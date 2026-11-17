@@ -1,0 +1,275 @@
+{
+  "format": "steambirds-map",
+  "version": 1,
+  "id": "dungeon_3brothers",
+  "name": "The Three Brothers",
+  "terrain": "Dungeon3Brothers",
+  "note": "Meowza's elite guard, between the Throne and the Sanctum. A corridor with turrets (hallwayturretS), then the arena: Golden Kai, Golden Jinn and Golden Rei, one at a time (barks 3brothers_intro1-3 and death1-3), with Duelist Protectors. At the end, the portal to the Inner Sanctum (3brothers_portalmaker) and the chest 3brothers_reward.",
+  "source": "Build 190828.2045: units, names, barks, signs, quests and territory come from the configBinary; the Dungeons/dungeon_* file of that build is empty, so the room format and the enemy positions were recreated.",
+  "exit": {"point": "portal", "when": "death:thunderboss3B"},
+  "nextDungeon": {"map": "dungeon_finalboss2", "point": "portal", "when": "death:thunderboss3B"},
+  "territory": 73,
+  "floor": {
+    "wallsOnEdges": true,
+    "voidMargin": 4,
+    "voidTerritory": 74,
+    "drawingPieces": [58053, 28202, 63887, 10700, 46385, 16534, 52219, 64568, 34717, 22369, 58054, 28203],
+    "drawing": {
+      "siStart": -20,
+      "sjStart": -44,
+      "legend": ". free floor, # wall, - no floor. First line = last sj row (the far end).",
+      "lines": [
+        "############################################",
+        "############################################",
+        "############################################",
+        "############################################",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "####################....####################",
+        "####################....####################",
+        "####################....####################",
+        "####################....####################",
+        "------------########....########------------",
+        "------------########....########------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "--------############....############--------",
+        "--------############....############--------",
+        "--------############....############--------",
+        "--------############....############--------",
+        "--------#######..............#######--------",
+        "--------#######..............#######--------",
+        "--------#######..............#######--------",
+        "--------#######..............#######--------",
+        "--------#######..............#######--------",
+        "--------#######..............#######--------",
+        "--------#######..............#######--------",
+        "--------#######..............#######--------",
+        "--------#######..............#######--------",
+        "--------#######..............#######--------",
+        "--------#######..............#######--------",
+        "--------#######..............#######--------",
+        "--------############################--------",
+        "--------############################--------",
+        "--------############################--------",
+        "--------############################--------"
+      ]
+    },
+    "pieces": []
+  },
+  "decor": [],
+  "buildings": [],
+  "spawn": {"u": 6.0, "v": -112.1, "rot": 315},
+  "points": {
+    "boss": {"u": 6.0, "v": 86.0, "rot": 135},
+    "portal": {"u": 6.0, "v": 53.3, "rot": 0, "note": "portal to the Inner Sanctum (dungeon_finalboss2)"}
+  },
+  "groups": {},
+  "areas": {
+    "entrance": {"minU": -15.6, "maxU": 27.6, "minV": -120.6, "maxV": -83.4},
+    "sacred_hall": {"minU": -12.6, "maxU": 24.6, "minV": -72.6, "maxV": 6.6},
+    "brothers_arena": {"minU": -42.6, "maxU": 54.6, "minV": 23.4, "maxV": 120.6}
+  },
+  "lines": {"entrance": -120.0, "sacred_hall": -72.0, "brothers_arena": 24.0},
+  "values": {"tier": 10},
+  "checkpoints": [
+    {"name": "entrance", "activeAtV": -120.0, "u": 6.0, "v": -116.1, "rot": 315},
+    {"name": "sacred_hall", "activeAtV": -72.0, "u": 6.0, "v": -64.8, "rot": 315},
+    {"name": "brothers_arena", "activeAtV": 24.0, "u": 6.0, "v": 32.7, "rot": 315}
+  ],
+  "gates": [
+    {"name": "sacred gate", "type": "3brothers_gate", "sj": -26, "siFrom": 0, "siTo": 3, "damageable": true, "room": "sacred_hall"},
+    {"name": "arena wall", "type": "3brothersdungeondestroyablewall", "sj": 5, "siFrom": 0, "siTo": 3, "damageable": true, "room": "brothers_arena"}
+  ],
+  "sideGates": [],
+  "signs": [],
+  "types": {
+    "kaiju3B": {
+      "name": "Golden Kai",
+      "template": "kaiju3B",
+      "boss": true,
+      "behavior": "circle",
+      "aggroRadius": 60,
+      "firstShotDelay": 2.0,
+      "preferredDistance": 7.5,
+      "onDeath": "kaiju3BDEATH",
+      "barks": {"onWake": "3brothers_intro1", "onDeath": "3brothers_death1"}
+    },
+    "raijin3B": {
+      "name": "Golden Jinn",
+      "template": "raijin3B",
+      "boss": true,
+      "behavior": "circle",
+      "aggroRadius": 60,
+      "firstShotDelay": 2.0,
+      "onDeath": "raijin3BDEATH",
+      "barks": {"onWake": "3brothers_intro2", "onDeath": "3brothers_death2"}
+    },
+    "thunderboss3B": {
+      "name": "Golden Rei",
+      "template": "thunderboss3B",
+      "boss": true,
+      "behavior": "circle",
+      "aggroRadius": 60,
+      "firstShotDelay": 2.0,
+      "onDeath": "thunderboss3BDEATH",
+      "barks": {"onWake": "3brothers_intro3", "onDeath": "3brothers_death3"}
+    },
+    "3brothers_portalmaker": {"name": "3brothers_portalmaker", "template": "3brothers_portalmaker", "behavior": "idle"},
+    "3brosportalally": {"name": "3brosportalally", "template": "3brosportalally", "behavior": "idle", "invulnerable": true},
+    "3brothers_gate": {"name": "3brothers_gate", "template": "3brothers_gate", "behavior": "idle", "invulnerable": true},
+    "3brothers_reward": {"name": "Treasure", "template": "3brothers_reward", "behavior": "idle", "opensAfterHitSeconds": 1.5},
+    "3brothersdungeondestroyablewall": {"name": "3brothersdungeondestroyablewall", "template": "3brothersdungeondestroyablewall", "behavior": "idle"},
+    "duelist_3Bclone": {"name": "Duelist Protector", "template": "duelist_3Bclone", "behavior": "turret", "aggroRadius": 30},
+    "hallwayturretS": {"name": "hallwayturretS", "template": "hallwayturretS", "behavior": "turret", "aggroRadius": 30},
+    "kaiju3BDEATH": {"name": "Golden Kai", "template": "kaiju3BDEATH", "behavior": "idle", "invulnerable": true},
+    "raijin3BDEATH": {"name": "Golden Jinn", "template": "raijin3BDEATH", "behavior": "idle", "invulnerable": true},
+    "thunderboss3BDEATH": {"name": "Golden Rei", "template": "thunderboss3BDEATH", "behavior": "idle", "invulnerable": true}
+  },
+  "encounters": [
+    {
+      "room": "sacred_hall",
+      "area": "sacred_hall",
+      "wakes": "onEnter",
+      "line": "sacred_hall",
+      "enemies": [
+        {
+          "type": "hallwayturretS",
+          "pos": [
+            {"u": -9.8, "v": -59.5, "rot": 45},
+            {"u": -9.8, "v": -33.0, "rot": 45},
+            {"u": -9.8, "v": -6.5, "rot": 45},
+            {"u": 21.8, "v": -59.5, "rot": 225},
+            {"u": 21.8, "v": -33.0, "rot": 225},
+            {"u": 21.8, "v": -6.5, "rot": 225}
+          ]
+        }
+      ],
+      "controllers": ["hallwayturretcontroller"]
+    },
+    {
+      "room": "brothers_arena",
+      "area": "brothers_arena",
+      "wakes": "onEnter",
+      "line": "brothers_arena",
+      "boss": true,
+      "closesOnEnter": true,
+      "controllers": ["3brothersmaster"],
+      "waves": [
+        {
+          "name": "Golden Kai",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "kaiju3B",
+              "pos": [
+                {"u": 6.0, "v": 90.7, "rot": 135}
+              ]
+            },
+            {
+              "type": "duelist_3Bclone",
+              "pos": [
+                {"u": -22.1, "v": 100.1, "rot": 135},
+                {"u": 34.1, "v": 100.1, "rot": 135}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Golden Jinn",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "raijin3B",
+              "pos": [
+                {"u": 6.0, "v": 90.7, "rot": 135}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Golden Rei",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "thunderboss3B",
+              "pos": [
+                {"u": 6.0, "v": 90.7, "rot": 135}
+              ]
+            },
+            {
+              "type": "duelist_3Bclone",
+              "pos": [
+                {"u": -22.1, "v": 81.4, "rot": 135},
+                {"u": 34.1, "v": 81.4, "rot": 135}
+              ]
+            }
+          ]
+        }
+      ],
+      "enemies": [
+        {
+          "type": "3brothers_reward",
+          "pos": [
+            {"u": 6.0, "v": 67.3, "rot": 135}
+          ],
+          "wakes": "death:thunderboss3B"
+        }
+      ]
+    }
+  ]
+}

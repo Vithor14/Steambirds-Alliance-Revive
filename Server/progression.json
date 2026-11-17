@@ -1,0 +1,55 @@
+// Server progression (pilot, planes and skills). Save the file and the server reloads it by itself.
+{
+  // XP of each kill (1 = reconstructed formula: base health x the tier's xpTiers x the unit's xpMultiplier).
+  "planeXpMultiplier": 1.0,
+
+  // Multiplies the pilot XP that planes give (1 = original).
+  "pilotXpMultiplier": 1.0,
+
+  // Original rule: a kill gives at most half of the current level; at the maximum level, at most xpLimitForMaxLevel.
+  "capXpPerKill": true,
+
+  // true = original: a destroyed plane leaves the account (the pilot keeps the XP the plane already gave in real time).
+  // false = the plane goes back to the hangar and keeps counting for the pilot.
+  "permadeath": true,
+
+  // Pilot XP comes in real time: a share of the value of each hangar plane (90% in this game version,
+  // 65% in the old ones). The rest only came by retiring the plane, and this client has no such button.
+  // How much of that rest the pilot gets when the plane falls: 0 = original, 1 = all of it.
+  "deathPilotXpBonus": 0.0,
+
+  // Skill loadouts per pilot (0 = the game's base value; the original sold more in the store).
+  "skillLoadoutSlots": 3,
+
+  // Planes per account (the original had 2 and sold more).
+  "hangarSlots": 3,
+
+  // Rank of a new pilot.
+  "startingPilotLevel": 1,
+
+  // Extra unlocks for all accounts, for example "playerclass_medic".
+  "startingUnlocks": [],
+
+  // All classes unlocked from the start.
+  "unlockAllClasses": false,
+
+  // Classes unlocked by plane level, using the game's "unlocks" rules.
+  "unlockClassesByLevel": true,
+
+  // "you did X% of the damage" text after the bosses.
+  "postFightDetails": true,
+
+  // "On kill" (OnKill) pilot skills fire when the player kills an enemy.
+  "killSkillTrigger": true,
+
+  // Picks a portrait for pilots without one (needs portraits_config.txt from plugin 1.20.0+).
+  "randomPortrait": true,
+
+  // Checks on the server the points, requirements and maximum level of the pilot skills.
+  "validateSkills": true,
+
+  // Career rewards (Pilot School timeline). Example:
+  // { "id": "career_reward_rank5", "pilotLevel": 5, "rewards": [ { "type": "PilotXp", "amount": 10 } ] }
+  // Types delivered today: PilotXp, PlaneXp and Unlock (id = unlock item).
+  "careerRewards": []
+}

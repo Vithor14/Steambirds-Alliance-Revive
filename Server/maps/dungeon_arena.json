@@ -1,0 +1,425 @@
+{
+  "format": "steambirds-map",
+  "version": 1,
+  "id": "dungeon_arena",
+  "name": "The Arena",
+  "terrain": "DungeonArena1",
+  "note": "Colosseum (T5). A single arena with waves announced by horns and a cheering crowd. 10 waves; on the 10th two identical minibosses come at the same time (March 2019 patch). Then Commodus. The the original waves were driven by the invisible units arenamaster/arenawave_*.",
+  "source": "Build 190828.2045: units, names, barks, signs, quests and territory come from the configBinary; the Dungeons/dungeon_* file of that build is empty, so the room format and the enemy positions were recreated.",
+  "key": "key_arena1",
+  "portalItem": "dungeon_arena1",
+  "exit": {"point": "portal", "when": "death:swarmboss"},
+  "territory": 64,
+  "floor": {
+    "wallsOnEdges": true,
+    "voidMargin": 4,
+    "voidTerritory": 74,
+    "drawingPieces": [31643, 55660, 25809, 7626, 43311, 1792, 37477],
+    "drawing": {
+      "siStart": -20,
+      "sjStart": -36,
+      "legend": ". free floor, # wall, - no floor. First line = last sj row (the far end).",
+      "lines": [
+        "------------####################------------",
+        "------------####################------------",
+        "------------####################------------",
+        "------------####################------------",
+        "------------####################------------",
+        "------------####################------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "################............################",
+        "################............################",
+        "####################....####################",
+        "####################....####################",
+        "####################....####################",
+        "####################....####################",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "####################....####################",
+        "####################....####################",
+        "####################....####################",
+        "####################....####################",
+        "####################....####################",
+        "####################....####################",
+        "------------########....########------------",
+        "------------########....########------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####################------------",
+        "------------####################------------",
+        "------------####################------------",
+        "------------####################------------"
+      ]
+    },
+    "pieces": []
+  },
+  "decor": [],
+  "buildings": [],
+  "spawn": {"u": 6.0, "v": -89.3, "rot": 315},
+  "points": {
+    "center": {"u": 6.0, "v": 6.0, "rot": 135},
+    "boss": {"u": 6.0, "v": 29.4, "rot": 135},
+    "portal": {"u": 6.0, "v": -3.4, "rot": 0, "note": "exit carrier"}
+  },
+  "groups": {},
+  "areas": {
+    "entrance": {"minU": -12.6, "maxU": 24.6, "minV": -96.6, "maxV": -65.4},
+    "arena": {"minU": -42.6, "maxU": 54.6, "minV": -42.6, "maxV": 54.6},
+    "prize": {"minU": -12.6, "maxU": 24.6, "minV": 65.4, "maxV": 90.6}
+  },
+  "lines": {"entrance": -96.0, "arena": -42.0, "prize": 66.0},
+  "values": {"tier": 5},
+  "checkpoints": [
+    {"name": "entrance", "activeAtV": -96.0, "u": 6.0, "v": -92.6, "rot": 315},
+    {"name": "arena", "activeAtV": -42.0, "u": 6.0, "v": -33.3, "rot": 315}
+  ],
+  "gates": [
+    {"name": "prize gate", "type": "arena2_destructiblewall1", "sj": 20, "siFrom": 0, "siTo": 3, "damageable": false, "opensWhen": "death:swarmboss", "room": "prize"}
+  ],
+  "sideGates": [],
+  "signs": [],
+  "types": {
+    "swarmboss": {
+      "name": "Commodus",
+      "template": "swarmboss",
+      "boss": true,
+      "behavior": "turret",
+      "aggroRadius": 60,
+      "firstShotDelay": 2.0,
+      "onDeath": "swarmbossDEATH",
+      "phases": [
+        {"belowHealth": 0.7, "summon": "swarmbossswarm", "summonCount": 6},
+        {"belowHealth": 0.4, "summon": "swarmbossswarm", "summonCount": 8},
+        {"belowHealth": 0.15, "summon": "swarmbosstrap", "summonCount": 2}
+      ]
+    },
+    "arenadungeontreasureBIG": {
+      "name": "Big Treasure",
+      "template": "arenadungeontreasureBIG",
+      "behavior": "idle",
+      "health": 1750,
+      "dpsChest": {"seconds": 25, "reward": "arenadungeontreasureBIG_reward"},
+      "note": "DPS chest: starts counting at the first hit; breaking it in 25 s swaps it for arenadungeontreasureBIG_reward. Health and time are a reconstruction (change 'health' and 'dpsChest.seconds' freely)."
+    },
+    "arena2_destructiblewall1": {"name": "Wall", "template": "arena2_destructiblewall1", "behavior": "idle"},
+    "arenaangel": {"name": "Chariot", "template": "arenaangel", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
+    "arenacloud": {"name": "Smog Beast", "template": "arenacloud", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
+    "arenacloudleader": {"name": "Smog Beast", "template": "arenacloudleader", "behavior": "circle", "preferredDistance": 2.0, "aggroRadius": 32},
+    "arenadungeontreasure": {"name": "Treasure", "template": "arenadungeontreasure", "behavior": "idle", "opensAfterHitSeconds": 1.5},
+    "arenadungeontreasureBIG_reward": {"name": "Big Treasure", "template": "arenadungeontreasureBIG_reward", "behavior": "idle", "opensAfterHitSeconds": 1.5},
+    "arenalasereye": {"name": "Heckler", "template": "arenalasereye", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
+    "arenasniper": {"name": "Malicious Acolyte", "template": "arenasniper", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
+    "arenaswarm": {"name": "Frenzied Mob", "template": "arenaswarm", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
+    "arenatackler": {"name": "Exotic Rhino", "template": "arenatackler", "behavior": "turret", "aggroRadius": 30},
+    "arenatetra": {"name": "Bruiser", "template": "arenatetra", "behavior": "turret", "aggroRadius": 30},
+    "arenawhaleshark": {"name": "Frenzied Shark", "template": "arenawhaleshark", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
+    "bonusswarm": {"name": "Bonus Pinata", "template": "bonusswarm", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
+    "swarmbossDEATH": {"name": "Commodus", "template": "swarmbossDEATH", "behavior": "idle", "invulnerable": true},
+    "swarmbossswarm": {"name": "Commodus Mob", "template": "swarmbossswarm", "behavior": "turret", "aggroRadius": 30},
+    "swarmbosstrap": {"name": "swarmbosstrap", "template": "swarmbosstrap", "behavior": "charge", "preferredDistance": 6, "aggroRadius": 30}
+  },
+  "encounters": [
+    {
+      "room": "arena",
+      "area": "arena",
+      "wakes": "onEnter",
+      "line": "arena",
+      "closesOnEnter": true,
+      "waves": [
+        {
+          "name": "Torcida",
+          "delayBeforeSeconds": 6,
+          "groups": [
+            {
+              "type": "arenaswarm",
+              "pos": [
+                {"u": -29.6, "v": 48.1, "rot": 135},
+                {"u": -5.9, "v": 48.1, "rot": 135},
+                {"u": 17.9, "v": 48.1, "rot": 135},
+                {"u": 41.6, "v": 48.1, "rot": 135},
+                {"u": -38.0, "v": -26.8, "rot": 45},
+                {"u": -38.0, "v": -4.9, "rot": 45},
+                {"u": -38.0, "v": 16.9, "rot": 45},
+                {"u": -38.0, "v": 38.8, "rot": 45}
+              ]
+            }
+          ],
+          "message": "Onda 1"
+        },
+        {
+          "name": "Fumaca",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arenacloudleader",
+              "pos": [
+                {"u": -29.6, "v": 43.4, "rot": 135},
+                {"u": 41.6, "v": 43.4, "rot": 135}
+              ]
+            },
+            {
+              "type": "arenacloud",
+              "pos": [
+                {"u": 50.0, "v": -26.8, "rot": 225},
+                {"u": 50.0, "v": -4.9, "rot": 225},
+                {"u": 50.0, "v": 16.9, "rot": 225},
+                {"u": 50.0, "v": 38.8, "rot": 225}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Hecklers",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arenalasereye",
+              "pos": [
+                {"u": 43.4, "v": 6.0, "rot": 225},
+                {"u": 6.0, "v": 43.4, "rot": 135},
+                {"u": -31.4, "v": 6.0, "rot": 45},
+                {"u": 6.0, "v": -31.4, "rot": 315}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Acolitos",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arenasniper",
+              "pos": [
+                {"u": -29.6, "v": -29.6, "rot": 135},
+                {"u": 41.6, "v": -29.6, "rot": 135},
+                {"u": -29.6, "v": 41.6, "rot": 135},
+                {"u": 41.6, "v": 41.6, "rot": 135}
+              ]
+            },
+            {
+              "type": "arenaswarm",
+              "pos": [
+                {"u": -29.6, "v": -35.2, "rot": 315},
+                {"u": -5.9, "v": -35.2, "rot": 315},
+                {"u": 17.9, "v": -35.2, "rot": 315},
+                {"u": 41.6, "v": -35.2, "rot": 315}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Bruiser",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arenatetra",
+              "pos": [
+                {"u": 6.0, "v": 34.1, "rot": 135}
+              ]
+            }
+          ],
+          "message": "Wave 5: Bruiser"
+        },
+        {
+          "name": "Carruagens",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arenaangel",
+              "pos": [
+                {"u": -29.6, "v": 43.4, "rot": 135},
+                {"u": 6.0, "v": 43.4, "rot": 135},
+                {"u": 41.6, "v": 43.4, "rot": 135}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Rinocerontes",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arenatackler",
+              "pos": [
+                {"u": -38.0, "v": 6.0, "rot": 45},
+                {"u": 50.0, "v": 6.0, "rot": 225}
+              ]
+            },
+            {
+              "type": "arenaswarm",
+              "pos": [
+                {"u": -29.6, "v": 48.1, "rot": 135},
+                {"u": -5.9, "v": 48.1, "rot": 135},
+                {"u": 17.9, "v": 48.1, "rot": 135},
+                {"u": 41.6, "v": 48.1, "rot": 135}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Tubaroes",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arenawhaleshark",
+              "pos": [
+                {"u": -29.6, "v": 38.8, "rot": 135},
+                {"u": 41.6, "v": 38.8, "rot": 135}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Tudo junto",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arenasniper",
+              "pos": [
+                {"u": -29.6, "v": -29.6, "rot": 135},
+                {"u": 41.6, "v": -29.6, "rot": 135}
+              ]
+            },
+            {
+              "type": "arenalasereye",
+              "pos": [
+                {"u": -29.6, "v": 43.4, "rot": 135},
+                {"u": 41.6, "v": 43.4, "rot": 135}
+              ]
+            },
+            {
+              "type": "arenacloudleader",
+              "pos": [
+                {"u": 6.0, "v": 38.8, "rot": 135}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Two minibosses",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arenatetra",
+              "pos": [
+                {"u": -12.7, "v": 34.1, "rot": 135},
+                {"u": 24.7, "v": 34.1, "rot": 135}
+              ]
+            }
+          ],
+          "message": "Wave 10: two Bruisers!"
+        },
+        {
+          "name": "Bonus",
+          "delayBeforeSeconds": 3,
+          "groups": [
+            {
+              "type": "bonusswarm",
+              "pos": [
+                {"u": 29.4, "v": 6.0, "rot": 225},
+                {"u": -5.7, "v": 26.3, "rot": 105},
+                {"u": -5.7, "v": -14.3, "rot": 345}
+              ]
+            }
+          ],
+          "message": "Pinata bonus!"
+        },
+        {
+          "name": "Commodus",
+          "delayBeforeSeconds": 6,
+          "groups": [
+            {
+              "type": "swarmboss",
+              "pos": [
+                {"u": 6.0, "v": 29.4, "rot": 135}
+              ]
+            }
+          ],
+          "message": "Commodus enters the arena!"
+        }
+      ],
+      "boss": true,
+      "controllers": [
+        "arenamaster",
+        "arenamasterbaby",
+        "arenawave_harassers_1..3",
+        "arenawave_swarm_1..3",
+        "arenaswarmspawner",
+        "arenaswarminstantleader1..4",
+        "swarmbossswarmspawner"
+      ],
+      "enemies": []
+    },
+    {
+      "room": "prize",
+      "area": "prize",
+      "wakes": "onEnter",
+      "line": "prize",
+      "enemies": [
+        {
+          "type": "arenadungeontreasureBIG",
+          "pos": [
+            {"u": 6.0, "v": 80.2, "rot": 135}
+          ]
+        }
+      ]
+    },
+    {
+      "room": "entrance",
+      "area": "entrance",
+      "wakes": "onEnter",
+      "line": "entrance",
+      "enemies": [
+        {
+          "type": "arenadungeontreasure",
+          "pos": [
+            {"u": -5.8, "v": -71.3, "rot": 135}
+          ]
+        }
+      ]
+    }
+  ]
+}

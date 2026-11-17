@@ -1,0 +1,41 @@
+// Bosses: used by every boss without loot of its own in the game (items.json: "bossLootTable") and in place of the
+// boss and treasure tables that the game's units name ("replaces").
+// The "tier" values are relative to the boss: tier 1 = the boss's tier, 2 = one above, 3 = two above (maximum 10).
+// Reconstructed values (the original server's named tables are not in the client): adjust freely.
+{
+  "id": "boss",
+  "description": "Bosses and dungeon chests: a guaranteed item the class uses, an extra item and a chance of health and scrap.",
+
+  "replaces": [ "*boss*", "miniboss", "meowza*", "*treasure*" ],
+
+  "rolls": [
+    {
+      // Sempre um equipamento um tier acima, de algo que a classe do jogador pode equipar.
+      "usableChance": 100,
+      "lootTable": [
+        { "weight": 1, "items": [ { "tier": 2 } ] }
+      ]
+    },
+    {
+      // An extra item of any class (to keep, trade or recycle).
+      "lootTable": [
+        { "weight": 50, "items": [ { "tier": 1 } ] },
+        { "weight": 35, "items": [ { "tier": 2 } ] },
+        { "weight": 15, "items": [ { "tier": 3 } ] }
+      ]
+    },
+    {
+      "lootTable": [
+        { "weight": 40 },
+        { "weight": 60, "items": [ { "slot": "Health", "tier": 2 } ] }
+      ]
+    },
+    {
+      // Scrap (recycling currency), delivered at once.
+      "lootTable": [
+        { "weight": 70 },
+        { "weight": 30, "items": [ { "instant": { "currency_id": "newscrap", "currency_amount": 25 } } ] }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,186 @@
+{
+  "format": "steambirds-map",
+  "version": 1,
+  "id": "dungeon_sneezy",
+  "name": "Iron Lair",
+  "terrain": "DungeonSneezy",
+  "note": "Mini-dungeon (T10) opened by the world's Mysterious Black Box. Spawn room (added in a 2019 patch) and SN-Z's arena, which launches beacons and calls the Robo Squadrons I-III. The client has no territory of its own for it; it uses industrialboss (67).",
+  "source": "Build 190828.2045: units, names, barks, signs, quests and territory come from the configBinary; the Dungeons/dungeon_* file of that build is empty, so the room format and the enemy positions were recreated.",
+  "key": "key_sneezy",
+  "portalItem": "dungeon_sneezy",
+  "exit": {"point": "portal", "when": "death:sneezy"},
+  "territory": 67,
+  "floor": {
+    "wallsOnEdges": true,
+    "voidMargin": 4,
+    "voidTerritory": 74,
+    "drawingPieces": [58814, 28963, 64648],
+    "drawing": {
+      "siStart": -20,
+      "sjStart": -28,
+      "legend": ". free floor, # wall, - no floor. First line = last sj row (the far end).",
+      "lines": [
+        "############################################",
+        "############################################",
+        "############################################",
+        "############################################",
+        "############################################",
+        "############################################",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "#######..............................#######",
+        "####################....####################",
+        "####################....####################",
+        "####################....####################",
+        "####################....####################",
+        "--------############....############--------",
+        "--------############....############--------",
+        "--------############....############--------",
+        "--------############....############--------",
+        "--------#######..............#######--------",
+        "--------#######..............#######--------",
+        "--------#######..............#######--------",
+        "--------#######..............#######--------",
+        "--------#######..............#######--------",
+        "--------#######..............#######--------",
+        "--------#######..............#######--------",
+        "--------#######..............#######--------",
+        "--------#######..............#######--------",
+        "--------#######..............#######--------",
+        "--------#######..............#######--------",
+        "--------#######..............#######--------",
+        "--------############################--------",
+        "--------############################--------",
+        "--------############################--------",
+        "--------############################--------"
+      ]
+    },
+    "pieces": []
+  },
+  "decor": [],
+  "buildings": [],
+  "spawn": {"u": 6.0, "v": -64.1, "rot": 315},
+  "points": {
+    "boss": {"u": 6.0, "v": 41.8, "rot": 135},
+    "portal": {"u": 6.0, "v": 19.9, "rot": 0, "note": "exit carrier (appears when the boss dies)"}
+  },
+  "groups": {},
+  "areas": {
+    "entrance": {"minU": -15.6, "maxU": 27.6, "minV": -72.6, "maxV": -35.4},
+    "snz_arena": {"minU": -39.6, "maxU": 51.6, "minV": -12.6, "maxV": 78.6}
+  },
+  "lines": {"entrance": -72.0, "snz_arena": -12.0},
+  "values": {"tier": 10},
+  "checkpoints": [
+    {"name": "entrance", "activeAtV": -72.0, "u": 6.0, "v": -68.1, "rot": 315},
+    {"name": "snz_arena", "activeAtV": -12.0, "u": 6.0, "v": -3.8, "rot": 315}
+  ],
+  "gates": [
+    {"name": "arena gate", "type": "spacedungeondestroyablewall", "sj": -8, "siFrom": 0, "siTo": 3, "damageable": true, "room": "snz_arena"}
+  ],
+  "sideGates": [],
+  "signs": [],
+  "types": {
+    "sneezy": {
+      "name": "SN-Z",
+      "template": "sneezy",
+      "boss": true,
+      "behavior": "circle",
+      "aggroRadius": 60,
+      "firstShotDelay": 2.0,
+      "onDeath": "sneezyDEATH",
+      "barks": {"onDeath": "sneezyDEATH"},
+      "phases": [
+        {"belowHealth": 0.9, "shieldSeconds": 10, "visualEffect": "tankShield", "summon": "sneezyforce1", "summonCount": 2, "message": "Robo Squadron I"},
+        {
+          "belowHealth": 0.7,
+          "shieldSeconds": 10,
+          "visualEffect": "tankShield",
+          "guns": [0, 1, 2, 7, 8, 9, 10, 11, 12],
+          "summon": "sneezybomb",
+          "summonCount": 3
+        },
+        {
+          "belowHealth": 0.5,
+          "shieldSeconds": 10,
+          "visualEffect": "tankShield",
+          "guns": [0, 1, 2, 14],
+          "summon": "sneezyforce2",
+          "summonCount": 3,
+          "message": "Robo Squadron II"
+        },
+        {
+          "belowHealth": 0.3,
+          "shieldSeconds": 10,
+          "visualEffect": "tankShield",
+          "guns": [16, 17, 18],
+          "summon": "sneezyforce3",
+          "summonCount": 3,
+          "message": "Robo Squadron III"
+        },
+        {
+          "belowHealth": 0.1,
+          "shieldSeconds": 10,
+          "visualEffect": "tankShield",
+          "guns": [16, 17, 18, 19, 20, 21],
+          "summon": "sneezybomb",
+          "summonCount": 2
+        }
+      ],
+      "guns": [0, 1, 2, 4, 5],
+      "note": "Guns by gunMounts index of SN-Z: 0-2 machine guns, 4-5 mainphase1, 7-12 mainphase2, 14 mainphase3 (missile), 16-18 mainphase4, 19-21 finalattack. 3/6/13/15 are the 'duds'."
+    },
+    "sneezyDEATH": {"name": "SN-Z", "template": "sneezyDEATH", "behavior": "idle", "invulnerable": true},
+    "sneezybomb": {"name": "SN-Z Beacon", "template": "sneezybomb", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
+    "sneezyforce1": {"name": "Robo Squadron I", "template": "sneezyforce1", "behavior": "turret", "aggroRadius": 30},
+    "sneezyforce2": {"name": "Robo Squadron II", "template": "sneezyforce2", "behavior": "turret", "aggroRadius": 30},
+    "sneezyforce3": {"name": "Robo Squadron III", "template": "sneezyforce3", "behavior": "turret", "aggroRadius": 30},
+    "spacedungeondestroyablewall": {"name": "Wall", "template": "spacedungeondestroyablewall", "behavior": "idle"}
+  },
+  "encounters": [
+    {
+      "room": "snz_arena",
+      "area": "snz_arena",
+      "wakes": "onEnter",
+      "line": "snz_arena",
+      "enemies": [
+        {
+          "type": "sneezy",
+          "pos": [
+            {"u": 6.0, "v": 41.8, "rot": 135}
+          ]
+        }
+      ],
+      "boss": true,
+      "closesOnEnter": true,
+      "controllers": ["sneezymaster"]
+    }
+  ]
+}

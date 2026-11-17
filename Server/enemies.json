@@ -1,0 +1,260 @@
+{
+  // Enemies of the server (read by Enemies.cs).
+  // You can edit it while the server runs: the file is reloaded when it changes
+  // and the new values apply to the enemies that spawn afterwards.
+  //
+  // "template": name of a UnitConfig of the game. Several options separated by | (the first one that exists wins):
+  //   "gameName|auto:weak". The options auto:weak, auto:medium, auto:strong, auto:turret and auto:boss
+  //   pick a unit by themselves from the catalog data\units_config.txt (written by the plugin).
+  //   In the game chat, /catalog shows the names and /types shows what each type became.
+  //
+  // "behavior": chase, circle, charge, turret, patrol, idle, escort or fixed (kamikaze is used by dungeon maps).
+  // A value of 0 in health, shotRange etc. means "use the game's value".
+  // "team": 2 = enemy (default), 1 = player's ally. "invulnerable": ignores damage.
+  // "opensAfterHitSeconds": seconds for a chest to open after the first hit. "freeRoam": flies outside the room.
+
+  "chatWarnings": true,
+  "globalHealthMultiplier": 0.7,
+
+  // Square where enemies without a room stay (center +- limit). In the tutorial each room has its own area.
+  "arena": { "centerX": 0, "centerY": 0, "limit": 40 },
+
+  "types": {
+    // ------------------------------------------------------------------ tutorial (DungeonTutorialWalker)
+    // Original units of the Training Grounds (units_config.txt). The script (corridor, crate gates,
+    // instructor barks, boss and portal to the Nexus) lives in Tutorial.cs; here you can tune the
+    // behavior. The original tutorial guns do 0.01 damage: the training never knocks the player down.
+
+    // Training Drone (target with a red ring).
+    "tutorial_hunter": {
+      "name": "Training Drone",
+      "template": "tutorialattacker",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 26,
+      "firstShotDelay": 1.5
+    },
+
+    // Gas drones of the ring (no guns: they only surround the player).
+    "tutorial_drone": {
+      "name": "Gas Drone",
+      "template": "tutorialattacker2minion_walker",
+      "behavior": "charge",
+      "preferredDistance": 6,
+      "aggroRadius": 4
+    },
+
+    // Training Turrets of the hangar: fixed to the left wall, they fire straight at the front wall without aiming
+    // ("fixed"); the player passes dodging the bursts. A slow, continuous burst (the shot flies 20 units).
+    "tutorial_cannon": {
+      "name": "Training Turret",
+      "template": "tutorialcannon",
+      "behavior": "fixed",
+      "invulnerable": true,
+      "aggroRadius": 0,
+      "shotRange": 40,
+      "firstShotDelay": 0.3
+    },
+
+    // Large Training Drone (arena boss).
+    "tutorial_boss": {
+      "name": "Large Training Drone",
+      "template": "tutorialattacker4",
+      "boss": true,
+      "behavior": "circle",
+      "preferredDistance": 9,
+      "aggroRadius": 60,
+      "firstShotDelay": 2.0,
+      "phases": [
+        { "belowHealth": 0.66, "summon": "tutorial_minion", "summonCount": 2 },
+        { "belowHealth": 0.33, "behavior": "charge", "speedMultiplier": 1.2, "summon": "tutorial_minion", "summonCount": 2 }
+      ]
+    },
+
+    "tutorial_minion": {
+      "name": "Large Drone Escort",
+      "template": "tutorialattacker4minion",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 60
+    },
+
+    "tutorial_boss_death": {
+      "name": "Large Drone Wreck",
+      "template": "tutorialattacker4DEATH",
+      "behavior": "idle",
+      "invulnerable": true
+    },
+
+    // Metal crate walls (40 health in the game; "isWall" units, the client creates the wall collider).
+    // The anteroom one already spawns destructible; the gates stay locked until the right moment of the script.
+    // One destroyed crate brings the whole wall down.
+    "tutorial_wall0": { "name": "Crate Wall", "template": "tutorialwall0", "behavior": "idle", "healthMultiplier": 0.3 },
+    "tutorial_wall": { "name": "Crate Gate", "template": "tutorialwall", "behavior": "idle", "healthMultiplier": 0.3 },
+    "tutorial_wall_boss": { "name": "Boss Gate", "template": "tutorialwallboss", "behavior": "idle", "healthMultiplier": 0.3 },
+
+    // Supply crate ("Shoot that storage crate!").
+    "tutorial_chest": { "name": "Supply Crate", "template": "tutorialwalkerdungeontreasure", "behavior": "idle", "opensAfterHitSeconds": 1.5 },
+
+    // Drill Sergeant Davis.
+    "tutorial_ally": {
+      "name": "Drill Sergeant Davis",
+      "template": "tutorialwalkerally",
+      "behavior": "escort",
+      "team": 1,
+      "freeRoam": true,
+      "invulnerable": true,
+      "preferredDistance": 5
+    },
+
+    // ------------------------------------------------------------------ generic types (tests and commands)
+
+    "scout": {
+      "name": "Scout",
+      "template": "auto:weak",
+      "behavior": "chase",
+      "speedMultiplier": 0.75,
+      "fireRateMultiplier": 0.5,
+      "preferredDistance": 14,
+      "aggroRadius": 80,
+      "firstShotDelay": 2.0
+    },
+
+    "gunner": {
+      "name": "Gunner",
+      "template": "auto:medium",
+      "behavior": "circle",
+      "freeAim": true,
+      "healthMultiplier": 0.7,
+      "speedMultiplier": 0.7,
+      "fireRateMultiplier": 0.6,
+      "preferredDistance": 16,
+      "aimLead": 0.3,
+      "aggroRadius": 80
+    },
+
+    "hunter": {
+      "name": "Hunter",
+      "template": "auto:strong",
+      "behavior": "charge",
+      "preferredDistance": 10,
+      "aimLead": 0.6,
+      "aggroRadius": 90
+    },
+
+    "turret": {
+      "name": "Turret",
+      "template": "auto:turret",
+      "behavior": "turret",
+      "freeAim": true,
+      "aimLead": 0.5,
+      "aggroRadius": 45
+    },
+
+    "test_boss": {
+      "name": "Test Boss",
+      "template": "auto:boss",
+      "boss": true,
+      "behavior": "circle",
+      "freeAim": true,
+      "maxHealth": 2500,
+      "speedMultiplier": 0.6,
+      "fireRateMultiplier": 0.6,
+      "preferredDistance": 18,
+      "aggroRadius": 120,
+      "firstShotDelay": 3.0,
+      "phases": [
+        {
+          "belowHealth": 0.66,
+          "fireRateMultiplier": 0.8,
+          "summon": "scout",
+          "summonCount": 2,
+          "message": "The boss called for reinforcements!"
+        },
+        {
+          "belowHealth": 0.33,
+          "behavior": "charge",
+          "speedMultiplier": 1.25,
+          "fireRateMultiplier": 1.1,
+          "message": "The boss is furious!"
+        }
+      ]
+    },
+
+    // A harder boss model: the game's health, double damage and three phases.
+    "hard_boss": {
+      "name": "Dreadnought",
+      "template": "auto:boss",
+      "boss": true,
+      "behavior": "circle",
+      "freeAim": true,
+      "damageMultiple": 2,
+      "preferredDistance": 20,
+      "aimLead": 0.5,
+      "aggroRadius": 150,
+      "phases": [
+        { "belowHealth": 0.75, "summon": "gunner", "summonCount": 2, "message": "Enemy reinforcements!" },
+        { "belowHealth": 0.5, "behavior": "charge", "speedMultiplier": 1.3, "message": "The dreadnought sped up!" },
+        { "belowHealth": 0.2, "fireRateMultiplier": 1.8, "summon": "hunter", "summonCount": 2, "message": "Last stand!" }
+      ]
+    }
+  },
+
+  // Encounters: sequences of waves. In the tutorial none starts by itself (the Tutorial script is in charge);
+  // in the chat: /encounter waves or /encounter challenge. On a server without a script, the first active
+  // encounter of that server starts when the plane spawns.
+  // Each wave starts when the previous one was completely destroyed (and after delayBeforeSeconds).
+  // Group: "distance" from the player, or fixed "x" and "y" (with "spread" around).
+  "encounters": [
+    {
+      "name": "waves",
+      "server": "tutorial",
+      "active": false,
+      "startAfterSeconds": 4,
+      "restartWaveOnDeath": true,
+      "repeat": false,
+      "finalMessage": "Test waves completed! /encounter waves to fight again.",
+      "waves": [
+        {
+          "name": "First contact",
+          "groups": [ { "type": "scout", "count": 2, "distance": 30 } ]
+        },
+        {
+          "name": "Squadron",
+          "delayBeforeSeconds": 5,
+          "groups": [
+            { "type": "scout", "count": 3, "distance": 32 },
+            { "type": "gunner", "count": 1, "distance": 34 }
+          ]
+        },
+        {
+          "name": "The boss",
+          "delayBeforeSeconds": 6,
+          "message": "A boss is approaching!",
+          "groups": [ { "type": "test_boss", "count": 1, "distance": 30 } ]
+        }
+      ]
+    },
+
+    {
+      "name": "challenge",
+      "server": "tutorial",
+      "active": false,
+      "startAfterSeconds": 4,
+      "repeat": true,
+      "repeatInterval": 12,
+      "waves": [
+        { "name": "Hunters", "groups": [ { "type": "hunter", "count": 3, "distance": 32 } ] },
+        {
+          "name": "Crossfire",
+          "delayBeforeSeconds": 5,
+          "groups": [
+            { "type": "turret", "count": 2, "distance": 20, "spread": 25 },
+            { "type": "gunner", "count": 3, "distance": 30 }
+          ]
+        },
+        { "name": "Dreadnought", "delayBeforeSeconds": 8, "groups": [ { "type": "hard_boss", "count": 1, "distance": 30 } ] }
+      ]
+    }
+  ]
+}

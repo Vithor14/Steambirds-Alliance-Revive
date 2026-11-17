@@ -1,0 +1,532 @@
+{
+  "format": "steambirds-map",
+  "version": 1,
+  "id": "dungeon_arena2",
+  "name": "The Elder Arena",
+  "terrain": "DungeonArena2",
+  "note": "Elder arena (T10, lightning). After the patch: 15 waves with 2 miniboss phases, 2 s less between waves and Death Wish (spotters) faster after the first shot. Boss: Dark Sphinx, with laser walls and cannons. The waves were driven by arena2master/arena2wave_*.",
+  "source": "Build 190828.2045: units, names, barks, signs, quests and territory come from the configBinary; the Dungeons/dungeon_* file of that build is empty, so the room format and the enemy positions were recreated.",
+  "key": "key_arena2",
+  "portalItem": "dungeon_arena2",
+  "exit": {"point": "portal", "when": "death:arenacube"},
+  "territory": 65,
+  "floor": {
+    "wallsOnEdges": true,
+    "voidMargin": 4,
+    "voidTerritory": 74,
+    "drawingPieces": [42241, 42244, 42243, 42238, 42237],
+    "drawing": {
+      "siStart": -20,
+      "sjStart": -36,
+      "legend": ". free floor, # wall, - no floor. First line = last sj row (the far end).",
+      "lines": [
+        "------------####################------------",
+        "------------####################------------",
+        "------------####################------------",
+        "------------####################------------",
+        "------------####################------------",
+        "------------####################------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "################............################",
+        "################............################",
+        "####################....####################",
+        "####################....####################",
+        "####################....####################",
+        "####################....####################",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "######................................######",
+        "####################....####################",
+        "####################....####################",
+        "####################....####################",
+        "####################....####################",
+        "####################....####################",
+        "####################....####################",
+        "------------########....########------------",
+        "------------########....########------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####............####------------",
+        "------------####################------------",
+        "------------####################------------",
+        "------------####################------------",
+        "------------####################------------"
+      ]
+    },
+    "pieces": []
+  },
+  "decor": [],
+  "buildings": [],
+  "spawn": {"u": 6.0, "v": -89.3, "rot": 315},
+  "points": {
+    "center": {"u": 6.0, "v": 6.0, "rot": 135},
+    "boss": {"u": 6.0, "v": 15.4, "rot": 135},
+    "portal": {"u": 6.0, "v": -12.7, "rot": 0, "note": "porta-avioes de saida"}
+  },
+  "groups": {},
+  "areas": {
+    "entrance": {"minU": -12.6, "maxU": 24.6, "minV": -96.6, "maxV": -65.4},
+    "arena": {"minU": -42.6, "maxU": 54.6, "minV": -42.6, "maxV": 54.6},
+    "prize": {"minU": -12.6, "maxU": 24.6, "minV": 65.4, "maxV": 90.6}
+  },
+  "lines": {"entrance": -96.0, "arena": -42.0, "prize": 66.0},
+  "values": {"tier": 10},
+  "checkpoints": [
+    {"name": "entrance", "activeAtV": -96.0, "u": 6.0, "v": -92.6, "rot": 315},
+    {"name": "arena", "activeAtV": -42.0, "u": 6.0, "v": -33.3, "rot": 315}
+  ],
+  "gates": [
+    {"name": "prize gate", "type": "arena2_destructiblewall1", "sj": 20, "siFrom": 0, "siTo": 3, "damageable": false, "opensWhen": "death:arenacube", "room": "prize"}
+  ],
+  "sideGates": [],
+  "signs": [],
+  "types": {
+    "arenacube": {
+      "name": "Dark Sphinx",
+      "template": "arenacube",
+      "boss": true,
+      "behavior": "turret",
+      "aggroRadius": 60,
+      "firstShotDelay": 2.0,
+      "onDeath": "arenacubeDEATH",
+      "phases": [
+        {"belowHealth": 0.75, "summon": "arenacubebiglaserwall", "summonCount": 1},
+        {"belowHealth": 0.5, "summon": "arenacubemini", "summonCount": 2},
+        {"belowHealth": 0.3, "summon": "arenacubebiglaserwall2", "summonCount": 1},
+        {"belowHealth": 0.15, "summon": "arenacubetendril", "summonCount": 3}
+      ]
+    },
+    "arena2_destructiblewall1": {"name": "Wall", "template": "arena2_destructiblewall1", "behavior": "idle"},
+    "arena2_destructiblewall3": {"name": "arena2_destructiblewall3", "template": "arena2_destructiblewall3", "behavior": "idle"},
+    "arena2ballnchain": {"name": "Chains", "template": "arena2ballnchain", "behavior": "turret", "aggroRadius": 30},
+    "arena2beehex": {"name": "Hornet", "template": "arena2beehex", "behavior": "chase", "preferredDistance": 3.3, "aggroRadius": 28},
+    "arena2lasereye": {"name": "Laser X", "template": "arena2lasereye", "behavior": "chase", "preferredDistance": 4.5, "aggroRadius": 28},
+    "arena2spotter": {"name": "Death Wish", "template": "arena2spotter", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
+    "arena2stardog": {"name": "Underdog", "template": "arena2stardog", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
+    "arena2tripod": {"name": "Corpse Pulveriser", "template": "arena2tripod", "behavior": "turret", "aggroRadius": 30},
+    "arena2tripodminionmaster": {"name": "Hex", "template": "arena2tripodminionmaster", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
+    "arena2warper": {"name": "Smoke Ninja", "template": "arena2warper", "behavior": "turret", "aggroRadius": 30},
+    "arenacubeDEATH": {"name": "Dark Sphinx", "template": "arenacubeDEATH", "behavior": "idle", "invulnerable": true},
+    "arenacubebiglaserwall": {"name": "Dark Sphinx", "template": "arenacubebiglaserwall", "behavior": "chase", "preferredDistance": 4.5, "aggroRadius": 28},
+    "arenacubebiglaserwall2": {"name": "Dark Sphinx", "template": "arenacubebiglaserwall2", "behavior": "chase", "preferredDistance": 4.5, "aggroRadius": 28},
+    "arenacubelasercross": {"name": "Laser X 2", "template": "arenacubelasercross", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
+    "arenacubemini": {"name": "Arena Bomber", "template": "arenacubemini", "behavior": "idle"},
+    "arenacubenode": {"name": "Sphinx Cannon", "template": "arenacubenode", "behavior": "turret", "aggroRadius": 30},
+    "arenacubespiral": {"name": "Riddle", "template": "arenacubespiral", "behavior": "charge", "preferredDistance": 2.0, "aggroRadius": 30},
+    "arenacubetendril": {"name": "Riddle", "template": "arenacubetendril", "behavior": "charge", "preferredDistance": 2.0, "aggroRadius": 30},
+    "arenacubetendrilrandom": {"name": "Riddle", "template": "arenacubetendrilrandom", "behavior": "charge", "preferredDistance": 2.0, "aggroRadius": 30},
+    "beartrap": {"name": "Dark Sphinx", "template": "beartrap", "behavior": "turret", "aggroRadius": 30},
+    "bonusswarm": {"name": "Bonus Pinata", "template": "bonusswarm", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28}
+  },
+  "encounters": [
+    {
+      "room": "arena",
+      "area": "arena",
+      "wakes": "onEnter",
+      "line": "arena",
+      "closesOnEnter": true,
+      "waves": [
+        {
+          "name": "Hornets",
+          "delayBeforeSeconds": 6,
+          "groups": [
+            {
+              "type": "arena2beehex",
+              "pos": [
+                {"u": -29.6, "v": 43.4, "rot": 135},
+                {"u": -5.9, "v": 43.4, "rot": 135},
+                {"u": 17.9, "v": 43.4, "rot": 135},
+                {"u": 41.6, "v": 43.4, "rot": 135}
+              ]
+            }
+          ],
+          "message": "Onda 1: Hornets"
+        },
+        {
+          "name": "Underdogs",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arena2stardog",
+              "pos": [
+                {"u": -38.0, "v": -26.8, "rot": 45},
+                {"u": -38.0, "v": -4.9, "rot": 45},
+                {"u": -38.0, "v": 16.9, "rot": 45},
+                {"u": -38.0, "v": 38.8, "rot": 45},
+                {"u": 50.0, "v": -26.8, "rot": 225},
+                {"u": 50.0, "v": -4.9, "rot": 225},
+                {"u": 50.0, "v": 16.9, "rot": 225},
+                {"u": 50.0, "v": 38.8, "rot": 225}
+              ]
+            }
+          ],
+          "message": "Onda 2: Underdogs"
+        },
+        {
+          "name": "Laser X",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arena2lasereye",
+              "pos": [
+                {"u": 43.4, "v": 6.0, "rot": 225},
+                {"u": 6.0, "v": 43.4, "rot": 135},
+                {"u": -31.4, "v": 6.0, "rot": 45},
+                {"u": 6.0, "v": -31.4, "rot": 315}
+              ]
+            }
+          ],
+          "message": "Onda 3: Laser X"
+        },
+        {
+          "name": "Death Wish",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arena2spotter",
+              "pos": [
+                {"u": -29.6, "v": -29.6, "rot": 135},
+                {"u": 41.6, "v": -29.6, "rot": 135},
+                {"u": -29.6, "v": 41.6, "rot": 135},
+                {"u": 41.6, "v": 41.6, "rot": 135}
+              ]
+            }
+          ],
+          "message": "Onda 4: Death Wish"
+        },
+        {
+          "name": "Ninjas",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arena2warper",
+              "pos": [
+                {"u": -29.6, "v": 38.8, "rot": 135},
+                {"u": 41.6, "v": 38.8, "rot": 135}
+              ]
+            },
+            {
+              "type": "arena2beehex",
+              "pos": [
+                {"u": -29.6, "v": -26.8, "rot": 315},
+                {"u": 6.0, "v": -26.8, "rot": 315},
+                {"u": 41.6, "v": -26.8, "rot": 315}
+              ]
+            }
+          ],
+          "message": "Onda 5: Ninjas"
+        },
+        {
+          "name": "Hex",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arena2tripodminionmaster",
+              "pos": [
+                {"u": -29.6, "v": 34.1, "rot": 135},
+                {"u": 41.6, "v": 34.1, "rot": 135}
+              ]
+            }
+          ],
+          "message": "Onda 6: Hex"
+        },
+        {
+          "name": "Mistura",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arena2stardog",
+              "pos": [
+                {"u": -29.6, "v": 43.4, "rot": 135},
+                {"u": 6.0, "v": 43.4, "rot": 135},
+                {"u": 41.6, "v": 43.4, "rot": 135}
+              ]
+            },
+            {
+              "type": "arena2lasereye",
+              "pos": [
+                {"u": -38.0, "v": 6.0, "rot": 45},
+                {"u": 50.0, "v": 6.0, "rot": 225}
+              ]
+            }
+          ],
+          "message": "Onda 7: Mistura"
+        },
+        {
+          "name": "Miniboss: Corpse Pulveriser",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arena2tripod",
+              "pos": [
+                {"u": 6.0, "v": 29.4, "rot": 135}
+              ]
+            }
+          ],
+          "message": "Onda 8: Miniboss: Corpse Pulveriser"
+        },
+        {
+          "name": "Death Wish 2",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arena2spotter",
+              "pos": [
+                {"u": 45.3, "v": 6.0, "rot": 225},
+                {"u": 25.7, "v": 40.0, "rot": 165},
+                {"u": -13.7, "v": 40.0, "rot": 105},
+                {"u": -33.3, "v": 6.0, "rot": 45},
+                {"u": -13.7, "v": -28.0, "rot": 345},
+                {"u": 25.7, "v": -28.0, "rot": 285}
+              ]
+            }
+          ],
+          "message": "Onda 9: Death Wish 2"
+        },
+        {
+          "name": "Riddles",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arenacubespiral",
+              "pos": [
+                {"u": -29.6, "v": 38.8, "rot": 135},
+                {"u": 41.6, "v": 38.8, "rot": 135}
+              ]
+            },
+            {
+              "type": "arenacubetendrilrandom",
+              "pos": [
+                {"u": -29.6, "v": -29.6, "rot": 135},
+                {"u": 41.6, "v": -29.6, "rot": 135},
+                {"u": -29.6, "v": 41.6, "rot": 135},
+                {"u": 41.6, "v": 41.6, "rot": 135}
+              ]
+            }
+          ],
+          "message": "Onda 10: Riddles"
+        },
+        {
+          "name": "Ninjas 2",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arena2warper",
+              "pos": [
+                {"u": -29.6, "v": -29.6, "rot": 135},
+                {"u": 41.6, "v": -29.6, "rot": 135},
+                {"u": -29.6, "v": 41.6, "rot": 135},
+                {"u": 41.6, "v": 41.6, "rot": 135}
+              ]
+            }
+          ],
+          "message": "Onda 11: Ninjas 2"
+        },
+        {
+          "name": "Hornets 2",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arena2beehex",
+              "pos": [
+                {"u": 43.4, "v": 6.0, "rot": 225},
+                {"u": 24.7, "v": 38.4, "rot": 165},
+                {"u": -12.7, "v": 38.4, "rot": 105},
+                {"u": -31.4, "v": 6.0, "rot": 45},
+                {"u": -12.7, "v": -26.4, "rot": 345},
+                {"u": 24.7, "v": -26.4, "rot": 285}
+              ]
+            },
+            {
+              "type": "arena2stardog",
+              "pos": [
+                {"u": -29.6, "v": 43.4, "rot": 135},
+                {"u": 41.6, "v": 43.4, "rot": 135}
+              ]
+            }
+          ],
+          "message": "Onda 12: Hornets 2"
+        },
+        {
+          "name": "Laser X 2",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arena2lasereye",
+              "pos": [
+                {"u": -29.6, "v": -29.6, "rot": 135},
+                {"u": 41.6, "v": -29.6, "rot": 135},
+                {"u": -29.6, "v": 41.6, "rot": 135},
+                {"u": 41.6, "v": 41.6, "rot": 135}
+              ]
+            },
+            {
+              "type": "arenacubelasercross",
+              "pos": [
+                {"u": 6.0, "v": 34.1, "rot": 135}
+              ]
+            }
+          ],
+          "message": "Onda 13: Laser X 2"
+        },
+        {
+          "name": "Tudo junto",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arena2spotter",
+              "pos": [
+                {"u": -29.6, "v": 43.4, "rot": 135},
+                {"u": 6.0, "v": 43.4, "rot": 135},
+                {"u": 41.6, "v": 43.4, "rot": 135}
+              ]
+            },
+            {
+              "type": "arena2warper",
+              "pos": [
+                {"u": -38.0, "v": 6.0, "rot": 45},
+                {"u": 50.0, "v": 6.0, "rot": 225}
+              ]
+            },
+            {
+              "type": "arena2tripodminionmaster",
+              "pos": [
+                {"u": 6.0, "v": 38.8, "rot": 135}
+              ]
+            }
+          ],
+          "message": "Onda 14: Tudo junto"
+        },
+        {
+          "name": "Miniboss: Chains",
+          "delayBeforeSeconds": 4,
+          "groups": [
+            {
+              "type": "arena2ballnchain",
+              "pos": [
+                {"u": -12.7, "v": 29.4, "rot": 135},
+                {"u": 24.7, "v": 29.4, "rot": 135}
+              ]
+            }
+          ],
+          "message": "Onda 15: Miniboss: Chains"
+        },
+        {
+          "name": "Bonus",
+          "delayBeforeSeconds": 3,
+          "groups": [
+            {
+              "type": "bonusswarm",
+              "pos": [
+                {"u": 29.4, "v": 6.0, "rot": 225},
+                {"u": -5.7, "v": 26.3, "rot": 105},
+                {"u": -5.7, "v": -14.3, "rot": 345}
+              ]
+            }
+          ],
+          "message": "Pinata bonus!"
+        },
+        {
+          "name": "Dark Sphinx",
+          "delayBeforeSeconds": 6,
+          "groups": [
+            {
+              "type": "arenacube",
+              "pos": [
+                {"u": 6.0, "v": 15.4, "rot": 135}
+              ]
+            },
+            {
+              "type": "arenacubenode",
+              "pos": [
+                {"u": -26.8, "v": -26.8, "rot": 135},
+                {"u": 38.8, "v": -26.8, "rot": 135},
+                {"u": -26.8, "v": 38.8, "rot": 135},
+                {"u": 38.8, "v": 38.8, "rot": 135}
+              ]
+            }
+          ],
+          "message": "The Dark Sphinx awakens!"
+        }
+      ],
+      "boss": true,
+      "controllers": [
+        "arena2master",
+        "arena2masterbaby",
+        "arena2wave_harassers_1..3",
+        "arena2wave_swarm_1..3",
+        "arena2spotterspawner",
+        "arenacubenodemaster1..3",
+        "arena2ballnchainsleeping"
+      ],
+      "enemies": [
+        {
+          "type": "beartrap",
+          "pos": [
+            {"u": 19.2, "v": 19.2, "rot": 180},
+            {"u": -7.2, "v": 19.2, "rot": 90},
+            {"u": -7.2, "v": -7.2, "rot": 0},
+            {"u": 19.2, "v": -7.2, "rot": 270}
+          ],
+          "note": "Sphinx traps on the floor"
+        }
+      ]
+    },
+    {
+      "room": "prize",
+      "area": "prize",
+      "wakes": "onEnter",
+      "line": "prize",
+      "enemies": [
+        {
+          "type": "arena2_destructiblewall3",
+          "pos": [
+            {"u": 6.0, "v": 86.6, "rot": 135}
+          ],
+          "note": "no chest of its own in 190828: the loot comes from the Dark Sphinx"
+        }
+      ]
+    }
+  ]
+}

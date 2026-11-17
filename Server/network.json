@@ -1,0 +1,31 @@
+// Network settings of the server. Ports and allowOtherPlayers only change when the server restarts.
+{
+  // Name shown in the server lists of the launchers.
+  "serverName": "Steambirds server",
+
+  // true: players of other PCs (local network, Radmin, Hamachi, internet) can join. false: only this PC.
+  "allowOtherPlayers": true,
+
+  // true: answers the "find servers" of the launchers on the local network and on VPNs.
+  "showInServerSearch": true,
+
+  // Players at the same time.
+  "maxPlayers": 16,
+
+  // Who can use the chat commands (/xp, /dungeon, /items...): "everyone", "host" (only the game of this PC) or "none".
+  "chatCommands": "everyone",
+
+  // Extra chat message for every player who arrives at the Nexus (empty = none).
+  "welcomeMessage": "",
+
+  // TCP port of the login (the launcher opens the game with OZY_URL=http://<ip>:<httpPort>/ozy).
+  "httpPort": 6443,
+
+  // UDP ports of the Nexus, the tutorial and the dungeons.
+  "nexusPort": 1111,
+  "tutorialPort": 1112,
+  "dungeonPort": 1113,
+
+  // UDP port of the server search of the launchers (they search on 6444 unless set otherwise).
+  "searchPort": 6444
+}

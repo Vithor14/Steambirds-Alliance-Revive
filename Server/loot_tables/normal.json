@@ -1,0 +1,31 @@
+// Regular enemies: used by every unit that is not a boss and has no loot of its own in the game
+// (items.json: "normalLootTable"). The "tier" values are relative to the enemy: tier 1 = the enemy's tier, 2 = one above.
+// Reconstructed values (the original server's named tables are not in the client): adjust freely.
+{
+  "id": "normal",
+  "description": "Regular enemies: a small chance of health, steam and a piece of equipment of the enemy's tier.",
+
+  // lootTableIds of the game's units that this table replaces.
+  "replaces": [ "*minion*", "*leader*", "respawner_*" ],
+
+  "rolls": [
+    {
+      // Health and steam (collected at once, they do not take cargo space).
+      "lootTable": [
+        { "weight": 85 },
+        { "weight": 10, "items": [ { "slot": "Health", "tier": 1 } ] },
+        { "weight": 5, "items": [ { "slot": "Energy", "tier": 1 } ] }
+      ]
+    },
+    {
+      // Equipamento aleatorio (arma, secundario, motor ou armadura).
+      // usableChance: chance (0-100) de o item ser de algo que a classe do jogador pode equipar.
+      "usableChance": 40,
+      "lootTable": [
+        { "weight": 88 },
+        { "weight": 10, "items": [ { "tier": 1 } ] },
+        { "weight": 2, "items": [ { "tier": 2 } ] }
+      ]
+    }
+  ]
+}

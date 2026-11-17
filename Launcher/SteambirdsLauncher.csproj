@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Steambirds Alliance Revive launcher (WinForms, .NET 8).
+    Built by "Build launcher.ps1" (in C:\Steambirds) as a single self-contained exe:
+    nobody needs .NET installed to run it.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>SteambirdsLauncher</AssemblyName>
+    <RootNamespace>SteambirdsLauncher</RootNamespace>
+    <Version>0.3.0</Version>
+    <Product>Steambirds Alliance Revive Launcher</Product>
+    <Company>Steambirds Alliance Revive community</Company>
+    <Description>Launcher for the community revival of Steambirds Alliance</Description>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <!-- Build output of the script lives next to the sources: keep it out of the compilation. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);build\**;dist\**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Old (Portuguese) names of the map format, shared with the server; see Editor\LegacyNames.cs. -->
+    <EmbeddedResource Include="..\Server\legacy-names.json" LogicalName="legacy-names.json" Link="legacy-names.json" />
+  </ItemGroup>
+
+</Project>

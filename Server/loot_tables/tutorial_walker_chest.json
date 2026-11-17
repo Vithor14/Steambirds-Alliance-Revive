@@ -1,0 +1,27 @@
+// Supply crate of the walker tutorial (Training Grounds).
+// The tutorial sign says: "open your inventory to choose your desired engine, before your final encounter".
+// That is why the crate drops the four tier 1 engines, one of each kind, for the player to choose.
+{
+  "id": "tutorial_walker_chest",
+  "description": "Walker tutorial crate: the four tier 1 engines.",
+
+  // Unidades que sempre usam esta tabela (templateName) e os lootTableIds do jogo que ela substitui.
+  "units": [ "tutorialwalkerdungeontreasure*" ],
+  "replaces": [ "tutorialwalkertreasure*" ],
+
+  "rolls": [
+    {
+      "lootTable": [
+        {
+          "weight": 1,
+          "items": [
+            { "id": "engine_speed_1" },
+            { "id": "engine_destruction_1" },
+            { "id": "engine_power_1" },
+            { "id": "engine_repair_1" }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+// Items, inventory and loot of the server. Save the file and the server reloads it by itself.
+// The loot tables are in the loot_tables folder (one file per table; see loot_tables\README.md).
+{
+  // Enemies drop loot bags.
+  "lootEnabled": true,
+
+  // How many times the loot of each kill is rolled (1 = original).
+  "lootRolls": 1,
+
+  // Tables used when the unit has no loot of its own (files in loot_tables, without the .json).
+  "normalLootTable": "normal",
+  "bossLootTable": "boss",
+
+  // Also rolls the loot written in the game's units (built-in tables, like the dungeon key that some enemies
+  // drop). The tables by name (lootTableId) only existed on the original server: a file in loot_tables with that
+  // id (or a pattern in "replaces") takes their place.
+  "useGameUnitLoot": true,
+
+  // Dungeon difficulty for loot entries "..._normal", "..._difficult" and "..._lethal".
+  "dungeonDifficulty": "normal",
+
+  // Seconds a loot bag stays in the world (0 = the game's value, 30).
+  "lootBagLifetime": 0,
+
+  // Original rule: a single cargo shared by all the planes of the account.
+  "sharedCargoForAllPlanes": true,
+
+  // Extra plane cargo and storage slots for all accounts.
+  "extraCargoSlots": 0,
+  "extraStorageSlots": 0,
+
+  // What a destroyed plane keeps. Original: it loses the cargo and the equipped items.
+  "keepCargoOnDeath": false,
+  "keepEquippedOnDeath": false,
+
+  // Equipped items that go to storage when the plane falls (DeathLootConfig.salvageRandomEquipment).
+  // The "death" config comes empty in this game version, so the original here is 0.
+  "deathSalvageRandomEquipment": 0,
+
+  // Salvaged items lose condition (wear) and supercharged ones lose the bonus.
+  "degradeSalvagedItems": true,
+
+  // "Trash" in the inventory recycles the item into the recycling currency (the game's "mulching" config).
+  "mulchOnTrash": true,
+
+  // Reforging and supercharging at the Workshop (the game's "reforging" config).
+  "reforgeEnabled": true,
+
+  // State of a new account: currencies, ingredients and items in storage. Example:
+  // "startingCurrencies": { "newscrap": 100 }, "startingStorageItems": [ "armor_2", "engine_speed_2" ]
+  "startingCurrencies": {},
+  "startingIngredients": {},
+  "startingStorageItems": [],
+
+  // Writes catalog\item_catalog.md and .json when the server starts and the game version changed.
+  "exportItemCatalog": true
+}

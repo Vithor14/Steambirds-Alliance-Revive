@@ -1,0 +1,312 @@
+using System.Globalization;
+using System.Text;
+using System.Text.Json;
+
+// Writes the list of every item of the game (from the configBinary the server reads):
+//   catalog\item_catalog.md    readable list: id, name, tier, who can use it, stats and the lore text
+//   catalog\item_catalog.json  the same data for tools (launcher, map editor, wiki)
+// Done when the server starts and the game build (or item count) changed, and by the /export_items command.
+public static class ItemCatalogExport
+{
+    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+    public const string FolderName = "catalog";
+
+    private static readonly string[] SlotOrder =
+    {
+        "MainGun", "SecondaryAttack", "Engine", "Armor", "Upgrade", "UserUpgrade", "Health", "Energy",
+        "ConsumableAction", "Consumable", "Quest", "Portal", "DeathGun", "ManeuverGun", "Clockwork", "Plane"
+    };
+
+    private static readonly Dictionary<string, string> SlotNames = new Dictionary<string, string>
+    {
+        ["MainGun"] = "Main gun", ["SecondaryAttack"] = "Secondary attack", ["Engine"] = "Motor", ["Armor"] = "Armor",
+        ["Upgrade"] = "Permanent upgrade", ["UserUpgrade"] = "Permanent upgrade (user)", ["Health"] = "Health (pickup)",
+        ["Energy"] = "Steam (pickup)", ["ConsumableAction"] = "Consumable", ["Consumable"] = "Consumable", ["Quest"] = "Quest / material",
+        ["Portal"] = "Portal / key", ["DeathGun"] = "Death gun", ["ManeuverGun"] = "Maneuver gun", ["Clockwork"] = "Clockwork",
+        ["Plane"] = "Plane"
+    };
+
+    public static string FolderPath => Path.Combine(Directory.GetCurrentDirectory(), FolderName);
+
+    public sealed class Entry
+    {
+        public string Id { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Slot { get; set; } = "";
+        public int Tier { get; set; }
+        public string Tag { get; set; } = "";
+        public List<string> ExtraTags { get; set; } = new List<string>();
+        public string UsableBy { get; set; } = "";
+        public List<string> Classes { get; set; } = new List<string>();
+        public List<string> Stats { get; set; } = new List<string>();
+        public List<string> Flags { get; set; } = new List<string>();
+        public int MulchValue { get; set; }
+        public string Icon { get; set; } = "";
+        public string File { get; set; } = "";
+    }
+
+    // Writes the catalog unless the files already describe this build.
+    public static void ExportIfChanged(Action<string, string> log)
+    {
+        if (!ItemCatalog.Loaded) return;
+        string json = Path.Combine(FolderPath, "item_catalog.json");
+        string stamp = Stamp();
+        try
+        {
+            if (File.Exists(json))
+            {
+                using JsonDocument doc = JsonDocument.Parse(File.ReadAllText(json));
+                if (doc.RootElement.TryGetProperty("stamp", out JsonElement s) && s.GetString() == stamp) return;
+            }
+        }
+        catch
+        {
+        }
+        Export(log);
+    }
+
+    private static string Stamp() => (ConfigBinary.BuildId.Length > 0 ? ConfigBinary.BuildId : "?") + "/" + ItemCatalog.Count.ToString(Inv);
+
+    // Returns the markdown path, or null on error.
+    public static string? Export(Action<string, string> log)
+    {
+        if (!ItemCatalog.Loaded)
+        {
+            log("ITEMS", "catalog not written: items not loaded (configBinary)");
+            return null;
+        }
+        try
+        {
+            List<Entry> entries = ItemCatalog.All.Select(Describe)
+                .OrderBy(e => Array.IndexOf(SlotOrder, e.Slot) < 0 ? 99 : Array.IndexOf(SlotOrder, e.Slot))
+                .ThenBy(e => e.Tag, StringComparer.Ordinal).ThenBy(e => e.Tier).ThenBy(e => e.Id, StringComparer.Ordinal)
+                .ToList();
+
+            Directory.CreateDirectory(FolderPath);
+            string md = Path.Combine(FolderPath, "item_catalog.md");
+            string json = Path.Combine(FolderPath, "item_catalog.json");
+            File.WriteAllText(json, JsonSerializer.Serialize(new
+            {
+                stamp = Stamp(),
+                build = ConfigBinary.BuildId,
+                count = entries.Count,
+                items = entries
+            }, new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+            File.WriteAllText(md, Markdown(entries));
+            log("ITEMS", "item catalog written: " + md + " e " + json + " (" + entries.Count + " items)");
+            return md;
+        }
+        catch (Exception e)
+        {
+            log("ITEMS", "error writing the item catalog: " + e.Message);
+            return null;
+        }
+    }
+
+    private static string Markdown(List<Entry> entries)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("# Steambirds Alliance item catalog");
+        sb.AppendLine();
+        sb.AppendLine("Generated by the server from the configBinary of build **" + (ConfigBinary.BuildId.Length > 0 ? ConfigBinary.BuildId : "?") +
+                      "** (" + entries.Count + " items). Name and lore text in English, as in the game.");
+        sb.AppendLine();
+        sb.AppendLine("For each item: id, name, tier, who can use it (classes by the item's `tag` and the class's `allowedItemTags`; " +
+                      "no tag = all classes), stats and the description/lore text. Recycling value from the `mulching` config.");
+        sb.AppendLine();
+        sb.AppendLine("## Summary");
+        sb.AppendLine();
+        sb.AppendLine("| Type | Items |");
+        sb.AppendLine("|---|---|");
+        foreach (IGrouping<string, Entry> g in entries.GroupBy(e => e.Slot))
+            sb.AppendLine("| " + (SlotNames.TryGetValue(g.Key, out string? n) ? n : g.Key) + " (`" + g.Key + "`) | " + g.Count() + " |");
+        sb.AppendLine();
+
+        foreach (IGrouping<string, Entry> g in entries.GroupBy(e => e.Slot))
+        {
+            sb.AppendLine("## " + (SlotNames.TryGetValue(g.Key, out string? n) ? n : g.Key) + " (`" + g.Key + "`)");
+            sb.AppendLine();
+            foreach (Entry e in g)
+            {
+                sb.AppendLine("### `" + e.Id + "` — " + e.Name + " (tier " + e.Tier + ")");
+                if (e.Description.Length > 0) sb.AppendLine("> " + e.Description.Replace("\r", " ").Replace("\n", " "));
+                var meta = new List<string>();
+                if (e.UsableBy.Length > 0) meta.Add("**Can use:** " + e.UsableBy);
+                if (e.Tag.Length > 0) meta.Add("**Tag:** `" + e.Tag + "`");
+                if (e.ExtraTags.Count > 0) meta.Add("**Tags extras:** " + string.Join(", ", e.ExtraTags));
+                if (e.Flags.Count > 0) meta.Add("**Tags:** " + string.Join(", ", e.Flags));
+                if (e.MulchValue > 0) meta.Add("**Recycling:** " + e.MulchValue + " " + ItemCatalog.MulchCurrency);
+                if (meta.Count > 0) sb.AppendLine("- " + string.Join(" | ", meta));
+                foreach (string stat in e.Stats) sb.AppendLine("- " + stat);
+                sb.AppendLine();
+            }
+        }
+        return sb.ToString();
+    }
+
+    private static Entry Describe(ItemDef def)
+    {
+        var e = new Entry
+        {
+            Id = def.Id,
+            Name = ItemCatalog.Name(def.Id),
+            Description = ItemCatalog.Description(def.Id),
+            Slot = def.Slot,
+            Tier = def.Tier,
+            Tag = def.Tag,
+            ExtraTags = def.ExtraTags,
+            Icon = def.Icon,
+            File = def.SourceFile,
+            MulchValue = ItemCatalog.MulchValue(def)
+        };
+
+        if (def.IsEquippable)
+        {
+            List<PlaneClassInfo> classes = ItemCatalog.UsableClasses(def);
+            e.Classes = classes.Select(c => c.Id).ToList();
+            e.UsableBy = def.Tag.Length == 0 ? "all" : (classes.Count > 0 ? string.Join(", ", classes.Select(c => c.Name)) : "no class (only with a pilot skill)");
+        }
+        if (def.Plane.Length > 0) e.UsableBy = (e.UsableBy.Length > 0 ? e.UsableBy + "; " : "") + "plane " + (ItemCatalog.GetClass(def.Plane)?.Name ?? def.Plane);
+        if (def.IngredientId.Length > 0) e.Stats.Add("ingredient pickup " + def.IngredientId);
+
+        foreach (ItemStatMod mod in def.StatMods) e.Stats.Add(StatModText(mod));
+        foreach (ConfigNode mount in def.Node["gunMounts"].Items) e.Stats.Add("gun: " + GunText(mount));
+        foreach (ConfigNode action in def.Actions) e.Stats.AddRange(ActionTexts(action));
+        if (def.Amount > 0) e.Stats.Add("amount " + def.Amount);
+
+        if (def.Soulbound) e.Flags.Add("soulbound");
+        if (def.Uses > 0) e.Flags.Add(def.Uses + " uso(s)");
+        if (def.Obsolete) e.Flags.Add("obsolete" + (def.ObsoleteMigrateTo.Length > 0 ? " -> " + def.ObsoleteMigrateTo : ""));
+        if (def.PreRelease) e.Flags.Add("pre-release");
+        if (def.DecaysInSeconds > 0) e.Flags.Add("disappears in " + def.DecaysInSeconds + "s");
+        if (!def.Tradable) e.Flags.Add("not tradable");
+        if (ItemCatalog.CanBeSupercharged(def)) e.Flags.Add("can be supercharged");
+        return e;
+    }
+
+    private static string Num(float value)
+    {
+        if (Math.Abs(value - Math.Round(value)) < 0.0001f) return ((int)Math.Round(value)).ToString(Inv);
+        return value.ToString("0.###", Inv);
+    }
+
+    private static string StatModText(ItemStatMod mod)
+    {
+        string name = ItemCatalog.StatName(mod.Name);
+        string level = mod.Leveling ? " (grows with the level)" : "";
+        switch (mod.Math)
+        {
+            case ItemStatMod.StatModMathMultiply: return name + " x" + Num(mod.Amount) + level;
+            case ItemStatMod.StatModMathPostAdd: return name + " +" + Num(mod.Amount) + " (later)" + level;
+            case ItemStatMod.StatModMathScale: return name + " scale " + Num(mod.Amount) + level;
+            default: return name + " " + (mod.Amount >= 0 ? "+" : "") + Num(mod.Amount) + level;
+        }
+    }
+
+    private static string GunText(ConfigNode mount)
+    {
+        ConfigNode gun = mount["gunTypeConfig"];
+        if (gun.IsMissing && mount.Has("gunTemplateName"))
+        {
+            string name = mount["gunTemplateName"].AsString("");
+            gun = ConfigBinary.Get("gunlist")["gunTypes"].Items.FirstOrDefault(g => g["name"].AsString("") == name) ?? ConfigNode.Missing;
+            if (gun.IsMissing) return "gun '" + name + "'";
+        }
+        float damage = gun["damage"].AsFloat(0f);
+        float rof = gun["rof"].AsFloat(0f);
+        int burst = gun["burst"].AsInt(0);
+        int multi = Math.Max(1, gun["multi"].AsInt(1));
+        float cooldown = gun["cooldown"].AsFloat(0f);
+        string effect = gun["effect"].AsString("");
+        float effectDamage = gun["effectDamage"].AsFloat(0f);
+
+        var parts = new List<string> { "damage " + Num(damage) };
+        if (effect.Length > 0 && effect != "None") parts.Add("effect " + effect + " " + Num(effectDamage));
+        parts.Add(Num(rof) + " shots/s");
+        if (multi > 1) parts.Add(multi + " bullets per shot");
+        parts.Add("clip " + burst);
+        if (cooldown > 0f) parts.Add("reload " + Num(cooldown) + "s");
+        parts.Add("range " + Num(gun["speed"].AsFloat(0f) * gun["lifetime"].AsFloat(0f)));
+
+        // GunTypeConfig.getDPS.
+        int shots = (int)Math.Ceiling(burst / (double)multi);
+        double denominator = (rof > 0f ? Math.Max(1, shots - 1) / rof : 0f) + cooldown;
+        double perShot = damage + (effect.Length > 0 && effect != "None" && effectDamage > 0f ? effectDamage : 0f);
+        double dps = denominator > 0 ? multi * shots / denominator * perShot : 0;
+        parts.Add("DPS ~" + dps.ToString("0.#", Inv));
+        if (gun["isPiercing"].AsBool(false)) parts.Add("pierces");
+        if (gun["isRicocheting"].AsBool(false)) parts.Add("ricochets");
+        if (gun["isIgnoringWalls"].AsBool(false)) parts.Add("goes through walls");
+        return string.Join(", ", parts);
+    }
+
+    private static IEnumerable<string> ActionTexts(ConfigNode action)
+    {
+        foreach (KeyValuePair<string, ConfigNode> pair in action.Pairs)
+        {
+            ConfigNode v = pair.Value;
+            switch (pair.Key)
+            {
+                case "gunMount":
+                    yield return "gun: " + GunText(v);
+                    break;
+                case "cloud":
+                {
+                    string name = v.AsString("");
+                    ConfigNode c = name.Length > 0 ? ConfigBinary.Get("clouds")[name] : v;
+                    string text = "cloud " + (name.Length > 0 ? name : c["name"].AsString("?"));
+                    if (!c.IsMissing)
+                    {
+                        text += " (" + c["cloudPrefab"].AsString("?") + ", effect " + Num(c["effect"].AsFloat(0f)) + ", radius " +
+                                Num(c["finalRadius"].AsFloat(c["initialRadius"].AsFloat(0f))) + ", lasts " + Num(c["lifetime"].AsFloat(0f)) +
+                                "s, cost " + Num(c["cost"].AsFloat(0f)) + " steam, reload " + Num(c["cooldown"].AsFloat(0f)) + "s" +
+                                (c["bufftime"].AsFloat(0f) > 0f ? ", buff " + Num(c["bufftime"].AsFloat(0f)) + "s" : "") + ")";
+                    }
+                    yield return text;
+                    break;
+                }
+                case "buff":
+                    yield return "buff " + Num(v["duration"].AsFloat(0f)) + "s, reload " + Num(v["cooldown"].AsFloat(0f)) + "s, cost " +
+                                 Num(v["cost"].AsFloat(0f)) + " (" + string.Join("; ", v["mods"].Items.Select(m => StatModText(ItemStatMod.FromNode(m)))) + ")";
+                    break;
+                case "maneuver":
+                    yield return v.IsScalar ? "maneuver " + v.AsString("?") : "maneuver " + v["name"].AsString("?") + " (steam " + Num(v["energy"].AsFloat(0f)) + ")";
+                    break;
+                case "spawn":
+                    yield return "summons " + v["unit"].AsString("?") + " x" + v["count"].AsInt(1) + " (reload " + Num(v["cooldown"].AsFloat(0f)) + "s)";
+                    break;
+                case "unlock":
+                    yield return "unlocks " + v["item_id"].AsString("?");
+                    break;
+                case "variant":
+                    yield return "variant " + v["planeClass"].AsString("?") + "/" + v["variantId"].AsString("?");
+                    break;
+                case "deco":
+                    yield return "paint " + string.Join(", ", v.Pairs.Select(p => p.Key + "=" + p.Value.AsString("")));
+                    break;
+                case "dungeon":
+                    yield return "opens the dungeon " + v["type"].AsString("?");
+                    break;
+                case "currency":
+                    yield return "+" + v["inc_amount"].AsInt(0) + " " + v["currency_id"].AsString("?");
+                    break;
+                case "healthenergy":
+                    yield return "health +" + v["health"].AsInt(0) + ", steam +" + v["energy"].AsInt(0);
+                    break;
+                case "planexpboost":
+                    yield return "plane XP +" + v["additionalPercentage"].AsInt(0) + "% por " + v["duration"].AsInt(0) + "s";
+                    break;
+                case "playerbuff":
+                    yield return "account buff " + v["id"].AsString("?");
+                    break;
+                case "soulbound":
+                    yield return "binds to the account (soulbound)";
+                    break;
+                default:
+                    yield return pair.Key + ": " + v.ToJson(80);
+                    break;
+            }
+        }
+    }
+}

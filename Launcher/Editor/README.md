@@ -1,0 +1,50 @@
+# Map editor (`Launcher\Editor`)
+
+The **Map editor** tab of the launcher creates, opens, edits and saves the map files the server uses (`server\maps\*.json`, format described in `Server\maps\README.md`). It draws the map with the game's pieces, so what you see is what the server will build.
+
+Portuguese version: `README.md`.
+
+## Using it
+
+- **File → New map...** starts from a dungeon of the game (a copy of its map, the original file is not touched) or from an **empty dungeon**. **Open...** loads any `.json` map; **Open a map of the server** lists `server\mapas`. **Save** / **Save as...** write the file (the file name becomes the map id: lowercase letters, digits and `_`). `Ctrl+N`, `Ctrl+O`, `Ctrl+S`.
+- **Left side**: the tools. *Terrain* (Select / move, Floor, Walls), *Dungeon* (Entrance, Exit, Checkpoint, Gate, Enemy) and *Markers* (Point, Group point, Area, Line, Route, Sign), and the options of the chosen tool (enemy type, room, gate type, group name, snap, rectangle, walls by tile).
+- **Middle**: the map. Left button uses the tool, middle button (or right button with Select, or `Space`+drag) moves the view, the wheel zooms. `Delete` removes, `Q`/`E` rotate (`Shift` = 45°), arrows nudge, `Ctrl+D` duplicates, `Ctrl+Z`/`Ctrl+Y` undo and redo, `F` fits the map, `Esc` goes back to Select.
+- **Right side**: one tab per kind of data — *Map* (name, terrain, territory, entrance, exit, floor), *Rooms* (rooms, their enemies and waves), *Units* (unit types: combat, death and summons, phases), *Gates*, *Points* (points, groups, areas, lines, values, routes, checkpoints, signs, decoration, buildings, floor pieces) and *Enemy AI* (grayed out, see below).
+- **View → Game pictures** switches between the pictures of the game and plain shapes. **Tools → Edit the file text...** shows the JSON as it will be saved.
+
+## Saving
+
+Saving checks the map first (**Tools → Check map** shows the same list):
+
+- **Errors** (the dungeon would not work): no floor or floor pieces, floor outside the game grid, no entrance, no exit point, nothing that ends the dungeon, rooms without name or area, groups or gates pointing to a unit type, room or area that does not exist, bad conditions (`cleared:`, `death:`, `quest:`), empty terrain.
+- **Warnings** (it works, but look at it): entrance or exit off the floor, rooms without units, gates that never open, no checkpoints, a unit outside the area of its room.
+
+A map with errors is not saved as a normal map. The dialog offers **Save as draft anyway**, which writes `"rascunho": true` in the file so you can keep working. The mark is only for the editor (the server does not read it), so a draft may not work on the server until the errors are fixed. Before the first save of a session the old file is copied to `server\_backup\mapas-<date>`.
+
+## Game pictures
+
+The tab reads `editor-assets\` next to the launcher: `ground\<id>.png` (floor pieces), `units\<name>.png` and `thumbs.json`, plus `ground_assets.txt` (names of the floor pieces). They are generated from the game's extracted assets by `tools\editor\build_editor_assets.py`, and `Build launcher.ps1` copies them to `dist\editor-assets`. Without the folder the editor still works and draws shapes and flat colors. The pictures are *previews* (shape and vertex colors of the meshes, not the textures); units without a picture are drawn as a letter.
+
+## The enemy AI editor (future)
+
+*Tools → Enemy AI editor...*, the *Enemy AI* tab and the *Edit AI...* button of the *Units* tab are grayed out on purpose. The slot already exists in the code (`EnemyAiHook.cs`):
+
+- each unit type may carry an optional `"ia"` object. The editor keeps it untouched when it opens and saves a map, undo/redo and renames included; the server ignores it;
+- a future editor implements `IEnemyAiEditor` (`DisplayName`, `Edit(...)`, `Validate(...)`), registers it in `EnemyAiEditors`, and the grayed buttons turn on by themselves; `Validate` results show up in *Check map*.
+
+## Code
+
+| File | What it is |
+|---|---|
+| `MapEditorTab.cs` | the tab: menu, toolbar, pages, status bar, open/save/new, undo and redo, closing |
+| `MapDocument.cs` | the map as a JSON tree (`MapDocument`) and its session: undo/redo snapshots, dirty flag, file |
+| `MapCanvas.cs`, `MapCanvas.Paint.cs` | the view: tools, mouse and keyboard, drawing |
+| `MapObjects.cs` | the things on the map that can be selected, moved and deleted (one class per kind) |
+| `FloorGrid.cs`, `MapCoords.cs` | the floor drawing and the units (tile 12 u, slot 6 u, sub-cell 3 u) |
+| `MapValidator.cs`, `MapFactory.cs`, `MapTransforms.cs`, `MapRefactor.cs`, `Territories.cs` | checks, new maps, moving/centering, renaming with references, terrains and territories of the client |
+| `EditorAssets.cs` | the pictures and name lists of `editor-assets` |
+| `JsonForm.cs`, `CollectionPanel.cs`, `ItemSources.cs`, `EditorContext.cs` | table-driven forms: a page lists its fields (`FieldSpec`) and the form edits the JSON directly |
+| `MapSettingsPage.cs`, `RoomsPage.cs`, `UnitTypesPage.cs`, `GatesPage.cs`, `PointsPage.cs` | the tabs on the right |
+| `EditorDialogs.cs`, `EditorTheme.cs`, `Json.cs`, `EnemyAiHook.cs` | dialogs, light/dark theme of the menu and buttons, JSON helpers, the AI slot |
+
+To support a new field of the map format, add a `FieldSpec` to the page that owns it (the key is the Portuguese name used in the file; dotted keys edit nested objects), and a check to `MapValidator.cs` when the server needs it. Every text goes through `L.T`/`L.F` (or a `FieldSpec` label/help, translated by `JsonForm`), and its translation goes into `Launcher\lang`.

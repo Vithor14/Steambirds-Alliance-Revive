@@ -1,0 +1,571 @@
+{
+  "format": "steambirds-map",
+  "version": 1,
+  "id": "dungeon_obstacle",
+  "name": "Laser Playground",
+  "terrain": "DungeonObstacle",
+  "note": "Feline nobility's obstacle course (T3, later T4): laser traps (Mincer, Grater, Dicer, Slicer), bullet conveyors, Bouncers and Harassers. Miniboss The Grinder; boss Lazer, the Victorious, an auditorium host, in an arena with rows of bullet conveyors (the 2019 patch removed the middle row).",
+  "source": "Build 190828.2045: units, names, barks, signs, quests and territory come from the configBinary; the Dungeons/dungeon_* file of that build is empty, so the room format and the enemy positions were recreated.",
+  "key": "key_obstacle",
+  "portalItem": "dungeon_obstacle",
+  "exit": {"point": "portal", "when": "death:turbineking"},
+  "territory": 44,
+  "floor": {
+    "wallsOnEdges": true,
+    "voidMargin": 4,
+    "voidTerritory": 74,
+    "drawingPieces": [39691, 39690, 39689],
+    "drawing": {
+      "siStart": -16,
+      "sjStart": -92,
+      "legend": ". free floor, # wall, - no floor. First line = last sj row (the far end).",
+      "lines": [
+        "--------####################----------------",
+        "--------####################----------------",
+        "--------####################----------------",
+        "--------####################----------------",
+        "--------####################----------------",
+        "--------####################----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "############............############--------",
+        "############............############--------",
+        "################....################--------",
+        "################....################--------",
+        "################....################--------",
+        "################....################--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "####............................####--------",
+        "################....################--------",
+        "################....################--------",
+        "################....################--------",
+        "################....################--------",
+        "----############....############------------",
+        "----############....############------------",
+        "----############....############------------",
+        "----############....############------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----############....############------------",
+        "----############....############------------",
+        "----############....############------------",
+        "----############....############------------",
+        "----############....############------------",
+        "----############....############------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----############....############------------",
+        "----############....############------------",
+        "----############....############------------",
+        "----############....############------------",
+        "----########............########------------",
+        "----########............########------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "----############....############------------",
+        "----############....############------------",
+        "----############....############------------",
+        "----############....############------------",
+        "----######................##################",
+        "----######................##################",
+        "----######................##################",
+        "----######................##################",
+        "----######................##################",
+        "----######................####..........####",
+        "----######................####..........####",
+        "----######................####..........####",
+        "----######..............................####",
+        "----######..............................####",
+        "----######..............................####",
+        "----######..............................####",
+        "----######................####..........####",
+        "----######................####..........####",
+        "----######................####..........####",
+        "----######................##################",
+        "----######................##################",
+        "----######................##################",
+        "----######................##################",
+        "----######................##################",
+        "----############....############------------",
+        "----############....############------------",
+        "----############....############------------",
+        "----############....############------------",
+        "----############....############------------",
+        "----############....############------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----####....................####------------",
+        "----############....############------------",
+        "----############....############------------",
+        "----############....############------------",
+        "----############....############------------",
+        "----############....############------------",
+        "----############....############------------",
+        "--------########....########----------------",
+        "--------########....########----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####............####----------------",
+        "--------####################----------------",
+        "--------####################----------------",
+        "--------####################----------------",
+        "--------####################----------------"
+      ]
+    },
+    "pieces": []
+  },
+  "decor": [],
+  "buildings": [],
+  "spawn": {"u": 6.0, "v": -257.3, "rot": 315},
+  "points": {
+    "boss": {"u": 6.0, "v": 198.1, "rot": 135},
+    "portal": {"u": 6.0, "v": 171.7, "rot": 0, "note": "exit carrier (appears when the boss dies)"}
+  },
+  "groups": {},
+  "areas": {
+    "entrance": {"minU": -12.6, "maxU": 24.6, "minV": -264.6, "maxV": -233.4},
+    "grinder_pit": {"minU": -24.6, "maxU": 36.6, "minV": -210.6, "maxV": -161.4},
+    "graters": {"minU": -18.6, "maxU": 30.6, "minV": -144.6, "maxV": -83.4},
+    "conveyor_corridor": {"minU": -12.6, "maxU": 24.6, "minV": -72.6, "maxV": -17.4},
+    "slicer": {"minU": -24.6, "maxU": 36.6, "minV": -6.6, "maxV": 48.6},
+    "grinder_room": {"minU": -24.6, "maxU": 36.6, "minV": 65.4, "maxV": 120.6},
+    "boss_stage": {"minU": -36.6, "maxU": 48.6, "minV": 143.4, "maxV": 222.6},
+    "prize": {"minU": -12.6, "maxU": 24.6, "minV": 233.4, "maxV": 258.6},
+    "side_treasure": {"minU": 41.4, "maxU": 72.6, "minV": -129.6, "maxV": -98.4}
+  },
+  "lines": {
+    "entrance": -264.0,
+    "grinder_pit": -210.0,
+    "graters": -144.0,
+    "conveyor_corridor": -72.0,
+    "slicer": -6.0,
+    "grinder_room": 66.0,
+    "boss_stage": 144.0,
+    "prize": 234.0,
+    "side_treasure": -129.0
+  },
+  "values": {"tier": 3},
+  "checkpoints": [
+    {"name": "entrance", "activeAtV": -264.0, "u": 6.0, "v": -260.6, "rot": 315},
+    {"name": "grinder_pit", "activeAtV": -210.0, "u": 6.0, "v": -205.2, "rot": 315},
+    {"name": "graters", "activeAtV": -144.0, "u": 6.0, "v": -138.2, "rot": 315},
+    {"name": "conveyor_corridor", "activeAtV": -72.0, "u": 6.0, "v": -66.7, "rot": 315},
+    {"name": "slicer", "activeAtV": -6.0, "u": 6.0, "v": -0.7, "rot": 315},
+    {"name": "grinder_room", "activeAtV": 66.0, "u": 6.0, "v": 71.3, "rot": 315},
+    {"name": "boss_stage", "activeAtV": 144.0, "u": 6.0, "v": 151.2, "rot": 315}
+  ],
+  "gates": [
+    {"name": "barricade", "type": "obstacledungeondestroyablewall_barricade", "sj": -26, "siFrom": 0, "siTo": 3, "damageable": true, "room": "conveyor_corridor"},
+    {
+      "name": "grinder gate",
+      "type": "obstacledungeondestroyablewallstrong",
+      "sj": 19,
+      "siFrom": 0,
+      "siTo": 3,
+      "damageable": false,
+      "opensWhen": "cleared:slicer",
+      "room": "grinder_room"
+    },
+    {
+      "name": "stage gate",
+      "type": "obstacledungeondestroyablewallstrong",
+      "sj": 44,
+      "siFrom": 0,
+      "siTo": 3,
+      "damageable": false,
+      "opensWhen": "cleared:grinder_room",
+      "room": "boss_stage"
+    },
+    {
+      "name": "prize gate",
+      "type": "obstacledungeondestroyablewallstrong",
+      "sj": 76,
+      "siFrom": 0,
+      "siTo": 3,
+      "damageable": false,
+      "opensWhen": "death:turbineking",
+      "room": "prize"
+    }
+  ],
+  "sideGates": [
+    {"name": "treasure wall", "type": "obstacledungeondestroyablewall", "si": 12, "sjFrom": -40, "sjTo": -37, "damageable": true, "room": "side_treasure"}
+  ],
+  "signs": [
+    {"key": "obstacledungeonsign1", "u": 6.0, "v": -246.2, "radius": 14, "rot": 0},
+    {"key": "obstacledungeonsign2", "u": 6.0, "v": -203.3, "radius": 14, "rot": 0}
+  ],
+  "types": {
+    "wavemaster": {
+      "name": "The Grinder",
+      "template": "wavemaster",
+      "behavior": "turret",
+      "aggroRadius": 30,
+      "miniboss": true,
+      "note": "The Grinder: miniboss according to the wiki (his loot has no 'miniboss')"
+    },
+    "turbineking": {
+      "name": "Lazer, the Victorious",
+      "template": "turbineking",
+      "boss": true,
+      "behavior": "turret",
+      "aggroRadius": 60,
+      "firstShotDelay": 2.0,
+      "onDeath": "turbinekingDEATH",
+      "barks": {"onWake": "turbineking", "onDeath": "turbinekingDEATH"},
+      "phases": [
+        {"belowHealth": 0.75, "summon": "turbinekingattack", "summonCount": 1},
+        {"belowHealth": 0.5, "summon": "turbinekingattack2", "summonCount": 1},
+        {"belowHealth": 0.25, "summon": "turbinekingattack3", "summonCount": 1}
+      ]
+    },
+    "obstacledungeontreasureBIG": {
+      "name": "Big Treasure",
+      "template": "obstacledungeontreasureBIG",
+      "behavior": "idle",
+      "health": 1250,
+      "dpsChest": {"seconds": 25, "reward": "obstacledungeontreasureBIG_reward"},
+      "note": "DPS chest: starts counting at the first hit; breaking it in 25 s swaps it for obstacledungeontreasureBIG_reward. Health and time are a reconstruction (change 'health' and 'dpsChest.seconds' freely)."
+    },
+    "bulletbeltchunkyE": {"name": "Bullet Belt", "template": "bulletbeltchunkyE", "behavior": "turret", "aggroRadius": 30},
+    "bulletbeltchunkyN": {"name": "Bullet Belt", "template": "bulletbeltchunkyN", "behavior": "turret", "aggroRadius": 30},
+    "bulletbeltchunkyS": {"name": "Bullet Belt", "template": "bulletbeltchunkyS", "behavior": "turret", "aggroRadius": 30},
+    "bulletbeltchunkyW2": {"name": "Bullet Belt", "template": "bulletbeltchunkyW2", "behavior": "turret", "aggroRadius": 30},
+    "buzzard": {"name": "Scavenger", "template": "buzzard", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
+    "fathunter": {"name": "Harasser", "template": "fathunter", "behavior": "chase", "preferredDistance": 4.5, "aggroRadius": 28},
+    "fathuntermini": {"name": "Tormentor", "template": "fathuntermini", "behavior": "chase", "preferredDistance": 4.5, "aggroRadius": 28},
+    "giantgate": {"name": "Dicer", "template": "giantgate", "behavior": "turret", "aggroRadius": 30},
+    "mazedrawer": {"name": "Slicer", "template": "mazedrawer", "behavior": "turret", "aggroRadius": 30},
+    "obstacledungeondestroyablewall": {"name": "Wall", "template": "obstacledungeondestroyablewall", "behavior": "idle"},
+    "obstacledungeondestroyablewall_barricade": {"name": "obstacledungeondestroyablewall_barricade", "template": "obstacledungeondestroyablewall_barricade", "behavior": "idle"},
+    "obstacledungeondestroyablewallstrong": {"name": "Wall", "template": "obstacledungeondestroyablewallstrong", "behavior": "idle"},
+    "obstacledungeontreasure": {"name": "Treasure", "template": "obstacledungeontreasure", "behavior": "idle", "opensAfterHitSeconds": 1.5},
+    "obstacledungeontreasureBIG_reward": {"name": "Big Treasure", "template": "obstacledungeontreasureBIG_reward", "behavior": "idle", "opensAfterHitSeconds": 1.5},
+    "shockwaver": {"name": "Bouncer", "template": "shockwaver", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
+    "trapbutton": {"name": "trapbutton", "template": "trapbutton", "behavior": "idle"},
+    "turbine": {"name": "Mincer", "template": "turbine", "behavior": "turret", "aggroRadius": 30},
+    "turbinekingDEATH": {"name": "Lazer, the Victorious", "template": "turbinekingDEATH", "behavior": "idle", "invulnerable": true},
+    "turbinekingattack": {"name": "turbinekingattack", "template": "turbinekingattack", "behavior": "turret", "aggroRadius": 30},
+    "turbinekingattack2": {"name": "turbinekingattack2", "template": "turbinekingattack2", "behavior": "turret", "aggroRadius": 30},
+    "turbinekingattack3": {"name": "turbinekingattack3", "template": "turbinekingattack3", "behavior": "turret", "aggroRadius": 30},
+    "turbinekingbuzzard": {"name": "Royal Scavenger", "template": "turbinekingbuzzard", "behavior": "chase", "preferredDistance": 3.3, "aggroRadius": 28},
+    "wavemaker4_inv": {"name": "Greater Grater", "template": "wavemaker4_inv", "behavior": "turret", "aggroRadius": 30},
+    "wavemakerN": {"name": "Grater", "template": "wavemakerN", "behavior": "turret", "aggroRadius": 30},
+    "wavemakerW": {"name": "Grater", "template": "wavemakerW", "behavior": "turret", "aggroRadius": 30},
+    "wavemasterminion": {"name": "Pest", "template": "wavemasterminion", "behavior": "turret", "aggroRadius": 30}
+  },
+  "encounters": [
+    {
+      "room": "grinder_pit",
+      "area": "grinder_pit",
+      "wakes": "onEnter",
+      "line": "grinder_pit",
+      "enemies": [
+        {
+          "type": "turbine",
+          "pos": [
+            {"u": 6.0, "v": -183.7, "rot": 135}
+          ],
+          "note": "Mincer: spins and spits lasers around it"
+        },
+        {
+          "type": "buzzard",
+          "pos": [
+            {"u": -15.9, "v": -170.0, "rot": 135},
+            {"u": 6.0, "v": -170.0, "rot": 135},
+            {"u": 27.9, "v": -170.0, "rot": 135}
+          ]
+        },
+        {
+          "type": "trapbutton",
+          "pos": [
+            {"u": -17.0, "v": -204.2, "rot": 135}
+          ],
+          "note": "button that triggers the traps"
+        }
+      ]
+    },
+    {
+      "room": "graters",
+      "area": "graters",
+      "wakes": "onEnter",
+      "line": "graters",
+      "enemies": [
+        {
+          "type": "wavemakerW",
+          "pos": [
+            {"u": -15.4, "v": -125.5, "rot": 45},
+            {"u": -15.4, "v": -102.5, "rot": 45}
+          ]
+        },
+        {
+          "type": "wavemakerN",
+          "pos": [
+            {"u": 6.0, "v": -86.9, "rot": 135}
+          ]
+        },
+        {
+          "type": "fathuntermini",
+          "pos": [
+            {"u": -11.3, "v": -114.0, "rot": 135},
+            {"u": 23.3, "v": -114.0, "rot": 135}
+          ]
+        }
+      ]
+    },
+    {
+      "room": "conveyor_corridor",
+      "area": "conveyor_corridor",
+      "wakes": "onEnter",
+      "line": "conveyor_corridor",
+      "enemies": [
+        {
+          "type": "bulletbeltchunkyE",
+          "pos": [
+            {"u": -9.8, "v": -60.5, "rot": 45},
+            {"u": -9.8, "v": -45.0, "rot": 45},
+            {"u": -9.8, "v": -29.5, "rot": 45}
+          ]
+        },
+        {
+          "type": "bulletbeltchunkyW2",
+          "pos": [
+            {"u": 21.8, "v": -55.3, "rot": 225},
+            {"u": 21.8, "v": -39.8, "rot": 225},
+            {"u": 21.8, "v": -24.4, "rot": 225}
+          ]
+        }
+      ]
+    },
+    {
+      "room": "slicer",
+      "area": "slicer",
+      "wakes": "onEnter",
+      "line": "slicer",
+      "enemies": [
+        {
+          "type": "giantgate",
+          "pos": [
+            {"u": 6.0, "v": 13.3, "rot": 135}
+          ],
+          "note": "Dicer"
+        },
+        {
+          "type": "mazedrawer",
+          "pos": [
+            {"u": -11.3, "v": 33.9, "rot": 135},
+            {"u": 23.3, "v": 33.9, "rot": 135}
+          ],
+          "note": "Slicer"
+        },
+        {
+          "type": "shockwaver",
+          "pos": [
+            {"u": -15.9, "v": 41.6, "rot": 135},
+            {"u": 27.9, "v": 41.6, "rot": 135}
+          ]
+        },
+        {
+          "type": "fathunter",
+          "pos": [
+            {"u": 6.0, "v": 26.2, "rot": 135}
+          ]
+        }
+      ]
+    },
+    {
+      "room": "grinder_room",
+      "area": "grinder_room",
+      "wakes": "onEnter",
+      "line": "grinder_room",
+      "enemies": [
+        {
+          "type": "wavemaster",
+          "pos": [
+            {"u": 6.0, "v": 100.7, "rot": 135}
+          ],
+          "miniboss": true
+        },
+        {
+          "type": "wavemasterminion",
+          "pos": [
+            {"u": 23.3, "v": 98.2, "rot": 225},
+            {"u": 6.0, "v": 113.6, "rot": 135},
+            {"u": -11.3, "v": 98.2, "rot": 45},
+            {"u": 6.0, "v": 82.7, "rot": 315}
+          ]
+        },
+        {
+          "type": "wavemaker4_inv",
+          "pos": [
+            {"u": -17.0, "v": 72.4, "rot": 135},
+            {"u": 29.0, "v": 72.4, "rot": 135}
+          ]
+        }
+      ],
+      "miniboss": true
+    },
+    {
+      "room": "boss_stage",
+      "area": "boss_stage",
+      "wakes": "onEnter",
+      "line": "boss_stage",
+      "enemies": [
+        {
+          "type": "turbineking",
+          "pos": [
+            {"u": 6.0, "v": 198.1, "rot": 135}
+          ]
+        },
+        {
+          "type": "turbinekingbuzzard",
+          "pos": [
+            {"u": -25.0, "v": 183.0, "rot": 135},
+            {"u": 37.0, "v": 183.0, "rot": 135}
+          ]
+        },
+        {
+          "type": "bulletbeltchunkyN",
+          "pos": [
+            {"u": -25.0, "v": 151.2, "rot": 315},
+            {"u": -4.3, "v": 151.2, "rot": 315},
+            {"u": 16.3, "v": 151.2, "rot": 315},
+            {"u": 37.0, "v": 151.2, "rot": 315}
+          ]
+        },
+        {
+          "type": "bulletbeltchunkyS",
+          "pos": [
+            {"u": -25.0, "v": 217.8, "rot": 135},
+            {"u": -4.3, "v": 217.8, "rot": 135},
+            {"u": 16.3, "v": 217.8, "rot": 135},
+            {"u": 37.0, "v": 217.8, "rot": 135}
+          ]
+        }
+      ],
+      "boss": true,
+      "closesOnEnter": true
+    },
+    {
+      "room": "prize",
+      "area": "prize",
+      "wakes": "script",
+      "line": "prize",
+      "enemies": [
+        {
+          "type": "obstacledungeontreasureBIG",
+          "pos": [
+            {"u": 6.0, "v": 248.2, "rot": 135}
+          ]
+        }
+      ]
+    },
+    {
+      "room": "side_treasure",
+      "area": "side_treasure",
+      "wakes": "onEnter",
+      "line": "side_treasure",
+      "enemies": [
+        {
+          "type": "obstacledungeontreasure",
+          "pos": [
+            {"u": 57.0, "v": -111.2, "rot": 135}
+          ]
+        }
+      ]
+    }
+  ]
+}
