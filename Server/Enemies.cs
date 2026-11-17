@@ -285,24 +285,44 @@ public static partial class Enemies
         public double LastTick;
         public double LastSend;
 
+        // Players that share this instance (a dungeon with several players). Connection/Peer are the first of them:
+        // everything the instance sends goes to all of them.
+        public readonly List<NetConnection> Members = new List<NetConnection>();
+        public readonly Dictionary<long, PlayerTrack> Tracks = new Dictionary<long, PlayerTrack>();
+
+        // The player the AI is looking at right now: the nearest live one for each enemy (see FocusNearest).
         public bool HasPlayer;
         public bool PlayerAlive;
         public bool PlayerWasAlive;
         public int PlayerShortId;
+        public long FocusPeer;
         public float PlayerX;
         public float PlayerY;
         public float PlayerVX;
         public float PlayerVY;
-        public bool HasSample;
-        public float SampleX;
-        public float SampleY;
-        public double SampleAt;
 
         public int Kills;
         public int BossesSent = -1;
 
         // The player's current room (script): wave enemies and commands spawn and fly inside it.
         public Ground.Rect? DefaultArea;
+    }
+
+    // Position of one player of the instance, with the velocity estimated from samples (lead aim).
+    private sealed class PlayerTrack
+    {
+        public long Peer;
+        public bool Has;
+        public bool Alive;
+        public int ShortId;
+        public float X;
+        public float Y;
+        public float VX;
+        public float VY;
+        public bool HasSample;
+        public float SampleX;
+        public float SampleY;
+        public double SampleAt;
     }
 
     // ================================================================== constants
@@ -384,7 +404,7 @@ public static partial class Enemies
         lock (Game.Lock)
         {
             Instance inst = GetInstance(server, connection, role, now);
-            inst.HasSample = false;
+            ResetSample(inst, connection);
 
             if (inst.Encounter == null)
             {
@@ -418,12 +438,24 @@ public static partial class Enemies
                     LoadConfig(log);
                 }
 
-                foreach (Instance inst in instances.Values)
+                // An instance with several players is in the dictionary once per player.
+                foreach (Instance inst in instances.Values.Distinct().ToList())
                 {
                     if (inst.Server != server) continue;
                     double step = now - inst.LastTick;
                     if (step < TickInterval) continue;
                     inst.LastTick = now;
+                    foreach (NetConnection dead in inst.Members.Where(c => c.Status == NetConnectionStatus.Disconnected).ToList())
+                    {
+                        if (inst.Members.Count < 2) break;
+                        inst.Members.Remove(dead);
+                        inst.Tracks.Remove(dead.RemoteUniqueIdentifier);
+                        if (inst.Connection == dead)
+                        {
+                            inst.Connection = inst.Members[0];
+                            inst.Peer = inst.Connection.RemoteUniqueIdentifier;
+                        }
+                    }
                     if (inst.Connection.Status != NetConnectionStatus.Connected) continue;
                     UpdateInstance(inst, (float)Math.Min(0.25, step), now, log);
                 }
@@ -484,18 +516,19 @@ public static partial class Enemies
                 if (enemy.Boss) Warn(inst, enemy.Type.Name + " was defeated!");
                 // Progression (Progression/PilotProgression.cs): plane XP, "on kill" skills and the after-fight text
                 // of the bosses. Only real enemies (the AI's team); script allies give no XP.
+                // With several players in the instance, every one of them gets the XP and their own loot bags.
                 if (enemy.Team == EnemyTeam)
                 {
-                    PilotProgression.EnemyKilled(inst.Server, inst.Connection, inst.Role.Trim('[', ']'), enemy.Model.Name, enemy.Model.Hash,
-                        enemy.Model.Tier, enemy.Model.MaxHp, enemy.Boss || enemy.Model.Boss, enemy.ShortId, enemy.X, enemy.Y, now);
+                    foreach (NetConnection member in inst.Members.ToList())
+                    {
+                        PilotProgression.EnemyKilled(inst.Server, member, inst.Role.Trim('[', ']'), enemy.Model.Name, enemy.Model.Hash,
+                            enemy.Model.Tier, enemy.Model.MaxHp, enemy.Boss || enemy.Model.Boss, enemy.ShortId, enemy.X, enemy.Y, now);
+                        // Loot (Items/LootDrops.cs and the loot_tables folder): bags where the enemy fell.
+                        LootDrops.EnemyKilled(inst.Server, member, inst.Role.Trim('[', ']'), enemy.Model.Name, enemy.Model.Tier,
+                            enemy.Boss || enemy.Model.Boss, enemy.X, enemy.Y, now, log);
+                    }
                 }
-                // Loot (Items/LootDrops.cs and the loot_tables folder): bags where the enemy fell.
-                if (enemy.Team == EnemyTeam)
-                {
-                    LootDrops.EnemyKilled(inst.Server, inst.Connection, inst.Role.Trim('[', ']'), enemy.Model.Name, enemy.Model.Tier,
-                        enemy.Boss || enemy.Model.Boss, enemy.X, enemy.Y, now, log);
-                }
-                return "enemy " + Describe(enemy) + " DESTRUIDO";
+                return "enemy " + Describe(enemy) + " DESTROYED";
             }
 
             ApplyPhases(inst, enemy, now, log);

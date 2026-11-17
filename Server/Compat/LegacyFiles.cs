@@ -9,32 +9,32 @@ public static class LegacyFiles
     // Folders of the server folder: old name -> new name.
     private static readonly (string Old, string New)[] Folders =
     {
-        ("maps", "maps"),
-        ("data", "data"),
-        ("accounts", "accounts"),
+        ("mapas", "maps"),
+        ("dados", "data"),
+        ("contas", "accounts"),
         ("itens", "catalog"),
-        ("client-uploads", "client-uploads"),
+        ("envios-do-cliente", "client-uploads"),
     };
 
     // Files of the server folder.
     private static readonly (string Old, string New)[] RootFiles =
     {
-        ("progression.json", "progression.json"),
-        ("items.json", "items.json"),
-        ("enemies.json", "enemies.json"),
-        ("network.json", "network.json"),
+        ("progressao.json", "progression.json"),
+        ("itens.json", "items.json"),
+        ("inimigos.json", "enemies.json"),
+        ("rede.json", "network.json"),
         // the old single account (before one account per player)
-        ("account.json", "account.json"),
-        ("inventory.json", "inventory.json"),
-        ("acceptances.json", "acceptances.json"),
+        ("conta.json", "account.json"),
+        ("inventario.json", "inventory.json"),
+        ("aceites.json", "acceptances.json"),
     };
 
     // Files inside each account folder (accounts\<key>\).
     private static readonly (string Old, string New)[] AccountFiles =
     {
-        ("account.json", "account.json"),
-        ("inventory.json", "inventory.json"),
-        ("acceptances.json", "acceptances.json"),
+        ("conta.json", "account.json"),
+        ("inventario.json", "inventory.json"),
+        ("aceites.json", "acceptances.json"),
     };
 
     // Files inside the data folder (game data exported by the plugin).
@@ -42,14 +42,14 @@ public static class LegacyFiles
     {
         ("acoes_config.txt", "actions_config.txt"),
         ("unidades_config.txt", "units_config.txt"),
-        ("portraits_config.txt", "portraits_config.txt"),
+        ("retratos_config.txt", "portraits_config.txt"),
     };
 
     private static readonly (string Old, string New)[] CatalogFiles =
     {
-        ("catalogo_de_items.json", "item_catalog.json"),
-        ("item_catalog.md", "item_catalog.md"),
-        ("README.md", "README.md"),
+        ("catalogo_de_itens.json", "item_catalog.json"),
+        ("catalogo_de_itens.md", "item_catalog.md"),
+        ("LEIA-ME.md", "README.md"),
     };
 
     // Old names of files that the plugin writes next to the game (BepInEx folder): GameDataFiles looks for both.
@@ -57,7 +57,7 @@ public static class LegacyFiles
     {
         ["actions_config.txt"] = "acoes_config.txt",
         ["units_config.txt"] = "unidades_config.txt",
-        ["portraits_config.txt"] = "portraits_config.txt",
+        ["portraits_config.txt"] = "retratos_config.txt",
     };
 
     public static void Migrate(string serverFolder, Action<string, string> log)
@@ -93,7 +93,7 @@ public static class LegacyFiles
 
     private static void MoveFolder(string from, string to, Action<string, string> log)
     {
-        if (!Directory.Exists(from)) return;
+        if (string.Equals(from, to, StringComparison.OrdinalIgnoreCase) || !Directory.Exists(from)) return;
         if (!Directory.Exists(to))
         {
             Directory.Move(from, to);
@@ -113,7 +113,7 @@ public static class LegacyFiles
 
     private static void MoveFile(string from, string to, Action<string, string> log)
     {
-        if (!File.Exists(from)) return;
+        if (string.Equals(from, to, StringComparison.OrdinalIgnoreCase) || !File.Exists(from)) return;
         if (File.Exists(to))
         {
             log("LEGACY", Path.GetFileName(from) + " and " + Path.GetFileName(to) + " both exist: using the new one");

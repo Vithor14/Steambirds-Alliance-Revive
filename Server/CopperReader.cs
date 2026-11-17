@@ -267,7 +267,7 @@ public static class CopperReader
         sb.Append(" gun=").Append(d.Gun);
         sb.Append(" pos=(").Append(Num(d.X)).Append(", ").Append(Num(d.Y)).Append(')');
         sb.Append(" rot=").Append(Num(d.Rotation));
-        sb.Append(" rotArma=").Append(Num(d.GunRotation));
+        sb.Append(" gunRotation=").Append(Num(d.GunRotation));
         sb.Append(" time=").Append(Num(d.Time));
         sb.Append(" bullet#").Append(d.Counter);
         sb.Append(" x").Append(d.Multiple);
@@ -419,7 +419,7 @@ public static class CopperReader
         sb.Append(Name(DeathReasonNames, m.Reason));
         if (m.HasPosition)
         {
-            sb.Append(" em (").Append(Num(m.X)).Append(", ").Append(Num(m.Y)).Append(')');
+            sb.Append(" at (").Append(Num(m.X)).Append(", ").Append(Num(m.Y)).Append(')');
             if (m.BulletResult != 0) sb.Append(' ').Append(Name(BulletResultNames, m.BulletResult));
         }
         return sb.ToString();
@@ -617,7 +617,7 @@ public static class CopperReader
             case "double":
                 return b.ReadDouble().ToString("0.###", Inv);
             case "bool":
-                return b.ReadBoolean() ? "sim" : "no";
+                return b.ReadBoolean() ? "yes" : "no";
             case "short":
                 return b.ReadInt16().ToString(Inv);
             case "byte":

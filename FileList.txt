@@ -1,12 +1,10 @@
 ﻿C:\Steambirds\Asset ripper
 C:\Steambirds\Assets
-C:\Steambirds\Claude outputs
 C:\Steambirds\decompilado
 C:\Steambirds\docs
 C:\Steambirds\Launcher
 C:\Steambirds\QuieterPlugin
 C:\Steambirds\Server
-C:\Steambirds\tools
 C:\Steambirds\VersoesAntigas
 C:\Steambirds\.gitignore
 C:\Steambirds\Build launcher.ps1
@@ -15,15 +13,12 @@ C:\Steambirds\Chat commands.md
 C:\Steambirds\CHECKLIST.md
 C:\Steambirds\CLAUDE.md
 C:\Steambirds\CONTRIBUTING.md
-C:\Steambirds\Download old versions.ps1
 C:\Steambirds\FileList.txt
 C:\Steambirds\LICENSE
-C:\Steambirds\ListaDeArquivos.txt
 C:\Steambirds\Push to GitHub.ps1
 C:\Steambirds\README.md
 C:\Steambirds\Run game.ps1
 C:\Steambirds\Run server.ps1
-C:\Steambirds\server-report.txt
 C:\Steambirds\Asset ripper\AssetRipper.GUI.Premium.exe
 C:\Steambirds\Asset ripper\AssetRipper_20261108_155834.log
 C:\Steambirds\Asset ripper\AssetRipper_20261108_161317.log
@@ -6487,7 +6482,6 @@ C:\Steambirds\Assets\Assets\Texture2D\wrench.png
 C:\Steambirds\Assets\Assets\Texture3D\NoiseTexture.png
 C:\Steambirds\Assets\Assets\TimeManager\TimeManager.json
 C:\Steambirds\Assets\Assets\VFXManager\VFXManager.json
-C:\Steambirds\Claude outputs\Steambirds-editor-de-mapas.zip
 C:\Steambirds\decompilado\Assembly-CSharp
 C:\Steambirds\decompilado\firstpass
 C:\Steambirds\decompilado\_estrutura.txt
@@ -9691,10 +9685,15 @@ C:\Steambirds\Launcher\dist\logs\cliente-20261116-071857.log
 C:\Steambirds\Launcher\dist\logs\cliente-20261116-225009.log
 C:\Steambirds\Launcher\dist\logs\cliente-20261117-003444.log
 C:\Steambirds\Launcher\dist\logs\cliente-20261117-004135.log
+C:\Steambirds\Launcher\dist\logs\cliente-20261117-012258.log
+C:\Steambirds\Launcher\dist\logs\cliente-20261117-013135.log
 C:\Steambirds\Launcher\dist\logs\launcher-errors.txt
 C:\Steambirds\Launcher\dist\logs\launcher-erros.txt
 C:\Steambirds\Launcher\dist\logs\relatorio-esboco.txt
 C:\Steambirds\Launcher\dist\logs\server-20261117-004739.log
+C:\Steambirds\Launcher\dist\logs\server-20261117-012302.log
+C:\Steambirds\Launcher\dist\logs\server-20261117-013143.log
+C:\Steambirds\Launcher\dist\logs\server-report.txt
 C:\Steambirds\Launcher\dist\logs\servidor-20261115-210703.log
 C:\Steambirds\Launcher\dist\logs\servidor-20261116-001746.log
 C:\Steambirds\Launcher\dist\logs\servidor-20261116-061753.log
@@ -9739,14 +9738,15 @@ C:\Steambirds\Launcher\dist\server\contas\steam_76561198073342595
 C:\Steambirds\Launcher\dist\server\contas\steam_76561198073342595\aceites.json
 C:\Steambirds\Launcher\dist\server\contas\steam_76561198073342595\conta.json
 C:\Steambirds\Launcher\dist\server\contas\steam_76561198073342595\inventario.json
-C:\Steambirds\Launcher\dist\server\dados\acoes_config.txt
 C:\Steambirds\Launcher\dist\server\dados\configBinary
 C:\Steambirds\Launcher\dist\server\dados\mapinfo_config.txt
-C:\Steambirds\Launcher\dist\server\dados\retratos_config.txt
-C:\Steambirds\Launcher\dist\server\dados\unidades_config.txt
+C:\Steambirds\Launcher\dist\server\data\acoes_config.txt
 C:\Steambirds\Launcher\dist\server\data\actions_config.txt
 C:\Steambirds\Launcher\dist\server\data\configBinary
 C:\Steambirds\Launcher\dist\server\data\mapinfo_config.txt
+C:\Steambirds\Launcher\dist\server\data\portraits_config.txt
+C:\Steambirds\Launcher\dist\server\data\retratos_config.txt
+C:\Steambirds\Launcher\dist\server\data\unidades_config.txt
 C:\Steambirds\Launcher\dist\server\data\units_config.txt
 C:\Steambirds\Launcher\dist\server\loot_tables\boss.json
 C:\Steambirds\Launcher\dist\server\loot_tables\dungeon_chest.json
@@ -9774,8 +9774,6 @@ C:\Steambirds\Launcher\dist\server\mapas\dungeon_sneezy.json
 C:\Steambirds\Launcher\dist\server\mapas\dungeon_space.json
 C:\Steambirds\Launcher\dist\server\mapas\dungeon_temple.json
 C:\Steambirds\Launcher\dist\server\mapas\dungeon_thief.json
-C:\Steambirds\Launcher\dist\server\mapas\LEIA-ME-dungeons.md
-C:\Steambirds\Launcher\dist\server\mapas\LEIA-ME-mapas.md
 C:\Steambirds\Launcher\dist\server\mapas\nexus.json
 C:\Steambirds\Launcher\dist\server\mapas\tutorial_walker.json
 C:\Steambirds\Launcher\dist\server\maps\dungeon_3brothers.json
@@ -9795,6 +9793,8 @@ C:\Steambirds\Launcher\dist\server\maps\dungeon_sneezy.json
 C:\Steambirds\Launcher\dist\server\maps\dungeon_space.json
 C:\Steambirds\Launcher\dist\server\maps\dungeon_temple.json
 C:\Steambirds\Launcher\dist\server\maps\dungeon_thief.json
+C:\Steambirds\Launcher\dist\server\maps\LEIA-ME-dungeons.md
+C:\Steambirds\Launcher\dist\server\maps\LEIA-ME-mapas.md
 C:\Steambirds\Launcher\dist\server\maps\nexus.json
 C:\Steambirds\Launcher\dist\server\maps\README-dungeons.md
 C:\Steambirds\Launcher\dist\server\maps\README.md
@@ -11385,6 +11385,7 @@ C:\Steambirds\Server\maps\README.md
 C:\Steambirds\Server\maps\tutorial_walker.json
 C:\Steambirds\Server\Network\LanDiscovery.cs
 C:\Steambirds\Server\Network\PlayerNamePath.cs
+C:\Steambirds\Server\Network\PlayerRelay.cs
 C:\Steambirds\Server\Network\PlayerSessions.cs
 C:\Steambirds\Server\Network\ServerNetworkSettings.cs
 C:\Steambirds\Server\Network\SteamTicket.cs
@@ -11502,46 +11503,6 @@ C:\Steambirds\Server\Progression\ProgressionMessages.cs
 C:\Steambirds\Server\Progression\ProgressionSettings.cs
 C:\Steambirds\Server\Properties\launchSettings.json
 C:\Steambirds\Server\Skills\DamageBoost.cs
-C:\Steambirds\tools\dungeons-190828
-C:\Steambirds\tools\editor
-C:\Steambirds\tools\maps
-C:\Steambirds\tools\dungeons-190828\out
-C:\Steambirds\tools\dungeons-190828\__pycache__
-C:\Steambirds\tools\dungeons-190828\check_maps.py
-C:\Steambirds\tools\dungeons-190828\dungeons_190828.py
-C:\Steambirds\tools\dungeons-190828\dungeon_builder.py
-C:\Steambirds\tools\dungeons-190828\dungeon_units.json
-C:\Steambirds\tools\dungeons-190828\extract_dungeon_units.py
-C:\Steambirds\tools\dungeons-190828\ia_190426.json
-C:\Steambirds\tools\dungeons-190828\LEIA-ME.md
-C:\Steambirds\tools\dungeons-190828\make_loot_tables.py
-C:\Steambirds\tools\dungeons-190828\previa-dungeons.png
-C:\Steambirds\tools\dungeons-190828\preview_maps.py
-C:\Steambirds\tools\dungeons-190828\unit_types.py
-C:\Steambirds\tools\dungeons-190828\out\dungeon_3brothers.json
-C:\Steambirds\tools\dungeons-190828\out\dungeon_arena.json
-C:\Steambirds\tools\dungeons-190828\out\dungeon_arena2.json
-C:\Steambirds\tools\dungeons-190828\out\dungeon_bomb.json
-C:\Steambirds\tools\dungeons-190828\out\dungeon_eye.json
-C:\Steambirds\tools\dungeons-190828\out\dungeon_finalboss.json
-C:\Steambirds\tools\dungeons-190828\out\dungeon_finalboss2.json
-C:\Steambirds\tools\dungeons-190828\out\dungeon_fire.json
-C:\Steambirds\tools\dungeons-190828\out\dungeon_grind.json
-C:\Steambirds\tools\dungeons-190828\out\dungeon_ice.json
-C:\Steambirds\tools\dungeons-190828\out\dungeon_obstacle.json
-C:\Steambirds\tools\dungeons-190828\out\dungeon_rescue.json
-C:\Steambirds\tools\dungeons-190828\out\dungeon_snake.json
-C:\Steambirds\tools\dungeons-190828\out\dungeon_sneezy.json
-C:\Steambirds\tools\dungeons-190828\out\dungeon_space.json
-C:\Steambirds\tools\dungeons-190828\out\dungeon_temple.json
-C:\Steambirds\tools\dungeons-190828\out\dungeon_thief.json
-C:\Steambirds\tools\dungeons-190828\__pycache__\dungeon_builder.cpython-38.pyc
-C:\Steambirds\tools\dungeons-190828\__pycache__\unit_types.cpython-38.pyc
-C:\Steambirds\tools\editor\build_editor_assets.py
-C:\Steambirds\tools\maps\__pycache__
-C:\Steambirds\tools\maps\legacy_names.py
-C:\Steambirds\tools\maps\migrate_legacy_map.py
-C:\Steambirds\tools\maps\__pycache__\legacy_names.cpython-38.pyc
 C:\Steambirds\VersoesAntigas\386011-1564438778448625069
 C:\Steambirds\VersoesAntigas\386011-1702765646885248947
 C:\Steambirds\VersoesAntigas\386011-241641090281251389

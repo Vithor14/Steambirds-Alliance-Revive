@@ -144,8 +144,8 @@ public static class ItemSettingsFile
             current = read;
             log("ITEMS", FilePath + " read: loot " + (read.LootEnabled ? "on x" + read.LootRolls : "off") +
                 ", tables '" + read.NormalLootTable + "'/'" + read.BossLootTable + "', cargo " + (read.SharedCargoForAllPlanes ? "shared" : "per plane") +
-                " (+" + read.ExtraCargoSlots + " slots), storage +" + read.ExtraStorageSlots + " slots, recycling " + (read.MulchOnTrash ? "sim" : "no") +
-                ", reforge " + (read.ReforgeEnabled ? "sim" : "no") + ", save on fall " + read.DeathSalvageRandomEquipment + " item(ns)");
+                " (+" + read.ExtraCargoSlots + " slots), storage +" + read.ExtraStorageSlots + " slots, recycling " + (read.MulchOnTrash ? "yes" : "no") +
+                ", reforge " + (read.ReforgeEnabled ? "yes" : "no") + ", save on fall " + read.DeathSalvageRandomEquipment + " item(s)");
             if (read.UnknownKeys != null && read.UnknownKeys.Count > 0)
                 log("ITEMS", "key(s) this version does not use in " + FileName + ": " + string.Join(", ", read.UnknownKeys.Keys));
         }

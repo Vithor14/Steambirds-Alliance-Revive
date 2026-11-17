@@ -63,10 +63,13 @@ public static partial class Game
 
         if (!isSelf)
         {
+            // Another player online on this server: its name, rank, plane level and equipment. An unknown account gets no
+            // answer (an "absent" answer would make the client ask every frame).
+            if (PlayerRelay.AnswerPlayerData(server, msg.SenderConnection, account, log)) return;
             if (times == 1 || times % 100 == 0)
             {
                 log("MSG", j.Role + " ServerRequestRemotePlayerData x" + times + ": accountId=" + text +
-                    " (another account: data of other players does not exist yet)");
+                    " (account not online on this server: no answer)");
             }
             return;
         }

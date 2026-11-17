@@ -15,6 +15,9 @@ public static partial class Game
         j.Shots++;
         if (d.IsPlayer && j.PlaneShortId == 0) j.PlaneShortId = d.Owner;
 
+        // The other players of the server see the shot (only the shots of the player's own plane).
+        if (d.IsPlayer && d.Owner == j.PlaneShortId) PlayerRelay.PlaneShot(j.Peer, d, now);
+
         if (!j.BurstOpen)
         {
             j.BurstOpen = true;
@@ -189,7 +192,7 @@ public static partial class Game
             {
                 j.SuperOpen = true;
                 j.SuperStart = now;
-                log("SKILL", j.Role + " super speed on for the unit " + shortId + " em (" +
+                log("SKILL", j.Role + " super speed on for the unit " + shortId + " at (" +
                     CopperReader.Num(x) + ", " + CopperReader.Num(y) + ")");
             }
             j.LastSuper = now;
@@ -202,7 +205,7 @@ public static partial class Game
             return;
         }
 
-        log("SKILL", j.Role + " action " + action + " of the unit " + shortId + " em (" + CopperReader.Num(x) + ", " +
+        log("SKILL", j.Role + " action " + action + " of the unit " + shortId + " at (" + CopperReader.Num(x) + ", " +
             CopperReader.Num(y) + ") flags " + flags + " parameter '" + parameter + "' (action with no handling of its own)");
     }
 
@@ -215,7 +218,7 @@ public static partial class Game
         float x, float y, float rotation, double now, Action<string, string> log)
     {
         j.Clouds++;
-        string where = " em (" + CopperReader.Num(x) + ", " + CopperReader.Num(y) + ")";
+        string where = " at (" + CopperReader.Num(x) + ", " + CopperReader.Num(y) + ")";
 
         LoadActions(log);
         if (!clouds.TryGetValue(name, out var cloud))

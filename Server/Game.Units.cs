@@ -35,7 +35,7 @@ public static partial class Game
 
     // UpdateUnitsBatch coming from the client: position, health and energy of its units, several times per second.
     // Each item: shortId, a "has its own time" byte (+ float), FieldUpdate. At the end of the message comes the batch time.
-    private static void HandleUpdateBatch(Player j, NetBuffer msg)
+    private static void HandleUpdateBatch(Player j, NetBuffer msg, double now)
     {
         uint countPlusOne = msg.ReadVariableUInt32();
         for (uint i = 0; i + 1 < countPlusOne && CopperReader.BitsLeft(msg) > 0; i++)
@@ -50,8 +50,20 @@ public static partial class Game
                 j.Units[shortId] = u;
             }
             ApplyFields(u, fields);
-            if (shortId == j.PlaneShortId) ApplyToPlayer(j, fields);
+            if (shortId == j.PlaneShortId)
+            {
+                ApplyToPlayer(j, fields);
+                PlayerRelay.PlaneMoved(j.Peer, fields, now);   // the other players of the server see the plane move
+            }
         }
+    }
+
+    // ServerProximityChat(string text, short quickChatId): the other players of the server receive it as ClientProximityChat.
+    private static void HandleProximityChat(Player j, NetBuffer msg, Action<string, string> log)
+    {
+        string text = msg.ReadString() ?? "";
+        short quickChatId = msg.ReadInt16();
+        PlayerRelay.Chat(j.Peer, text, quickChatId, log);
     }
 
     // KillUnitsBatch coming from the client: its units that died. Each item: float time, shortId, KillInfo.
@@ -94,7 +106,7 @@ public static partial class Game
         int reason = msg.ReadInt32();
         float x = msg.ReadSingle();
         float y = msg.ReadSingle();
-        string text = CopperReader.Name(CopperReader.DeathReasonNames, reason) + " em (" +
+        string text = CopperReader.Name(CopperReader.DeathReasonNames, reason) + " at (" +
             CopperReader.Num(x) + ", " + CopperReader.Num(y) + ")";
         RecordDeath(server, msg.SenderConnection, j, shortId, reason, text, "ServerRequestKill", log);
     }
@@ -117,6 +129,7 @@ public static partial class Game
             j.PlaneAlive = false;
             log("PLANE", j.Role + " player's plane (unit " + shortId + ") destroyed: " + reason + " [" + origin + "]" +
                 (wasAlive ? "" : " (was already dead)"));
+            if (wasAlive) PlayerRelay.PlaneGone(connection, (byte)Math.Clamp(code, 0, 255), -1);   // the other players see it explode
 
             // A real death: plane XP becomes pilot XP, the death screen goes out and the plane leaves the account
             // (GameClient.OnPlayerPlaneDied also takes the plane out of the PlayerData). Plane swaps and disconnects do not count.
@@ -208,7 +221,7 @@ public static partial class Game
         else
         {
             sb.Append("plane ").Append(j.PlaneShortId).Append(j.PlaneAlive ? "" : " (destroyed)");
-            if (j.HasPosition) sb.Append(" em (").Append(CopperReader.Num(j.X)).Append(", ").Append(CopperReader.Num(j.Y)).Append(')');
+            if (j.HasPosition) sb.Append(" at (").Append(CopperReader.Num(j.X)).Append(", ").Append(CopperReader.Num(j.Y)).Append(')');
             if (j.HasHealth) sb.Append(" health ").Append(CopperReader.Num(j.Health));
             if (j.HasEnergy) sb.Append(" energy ").Append(CopperReader.Num(j.Energy));
         }

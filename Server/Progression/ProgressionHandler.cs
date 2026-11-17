@@ -95,7 +95,7 @@ public static class ProgressionHandler
                 float clock = msg.ReadSingle();
                 int count = Count(role + " extra damage");
                 if (count <= 3 || count % 50 == 0)
-                    log("SKILL", tag + " extra damage received from an ally: x" + CopperReader.Num(factor) + " por " + CopperReader.Num(clock) + "s (x" + count + ")");
+                    log("SKILL", tag + " extra damage received from an ally: x" + CopperReader.Num(factor) + " for " + CopperReader.Num(clock) + "s (x" + count + ")");
                 return true;
             }
             case MsgServerReportCloudHeal:

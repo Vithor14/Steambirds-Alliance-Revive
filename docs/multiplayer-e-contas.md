@@ -56,6 +56,25 @@ Servidor **v11** e launcher **0.3.0** (16/11/2026, ainda não testados). O que e
 - **Settings → Multiplayer**: porta da busca (6444).
 - `Build launcher.ps1`: a pasta `contas` nunca é copiada para o dist; a conta antiga só vai na primeira vez (quando o dist ainda não tem `contas`); copia também o `README.md` (inglês) do launcher.
 
-## Próximo passo do multiplayer
+## Relay de multiplayer (17/11/2026, escrito sem compilar, ainda não testado)
 
-Fazer os jogadores se verem: para cada jogador do mesmo servidor, criar nos outros clientes o avião dele (SpawnUnitsBatch com o PeerId do dono como `playerAuthority` e shortIds próprios por observador, porque hoje todo avião usa o mesmo `ShortIdPlanoDoJogador`), repassar o estado de voo (`61257`, `26781`, `45864` → `UpdateUnitsBatch`), tiros (`GunFire`/`GunFireBatch` `62327`), skills (`TriggerOtherPlayerSkill` `65043`) e `ClientReceiveRemotePlayerData`. Depois decidir inimigos e loot compartilhados (hoje `InimigosEsboco` cria inimigos por conexão).
+`Server\Network\PlayerRelay.cs` repassa o que cada jogador faz para os outros da mesma "sala": todos do Nexus formam uma sala e cada instância de dungeon é outra (o tutorial continua privado):
+
+- **Avião:** SpawnUnitsBatch com `playerAuthority` = PeerId do dono (o cliente só trata como avião local quando a autoridade é o próprio PeerId) e um shortId de relay (7.000.000+), igual para todos os observadores e novo a cada avião (o cliente descarta spawn de shortId vivo; também mantém os ids de bala únicos). Inclui velocidade (0, 0).
+- **Movimento:** `UpdateUnitsBatch` com posição, velocidade, rotação, mira e vida, com o tempo do servidor no fim.
+- **Tiros:** `GunFire` `62326` reescrito com o shortId de relay; alvo que é avião de jogador é zerado.
+- **Saída:** `KillUnitsBatch` na morte, na troca de avião (`ChangePlane`) e na desconexão.
+- **Chat:** `ServerProximityChat` `11732` vira `ClientProximityChat` `1612` para os outros (o cliente do remetente já mostra a própria fala).
+- **Dados do jogador:** `ServerRequestRemotePlayerData` de outra conta online recebe `ClientReceiveRemotePlayerData` com o shortId de relay.
+
+Ainda não repassa: nuvens e skills dos outros (`TriggerOtherPlayerSkill` `65043`), `GunFireBatch` `62327`, `61257`/`26781` (o estado vem pelo `UpdateUnitsBatch`), inimigos e loot compartilhados (hoje `Enemies` cria inimigos por conexão).
+
+## Dungeons compartilhadas (17/11/2026, escrito sem compilar, ainda não testado)
+
+- **Entrada:** `DungeonServer.PrepareSession` procura uma instância em andamento do mesmo tipo (não terminada) e o jogador entra nela; senão cria uma nova. `Session.Members` tem os jogadores; `sessions` guarda a mesma instância uma vez por jogador.
+- **Estado:** quem chega depois recebe os inimigos, peças de portão e o contador de chefes que já existem (`Enemies.SendStateTo`), mais o chão do mapa como sempre.
+- **Inimigos:** a instância de `Enemies` também tem vários jogadores (`Instance.Members`); spawns, updates, tiros, mortes e falas vão para todos. Cada inimigo persegue e mira o jogador vivo mais próximo; tiros teleguiados usam o id que cada cliente conhece (o próprio avião ou o id de relay do outro).
+- **Progresso:** salas, portões, ondas e checkpoint são da instância (qualquer jogador vivo perto acorda uma sala). XP e loot de cada abate vão para todos os jogadores da instância, cada um com os próprios sacos.
+- **Comandos:** `/leave` tira só quem digitou; `/room` e `/boss` teleportam só quem digitou; `/restart` recomeça a dungeon para todos.
+- **Reset:** quando o último jogador sai (ou desconecta) a instância e o estado dos inimigos são descartados; a próxima entrada começa do zero. Uma dungeon já concluída não aceita novos jogadores.
+- **Ainda não:** limite de jogadores por dungeon, fila, escalar a dificuldade pelo número de jogadores.

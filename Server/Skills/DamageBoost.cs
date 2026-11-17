@@ -97,7 +97,7 @@ public static class DamageBoost
 
         if (SendVisualEffect) SendCloudEffect(server, ownerConnection, ownerShortId, x, y, buffTime);
 
-        log("SKILL", role + " damage bonus of '" + cloudName + "': x" + factor.ToString("0.##", Inv) + " por " +
+        log("SKILL", role + " damage bonus of '" + cloudName + "': x" + factor.ToString("0.##", Inv) + " for " +
             buffTime.ToString("0.#", Inv) + "s on allies within the radius " + radius.ToString("0.#", Inv) +
             " (applied by the server on shot hits)");
     }

@@ -155,7 +155,7 @@ public static class ProgressionSettingsFile
             foreach (CareerRewardSetting reward in read.CareerRewards) reward.Rewards ??= new List<CareerRewardItem>();
             current = read;
             log("PROGRESSION", FilePath + " read: XP x" + read.PlaneXpMultiplier + ", pilot XP x" + read.PilotXpMultiplier +
-                ", permadeath " + (read.Permadeath ? "sim" : "no") + ", pilot bonus on fall " + read.DeathPilotXpBonus + ", " +
+                ", permadeath " + (read.Permadeath ? "yes" : "no") + ", pilot bonus on fall " + read.DeathPilotXpBonus + ", " +
                 read.SkillLoadoutSlots + " loadout(s), " + read.HangarSlots + " hangar slot(s), " + read.CareerRewards.Count +
                 " career reward(s)");
             if (read.UnknownKeys != null && read.UnknownKeys.Count > 0)

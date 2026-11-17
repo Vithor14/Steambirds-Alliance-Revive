@@ -14,11 +14,15 @@ public static partial class DungeonServer
 
         UpdateUnits(s, now, log);
 
-        if (Game.GetPlane(s.Peer, out float px, out float py, out bool alive, out _) && alive)
+        // Rooms come up and wake with ANY live player (and the checkpoint is the furthest one reached by any of them).
+        foreach (NetConnection member in s.Members.ToList())
         {
-            Ground.ToGrid(px, py, out float pa, out float pb);
-            UpdateCheckpoint(s, pb, log);
-            UpdateRooms(s, pa, pb, now, log);
+            if (Game.GetPlane(member.RemoteUniqueIdentifier, out float px, out float py, out bool alive, out _) && alive)
+            {
+                Ground.ToGrid(px, py, out float pa, out float pb);
+                UpdateCheckpoint(s, pb, log);
+                UpdateRooms(s, pa, pb, now, log);
+            }
         }
 
         UpdateConditionalRooms(s, now, log);

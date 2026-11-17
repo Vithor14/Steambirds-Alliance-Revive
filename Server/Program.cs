@@ -209,6 +209,9 @@ void SpawnPlane(NetServer server, NetConnection connection, byte role, string ch
 
     // The game state (Game) now knows which unit is this player's plane.
     Game.PlaneCreated(connection, RoleName(role), shortId, spawnX, spawnY, clock.Elapsed.TotalSeconds, characterId, record.Class);
+    // Multiplayer: the plane appears for the other players of the server, and theirs for this one.
+    PlayerRelay.PlaneSpawned(connection, characterId, idBytes, record.Class, netClass, netVariant, model.Hash,
+        Accounts.Pilot().Level, spawnX, spawnY, spawnRot, clock.Elapsed.TotalSeconds);
     // Progression: statistics of nearby players (pilot skills) from now on.
     PilotProgression.PlaneSpawned(server, connection, RoleName(role), characterId, clock.Elapsed.TotalSeconds);
 
@@ -402,6 +405,11 @@ void HandleData(NetServer server, NetIncomingMessage msg, byte role)
 
         // Game needs to know who the player is to answer the data requests of their own account.
         Game.Identify(connection, RoleName(role), Accounts.AccountId, name, procId, clock.Elapsed.TotalSeconds);
+        // Multiplayer: from now on the other players of this server can see and hear this one (Network\PlayerRelay.cs).
+        // The Nexus is one group; each dungeon instance is a group of its own; the tutorial is private.
+        string? relayRoom = role == RoleNexus ? PlayerRelay.NexusRoom : role == RoleDungeon ? DungeonServer.RoomKey(connection) : null;
+        if (relayRoom != null)
+            PlayerRelay.Joined(server, connection, relayRoom, name, Accounts.AccountId, procId, Accounts.Pilot().Level);
         PilotProgression.PlayerIdentified(server, connection, RoleName(role), clock.Elapsed.TotalSeconds);
         // Ingredient wallet (ClientUpdateIngredients); the items already went in the PlayerData of the welcome.
         InventoryHandler.PlayerIdentified(server, connection, RoleName(role));
@@ -467,7 +475,7 @@ void HandleData(NetServer server, NetIncomingMessage msg, byte role)
         bool fresh = Accounts.MarkDungeonFinished(Tutorial.DungeonName);
         if (requestedTutorial != Tutorial.DungeonName) fresh |= Accounts.MarkDungeonFinished(requestedTutorial);
         Log("TUTORIAL", $"[tutorial] SendMarkDungeonFinished from {PlayerSessions.NameOf(msg.SenderConnection)}: " +
-            $"{(fresh ? "tutorial marcado como terminado" : "o tutorial ja estava terminado")} " +
+            $"{(fresh ? "tutorial marked as finished" : "the tutorial was already finished")} " +
             $"(finished dungeons: {string.Join(", ", Accounts.FinishedDungeons())})");
         return;
     }
@@ -719,6 +727,7 @@ void StartUdp(int port, byte role)
                             PlayerSession? whoLeft = PlayerSessions.Of(connection);
                             using (Accounts.UseFor(connection))
                             {
+                                PlayerRelay.Left(connection);
                                 Game.Disconnected(connection, Log);
                                 Enemies.Disconnected(connection, Log);
                                 Tutorial.Disconnected(connection, Log);
@@ -889,8 +898,8 @@ object Join(HttpContext ctx, string body, string? launcherName)
     IPAddress serverAddress = ServerAddressForClient(ctx);
     PlayerSession session = PlayerSessions.Create(account, name, serverAddress, client);
     Log("LOGIN", $"{name} ({how}{(fromThisPc ? ", this PC" : ", from " + client)}) -> account {key}" +
-        $"{(note.Length > 0 ? " (" + note + ")" : "")}, Nexus em {serverAddress}:{NexusPort}" +
-        $"{(launcherName != null ? ", nome do launcher" : "")}");
+        $"{(note.Length > 0 ? " (" + note + ")" : "")}, Nexus at {serverAddress}:{NexusPort}" +
+        $"{(launcherName != null ? ", launcher name" : "")}");
     return AccountResponse(session);
 }
 

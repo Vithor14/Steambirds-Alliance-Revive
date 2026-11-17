@@ -38,7 +38,7 @@ public static partial class Game
     private static string Where(Player j)
     {
         if (!j.HasPosition) return "";
-        return " em (" + CopperReader.Num(j.X) + ", " + CopperReader.Num(j.Y) + ")";
+        return " at (" + CopperReader.Num(j.X) + ", " + CopperReader.Num(j.Y) + ")";
     }
 
     // ------------------------------------------------------------------ player input

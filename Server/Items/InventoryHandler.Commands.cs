@@ -45,8 +45,8 @@ public static partial class InventoryHandler
                     Send(server, connection, m => InventoryWire.WriteClientInvAdd(m, characterId, item, pos, 0f, 0f, audit));
                     given++;
                 }
-                Chat(server, connection, given > 0 ? given + "x " + ItemCatalog.Name(def.Id) + " no cargo." : "Cargo full.");
-                logTo("INVENTORY", tag + " /item " + def.Id + ": " + given + " no cargo");
+                Chat(server, connection, given > 0 ? given + "x " + ItemCatalog.Name(def.Id) + " in the cargo." : "Cargo full.");
+                logTo("INVENTORY", tag + " /item " + def.Id + ": " + given + " in the cargo");
                 return true;
             }
 

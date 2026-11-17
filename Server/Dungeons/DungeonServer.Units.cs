@@ -267,25 +267,34 @@ public static partial class DungeonServer
         point.World(out float x, out float y);
 
         int id = WorldObjects.NewShortId();
-        WorldObjects.SendExitPortal(s.Server, s.Connection, id, x, y, nexusEndpoint, nexusHostId, "Nexus", gameVersion, nexusTags, now);
+        foreach (NetConnection member in s.Members.ToList())
+            WorldObjects.SendExitPortal(s.Server, member, id, x, y, nexusEndpoint, nexusHostId, "Nexus", gameVersion, nexusTags, now);
         s.ExitPortal = id;
         s.Objects.Add((id, x, y));
-        log("DUNGEON", "[dungeon] exit carrier " + id + " em (" + Maps.Num(x) + ", " + Maps.Num(y) + ") -> Nexus " + nexusEndpoint);
+        log("DUNGEON", "[dungeon] exit carrier " + id + " at (" + Maps.Num(x) + ", " + Maps.Num(y) + ") -> Nexus " + nexusEndpoint);
     }
 
+    // Everybody in the instance goes back to the Nexus (automatic exit, map error).
     private static void LeaveToNexus(Session s, string reason, bool markFinished)
     {
-        if (s.Left || s.Connection.Status != NetConnectionStatus.Connected) return;
-        // Called by the update loop too: the finished dungeon goes to the account of this session's player.
-        using Accounts.Scope accountScope = Accounts.UseFor(s.Connection);
+        if (s.Left || Connected(s).Count == 0) return;
         if (ReturnToNexus == null)
         {
             logger("DUNGEON", "[dungeon] " + reason + ": no link to the Nexus (ReturnToNexus is null)");
             return;
         }
         s.Left = true;
+        foreach (NetConnection member in Connected(s)) SendMemberToNexus(s, member, reason, markFinished);
+    }
+
+    // One player goes back to the Nexus (/leave); the others stay. Called by the update loop too: a finished dungeon is
+    // marked in the account of the player who leaves.
+    private static void SendMemberToNexus(Session s, NetConnection member, string reason, bool markFinished)
+    {
+        if (member.Status != NetConnectionStatus.Connected || ReturnToNexus == null) return;
+        using Accounts.Scope accountScope = Accounts.UseFor(member);
         if (markFinished && s.Finished) Accounts.MarkDungeonFinished(s.Entry.Type);
-        ReturnToNexus(s.Server, s.Connection, "[dungeon] " + reason);
+        ReturnToNexus(s.Server, member, "[dungeon] " + reason);
     }
 
 }

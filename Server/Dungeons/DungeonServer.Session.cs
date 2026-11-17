@@ -104,17 +104,17 @@ public static partial class DungeonServer
                         Chat(s, "Room '" + argument + "' does not exist. /room shows the list.");
                         break;
                     }
-                    SkipTo(s, index, now, log);
+                    SkipTo(s, connection, index, now, log);
                     break;
                 }
 
                 case "/boss":
                     if (points.Count == 0) break;
-                    SkipTo(s, points.Count - 1, now, log);
+                    SkipTo(s, connection, points.Count - 1, now, log);
                     break;
 
                 case "/leave":
-                    LeaveToNexus(s, "/leave no chat", s.Finished);
+                    SendMemberToNexus(s, connection, "/leave in the chat", s.Finished);
                     break;
 
                 case "/restart":
@@ -133,12 +133,14 @@ public static partial class DungeonServer
     {
         var s = new Session
         {
+            Id = "dungeon:" + (nextSessionNumber++).ToString(Inv),
             Peer = connection.RemoteUniqueIdentifier,
             Server = server,
             Connection = connection,
             Entry = entry,
             NextTick = now
         };
+        s.Members.Add(connection);
         try
         {
             s.Map = Maps.Get(entry.Map, log);

@@ -303,7 +303,30 @@ public static partial class Enemies
     {
         lock (Game.Lock)
         {
-            if (instances.TryGetValue(connection.RemoteUniqueIdentifier, out Instance? inst)) inst.HasSample = false;
+            if (instances.TryGetValue(connection.RemoteUniqueIdentifier, out Instance? inst)) ResetSample(inst, connection);
+        }
+    }
+
+    // A second (third...) player joins the instance of "primary": from now on everything of the instance goes to them too.
+    // Creates the instance if the first player has not made any unit yet.
+    public static void AddMember(NetServer server, NetConnection primary, NetConnection joining, string role, double now)
+    {
+        lock (Game.Lock)
+        {
+            Instance inst = GetInstance(server, primary, role, now);
+            if (!inst.Members.Contains(joining)) inst.Members.Add(joining);
+            instances[joining.RemoteUniqueIdentifier] = inst;
+        }
+    }
+
+    // The new player gets what already exists in the instance (units, gate pieces, boss counter): the others have it.
+    public static void SendStateTo(NetConnection connection, double now)
+    {
+        lock (Game.Lock)
+        {
+            if (!instances.TryGetValue(connection.RemoteUniqueIdentifier, out Instance? inst)) return;
+            SendSpawns(inst, inst.Enemies.Values.ToList(), now, connection);
+            SendBossCountTo(inst, connection);
         }
     }
 
@@ -314,8 +337,21 @@ public static partial class Enemies
         lock (Game.Lock)
         {
             if (!instances.TryGetValue(connection.RemoteUniqueIdentifier, out Instance? inst)) return;
-            if (inst.Connection != connection) return;   // older connection of the same client (it already moved to another server)
+            if (!inst.Members.Contains(connection)) return;   // older connection of the same client (it already moved to another server)
             instances.Remove(connection.RemoteUniqueIdentifier);
+            inst.Members.Remove(connection);
+            inst.Tracks.Remove(connection.RemoteUniqueIdentifier);
+            if (inst.Members.Count > 0)
+            {
+                // Other players stay: the instance goes on with the first of them.
+                if (inst.Connection == connection)
+                {
+                    inst.Connection = inst.Members[0];
+                    inst.Peer = inst.Connection.RemoteUniqueIdentifier;
+                }
+                log("ENEMY", inst.Role + " a player left the instance (" + inst.Members.Count + " left)");
+                return;
+            }
             log("ENEMY", inst.Role + " session ended: " + inst.Kills + " enemy(ies) killed, " +
                 inst.Enemies.Count + " still alive discarded");
         }

@@ -9,7 +9,7 @@ public static partial class DungeonServer
 
     // /room N and /boss: what is before the room disappears (counted as cleared), the doors on the way open and the
     // plane goes to the checkpoint of the room.
-    private static void SkipTo(Session s, int index, double now, Action<string, string> log)
+    private static void SkipTo(Session s, NetConnection who, int index, double now, Action<string, string> log)
     {
         if (!s.Started)
         {
@@ -47,7 +47,7 @@ public static partial class DungeonServer
 
         s.Checkpoint = Math.Max(s.Checkpoint, index);
         target.Point.World(out float x, out float y);
-        WorldObjects.SendTeleport(s.Server, s.Connection, x, y, target.Point.Rotation, 0.2f);
+        WorldObjects.SendTeleport(s.Server, who, x, y, target.Point.Rotation, 0.2f);   // only who asked: the others stay where they are
         Chat(s, "Going to: " + target.Name + " (" + rooms + " room(s) and " + gates + " gate(s) behind).");
         log("DUNGEON", "[dungeon] jump to '" + target.Name + "': " + rooms + " room(s) and " + gates + " gate(s) released");
     }
@@ -56,17 +56,32 @@ public static partial class DungeonServer
     private static void Restart(Session s, double now, Action<string, string> log)
     {
         int units = Enemies.RemoveAll(s.Connection, now);
-        foreach ((int id, float x, float y) in s.Objects)
-            WorldObjects.SendRemoval(s.Server, s.Connection, id, x, y, WorldObjects.ReasonFizzled, now);
+        foreach (NetConnection member in Connected(s))
+        {
+            foreach ((int id, float x, float y) in s.Objects)
+                WorldObjects.SendRemoval(s.Server, member, id, x, y, WorldObjects.ReasonFizzled, now);
+        }
 
+        // The same players, the same relay group, a dungeon from scratch.
         Session fresh = NewSession(s.Server, s.Connection, s.Entry, now, log);
-        sessions[fresh.Peer] = fresh;
+        fresh.Id = s.Id;
+        fresh.Members.Clear();
+        fresh.Members.AddRange(s.Members);
+        foreach (NetConnection member in fresh.Members)
+        {
+            sessions[member.RemoteUniqueIdentifier] = fresh;
+            fresh.Synced.Add(member.RemoteUniqueIdentifier);   // StartDungeon sends everything to all of them
+        }
         log("DUNGEON", "[dungeon] /restart: " + units + " unit(s) and " + s.Objects.Count + " object(s) removed");
 
-        if (fresh.Map != null && Game.GetPlane(fresh.Peer, out _, out _, out bool alive, out _) && alive)
+        if (fresh.Map != null && fresh.Members.Any(c => Game.GetPlane(c.RemoteUniqueIdentifier, out _, out _, out bool planeAlive, out _) && planeAlive))
         {
-            SpawnPoint(fresh.Connection, out float x, out float y, out float rotation);
-            WorldObjects.SendTeleport(fresh.Server, fresh.Connection, x, y, rotation, 0.2f);
+            foreach (NetConnection member in Connected(fresh))
+            {
+                if (!Game.GetPlane(member.RemoteUniqueIdentifier, out _, out _, out bool alive, out _) || !alive) continue;
+                SpawnPoint(member, out float x, out float y, out float rotation);
+                WorldObjects.SendTeleport(fresh.Server, member, x, y, rotation, 0.2f);
+            }
             StartDungeon(fresh, now, log);
         }
     }

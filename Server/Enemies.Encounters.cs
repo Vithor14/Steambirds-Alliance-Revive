@@ -13,9 +13,10 @@ public static partial class Enemies
     {
         long peer = connection.RemoteUniqueIdentifier;
         // Same client on a new connection (it switched servers): the old instance belongs to the old server.
-        if (!instances.TryGetValue(peer, out Instance? inst) || inst.Connection != connection)
+        if (!instances.TryGetValue(peer, out Instance? inst) || !inst.Members.Contains(connection))
         {
             inst = new Instance { Peer = peer, Server = server, Connection = connection, Role = "[" + role + "]", LastTick = now };
+            inst.Members.Add(connection);
             instances[peer] = inst;
         }
         return inst;
@@ -145,7 +146,7 @@ public static partial class Enemies
 
         string name = string.IsNullOrWhiteSpace(wave.Name) ? "" : ": " + wave.Name;
         log("ENEMY", inst.Role + " wave " + (index + 1) + "/" + encounter.Waves.Count + name + " -> " + added2.Count + " enemy(ies): " +
-            string.Join(", ", added2.Select(i => i.ShortId + " " + Describe(i) + " health " + Num(i.MaxHp) + " em (" + Num(i.X) + ", " + Num(i.Y) + ")")));
+            string.Join(", ", added2.Select(i => i.ShortId + " " + Describe(i) + " health " + Num(i.MaxHp) + " at (" + Num(i.X) + ", " + Num(i.Y) + ")")));
         if (added2.Count == 0)
             log("ENEMY", inst.Role + " wave " + (index + 1) + " came out empty (types without a template in the catalog?) and is skipped");
 

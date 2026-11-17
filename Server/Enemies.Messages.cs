@@ -10,7 +10,8 @@ public static partial class Enemies
     // ================================================================== messages to the client
 
     // SpawnUnitsBatch: same order as EntitySpawnStructSerializer.Write (see PlaneSpawn).
-    private static void SendSpawns(Instance inst, List<Enemy> added2, double now)
+    // only: a single player that joined later (the others already have these units). resetFlags: false for that case.
+    private static void SendSpawns(Instance inst, List<Enemy> added2, double now, NetConnection? only = null)
     {
         if (added2.Count == 0) return;
 
@@ -33,14 +34,31 @@ public static partial class Enemies
                 m.Write(inst.Server.UniqueIdentifier);                // authority = server
                 m.WriteVariableInt32(0);                                // null unitOptions (GenericUnit does not read options)
                 WriteFields(m, enemy, true, enemy.EffectId != 0);
-                enemy.EffectChanged = false;
-                enemy.HealthChanged = false;
-                enemy.LastHealthSent = now;
+                if (only == null)
+                {
+                    enemy.EffectChanged = false;
+                    enemy.HealthChanged = false;
+                    enemy.LastHealthSent = now;
+                }
             }
-            inst.Server.SendMessage(m, inst.Connection, NetDeliveryMethod.ReliableOrdered, 0);
+            Broadcast(inst, m, only);
         }
 
-        if (added2.Any(i => i.Boss)) SendBossCount(inst);
+        if (only == null && added2.Any(i => i.Boss)) SendBossCount(inst);
+    }
+
+    // Sends the message to every connected player of the instance (or only to "only").
+    private static void Broadcast(Instance inst, NetOutgoingMessage m, NetConnection? only = null)
+    {
+        if (only != null)
+        {
+            if (only.Status == NetConnectionStatus.Connected) inst.Server.SendMessage(m, only, NetDeliveryMethod.ReliableOrdered, 0);
+            return;
+        }
+        List<NetConnection> to = inst.Members.Where(c => c.Status == NetConnectionStatus.Connected).ToList();
+        if (to.Count == 0) return;
+        if (to.Count == 1) inst.Server.SendMessage(m, to[0], NetDeliveryMethod.ReliableOrdered, 0);
+        else inst.Server.SendMessage(m, to, NetDeliveryMethod.ReliableOrdered, 0);
     }
 
     // UpdateUnitsBatch: list of (shortId, byte 0 = no own time, FieldUpdate) and the batch time at the end.
@@ -64,7 +82,7 @@ public static partial class Enemies
             }
         }
         m.Write((float)now);
-        inst.Server.SendMessage(m, inst.Connection, NetDeliveryMethod.ReliableOrdered, 0);
+        Broadcast(inst, m);
     }
 
     // FieldUpdateSerializer.Write: mask, then position (x1024), velocity (x1024), rotation (x32), health (x512, fraction).
@@ -92,22 +110,36 @@ public static partial class Enemies
     // With a target the bullet becomes homing (BulletScript follows the target in a curve): only with "homingBullets".
     private static void SendShot(Instance inst, Enemy enemy, GameGun gun, float gunRotation, double now)
     {
-        int target = enemy.Type.HomingBullets ? inst.PlayerShortId : 0;
+        bool homing = enemy.Type.HomingBullets && inst.PlayerShortId != 0;
+        byte seed = (byte)rng.Next(32);
 
-        NetOutgoingMessage m = inst.Server.CreateMessage();
-        m.Write(MsgGunFire);
-        m.Write((byte)(rng.Next(32) | (target != 0 ? 64 : 0)));
-        m.WriteVariableInt32(enemy.ShortId);
-        m.Write((float)now);
-        WriteScaled(m, enemy.X, 64f);
-        WriteScaled(m, enemy.Y, 64f);
-        WriteScaled(m, NormalizeAngle(enemy.Rot), 256f);
-        m.Write((byte)Math.Clamp(gun.Index, 0, 255));
-        WriteScaled(m, NormalizeAngle(gunRotation), 256f);
-        m.WriteVariableInt32(enemy.BulletCounter);
-        m.Write((byte)Math.Clamp(enemy.Type.DamageMultiple, 1, 10));
-        if (target != 0) m.WriteVariableInt32(target);
-        inst.Server.SendMessage(m, inst.Connection, NetDeliveryMethod.ReliableOrdered, 0);
+        // The target is a plane. Each client knows its own plane as unit 1000.. and the others by their relay id, so with
+        // several players every client gets the id it knows.
+        foreach (NetConnection member in inst.Members.Where(c => c.Status == NetConnectionStatus.Connected).ToList())
+        {
+            int target = 0;
+            if (homing)
+            {
+                target = member.RemoteUniqueIdentifier == inst.FocusPeer
+                    ? inst.PlayerShortId
+                    : PlayerRelay.RelayIdOf(inst.FocusPeer);
+            }
+
+            NetOutgoingMessage m = inst.Server.CreateMessage();
+            m.Write(MsgGunFire);
+            m.Write((byte)(seed | (target != 0 ? 64 : 0)));
+            m.WriteVariableInt32(enemy.ShortId);
+            m.Write((float)now);
+            WriteScaled(m, enemy.X, 64f);
+            WriteScaled(m, enemy.Y, 64f);
+            WriteScaled(m, NormalizeAngle(enemy.Rot), 256f);
+            m.Write((byte)Math.Clamp(gun.Index, 0, 255));
+            WriteScaled(m, NormalizeAngle(gunRotation), 256f);
+            m.WriteVariableInt32(enemy.BulletCounter);
+            m.Write((byte)Math.Clamp(enemy.Type.DamageMultiple, 1, 10));
+            if (target != 0) m.WriteVariableInt32(target);
+            inst.Server.SendMessage(m, member, NetDeliveryMethod.ReliableOrdered, 0);
+        }
 
         // Each bullet of the shot uses an id (BulletId = owner << 32 | counter).
         enemy.BulletCounter += Math.Max(1, gun.Multi);
@@ -139,8 +171,7 @@ public static partial class Enemies
                 inst.Enemies.Remove(enemy.ShortId);
                 if (enemy.Boss) hadBoss = true;
             }
-            if (inst.Connection.Status == NetConnectionStatus.Connected)
-                inst.Server.SendMessage(m, inst.Connection, NetDeliveryMethod.ReliableOrdered, 0);
+            Broadcast(inst, m);
         }
 
         if (hadBoss) SendBossCount(inst);
@@ -152,12 +183,15 @@ public static partial class Enemies
         int bosses = inst.Enemies.Values.Count(i => i.Boss);
         if (bosses == inst.BossesSent) return;
         inst.BossesSent = bosses;
-        if (inst.Connection.Status != NetConnectionStatus.Connected) return;
+        SendBossCountTo(inst, null);
+    }
 
+    private static void SendBossCountTo(Instance inst, NetConnection? only)
+    {
         NetOutgoingMessage m = inst.Server.CreateMessage();
         m.Write(MsgClientSetNumBossesRemaining);
-        m.Write(bosses);
-        inst.Server.SendMessage(m, inst.Connection, NetDeliveryMethod.ReliableOrdered, 0);
+        m.Write(inst.Enemies.Values.Count(i => i.Boss));
+        Broadcast(inst, m, only);
     }
 
     // Game notice (waves, bosses): turned off with "chatWarnings": false.
@@ -169,19 +203,19 @@ public static partial class Enemies
     // Speech bubble over an enemy with a key of the game's texts (ClientShowUnitChat), like the dungeon barks.
     private static void Speak(Instance inst, Enemy enemy, string barkKey)
     {
-        WorldObjects.SendSpeech(inst.Server, inst.Connection, enemy.ShortId, barkKey, 5f, WorldObjects.SpeechBig, "",
-            (float)Random.Shared.NextDouble());
+        float pick = (float)Random.Shared.NextDouble();
+        foreach (NetConnection member in inst.Members.ToList())
+            WorldObjects.SendSpeech(inst.Server, member, enemy.ShortId, barkKey, 5f, WorldObjects.SpeechBig, "", pick);
     }
 
     // ClientReceiveText with type ServerSays: it shows in the game chat.
     private static void Reply(Instance inst, string text)
     {
-        if (inst.Connection.Status != NetConnectionStatus.Connected) return;
         NetOutgoingMessage m = inst.Server.CreateMessage();
         m.Write(MsgClientReceiveText);
         m.Write(text);
         m.Write((byte)0);
-        inst.Server.SendMessage(m, inst.Connection, NetDeliveryMethod.ReliableOrdered, 0);
+        Broadcast(inst, m);
     }
 
 }

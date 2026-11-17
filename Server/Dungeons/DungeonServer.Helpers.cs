@@ -35,12 +35,21 @@ public static partial class DungeonServer
         if (key.Contains("..", StringComparison.Ordinal) || key.EndsWith("_", StringComparison.Ordinal)) return;   // ranges and prefixes: documentation only
         float pick;
         lock (random) pick = (float)random.NextDouble();
-        WorldObjects.SendSpeech(s.Server, s.Connection, unitId, key, 5f, WorldObjects.SpeechBig, "", pick);
+        foreach (NetConnection member in s.Members.ToList())
+            WorldObjects.SendSpeech(s.Server, member, unitId, key, 5f, WorldObjects.SpeechBig, "", pick);
     }
 
+    // Text in the chat of every player of the instance.
     private static void Chat(Session s, string text)
     {
-        WorldObjects.SendChat(s.Server, s.Connection, text);
+        foreach (NetConnection member in s.Members.ToList())
+            WorldObjects.SendChat(s.Server, member, text);
+    }
+
+    // Connections of the instance that are still open (what leaves the instance is dropped in Disconnected/Update).
+    private static List<NetConnection> Connected(Session s)
+    {
+        return s.Members.Where(c => c.Status == NetConnectionStatus.Connected).ToList();
     }
 
     private static void Schedule(Session s, double when, string name, Action<double> act)

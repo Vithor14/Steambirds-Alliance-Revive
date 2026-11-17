@@ -58,8 +58,9 @@ public static partial class Enemies
             {
                 log("ENEMY", inst.Role + " " + Describe(enemy) + " opened at (" + Num(enemy.X) + ", " + Num(enemy.Y) + ")");
                 // Chest opened: its loot (the tutorial crate uses loot_tables\tutorial_walker_chest.json).
-                LootDrops.EnemyKilled(inst.Server, inst.Connection, inst.Role.Trim('[', ']'), enemy.Model.Name, enemy.Model.Tier,
-                    false, enemy.X, enemy.Y, now, log);
+                foreach (NetConnection member in inst.Members.ToList())
+                    LootDrops.EnemyKilled(inst.Server, member, inst.Role.Trim('[', ']'), enemy.Model.Name, enemy.Model.Tier,
+                        false, enemy.X, enemy.Y, now, log);
             }
             if (inst.Enemies.Count == 0) return;
         }
@@ -67,6 +68,7 @@ public static partial class Enemies
         List<Enemy>? exploded = null;
         foreach (Enemy enemy in inst.Enemies.Values)
         {
+            FocusNearest(inst, enemy);
             Think(inst, enemy, dt, now);
             Fire(inst, enemy, now);
 
@@ -89,49 +91,112 @@ public static partial class Enemies
         }
     }
 
-    // Position and velocity of the player's plane (the velocity is estimated from samples, for the lead aim).
+    // Position and velocity of the planes of the players of the instance (the velocity is estimated from samples, for
+    // the lead aim). Afterwards inst.Player* describes the first live player; with several players, every enemy looks at
+    // the nearest one (FocusNearest).
     private static void ReadPlayer(Instance inst, double now)
     {
-        if (!Game.GetPlane(inst.Peer, out float x, out float y, out bool alive, out int shortId))
+        PlayerTrack? main = null;
+        PlayerTrack? firstWithPlane = null;
+        foreach (NetConnection member in inst.Members.ToList())
+        {
+            long peer = member.RemoteUniqueIdentifier;
+            if (!inst.Tracks.TryGetValue(peer, out PlayerTrack? t))
+            {
+                t = new PlayerTrack { Peer = peer };
+                inst.Tracks[peer] = t;
+            }
+
+            if (!Game.GetPlane(peer, out float x, out float y, out bool alive, out int shortId))
+            {
+                t.Has = false;
+                t.Alive = false;
+                continue;
+            }
+
+            t.Has = true;
+            t.Alive = alive;
+            t.ShortId = shortId;
+
+            if (!t.HasSample)
+            {
+                t.HasSample = true;
+                t.SampleX = x;
+                t.SampleY = y;
+                t.SampleAt = now;
+                t.VX = 0f;
+                t.VY = 0f;
+            }
+            else if (now - t.SampleAt >= 0.1)
+            {
+                float interval = (float)(now - t.SampleAt);
+                float vx = (x - t.SampleX) / interval;
+                float vy = (y - t.SampleY) / interval;
+                if (vx * vx + vy * vy > 60f * 60f)
+                {
+                    // A big jump (teleport or respawn): it is not velocity.
+                    vx = 0f;
+                    vy = 0f;
+                }
+                t.VX += (vx - t.VX) * 0.5f;
+                t.VY += (vy - t.VY) * 0.5f;
+                t.SampleX = x;
+                t.SampleY = y;
+                t.SampleAt = now;
+            }
+
+            t.X = x;
+            t.Y = y;
+            firstWithPlane ??= t;
+            if (alive) main ??= t;
+        }
+
+        PlayerTrack? pick = main ?? firstWithPlane;
+        if (pick == null)
         {
             inst.HasPlayer = false;
             inst.PlayerAlive = false;
             return;
         }
+        Focus(inst, pick);
+        inst.PlayerAlive = main != null;
+    }
 
+    private static void Focus(Instance inst, PlayerTrack t)
+    {
         inst.HasPlayer = true;
-        inst.PlayerAlive = alive;
-        inst.PlayerShortId = shortId;
+        inst.PlayerAlive = t.Alive;
+        inst.PlayerShortId = t.ShortId;
+        inst.FocusPeer = t.Peer;
+        inst.PlayerX = t.X;
+        inst.PlayerY = t.Y;
+        inst.PlayerVX = t.VX;
+        inst.PlayerVY = t.VY;
+    }
 
-        if (!inst.HasSample)
+    // With several players: the enemy looks at the nearest live plane (the one it chases, aims at and can blow up on).
+    private static void FocusNearest(Instance inst, Enemy enemy)
+    {
+        if (inst.Members.Count < 2) return;
+        PlayerTrack? best = null;
+        float bestDistance = float.MaxValue;
+        foreach (PlayerTrack t in inst.Tracks.Values)
         {
-            inst.HasSample = true;
-            inst.SampleX = x;
-            inst.SampleY = y;
-            inst.SampleAt = now;
-            inst.PlayerVX = 0f;
-            inst.PlayerVY = 0f;
-        }
-        else if (now - inst.SampleAt >= 0.1)
-        {
-            float interval = (float)(now - inst.SampleAt);
-            float vx = (x - inst.SampleX) / interval;
-            float vy = (y - inst.SampleY) / interval;
-            if (vx * vx + vy * vy > 60f * 60f)
+            if (!t.Has || !t.Alive) continue;
+            float d = Distance(enemy.X, enemy.Y, t.X, t.Y);
+            if (d < bestDistance)
             {
-                // A big jump (teleport or respawn): it is not velocity.
-                vx = 0f;
-                vy = 0f;
+                bestDistance = d;
+                best = t;
             }
-            inst.PlayerVX += (vx - inst.PlayerVX) * 0.5f;
-            inst.PlayerVY += (vy - inst.PlayerVY) * 0.5f;
-            inst.SampleX = x;
-            inst.SampleY = y;
-            inst.SampleAt = now;
         }
+        if (best != null) Focus(inst, best);
+    }
 
-        inst.PlayerX = x;
-        inst.PlayerY = y;
+    // The plane of this connection spawned again: the estimated velocity restarts from zero (lead aim).
+    private static void ResetSample(Instance inst, NetConnection connection)
+    {
+        if (inst.Tracks.TryGetValue(connection.RemoteUniqueIdentifier, out PlayerTrack? t)) t.HasSample = false;
     }
 
     // Plane flight: picks a destination point according to the behavior, turns at most MaxTurn degrees

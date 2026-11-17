@@ -106,7 +106,7 @@ public static class InventoryStore
         int items = data.Storage.AllItems().Count() + data.SharedCargo.Count(i => i != null) +
                     data.Planes.Values.Sum(p => p.AllItems().Count());
         log("INVENTORY", (path.Length > 0 ? path : "(temporary account)") + ": " + data.Planes.Count + " plane inventories, storage " +
-            data.StorageCharacterId + ", " + items + " item(ns) no total" +
+            data.StorageCharacterId + ", " + items + " item(s) in total" +
             (data.Currencies.Count > 0 ? ", currencies " + string.Join(", ", data.Currencies.Select(c => c.Key + "=" + c.Value)) : "") +
             (data.Ingredients.Count > 0 ? ", " + data.Ingredients.Count + " ingredient(s)" : ""));
         return data;

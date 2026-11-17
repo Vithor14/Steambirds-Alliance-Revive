@@ -59,6 +59,7 @@ public static partial class Game
     private const ushort MsgEnterQuestGiver = 54195;     // ServerEnterQuestGiver(string giverId)
     private const ushort MsgBulletHit = 61050;
     private const ushort MsgPlayerInput = 61257;
+    private const ushort MsgProximityChat = 11732;       // ServerProximityChat(string text, short quickChatId)
     private const ushort MsgGunFire = 62326;
 
     private const int ActionDropCloud = 2;       // UnitScript.doDropCloudRaw
@@ -86,13 +87,13 @@ public static partial class Game
     // Log label for messages that are only decoded. What is not here comes out as [MSG].
     private static readonly Dictionary<ushort, string> Tags = new Dictionary<ushort, string>
     {
-        [13289] = "EFEITO",   // ServerReportPlayerEffect
+        [13289] = "EFFECT",   // ServerReportPlayerEffect
         [13947] = "SKILL",    // ServerReportPlayerSkillTrigger
         [13948] = "PLANE",    // ServerReportPlaneLevel
         [13949] = "SKILL",    // ServerReportDamageBoost
         [27910] = "SKILL",    // ServerReportCloudHeal
         [38890] = "SHOT",     // ServerReportUnitDamage
-        [60850] = "EFEITO",   // ServerShowInstantEffect
+        [60850] = "EFFECT",   // ServerShowInstantEffect
         [65043] = "SKILL",    // TriggerOtherPlayerSkill
         [54296] = "STORE",
         [54297] = "STORE",
@@ -311,7 +312,11 @@ public static partial class Game
                     return true;
 
                 case MsgUpdateUnitsBatch:
-                    HandleUpdateBatch(j, msg);
+                    HandleUpdateBatch(j, msg, now);
+                    return true;
+
+                case MsgProximityChat:
+                    HandleProximityChat(j, msg, log);
                     return true;
 
                 case MsgKillUnitsBatch:

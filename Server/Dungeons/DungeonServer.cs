@@ -22,7 +22,11 @@ using Info = MapInfo;
 //    flag): entering it the client sends SendMarkDungeonFinished (the dungeon goes to finishedDungeonTypes) and the
 //    server takes the player back to the Nexus with the same plane.
 //
-// Not yet: loot, keys being used up, dungeon modifiers, several players in the same instance, special scripts
+// Several players share one instance: entering a dungeon type joins the running instance of that type (unless it is already
+// finished), everybody sees the same units, gates and rooms and each other (PlayerRelay). When the last player leaves,
+// the instance is discarded, so the next entry starts the dungeon from scratch.
+//
+// Not yet: keys being used up, dungeon modifiers, special scripts
 // (The Dig drill, The Vaults key, Temple of Bast altar curses, ambushes) and the original state machines of the units.
 //
 // Chat commands: /dungeons, /dungeon X (anywhere); inside a dungeon /room [N], /boss, /leave, /restart, /dungeonhelp.
@@ -116,6 +120,11 @@ public static partial class DungeonServer
 
     private sealed class Session
     {
+        // Players in the instance. Peer and Connection are the first of them (they change if that player leaves).
+        public readonly List<NetConnection> Members = new List<NetConnection>();
+        // Players that already received the units, gates and objects that exist (a late joiner gets them once).
+        public readonly HashSet<long> Synced = new HashSet<long>();
+        public string Id = "";
         public long Peer;
         public NetServer Server = null!;
         public NetConnection Connection = null!;
@@ -144,7 +153,9 @@ public static partial class DungeonServer
         public int Kills;
     }
 
+    // One entry per player: an instance with several players appears once for each of them.
     private static readonly Dictionary<long, Session> sessions = new Dictionary<long, Session>();
+    private static int nextSessionNumber = 1;
     private static readonly Dictionary<string, string> pendingByAccount = new Dictionary<string, string>(StringComparer.Ordinal);
     private static readonly HashSet<string> mapInfoTerrains = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     private static int tickErrors;
@@ -188,6 +199,22 @@ public static partial class DungeonServer
                 log("DUNGEON", "[dungeon] connection with no requested dungeon (no carrier and no /dungeon): goes " + entry.Label);
 
             RegisterMapInfos();
+
+            // Same dungeon already running with players in it: join it (a finished one is about to close, so it is not joined).
+            Session? running = sessions.Values.Distinct().FirstOrDefault(x =>
+                x.Server == server && x.Map != null && !x.Finished && !x.Left &&
+                string.Equals(x.Entry.Type, entry.Type, StringComparison.OrdinalIgnoreCase) &&
+                x.Members.Any(c => c.Status == NetConnectionStatus.Connected));
+            if (running != null)
+            {
+                running.Members.Add(connection);
+                sessions[connection.RemoteUniqueIdentifier] = running;
+                Enemies.AddMember(server, running.Connection, connection, Role, now);
+                log("DUNGEON", "[dungeon] " + PlayerSessions.NameOf(connection) + " joined the running " + entry.Label + " (" +
+                    running.Members.Count + " players)");
+                return entry.Type;
+            }
+
             Session s = NewSession(server, connection, entry, now, log);
             sessions[s.Peer] = s;
             return entry.Type;
@@ -211,6 +238,16 @@ public static partial class DungeonServer
             int bytes = m.LengthBytes;
             server.SendMessage(m, connection, NetDeliveryMethod.ReliableOrdered, 0);
             log("FLOOR", "[dungeon] ClientReceiveTerrainTiles sent (" + bytes + " bytes, " + s.Map.Name + ": " + summary + ")");
+        }
+    }
+
+    // Group of the players of this connection's dungeon instance (PlayerRelay). Null without a session.
+    public static string? RoomKey(NetConnection? connection)
+    {
+        if (connection == null) return null;
+        lock (Game.Lock)
+        {
+            return sessions.TryGetValue(connection.RemoteUniqueIdentifier, out Session? s) ? s.Id : null;
         }
     }
 
@@ -251,13 +288,19 @@ public static partial class DungeonServer
         {
             if (!sessions.TryGetValue(connection.RemoteUniqueIdentifier, out Session? s)) return;
             s.Server = server;
-            s.Connection = connection;
             Enemies.PlayerRespawned(connection);
             if (s.Map == null || s.Data == null) return;
             if (!s.Started)
             {
+                s.Synced.Add(connection.RemoteUniqueIdentifier);
                 StartDungeon(s, now, log);
                 return;
+            }
+            // A player that joined a running dungeon: the units, gate pieces and the boss counter that already exist.
+            if (s.Synced.Add(connection.RemoteUniqueIdentifier))
+            {
+                Enemies.SendStateTo(connection, now);
+                log("DUNGEON", "[dungeon] " + PlayerSessions.NameOf(connection) + " received the state of the running " + s.Entry.Label);
             }
             string checkpoint = s.Map.Checkpoints.Count > 0
                 ? s.Map.Checkpoints[Math.Clamp(s.Checkpoint, 0, s.Map.Checkpoints.Count - 1)].Name
@@ -271,12 +314,24 @@ public static partial class DungeonServer
     {
         lock (Game.Lock)
         {
-            foreach (Session s in sessions.Values.ToList())
+            foreach (Session s in sessions.Values.Distinct().ToList())
             {
                 if (s.Server != server) continue;
+                // A member whose connection died without a Disconnected for this session (the client reconnected).
+                foreach (NetConnection dead in s.Members.Where(c => c.Status == NetConnectionStatus.Disconnected).ToList())
+                {
+                    if (s.Members.Count < 2) break;
+                    s.Members.Remove(dead);
+                    s.Synced.Remove(dead.RemoteUniqueIdentifier);
+                    if (s.Connection == dead)
+                    {
+                        s.Connection = s.Members[0];
+                        s.Peer = s.Connection.RemoteUniqueIdentifier;
+                    }
+                }
                 if (now < s.NextTick) continue;
                 s.NextTick = now + TickInterval;
-                if (s.Connection.Status != NetConnectionStatus.Connected) continue;
+                if (!s.Members.Any(c => c.Status == NetConnectionStatus.Connected)) continue;
                 try
                 {
                     Tick(s, now, log);
@@ -300,9 +355,23 @@ public static partial class DungeonServer
         lock (Game.Lock)
         {
             if (!sessions.TryGetValue(connection.RemoteUniqueIdentifier, out Session? s)) return;
-            if (s.Connection != connection) return;   // an older connection of the same client (server switch)
+            if (!s.Members.Contains(connection)) return;   // an older connection of the same client (server switch)
             sessions.Remove(connection.RemoteUniqueIdentifier);
-            log("DUNGEON", "[dungeon] session of " + s.Entry.Label + " ended: " + s.Rooms.Count(r => r.Cleared) + "/" + s.Rooms.Count +
+            s.Members.Remove(connection);
+            s.Synced.Remove(connection.RemoteUniqueIdentifier);
+            if (s.Members.Count > 0)
+            {
+                // Other players stay: the dungeon goes on with them.
+                if (s.Connection == connection)
+                {
+                    s.Connection = s.Members[0];
+                    s.Peer = s.Connection.RemoteUniqueIdentifier;
+                }
+                log("DUNGEON", "[dungeon] a player left " + s.Entry.Label + " (" + s.Members.Count + " left)");
+                return;
+            }
+            // Empty: the instance is discarded (the next entry starts the dungeon from scratch).
+            log("DUNGEON", "[dungeon] " + s.Entry.Label + " is empty and was reset: " + s.Rooms.Count(r => r.Cleared) + "/" + s.Rooms.Count +
                 " room(s) cleared, " + s.Kills + " enemy(ies) killed" + (s.Finished ? ", dungeon completed" : ""));
         }
     }
