@@ -12,6 +12,14 @@ the game's files, decompiled code and extracted assets are never stored in this 
 - **How to help:** [CONTRIBUTING.md](CONTRIBUTING.md).
 - **Design notes** (Portuguese): [docs/](docs/).
 
+## Quick Download (Releases)
+
+If you just want to play or host without compiling from source, you can download the latest prebuilt launcher package directly from the [GitHub Releases page](https://github.com/Vithor14/Steambirds-Alliance-Revive/releases/). 
+
+1. Download the latest release `.zip` asset.
+2. Extract the archive anywhere on your computer.
+3. Run `SteambirdsLauncher.exe`.
+
 ## What works today
 
 - Login and one account per player, with the pilot, planes, items and finished dungeons saved on the host's PC.
@@ -28,7 +36,7 @@ dungeon scripts. The checklist has the full list.
 
 ## Requirements
 
-**To play or host (launcher package):**
+**To play or host (using the prebuilt release or launcher package):**
 
 - Windows 10 or 11.
 - Steam, with a copy of Steambirds Alliance in the account's library (the launcher downloads it with the depot command).
@@ -70,7 +78,7 @@ dungeon scripts. The checklist has the full list.
 
 ## Running
 
-- **Launcher (recommended):** open `Launcher\dist\SteambirdsLauncher.exe`. Use the **Server** tab to host, the **Client**
+- **Launcher (recommended):** open `SteambirdsLauncher.exe` (from the downloaded release zip or `Launcher\dist\`). Use the **Server** tab to host, the **Client**
   tab to join (*This PC* or any server in the list), and **Play**.
 - **Server alone (for development):** `.\"Run server.ps1"` runs the server in a console; Ctrl+C writes
   `server-report.txt` with the server output and the game logs. It is interactive (it asks some questions).
