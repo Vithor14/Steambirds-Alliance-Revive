@@ -11035,11 +11035,7 @@ C:\Steambirds\Release\build\gamefiles
 C:\Steambirds\Release\build\server
 C:\Steambirds\Release\build\stage
 C:\Steambirds\Release\build\release.log
-C:\Steambirds\Release\build\gamefiles\data
-C:\Steambirds\Release\build\gamefiles\logs
 C:\Steambirds\Release\build\gamefiles\SteambirdsGameFiles.exe
-C:\Steambirds\Release\build\gamefiles\data\configBinary
-C:\Steambirds\Release\build\gamefiles\logs\game-files.log
 C:\Steambirds\Release\build\server\catalog
 C:\Steambirds\Release\build\server\loot_tables
 C:\Steambirds\Release\build\server\maps
