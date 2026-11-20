@@ -49,6 +49,14 @@ public static partial class Game
     {
         CopperReader.Entry e = CopperReader.ReadInput(msg);
 
+        // After the input come clientFixedTime and clientChosenServerTime: they give the offset of the player's clock.
+        if (CopperReader.BitsLeft(msg) >= 64)
+        {
+            float clientFixedTime = msg.ReadSingle();
+            float clientChosenServerTime = msg.ReadSingle();
+            PlayerRelay.ClockSample(j.Peer, clientFixedTime, clientChosenServerTime, log);
+        }
+
         if (e.HasCheck)
         {
             j.HasPosition = true;

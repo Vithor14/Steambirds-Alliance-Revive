@@ -134,6 +134,10 @@ public static class CopperReader
         public int Ammo;
         public float Scale;
         public string Name = "";
+        public uint Flags;
+        public byte[]? Guns;
+        public short Effect1;
+        public short Effect2;
 
         public bool Has(uint bit)
         {
@@ -308,14 +312,14 @@ public static class CopperReader
             ReadScaled(b, 64f); // a
         }
         if (c.Has(1024u)) c.Name = b.ReadString() ?? "";
-        if (c.Has(2048u)) b.ReadVariableUInt32(); // flags
+        if (c.Has(2048u)) c.Flags = b.ReadVariableUInt32();
         if (c.Has(4096u))
         {
             int gunBytes = b.ReadVariableInt32();
-            if (gunBytes > 0 && gunBytes * 8L <= BitsLeft(b)) b.ReadBytes(gunBytes);
+            if (gunBytes > 0 && gunBytes * 8L <= BitsLeft(b)) c.Guns = b.ReadBytes(gunBytes);
         }
-        if (c.Has(8192u)) b.ReadInt16(); // effectState1
-        if (c.Has(16384u)) b.ReadInt16(); // effectState2
+        if (c.Has(8192u)) c.Effect1 = b.ReadInt16();
+        if (c.Has(16384u)) c.Effect2 = b.ReadInt16();
         if (c.Has(65536u)) ReadDecoration(b);
         if (c.Has(131072u)) b.ReadSingle(); // gunRange
         if (c.Has(262144u)) b.ReadSingle(); // bulletSpeed

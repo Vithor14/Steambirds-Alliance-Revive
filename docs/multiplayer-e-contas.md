@@ -67,7 +67,17 @@ Servidor **v11** e launcher **0.3.0** (16/11/2026, ainda não testados). O que e
 - **Chat:** `ServerProximityChat` `11732` vira `ClientProximityChat` `1612` para os outros (o cliente do remetente já mostra a própria fala).
 - **Dados do jogador:** `ServerRequestRemotePlayerData` de outra conta online recebe `ClientReceiveRemotePlayerData` com o shortId de relay.
 
-Ainda não repassa: nuvens e skills dos outros (`TriggerOtherPlayerSkill` `65043`), `GunFireBatch` `62327`, `61257`/`26781` (o estado vem pelo `UpdateUnitsBatch`), inimigos e loot compartilhados (hoje `Enemies` cria inimigos por conexão).
+### Ajustes depois do primeiro teste com dois PCs (19/11/2026, sem compilar)
+
+O teste mostrou que aviões, animação de tiro, inimigos, portões e o reset da dungeon funcionavam, mas faltavam o nome, as balas e as skills em área dos outros, e a skill em área do Old Faithful não fazia nada:
+
+- **Nome sobre o avião:** o cliente monta o rótulo (`RemotePlayerData.GetLabelWithFlair`) a partir do campo *name* (`1024`) do `FieldUpdate` do avião, não só do `ClientReceiveRemotePlayerData`. O relay agora manda o nome da conta no spawn e em cada atualização que o dono mande com o campo. O pedido de dados de outra conta já funcionava (a rajada de respostas a cada 30 s é só o cache do cliente expirando).
+- **Balas:** o `GunFire` leva `Time.fixedTime` do atirador (relógio local), e o cliente que observa só cria a bala quando o relógio do servidor chega nesse tempo. `ServerReceivePlayerInput` traz `clientFixedTime` e `clientChosenServerTime`; a diferença é o deslocamento do relógio do jogador (`PlayerRelay.ClockSample`) e o relay soma isso ao tempo do tiro antes de repassar. Sem amostra, usa o relógio do servidor.
+- **Estado do avião:** o relay também repassa estado (`128`), flags (`2048`), sinal das armas (`4096`, flash e recuo) e os dois efeitos (`8192`, `16384`).
+- **Nuvens para todos:** `Game.CreateCloud` manda o spawn da nuvem ao dono e aos outros jogadores da sala que veem o avião dele (`PlayerRelay.Observers`); dentro das opções da nuvem o dono vai com o id que o receptor conhece (próprio shortId ou id de relay). Quem entra depois da nuvem criada não a vê (dura segundos).
+- **Veneno (Old Faithful):** a nuvem de veneno só causa dano no cliente que é autoridade do alvo, e os inimigos são do servidor; `Skills\CloudDamage.cs` aplica `effect` de vida por segundo (configBinary `clouds`) aos inimigos dentro do raio, via `Enemies.DamageArea`. O multiplicador de dano do avião do original não é conhecido (`CloudDamage.DamageMultiplier = 1`).
+
+Ainda não repassa: `TriggerOtherPlayerSkill` `65043`, `GunFireBatch` `62327`, `61257`/`26781` (o estado vem pelo `UpdateUnitsBatch`), loot compartilhado fora das dungeons.
 
 ## Dungeons compartilhadas (17/11/2026, escrito sem compilar, ainda não testado)
 

@@ -438,6 +438,9 @@ public static partial class Enemies
                     LoadConfig(log);
                 }
 
+                // Poison clouds hurt the enemies (Skills/CloudDamage.cs).
+                CloudDamage.Update(now, log);
+
                 // An instance with several players is in the dictionary once per player.
                 foreach (Instance inst in instances.Values.Distinct().ToList())
                 {
@@ -534,6 +537,36 @@ public static partial class Enemies
             ApplyPhases(inst, enemy, now, log);
             return "enemy " + Describe(enemy) + " health " + Num(enemy.Health) + "/" + Num(enemy.MaxHp);
         }
+    }
+
+    // Area damage of a skill cloud (Skills/CloudDamage.cs): every enemy of the instance of this player whose body touches
+    // the circle loses "damage" health. Returns how many enemies were hit. The kill, XP and loot go through TakeDamage.
+    public static int DamageArea(NetConnection? connection, float x, float y, float radius, float damage, double now,
+        Action<string, string> log)
+    {
+        if (connection == null || damage <= 0f) return 0;
+
+        List<int> targets;
+        lock (Game.Lock)
+        {
+            if (!instances.TryGetValue(connection.RemoteUniqueIdentifier, out Instance? inst)) return 0;
+            targets = new List<int>();
+            foreach (Enemy enemy in inst.Enemies.Values)
+            {
+                if (enemy.Team != EnemyTeam || enemy.Invulnerable || enemy.Type.OpensAfterHitSeconds > 0f) continue;   // chests do not open by poison
+                float dx = enemy.X - x;
+                float dy = enemy.Y - y;
+                float reach = radius + Math.Max(0f, enemy.Model.Radius);
+                if (dx * dx + dy * dy <= reach * reach) targets.Add(enemy.ShortId);
+            }
+        }
+
+        int hit = 0;
+        foreach (int target in targets)
+        {
+            if (TakeDamage(connection, target, damage, now, log) != null) hit++;
+        }
+        return hit;
     }
 
     // Chat SlashCommand. Returns false if the command is not an enemy one (Game only logs it).

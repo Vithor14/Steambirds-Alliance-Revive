@@ -8,10 +8,10 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 
-[BepInPlugin("local.steambirds.quieter", "Steambirds Quieter", "1.20.0")]
+[BepInPlugin("local.steambirds.quieter", "Steambirds Quieter", "1.21.0")]
 public class QuieterPlugin : BaseUnityPlugin
 {
-    private const string Version = "1.20.0";
+    private const string Version = "1.21.0";
 
     private ConfigEntry<bool> hideDebug;
     private ConfigEntry<bool> swallowPlaylistError;
@@ -135,6 +135,15 @@ public class QuieterPlugin : BaseUnityPlugin
         try { File.WriteAllText(asciiMapsFile, ""); } catch { }
 
         Logger.LogInfo("Steambirds Quieter " + Version + " iniciado.");
+
+        // 1.21.0: export mode of the Steambirds Game Files tool (STEAMBIRDS_EXPORT): draws the pictures of the map
+        // editor and closes the game when the data files are written (GameFilesExport.cs).
+        if (GameFilesExport.IsRequested())
+        {
+            GameFilesExport.Log = Logger;
+            gameObject.AddComponent<GameFilesExport>();
+            Logger.LogInfo("Game files export mode on: " + GameFilesExport.OutputFolder());
+        }
 
         if (hideDebug.Value)
             Debug.unityLogger.filterLogType = LogType.Error;

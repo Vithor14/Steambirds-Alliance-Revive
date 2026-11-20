@@ -66,15 +66,21 @@ dungeon scripts. The checklist has the full list.
    Then open `Launcher\dist\SteambirdsLauncher.exe`. In the **Client** tab, *Download the game with Steam* installs the game.
 
 3. Data taken from the game. The server needs the game's configuration (`configBinary`, read straight from the installed
-   game) and a few text files exported from the game by the plugin. To create those files:
+   game) and a few text files exported from the game by the plugin. The easy way is `Launcher\dist\SteambirdsGameFiles.exe`
+   (built by `Build launcher.ps1`): it installs BepInEx and the plugin, opens the game once and copies
+   `units_config.txt`, `actions_config.txt`, `mapinfo_config.txt` and `portraits_config.txt` to `dist\server\data`, and
+   the map editor pictures to `dist\editor-assets`. By hand:
 
    ```powershell
    .\"Build plugin.ps1"      # copies the plugin into the game's BepInEx\plugins
    ```
 
-   Start the game once with the plugin installed. It writes `units_config.txt`, `actions_config.txt`,
-   `mapinfo_config.txt` and `portraits_config.txt` into the game's `BepInEx` folder. Copy them to `Server\data`
-   (that folder is not in git: it holds the game's data). The server also works without them, with fewer features.
+   Start the game once with the plugin installed. It writes those files into the game's `BepInEx` folder. Copy them to
+   `Server\data` (that folder is not in git: it holds the game's data). The server also works without them, with fewer
+   features.
+
+4. Server release for GitHub: `.\"Build server release.ps1"` builds `Release\SteambirdsServer-<version>-win-x64.zip`
+   (server, `SteambirdsGameFiles.exe`, plugin, settings and maps, with no game files) to attach to a GitHub release.
 
 ## Running
 
@@ -98,7 +104,9 @@ dungeons 1113 (UDP), server search 6444 (UDP).
 | `Server\loot_tables\` | Loot tables (one file each). |
 | `Server\Compat\` | Converts files and folders written by older versions (Portuguese names). |
 | `Launcher\` | The launcher (WinForms): client, server hosting, settings and the map editor. |
-| `QuieterPlugin\` | BepInEx plugin for the game client: data exports and client-side fixes. |
+| `QuieterPlugin\` | BepInEx plugin for the game client: data exports, map editor pictures (export mode) and client-side fixes. |
+| `GameFiles\` | `SteambirdsGameFiles.exe`: takes the game's own files from the player's copy of the game (see its README). |
+| `Packaging\server\` | README and `Start server.cmd` that go into the server release zip. |
 | `tools\` | Python tools: dungeon generator, editor image builder, map migration. |
 | `docs\` | Design notes (Portuguese). |
 | `CHECKLIST.md` | Status of every area and the suggested order of work. |

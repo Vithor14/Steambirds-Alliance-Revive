@@ -5,7 +5,9 @@
 #   dist\server\SteambirdsServer.exe   server (the same code that Run server.ps1 runs), with maps, data and configs
 #   dist\plugin\QuieterPlugin.dll      Steambirds Quieter plugin, which the launcher copies into the game's BepInEx folder
 #   dist\editor-assets\                game pictures for the Map editor tab (copied from Launcher\editor-assets)
-# Both .exe files are self-contained: whoever receives the dist folder does not need to install .NET.
+#   dist\SteambirdsGameFiles.exe       takes configBinary, the plugin's data files and the map editor pictures from the
+#                                      player's own copy of the game (GameFiles\README.md); writes server\data and editor-assets
+# The .exe files are self-contained: whoever receives the dist folder does not need to install .NET.
 #
 # Run it again whenever the server, plugin or launcher code changes. Data copied into dist\server:
 #   - maps, data, loot_tables, items and configs (progression.json, items.json, dungeons.json, enemies.json):
@@ -28,6 +30,7 @@ $root = $PSScriptRoot
 if (-not $root) { $root = "C:\Steambirds" }
 $serverFolder      = Join-Path $root "Server"
 $pluginFolder      = Join-Path $root "QuieterPlugin"
+$gameFilesFolder   = Join-Path $root "GameFiles"
 $launcherFolder    = Join-Path $root "Launcher"
 $buildFolder       = Join-Path $launcherFolder "build"
 $distFolder        = Join-Path $launcherFolder "dist"
@@ -413,6 +416,7 @@ if (-not (Test-Path -LiteralPath (Join-Path $launcherFolder "SteambirdsLauncher.
 ResolveCopies $serverFolder
 ResolveCopies $pluginFolder
 ResolveCopies $launcherFolder
+ResolveCopies $gameFilesFolder
 ResolveSameFileInTwoFolders $serverFolder
 ResolveSameFileInTwoFolders $launcherFolder
 
@@ -449,6 +453,20 @@ if ($exitCode -ne 0) { Fail "the launcher build failed (look for the lines with 
 $launcherExe = Join-Path $launcherOutput "SteambirdsLauncher.exe"
 if (-not (Test-Path -LiteralPath $launcherExe)) { Fail "the launcher publish did not create $launcherExe" }
 
+# ---------------------------------------------------------------- game files tool (optional: the launcher runs without it)
+$gameFilesExe = $null
+if (Test-Path -LiteralPath (Join-Path $gameFilesFolder "SteambirdsGameFiles.csproj")) {
+    $gameFilesOutput = Join-Path $buildFolder "gamefiles"
+    if (Test-Path -LiteralPath $gameFilesOutput) { Remove-Item -LiteralPath $gameFilesOutput -Recurse -Force }
+    $exitCode = RunDotnet "Game files tool (SteambirdsGameFiles)" @(
+        "publish", (Join-Path $gameFilesFolder "SteambirdsGameFiles.csproj"),
+        "-c", "Release", "-r", "win-x64", "--self-contained", "true",
+        "-p:PublishSingleFile=true", "-p:IncludeNativeLibrariesForSelfExtract=true", "-p:EnableCompressionInSingleFile=true",
+        "-p:DebugType=none", "-o", $gameFilesOutput)
+    if ($exitCode -ne 0) { Say "WARNING: the game files tool did not build; dist keeps the previous SteambirdsGameFiles.exe, if there is one." Yellow }
+    else { $gameFilesExe = Join-Path $gameFilesOutput "SteambirdsGameFiles.exe" }
+}
+
 # ---------------------------------------------------------------- assemble the dist folder
 Say ""
 Say "=== Assembling $distFolder ===" Cyan
@@ -459,6 +477,10 @@ New-Item -ItemType Directory -Force -Path (Join-Path $distFolder "plugin") | Out
 Copy-Item -LiteralPath $launcherExe -Destination $distFolder -Force
 Copy-Item -LiteralPath $serverExe -Destination $distServerFolder -Force
 Say "  SteambirdsLauncher.exe and server\SteambirdsServer.exe copied"
+if ($gameFilesExe -and (Test-Path -LiteralPath $gameFilesExe)) {
+    Copy-Item -LiteralPath $gameFilesExe -Destination $distFolder -Force
+    Say "  SteambirdsGameFiles.exe copied"
+}
 
 if (Test-Path -LiteralPath $pluginDll) {
     Copy-Item -LiteralPath $pluginDll -Destination (Join-Path $distFolder "plugin") -Force

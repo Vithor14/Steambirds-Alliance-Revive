@@ -20,6 +20,15 @@
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>$(GameDir)\Steambirds_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
+    <!-- Export mode (GameFilesExport.cs): Texture2D.EncodeToPNG and AudioListener. -->
+    <Reference Include="UnityEngine.ImageConversionModule">
+      <HintPath>$(GameDir)\Steambirds_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AudioModule">
+      <HintPath>$(GameDir)\Steambirds_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="Assembly-CSharp-firstpass">
       <HintPath>$(GameDir)\Steambirds_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>

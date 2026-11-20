@@ -17,7 +17,10 @@ using Lidgren.Network;
 //
 // Players are grouped in "rooms": everybody in the Nexus is in the room "nexus", and everybody in the same dungeon instance
 // (DungeonServer.RoomKey) is in the room of that instance. The tutorial has no room: one private world per player.
-// Not relayed yet: skill effects of other players (TriggerOtherPlayerSkill) and clouds.
+// The shot time of GunFire is the shooter's own clock (Time.fixedTime). The observers compare it with the server clock, so
+// the relay converts it with the offset the shooter reports in every input message (ClockSample).
+// Skill clouds of a player (poison, heal, damage blast...) are created for every member of the room by the Skills module
+// (PlayerRelay.Observers); TriggerOtherPlayerSkill is not relayed yet.
 public static class PlayerRelay
 {
     public const string NexusRoom = "nexus";
@@ -36,6 +39,12 @@ public static class PlayerRelay
     private const uint FieldRotation = 4u;
     private const uint FieldHealth = 8u;
     private const uint FieldAim = 64u;
+    private const uint FieldState = 128u;
+    private const uint FieldName = 1024u;                   // the name plate text of the plane
+    private const uint FieldFlags = 2048u;
+    private const uint FieldGuns = 4096u;                   // gun signal (muzzle flash and recoil of the remote plane)
+    private const uint FieldEffect1 = 8192u;
+    private const uint FieldEffect2 = 16384u;
 
     public const byte ReasonDestroyed = 2;                 // KillReason.Destroyed
     public const byte ReasonDisconnected = 12;             // KillReason.Disconnected
@@ -66,6 +75,10 @@ public static class PlayerRelay
         public float X;
         public float Y;
         public float Rotation;
+
+        // Server clock minus the shooter's own game clock (clientChosenServerTime - clientFixedTime), from the input messages.
+        public double ClockOffset;
+        public bool HasClock;
 
         // Owners whose current plane this member already received (so updates are not sent for units it does not know).
         public readonly HashSet<long> Seen = new HashSet<long>();
@@ -191,7 +204,9 @@ public static class PlayerRelay
             }
             if (fields.Has(FieldRotation)) owner.Rotation = fields.Rotation;
 
-            uint mask = fields.Mask & (FieldPosition | FieldVelocity | FieldRotation | FieldHealth | FieldAim);
+            uint mask = fields.Mask & (FieldPosition | FieldVelocity | FieldRotation | FieldHealth | FieldAim | FieldState |
+                FieldName | FieldFlags | FieldGuns | FieldEffect1 | FieldEffect2);
+            if ((mask & FieldGuns) != 0 && fields.Guns == null) mask &= ~FieldGuns;
             if (mask == 0) return;
 
             foreach (Member observer in members.Values)
@@ -204,7 +219,7 @@ public static class PlayerRelay
                 m.WriteVariableInt32(owner.RelayId);
                 m.Write((byte)0);                              // no own time
                 m.WriteVariableUInt32(mask);
-                // Order of FieldUpdateSerializer: position, velocity, rotation, aim, state, health.
+                // Order of FieldUpdateSerializer: position, velocity, rotation, aim, state, health, ..., name, flags, guns, effects.
                 if ((mask & FieldPosition) != 0)
                 {
                     WriteScaled(m, fields.X, 1024f);
@@ -217,10 +232,36 @@ public static class PlayerRelay
                 }
                 if ((mask & FieldRotation) != 0) WriteScaled(m, fields.Rotation, 32f);
                 if ((mask & FieldAim) != 0) WriteScaled(m, fields.Aim, 32f);
+                if ((mask & FieldState) != 0) m.Write((byte)fields.State);
                 if ((mask & FieldHealth) != 0) WriteScaled(m, fields.Health, 512f);
+                if ((mask & FieldName) != 0) m.Write(owner.Name);              // always the account name, never an empty label
+                if ((mask & FieldFlags) != 0) m.WriteVariableUInt32(fields.Flags);
+                if ((mask & FieldGuns) != 0)
+                {
+                    m.WriteVariableInt32(fields.Guns!.Length);
+                    m.Write(fields.Guns);
+                }
+                if ((mask & FieldEffect1) != 0) m.Write(fields.Effect1);
+                if ((mask & FieldEffect2) != 0) m.Write(fields.Effect2);
                 m.Write((float)now);                           // batch time
                 observer.Server.SendMessage(m, observer.Connection, NetDeliveryMethod.ReliableOrdered, 0);
             }
+        }
+    }
+
+    // ClientChosenServerTime - ClientFixedTime of an input message: the offset between the player's clock and the server clock.
+    public static void ClockSample(long peer, float clientFixedTime, float clientChosenServerTime, Action<string, string> log)
+    {
+        if (!float.IsFinite(clientFixedTime) || !float.IsFinite(clientChosenServerTime)) return;
+        lock (Gate)
+        {
+            if (!members.TryGetValue(peer, out Member? member)) return;
+            bool first = !member.HasClock;
+            member.ClockOffset = (double)clientChosenServerTime - clientFixedTime;
+            member.HasClock = true;
+            if (first)
+                log("RELAY", "clock of '" + member.Name + "': server time = player time + " + member.ClockOffset.ToString("0.###",
+                    System.Globalization.CultureInfo.InvariantCulture) + " s");
         }
     }
 
@@ -231,6 +272,9 @@ public static class PlayerRelay
         {
             lastNow = now;
             if (!members.TryGetValue(peer, out Member? owner) || owner.RelayId == 0 || !shot.IsPlayer) return;
+
+            // The shot time is the shooter's clock; the observers wait for their server clock to reach it.
+            float shotTime = owner.HasClock ? (float)(shot.Time + owner.ClockOffset) : (float)now;
 
             // A target that is a plane of another client does not mean the same unit for the observer: no homing then.
             int target = shot.Target >= PlaneSpawn.PlayerPlaneShortId && shot.Target <= PlaneSpawn.LastPlayerPlaneShortId ? 0 : shot.Target;
@@ -244,7 +288,7 @@ public static class PlayerRelay
                 m.Write(MsgGunFire);
                 m.Write((byte)((shot.Seed & 0x1F) | (target != 0 ? 64 : 0) | 128));
                 m.WriteVariableInt32(owner.RelayId);
-                m.Write(shot.Time);
+                m.Write(shotTime);
                 WriteScaled(m, shot.X, 64f);
                 WriteScaled(m, shot.Y, 64f);
                 WriteScaled(m, shot.Rotation, 256f);
@@ -307,6 +351,25 @@ public static class PlayerRelay
         }
     }
 
+    // The other players of the room that already see the plane of this connection, with the id of that plane for them.
+    // Used for things the owner's plane creates in the world (skill clouds): the others need them too.
+    public static List<(NetConnection Connection, int OwnerId)> Observers(NetConnection? owner)
+    {
+        var result = new List<(NetConnection, int)>();
+        if (owner == null) return result;
+        lock (Gate)
+        {
+            if (!members.TryGetValue(owner.RemoteUniqueIdentifier, out Member? member) || member.RelayId == 0) return result;
+            foreach (Member other in members.Values)
+            {
+                if (other == member || other.Room != member.Room || !other.Seen.Contains(member.Peer)) continue;
+                if (other.Connection.Status != NetConnectionStatus.Connected) continue;
+                result.Add((other.Connection, member.RelayId));
+            }
+        }
+        return result;
+    }
+
     // ------------------------------------------------------------------ data of other players
 
     // ServerRequestRemotePlayerData for ANOTHER account: answers when that account is online on this server.
@@ -360,12 +423,13 @@ public static class PlayerRelay
         m.Write(owner.Peer);                                    // authority = the owner, not the observer
         m.WriteVariableInt32(options.LengthBytes + 1);          // unitOptions (bytes + 1)
         m.Write(options.Data, 0, options.LengthBytes);          // never m.Write(options): loose bits would shift the rest
-        m.WriteVariableUInt32(FieldPosition | FieldVelocity | FieldRotation);
+        m.WriteVariableUInt32(FieldPosition | FieldVelocity | FieldRotation | FieldName);
         WriteScaled(m, owner.X, 1024f);
         WriteScaled(m, owner.Y, 1024f);
         WriteScaled(m, 0f, 1024f);
         WriteScaled(m, 0f, 1024f);
         WriteScaled(m, owner.Rotation, 32f);
+        m.Write(owner.Name);                                    // name plate: the client builds it from this field
         observer.Server.SendMessage(m, observer.Connection, NetDeliveryMethod.ReliableOrdered, 0);
         observer.Seen.Add(owner.Peer);
     }

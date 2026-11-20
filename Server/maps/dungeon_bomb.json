@@ -83,11 +83,11 @@
         "----------------####....................####----------------",
         "----------------####....................####----------------",
         "----------------####....................####----------------",
-        "----------------####....................####----------------",
-        "------------################....################------------",
-        "------------################....################------------",
-        "------------################....################------------",
-        "------------################....################------------",
+        "----------------####....####............####----------------",
+        "------------############----#...################------------",
+        "------------############----#...################------------",
+        "------------############----#...################------------",
+        "------------############----#...################------------",
         "############################....################------------",
         "############################....################------------",
         "##################........................######------------",
@@ -199,10 +199,7 @@
   "decor": [],
   "buildings": [],
   "spawn": {"u": 6.0, "v": -233.3, "rot": 315},
-  "points": {
-    "boss": {"u": 6.0, "v": 193.9, "rot": 135},
-    "portal": {"u": 6.0, "v": 169.6, "rot": 0, "note": "exit carrier (appears when the boss dies)"}
-  },
+  "points": {"boss": {"u": 6.0, "v": 193.9, "rot": 135}, "portal": {"u": 6.0, "v": 169.6, "rot": 0, "note": "exit carrier (appears when the boss dies)"}},
   "groups": {},
   "areas": {
     "entrance": {"minU": -12.6, "maxU": 24.6, "minV": -240.6, "maxV": -209.4},
@@ -246,7 +243,7 @@
       "sj": 21,
       "siFrom": 0,
       "siTo": 3,
-      "damageable": false,
+      "damageable": true,
       "opensWhen": "cleared:hangar",
       "room": "overseer_room"
     },
@@ -256,7 +253,7 @@
       "sj": 44,
       "siFrom": 0,
       "siTo": 3,
-      "damageable": false,
+      "damageable": true,
       "opensWhen": "cleared:overseer_room",
       "room": "boss_room"
     },
@@ -266,14 +263,30 @@
       "sj": 74,
       "siFrom": 0,
       "siTo": 3,
-      "damageable": false,
+      "damageable": true,
       "opensWhen": "death:bombboss",
       "room": "vault"
     }
   ],
   "sideGates": [
-    {"name": "depot treasure wall", "type": "bombdungeondestroyablewall", "si": 16, "sjFrom": -35, "sjTo": -32, "damageable": true, "room": "depot_treasure"},
-    {"name": "hangar treasure wall", "type": "bombdungeondestroyablewallstrong", "si": -12, "sjFrom": 8, "sjTo": 11, "damageable": true, "room": "hangar_treasure"}
+    {
+      "name": "depot treasure wall",
+      "type": "bombdungeondestroyablewall",
+      "si": 16,
+      "sjFrom": -35,
+      "sjTo": -32,
+      "damageable": true,
+      "room": "depot_treasure"
+    },
+    {
+      "name": "hangar treasure wall",
+      "type": "bombdungeondestroyablewallstrong",
+      "si": -12,
+      "sjFrom": 8,
+      "sjTo": 11,
+      "damageable": true,
+      "room": "hangar_treasure"
+    }
   ],
   "signs": [
     {"key": "bombdungeonsign1", "u": 6.0, "v": -222.2, "radius": 14, "rot": 0},
@@ -411,19 +424,9 @@
       "enemies": [
         {
           "type": "bombfactoryworker",
-          "pos": [
-            {"u": -4.5, "v": -154.1, "rot": 135},
-            {"u": 7.4, "v": -170.4, "rot": 135},
-            {"u": -0.9, "v": -148.9, "rot": 135}
-          ]
+          "pos": [{"u": -4.5, "v": -154.1, "rot": 135}, {"u": 7.4, "v": -170.4, "rot": 135}, {"u": -0.9, "v": -148.9, "rot": 135}]
         },
-        {
-          "type": "bombturret",
-          "pos": [
-            {"u": -21.1, "v": -168.8, "rot": 45},
-            {"u": -21.1, "v": -148.3, "rot": 45}
-          ]
-        },
+        {"type": "bombturret", "pos": [{"u": -21.1, "v": -168.8, "rot": 45}, {"u": -21.1, "v": -148.3, "rot": 45}]},
         {
           "type": "bombbarrel",
           "pos": [
@@ -435,13 +438,7 @@
             {"u": 26.2, "v": -155.2, "rot": 135}
           ]
         },
-        {
-          "type": "bombbarrel",
-          "pos": [
-            {"u": -5.5, "v": -146.0, "rot": 135},
-            {"u": 17.5, "v": -146.0, "rot": 135}
-          ]
-        }
+        {"type": "bombbarrel", "pos": [{"u": -5.5, "v": -146.0, "rot": 135}, {"u": 17.5, "v": -146.0, "rot": 135}]}
       ]
     },
     {
@@ -450,29 +447,12 @@
       "wakes": "onEnter",
       "line": "depot",
       "enemies": [
-        {
-          "type": "homingbomblayer",
-          "pos": [
-            {"u": 0.7, "v": -89.1, "rot": 135},
-            {"u": 35.3, "v": -89.1, "rot": 135}
-          ]
-        },
+        {"type": "homingbomblayer", "pos": [{"u": 0.7, "v": -89.1, "rot": 135}, {"u": 35.3, "v": -89.1, "rot": 135}]},
         {
           "type": "homingbomb",
-          "pos": [
-            {"u": 24.2, "v": -100.5, "rot": 135},
-            {"u": 2.2, "v": -94.0, "rot": 135},
-            {"u": 7.9, "v": -91.8, "rot": 135},
-            {"u": 26.9, "v": -100.3, "rot": 135}
-          ]
+          "pos": [{"u": 24.2, "v": -100.5, "rot": 135}, {"u": 2.2, "v": -94.0, "rot": 135}, {"u": 7.9, "v": -91.8, "rot": 135}, {"u": 26.9, "v": -100.3, "rot": 135}]
         },
-        {
-          "type": "bombturret",
-          "pos": [
-            {"u": 39.4, "v": -106.9, "rot": 225},
-            {"u": 39.4, "v": -91.1, "rot": 225}
-          ]
-        }
+        {"type": "bombturret", "pos": [{"u": 39.4, "v": -106.9, "rot": 225}, {"u": 39.4, "v": -91.1, "rot": 225}]}
       ]
     },
     {
@@ -481,28 +461,9 @@
       "wakes": "onEnter",
       "line": "barracks",
       "enemies": [
-        {
-          "type": "altar",
-          "pos": [
-            {"u": -20.2, "v": -20.4, "rot": 135},
-            {"u": 20.2, "v": -20.4, "rot": 135}
-          ]
-        },
-        {
-          "type": "bombguard",
-          "pos": [
-            {"u": -21.9, "v": -35.0, "rot": 135},
-            {"u": 0.0, "v": -35.0, "rot": 135},
-            {"u": 21.9, "v": -35.0, "rot": 135}
-          ]
-        },
-        {
-          "type": "flakblimpexploder",
-          "pos": [
-            {"u": -17.3, "v": -43.0, "rot": 135},
-            {"u": 17.3, "v": -43.0, "rot": 135}
-          ]
-        }
+        {"type": "altar", "pos": [{"u": -20.2, "v": -20.4, "rot": 135}, {"u": 20.2, "v": -20.4, "rot": 135}]},
+        {"type": "bombguard", "pos": [{"u": -21.9, "v": -35.0, "rot": 135}, {"u": 0.0, "v": -35.0, "rot": 135}, {"u": 21.9, "v": -35.0, "rot": 135}]},
+        {"type": "flakblimpexploder", "pos": [{"u": -17.3, "v": -43.0, "rot": 135}, {"u": 17.3, "v": -43.0, "rot": 135}]}
       ]
     },
     {
@@ -511,35 +472,10 @@
       "wakes": "onEnter",
       "line": "hangar",
       "enemies": [
-        {
-          "type": "flakblimp",
-          "pos": [
-            {"u": -20.4, "v": 41.4, "rot": 135},
-            {"u": 6.0, "v": 41.4, "rot": 135},
-            {"u": 32.4, "v": 41.4, "rot": 135}
-          ]
-        },
-        {
-          "type": "flakblimpexploderstrong",
-          "pos": [
-            {"u": -7.9, "v": 30.0, "rot": 135},
-            {"u": 19.9, "v": 30.0, "rot": 135}
-          ]
-        },
-        {
-          "type": "bomberjet",
-          "pos": [
-            {"u": -18.4, "v": 48.2, "rot": 135},
-            {"u": 30.4, "v": 48.2, "rot": 135}
-          ]
-        },
-        {
-          "type": "bomberjetexploder",
-          "pos": [
-            {"u": -26.7, "v": 30.0, "rot": 45},
-            {"u": 38.7, "v": 30.0, "rot": 225}
-          ]
-        }
+        {"type": "flakblimp", "pos": [{"u": -20.4, "v": 41.4, "rot": 135}, {"u": 6.0, "v": 41.4, "rot": 135}, {"u": 32.4, "v": 41.4, "rot": 135}]},
+        {"type": "flakblimpexploderstrong", "pos": [{"u": -7.9, "v": 30.0, "rot": 135}, {"u": 19.9, "v": 30.0, "rot": 135}]},
+        {"type": "bomberjet", "pos": [{"u": -18.4, "v": 48.2, "rot": 135}, {"u": 30.4, "v": 48.2, "rot": 135}]},
+        {"type": "bomberjetexploder", "pos": [{"u": -26.7, "v": 30.0, "rot": 45}, {"u": 38.7, "v": 30.0, "rot": 225}]}
       ]
     },
     {
@@ -550,24 +486,11 @@
       "enemies": [
         {
           "type": "fatblimp",
-          "pos": [
-            {"u": 6.0, "v": 102.8, "rot": 135}
-          ],
+          "pos": [{"u": 6.0, "v": 102.8, "rot": 135}],
           "note": "Overseer Charles (miniboss). No guns in the game: the attack came from the bombs and the helpers."
         },
-        {
-          "type": "flakblimpbig",
-          "pos": [
-            {"u": -11.3, "v": 107.4, "rot": 135},
-            {"u": 23.3, "v": 107.4, "rot": 135}
-          ]
-        },
-        {
-          "type": "homingbomblayercenter",
-          "pos": [
-            {"u": 6.0, "v": 91.4, "rot": 135}
-          ]
-        }
+        {"type": "flakblimpbig", "pos": [{"u": -11.3, "v": 107.4, "rot": 135}, {"u": 23.3, "v": 107.4, "rot": 135}]},
+        {"type": "homingbomblayercenter", "pos": [{"u": 6.0, "v": 91.4, "rot": 135}]}
       ],
       "miniboss": true
     },
@@ -577,20 +500,10 @@
       "wakes": "onEnter",
       "line": "boss_room",
       "enemies": [
-        {
-          "type": "bombboss",
-          "pos": [
-            {"u": 6.0, "v": 193.9, "rot": 135}
-          ]
-        },
+        {"type": "bombboss", "pos": [{"u": 6.0, "v": 193.9, "rot": 135}]},
         {
           "type": "bombbarrel",
-          "pos": [
-            {"u": -18.4, "v": 155.6, "rot": 135},
-            {"u": 30.4, "v": 155.6, "rot": 135},
-            {"u": -18.4, "v": 204.4, "rot": 135},
-            {"u": 30.4, "v": 204.4, "rot": 135}
-          ]
+          "pos": [{"u": -18.4, "v": 155.6, "rot": 135}, {"u": 30.4, "v": 155.6, "rot": 135}, {"u": -18.4, "v": 204.4, "rot": 135}, {"u": 30.4, "v": 204.4, "rot": 135}]
         }
       ],
       "boss": true,
@@ -602,12 +515,7 @@
       "wakes": "script",
       "line": "vault",
       "enemies": [
-        {
-          "type": "bombdungeontreasureBIG",
-          "pos": [
-            {"u": 6.0, "v": 242.2, "rot": 135}
-          ]
-        }
+        {"type": "bombdungeontreasureBIG", "pos": [{"u": 6.0, "v": 242.2, "rot": 135}]}
       ],
       "note": "Big Treasure (DPS chest): breaking the chest in time swaps it for bombdungeontreasureBIG_reward; otherwise the _dud stays."
     },
@@ -617,12 +525,7 @@
       "wakes": "onEnter",
       "line": "depot_treasure",
       "enemies": [
-        {
-          "type": "bombdungeontreasure",
-          "pos": [
-            {"u": 69.0, "v": -96.2, "rot": 135}
-          ]
-        }
+        {"type": "bombdungeontreasure", "pos": [{"u": 69.0, "v": -96.2, "rot": 135}]}
       ]
     },
     {
@@ -631,12 +534,7 @@
       "wakes": "onEnter",
       "line": "hangar_treasure",
       "enemies": [
-        {
-          "type": "bombdungeontreasure",
-          "pos": [
-            {"u": -57.0, "v": 32.8, "rot": 135}
-          ]
-        }
+        {"type": "bombdungeontreasure", "pos": [{"u": -57.0, "v": 32.8, "rot": 135}]}
       ]
     }
   ]

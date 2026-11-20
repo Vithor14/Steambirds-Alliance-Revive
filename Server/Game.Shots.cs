@@ -241,16 +241,62 @@ public static partial class Game
         float start = (float)now;
         float duration = cloud.Duration > 0f ? cloud.Duration : 5f;
 
+        // The cloud goes to the owner and to the other players of the room that see the owner's plane. The owner id inside the
+        // cloud options is the plane id of the RECEIVER (own shortId for the owner, relay id for the others).
+        SendCloudSpawn(server, connection, shortId, ownerShortId, cloud, start, x, y, rotation);
+        pendingDeaths.Add(new PendingDeath
+        {
+            When = now + duration,
+            Server = server,
+            Connection = connection,
+            ShortId = shortId,
+            X = x,
+            Y = y,
+            Name = name
+        });
+        foreach (var (observer, relayOwnerId) in PlayerRelay.Observers(connection))
+        {
+            SendCloudSpawn(server, observer, shortId, relayOwnerId, cloud, start, x, y, rotation);
+            pendingDeaths.Add(new PendingDeath
+            {
+                When = now + duration,
+                Server = server,
+                Connection = observer,
+                ShortId = shortId,
+                X = x,
+                Y = y,
+                Name = name
+            });
+        }
+
+        j.Units[shortId] = new Unit { ShortId = shortId, Prefab = cloud.PrefabIndex, X = x, Y = y, Rotation = rotation };
+
+        // Damage clouds/blasts: damage boost for the allies inside (Skills\DamageBoost.cs).
+        DamageBoost.CloudCreated(server, connection, j.Peer, j.Role, ownerShortId, name, x, y, cloud.FinalRadius, duration, now, log);
+
+        // Poison clouds hurt the server enemies (Skills\CloudDamage.cs): on the client the cloud never reaches them.
+        CloudDamage.CloudCreated(connection, name, x, y, cloud.FinalRadius, duration, now, log);
+
+        log("SKILL", j.Role + " cloud skill '" + name + "' used by the unit " + ownerShortId + where +
+            " -> created the unit " + shortId + " (prefab " + cloud.PrefabIndex + " " + cloud.Prefab +
+            ", radius " + CopperReader.Num(cloud.FinalRadius) + ", lasts " + CopperReader.Num(duration) + "s" +
+            (cloud.AttachedToOwner ? ", attached to the owner" : "") + ")");
+    }
+
+    // SpawnUnitsBatch of a cloud for one receiver. ownerId = the owner's plane as the receiver knows it.
+    private static void SendCloudSpawn(NetServer server, NetConnection target, int shortId, int ownerId, Cloud cloud, float start,
+        float x, float y, float rotation)
+    {
         // CloudScript.CreateEntOptions: owner, cloud hash, start, radius modifier,
         // duration modifier and a byte that says whether it follows a unit.
         NetBuffer options = server.CreateMessage();
-        options.WriteVariableInt32(ownerShortId);
+        options.WriteVariableInt32(ownerId);
         options.Write(cloud.Hash);
         options.Write(start);
         options.Write(1f);
         options.Write(1f);
         options.Write((byte)(cloud.AttachedToOwner ? 1 : 0));
-        if (cloud.AttachedToOwner) options.WriteVariableInt32(ownerShortId);
+        if (cloud.AttachedToOwner) options.WriteVariableInt32(ownerId);
 
         // Same order as PlaneSpawn.WritePlaneSpawn (EntitySpawnStructSerializer.Write).
         NetOutgoingMessage spawn = server.CreateMessage();
@@ -266,34 +312,13 @@ public static partial class Game
         spawn.Write((short)0);                              // artReplacement
         spawn.Write(server.UniqueIdentifier);               // authority = server
         spawn.WriteVariableInt32(options.LengthBytes + 1);   // unitOptions: bytes + 1
-        spawn.Write(options);
+        spawn.Write(options.Data, 0, options.LengthBytes);   // never spawn.Write(options): loose bits would shift the rest
         spawn.WriteVariableUInt32(1u | 4u | 32768u);        // FieldUpdate: position, rotation and scale
         WriteScaled(spawn, x, 1024f);
         WriteScaled(spawn, y, 1024f);
         WriteScaled(spawn, rotation, 32f);
         WriteScaled(spawn, cloud.FinalRadius, 32f);
-        server.SendMessage(spawn, connection, NetDeliveryMethod.ReliableOrdered, 0);
-
-        pendingDeaths.Add(new PendingDeath
-        {
-            When = now + duration,
-            Server = server,
-            Connection = connection,
-            ShortId = shortId,
-            X = x,
-            Y = y,
-            Name = name
-        });
-
-        j.Units[shortId] = new Unit { ShortId = shortId, Prefab = cloud.PrefabIndex, X = x, Y = y, Rotation = rotation };
-
-        // Damage clouds/blasts: damage boost for the allies inside (Skills\DamageBoost.cs).
-        DamageBoost.CloudCreated(server, connection, j.Peer, j.Role, ownerShortId, name, x, y, cloud.FinalRadius, duration, now, log);
-
-        log("SKILL", j.Role + " cloud skill '" + name + "' used by the unit " + ownerShortId + where +
-            " -> created the unit " + shortId + " (prefab " + cloud.PrefabIndex + " " + cloud.Prefab +
-            ", radius " + CopperReader.Num(cloud.FinalRadius) + ", lasts " + CopperReader.Num(duration) + "s" +
-            (cloud.AttachedToOwner ? ", attached to the owner" : "") + ")");
+        server.SendMessage(spawn, target, NetDeliveryMethod.ReliableOrdered, 0);
     }
 
     // The client's ScaledHelper.WriteScaled: variable integer of floor(value * scale).

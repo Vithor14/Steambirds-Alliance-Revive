@@ -453,6 +453,7 @@ public static partial class Game
 
             players.Remove(peer);
             DamageBoost.Forget(peer);
+            CloudDamage.Forget(connection);
             pendingDeaths.RemoveAll(p => p.Connection == connection);
             log("SUMMARY", j.Role + " session ended. " + SummaryText(j));
         }
