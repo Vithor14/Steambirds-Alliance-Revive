@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="Steambirds Alliance Revive - emblem">
+<title>Steambirds Alliance Revive - emblem</title>
+<defs>
+<path id="p1" fill-rule="evenodd" d="M59.5,163.3 L210.2,230.4 L169.5,321.7 L18.8,254.6 Z"/>
+<path id="p2" fill-rule="evenodd" d="M964.5,163.3 L813.8,230.4 L854.5,321.7 L1005.2,254.6 Z"/>
+<path id="p3" fill-rule="evenodd" d="M220.1,227.9 L357.1,288.9 L311.3,391.7 L174.3,330.7 Z"/>
+<path id="p4" fill-rule="evenodd" d="M803.9,227.9 L666.9,288.9 L712.7,391.7 L849.7,330.7 Z"/>
+<path id="p5" fill-rule="evenodd" d="M42.0,310.0 L412.0,399.0 L412.0,440.0 L234.5,420.0 L54.5,376.0 Z"/>
+<path id="p6" fill-rule="evenodd" d="M982.0,310.0 L612.0,399.0 L612.0,440.0 L789.5,420.0 L969.5,376.0 Z"/>
+<path id="p7" fill-rule="evenodd" d="M114.5,420.0 L272.0,436.0 L262.0,490.0 L131.0,480.0 Z"/>
+<path id="p8" fill-rule="evenodd" d="M909.5,420.0 L752.0,436.0 L762.0,490.0 L893.0,480.0 Z"/>
+<path id="p9" fill-rule="evenodd" d="M342.0,278.0 L454.0,271.0 L454.0,430.0 L307.0,410.0 Z"/>
+<path id="p10" fill-rule="evenodd" d="M682.0,278.0 L570.0,271.0 L570.0,430.0 L717.0,410.0 Z"/>
+<mask id="m11" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024"><rect width="1024" height="1024" fill="#fff"/><path d="M87.0,308.0 L99.0,311.0 L87.0,395.0 L75.0,392.0 Z M118.0,316.0 L125.0,318.0 L115.0,395.0 L108.0,393.0 Z M937.0,308.0 L925.0,311.0 L937.0,395.0 L949.0,392.0 Z M906.0,316.0 L899.0,318.0 L909.0,395.0 L916.0,393.0 Z" fill="#000"/></mask>
+<path id="p12" fill-rule="evenodd" d="M87.4,207.5 L76.5,215.4 L64.2,209.9 L62.7,196.5 L73.7,188.5 L86.0,194.0 Z"/>
+<path id="p13" fill-rule="evenodd" d="M118.0,221.1 L107.1,229.0 L94.8,223.5 L93.4,210.1 L104.3,202.2 L116.6,207.7 Z"/>
+<path id="p14" fill-rule="evenodd" d="M148.6,234.7 L137.7,242.6 L125.4,237.1 L124.0,223.7 L134.9,215.8 L147.2,221.3 Z"/>
+<path id="p15" fill-rule="evenodd" d="M86.2,250.7 L75.3,258.6 L63.0,253.1 L61.6,239.7 L72.5,231.8 L84.8,237.3 Z"/>
+<path id="p16" fill-rule="evenodd" d="M116.8,264.3 L105.9,272.3 L93.6,266.8 L92.2,253.3 L103.1,245.4 L115.4,250.9 Z"/>
+<path id="p17" fill-rule="evenodd" d="M147.4,278.0 L136.5,285.9 L124.2,280.4 L122.8,267.0 L133.7,259.0 L146.0,264.5 Z"/>
+<path id="p18" fill-rule="evenodd" d="M917.6,211.5 L937.9,257.2 L886.7,252.7 Z"/>
+<path id="p19" fill-rule="evenodd" d="M841.9,252.9 L847.5,257.0 L853.9,254.2 L854.7,247.2 L849.0,243.1 L842.6,245.9 Z"/>
+<path id="p20" fill-rule="evenodd" d="M362.0,660.0 L441.0,660.0 L437.0,757.5 L368.0,702.5 Z"/>
+<path id="p21" fill-rule="evenodd" d="M662.0,660.0 L583.0,660.0 L587.0,757.5 L656.0,702.5 Z"/>
+<path id="p22" fill-rule="evenodd" d="M452.0,660.0 L572.0,660.0 L578.0,767.5 L512.0,852.5 L446.0,767.5 Z"/>
+<path id="p23" fill-rule="evenodd" d="M487.5,755.0 L484.8,759.8 L479.2,759.8 L476.5,755.0 L479.2,750.2 L484.8,750.2 Z"/>
+<path id="p24" fill-rule="evenodd" d="M547.5,755.0 L544.8,759.8 L539.2,759.8 L536.5,755.0 L539.2,750.2 L544.8,750.2 Z"/>
+<path id="p25" fill-rule="evenodd" d="M412.0,195.0 L612.0,195.0 L643.0,235.0 L568.0,262.5 L592.0,395.0 L432.0,395.0 L456.0,262.5 L381.0,235.0 Z"/>
+<path id="p26" fill-rule="evenodd" d="M499.0,208.0 L535.0,208.0 L529.0,222.0 L505.0,222.0 Z"/>
+<path id="p27" fill-rule="evenodd" d="M453.5,378.0 L450.8,382.8 L445.2,382.8 L442.5,378.0 L445.2,373.2 L450.8,373.2 Z"/>
+<path id="p28" fill-rule="evenodd" d="M581.5,378.0 L578.8,382.8 L573.2,382.8 L570.5,378.0 L573.2,373.2 L578.8,373.2 Z"/>
+<path id="p29" fill-rule="evenodd" d="M252.0,405.0 L772.0,405.0 L747.0,530.0 L697.0,662.5 L327.0,662.5 L277.0,530.0 Z"/>
+<path id="p30" fill-rule="evenodd" d="M452.0,412.5 L624.8,412.5 L572.0,652.5 L399.2,652.5 Z"/>
+<path id="p31" fill-rule="evenodd" d="M452.0,412.5 L576.8,412.5 L607.8,446.1 L592.0,518.1 L562.2,544.5 L572.0,652.5 L509.6,652.5 L503.8,558.9 L482.2,558.9 L461.6,652.5 L399.2,652.5 Z M502.8,465.3 L541.2,465.3 L544.9,470.1 L538.1,501.3 L532.2,506.1 L493.8,506.1 Z"/>
+</defs>
+<g mask="url(#m11)">
+<use href="#p1" fill="#151019"/>
+<use href="#p2" fill="#151019"/>
+<use href="#p3" fill="#151019"/>
+<use href="#p4" fill="#151019"/>
+<use href="#p5" fill="#151019"/>
+<use href="#p6" fill="#151019"/>
+<use href="#p7" fill="#151019"/>
+<use href="#p8" fill="#151019"/>
+<use href="#p9" fill="#151019"/>
+<use href="#p10" fill="#151019"/>
+</g>
+<use href="#p12" fill="#F2622A"/>
+<use href="#p13" fill="#F2622A"/>
+<use href="#p14" fill="#F2622A"/>
+<use href="#p15" fill="#F2622A"/>
+<use href="#p16" fill="#F2622A"/>
+<use href="#p17" fill="#F2622A"/>
+<use href="#p18" fill="#F2622A"/>
+<use href="#p19" fill="#F2622A"/>
+<use href="#p20" fill="#151019" stroke="#151019" stroke-width="13.0" stroke-linejoin="round"/>
+<use href="#p20" fill="#F8BA24"/>
+<use href="#p21" fill="#151019" stroke="#151019" stroke-width="13.0" stroke-linejoin="round"/>
+<use href="#p21" fill="#F8BA24"/>
+<use href="#p22" fill="#151019" stroke="#151019" stroke-width="13.0" stroke-linejoin="round"/>
+<use href="#p22" fill="#F8BA24"/>
+<use href="#p23" fill="#151019"/>
+<use href="#p24" fill="#151019"/>
+<use href="#p25" fill="#151019" stroke="#151019" stroke-width="14.0" stroke-linejoin="round"/>
+<use href="#p25" fill="#F8BA24"/>
+<use href="#p26" fill="#F2622A"/>
+<use href="#p27" fill="#151019"/>
+<use href="#p28" fill="#151019"/>
+<use href="#p29" fill="#151019"/>
+<use href="#p30" fill="#151019" stroke="#151019" stroke-width="10.0" stroke-linejoin="round"/>
+<use href="#p30" fill="#151019"/>
+<use href="#p31" transform="translate(0 13)" fill="#151019" stroke="#151019" stroke-width="14.0" stroke-linejoin="round"/>
+<use href="#p31" transform="translate(0 11)" fill="#151019" stroke="#151019" stroke-width="14.0" stroke-linejoin="round"/>
+<use href="#p31" transform="translate(0 9)" fill="#151019" stroke="#151019" stroke-width="14.0" stroke-linejoin="round"/>
+<use href="#p31" transform="translate(0 7)" fill="#151019" stroke="#151019" stroke-width="14.0" stroke-linejoin="round"/>
+<use href="#p31" transform="translate(0 5)" fill="#151019" stroke="#151019" stroke-width="14.0" stroke-linejoin="round"/>
+<use href="#p31" transform="translate(0 3)" fill="#151019" stroke="#151019" stroke-width="14.0" stroke-linejoin="round"/>
+<use href="#p31" transform="translate(0 1)" fill="#151019" stroke="#151019" stroke-width="14.0" stroke-linejoin="round"/>
+<use href="#p31" fill="#151019" stroke="#151019" stroke-width="14.0" stroke-linejoin="round"/>
+<use href="#p31" fill="#F8BA24"/>
+</svg>
