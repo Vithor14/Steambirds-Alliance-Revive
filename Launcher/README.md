@@ -1,6 +1,6 @@
 # Steambirds Alliance Revive — Launcher
 
-Launcher of the project (Portuguese version: `README.md`), with four tabs:
+Launcher of the project (Portuguese version: `LEIA-ME.md`), with four tabs:
 
 - **Client**: downloads the game with Steam, sets the player name, lists the servers (this PC, the local network and VPNs like Radmin and Hamachi, or a typed IP) and opens the game on the chosen server. Its console shows `BepInEx\LogOutput.log` and the Unity `Player.log` while the game runs.
 - **Server**: hosts the server of this PC (what `Run server.ps1` did) for this PC and for players of other PCs, shows its output in a console and edits its settings, its network (name, ports, who can join) and the accounts of the players.
@@ -17,7 +17,7 @@ In the project folder (`C:\Steambirds`), run **`Build launcher.ps1`** (right cli
 
 1. looks for duplicated `.cs` files (copies like `Name-1.cs`, or the same file in two folders);
 2. builds the server (`Server`), the plugin (`QuieterPlugin`) and the launcher as *self-contained* executables (nobody needs .NET installed);
-3. assembles **`Launcher\dist`**, with the languages of `Launcher\lang` in `dist\lang` and the pictures of the map editor (`Launcher\editor-assets`, made by `tools\editor\build_editor_assets.py` from the extracted game assets, not in git) in `dist\editor-assets`.
+3. assembles **`Launcher\dist`**, with the languages of `Launcher\lang` in `dist\lang` and the pictures of the map editor (`Launcher\editor-assets`, drawn by `SteambirdsGameFiles.exe` from your own copy of the game, not in git) in `dist\editor-assets`.
 
 Then open `Launcher\dist\SteambirdsLauncher.exe`. Run the script again whenever the code of the server, the plugin or the launcher changes. The build log is `Launcher\build\build.log`.
 
@@ -31,12 +31,10 @@ Then open `Launcher\dist\SteambirdsLauncher.exe`. Run the script again whenever 
 | `logs\` | server logs per session, client console logs, `server-report.txt` (report) and launcher errors |
 | `server\` | the server and its data: `maps`, `data`, `loot_tables`, `catalog` and the settings (`progression.json`, `items.json`, `dungeons.json`, `enemies.json`, `network.json`) |
 | `server\accounts\<key>\` | one account per player (`steam_<SteamID>`): `account.json`, `inventory.json`, `acceptances.json` |
-| `server\_backup\` | copies made before files are replaced or accounts are saved, removed or moved |
+| `server\_backup\` | copies made before files are replaced or accounts are changed or removed |
 | `plugin\QuieterPlugin.dll` | the plugin, which *Install plugin* copies to the game's `BepInEx\plugins` |
 
-The old single account (`account.json` in the server folder, from before the accounts per player) goes to the **first player who joins from the server's own PC**, with a copy in `server\_backup\migration-<date>`.
-
-Before sharing the `dist` folder, delete the accounts and logs (`server\accounts`, `server\account.json`, `server\acceptances.json`, `server\inventory.json`, `server\client-uploads`, `server\_backup`, `logs`, `launcher.json`, `lang\*.missing.json`).
+Before sharing the `dist` folder, delete the accounts and logs (`server\accounts`, `server\client-uploads`, `server\_backup`, `logs`, `launcher.json`, `lang\*.missing.json`).
 
 ## Client tab
 

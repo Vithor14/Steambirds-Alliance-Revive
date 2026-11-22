@@ -218,22 +218,22 @@ internal sealed class UnitTypesPage : EditorPage
         yield return new FieldSpec("visualEffect", "Visual effect", FieldKind.Text) { Help = "Name of a statefulEffects of the client." };
 
         yield return FieldSpec.Header("Summons");
-        yield return new FieldSpec("invocacaoPeriodica.tipo", "Summons", FieldKind.EditableChoice) { Choices = Context.TypeNames };
-        yield return new FieldSpec("invocacaoPeriodica.segundos", "Every (s)", FieldKind.OptionalNumber);
-        yield return new FieldSpec("invocacaoPeriodica.quantidade", "Amount each time", FieldKind.OptionalNumber);
-        yield return new FieldSpec("invocacaoPeriodica.maximo", "At most alive", FieldKind.OptionalNumber);
-        yield return new FieldSpec("invocacaoPeriodica.abaixoDeVida", "Only below health (0-1)", FieldKind.OptionalNumber);
-        yield return new FieldSpec("invocacaoPeriodica.contaNaSala", "Summoned units count for the room", FieldKind.Bool) { DefaultBool = true };
+        yield return new FieldSpec("periodicSummon.type", "Summons", FieldKind.EditableChoice) { Choices = Context.TypeNames };
+        yield return new FieldSpec("periodicSummon.seconds", "Every (s)", FieldKind.OptionalNumber);
+        yield return new FieldSpec("periodicSummon.count", "Amount each time", FieldKind.OptionalNumber);
+        yield return new FieldSpec("periodicSummon.max", "At most alive", FieldKind.OptionalNumber);
+        yield return new FieldSpec("periodicSummon.belowHealth", "Only below health (0-1)", FieldKind.OptionalNumber);
+        yield return new FieldSpec("periodicSummon.countsForRoomClear", "Summoned units count for the room", FieldKind.Bool) { DefaultBool = true };
 
         yield return FieldSpec.Header("Damage chest (Big Treasure)");
-        yield return new FieldSpec("bauDeDps.segundos", "Seconds to open it", FieldKind.OptionalNumber);
-        yield return new FieldSpec("bauDeDps.recompensa", "Reward", FieldKind.EditableChoice) { Choices = Context.TypeNames };
-        yield return new FieldSpec("bauDeDps.falha", "If it fails", FieldKind.EditableChoice) { Choices = Context.TypeNames };
+        yield return new FieldSpec("dpsChest.seconds", "Seconds to open it", FieldKind.OptionalNumber);
+        yield return new FieldSpec("dpsChest.reward", "Reward", FieldKind.EditableChoice) { Choices = Context.TypeNames };
+        yield return new FieldSpec("dpsChest.fail", "If it fails", FieldKind.EditableChoice) { Choices = Context.TypeNames };
 
         yield return FieldSpec.Header("Speech (client bark keys)");
-        yield return new FieldSpec("falas.aoAcordar", "When it wakes up", FieldKind.Text);
-        yield return new FieldSpec("falas.fase", "When the phase changes", FieldKind.Text);
-        yield return new FieldSpec("falas.aoMorrer", "When it dies", FieldKind.Text);
+        yield return new FieldSpec("barks.onWake", "When it wakes up", FieldKind.Text);
+        yield return new FieldSpec("barks.phase", "When the phase changes", FieldKind.Text);
+        yield return new FieldSpec("barks.onDeath", "When it dies", FieldKind.Text);
     }
 
     private IEnumerable<FieldSpec> PhaseFields()

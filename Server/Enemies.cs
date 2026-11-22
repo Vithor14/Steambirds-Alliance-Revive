@@ -265,6 +265,17 @@ public static partial class Enemies
         public short EffectId;
         public short BaseEffect;
         public bool EffectChanged;
+
+        // Stun (EMP of the bandit): no flight and no shots until this time (Enemies.Allies.cs).
+        public double StunUntil;
+
+        // Units of the player created by ServerSpawnGreenTeamAlly (turrets, mines): see Enemies.Allies.cs.
+        public int AllyKind;
+        public long OwnerPeer;
+        // Short id of the owner's plane: sent as parentShortId so the client puts the unit in the plane's family
+        // (the engineer's "teleportToTurret" maneuver looks for units of the same family).
+        public int OwnerShortId;
+        public double ExpiresAt;
     }
 
     // A player (one connection) with their enemies. In the tutorial each player has their own instance.

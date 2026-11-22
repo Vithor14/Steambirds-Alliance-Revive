@@ -1,12 +1,12 @@
 # Mapas em arquivo (formato "steambirds-esboco-mapa" v1)
 
-Desde a v5 (14/11/2026) os mapas que o esboço usa ficam em `Server\maps`, um `.json` por mapa. O id do mapa é o nome do arquivo. Objetivo: um editor de mapas no futuro e readicionar dungeons feitas à mão. A documentação para quem edita é o `maps\README.md`, que vai junto com o servidor (e `maps\README-dungeons.md` para o `dungeons.json`).
+Desde a v5 (14/11/2026) os mapas que o esboço usa ficam em `Server\maps`, um `.json` por mapa. O id do mapa é o nome do arquivo. Objetivo: um editor de mapas no futuro e readicionar dungeons feitas à mão. A documentação para quem edita é o `docs/map-format.md`, que vai junto com o servidor (e `maps\README-dungeons.md` para o `dungeons.json`).
 
 | Arquivo | Mapa | Quem usa |
 |---|---|---|
 | `nexus.json` | Rebel City | `NexusEsboco.cs` (chão, enfeites, prédios, nascimento) |
 | `tutorial_walker.json` | Training Grounds | `TutorialEsboco.cs` (o roteiro continua no código e pega os lugares pelo nome) |
-| `dungeon_*.json` (17) | Dungeons da build 190828 recriadas (15/11/2026) | `Dungeons\DungeonServer.cs` (v8, porta 1113). Qual arquivo cada dungeon usa: `dungeons.json`. Detalhes em `docs/dungeons-190828.md` e `docs/servidor-de-dungeon.md` |
+| `dungeon_*.json` (17) | Dungeons da build 190828 recriadas (15/11/2026) | `Dungeons\DungeonServer.cs` (v8, porta 1113). Qual arquivo cada dungeon usa: `dungeons.json`. Detalhes em `docs/dungeons-190828.md` e `docs/dungeon-server.md` |
 
 ## Coordenadas
 - `u`, `v` = unidades ao longo dos eixos a e b da grade do cliente (u = 12·a, v = 12·b, com a, b em tiles do ChaoEsboco). No mundo: x = (u − v)/√2, y = (u + v)/√2.

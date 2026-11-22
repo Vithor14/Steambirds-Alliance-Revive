@@ -11,7 +11,7 @@ using System.Globalization;
 //    (0 = always forward, 180 = any direction).
 //
 // PlayerClassConfig.planeName (configBinary "playerclasses") says which template each class uses. In the builds
-// 190426 to 190911 (VersoesAntigas): walker, paladin, support, pirate, siegetank and daggerknight use
+// 190426 to 190911 (OldVersions): walker, paladin, support, pirate, siegetank and daggerknight use
 // walkerClassPlane (Absolute, aim 180); olfaithful, duster and wizard use playerPlane (Relative, aim 0);
 // assault, engineer and angler use assaultClassPlane; medic, rapier and tank use their own ClassPlane.
 // The server used to send playerPlane for every class, so every class flew like olfaithful.

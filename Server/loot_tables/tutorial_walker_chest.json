@@ -5,7 +5,7 @@
   "id": "tutorial_walker_chest",
   "description": "Walker tutorial crate: the four tier 1 engines.",
 
-  // Unidades que sempre usam esta tabela (templateName) e os lootTableIds do jogo que ela substitui.
+  // Units that always use this table (templateName) and the game's lootTableIds that it replaces.
   "units": [ "tutorialwalkerdungeontreasure*" ],
   "replaces": [ "tutorialwalkertreasure*" ],
 

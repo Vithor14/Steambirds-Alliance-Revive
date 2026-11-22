@@ -4,7 +4,7 @@
   "id": "tutorial_walker",
   "name": "Training Grounds",
   "terrain": "DungeonTutorialWalker",
-  "note": "Walker tutorial. A corridor that goes up-left on the screen (+v), 18 u rooms and 12 u corridors, an octagonal arena at the end. The script (barks, steps, who wakes up when) lives in Tutorial.cs and uses the points, areas, lines and gates of this file by name. Line towers = 0: the hangar Training Turrets already start shooting when the plane spawns (it used to be 34.8, only when entering the hangar); they still go quiet when the player passes the line towersQuiet.",
+  "note": "Tutorial do walker. Corredor que sobe para a esquerda na tela (+v), salas de 18 u e corredores de 12 u, arena octogonal no fim. O roteiro (falas, etapas, quem acorda quando) fica em TutorialEsboco.cs e usa os pontos, areas, linhas e portoes deste arquivo pelo nome. Linha torres = 0: as Training Turrets do hangar ja comecam atirando quando o aviao nasce (antes 34.8, so ao entrar no hangar); elas ainda ficam quietas ao passar da linha torresQuietas.",
   "territory": 63,
   "floor": {
     "wallsOnEdges": true,
@@ -14,7 +14,7 @@
     "drawing": {
       "siStart": -8,
       "sjStart": 0,
-      "legend": ". free floor, # wall (3 u sub-cell in a tile with floor), - no floor. First line = last sj row (the far end); each character is one si sub-cell starting at siStart.",
+      "legend": ". chao livre, # muro (sub-celula de 3 u num tile com chao), - sem chao. Primeira linha = ultima fileira sj (o fundo); cada caractere e uma sub-celula si a partir de siInicial.",
       "lines": [
         "####################",
         "######........######",
@@ -107,13 +107,13 @@
   "decor": [],
   "buildings": [],
   "points": {
-    "instructor": {"u": 6, "v": 35.4, "rot": 135, "note": "Drill Sergeant Davis waits at the hangar entrance"},
-    "ring": {"u": 6, "v": 135, "rot": 0, "note": "center of the gas drone ring"},
-    "crate": {"u": 2.4, "v": 160.8, "rot": 0, "note": "supply crate"},
-    "boss": {"u": 6, "v": 238.8, "rot": 135, "note": "Large Training Drone, at the far end of the arena"},
-    "portal": {"u": 6, "v": 226.8, "rot": 0, "note": "carrier (exit portal to the Nexus)"},
-    "dronesGuide": {"u": 6, "v": 80.4, "rot": 0, "note": "where the instructor goes when leaving the hangar"},
-    "finalCorridorGuide": {"u": 6, "v": 180, "rot": 0, "note": "where the instructor goes when the middle gate opens"}
+    "instructor": {"u": 6, "v": 35.4, "rot": 135, "note": "Drill Sergeant Davis espera na entrada do hangar"},
+    "ring": {"u": 6, "v": 135, "rot": 0, "note": "centro do anel de drones de gas"},
+    "crate": {"u": 2.4, "v": 160.8, "rot": 0, "note": "caixa de suprimentos"},
+    "boss": {"u": 6, "v": 238.8, "rot": 135, "note": "Large Training Drone, no fundo da arena"},
+    "portal": {"u": 6, "v": 226.8, "rot": 0, "note": "porta-avioes (portal de saida para o Nexus)"},
+    "dronesGuide": {"u": 6, "v": 80.4, "rot": 0, "note": "onde o instrutor vai ao sair do hangar"},
+    "finalCorridorGuide": {"u": 6, "v": 180, "rot": 0, "note": "onde o instrutor vai quando o portao do meio abre"}
   },
   "groups": {
     "towers": [
@@ -123,25 +123,39 @@
       {"u": -1.5, "v": 58.5, "rot": 315},
       {"u": -1.5, "v": 64.5, "rot": 315}
     ],
-    "drones1": [
-      {"u": 3.6, "v": 86.4, "rot": 135},
-      {"u": 9, "v": 89.4, "rot": 135}
-    ],
-    "drones2": [
-      {"u": 3, "v": 108, "rot": 135},
-      {"u": 9, "v": 111.6, "rot": 135},
-      {"u": 6, "v": 118.8, "rot": 135}
-    ]
+    "drones1": [{"u": 3.6, "v": 86.4, "rot": 135}, {"u": 9, "v": 89.4, "rot": 135}],
+    "drones2": [{"u": 3, "v": 108, "rot": 135}, {"u": 9, "v": 111.6, "rot": 135}, {"u": 6, "v": 118.8, "rot": 135}]
   },
   "areas": {
-    "hangar": {"minU": -5.4, "maxU": 17.4, "minV": 31.2, "maxV": 73.8, "note": "AI areas: a little bigger than the free floor"},
+    "hangar": {
+      "minU": -5.4,
+      "maxU": 17.4,
+      "minV": 31.2,
+      "maxV": 73.8,
+      "note": "areas da IA: um pouco maiores que o chao livre"
+    },
     "anteroom": {"minU": -2.4, "maxU": 14.4, "minV": 73.2, "maxV": 94.8},
     "drones": {"minU": -2.4, "maxU": 14.4, "minV": 94.2, "maxV": 127.8},
     "ring": {"minU": -5.4, "maxU": 17.4, "minV": 124.2, "maxV": 145.8},
     "arena": {"minU": -20.4, "maxU": 32.4, "minV": 202.2, "maxV": 250.8}
   },
-  "lines": {"instructor": 29.4, "towers": 0, "bulletsTalk": 40.8, "hangarExit": 71.4, "towersQuiet": 75.6, "droneCorridor": 96, "finalCorridor": 175.2},
-  "values": {"ringCount": 14, "ringOpening": 70, "ringRadiusU": 5.04, "ringRadiusV": 6.96, "ringMiddleRadius": 4.5, "drones1Radius": 9},
+  "lines": {
+    "instructor": 29.4,
+    "towers": 0,
+    "bulletsTalk": 40.8,
+    "hangarExit": 71.4,
+    "towersQuiet": 75.6,
+    "droneCorridor": 96,
+    "finalCorridor": 175.2
+  },
+  "values": {
+    "ringCount": 14,
+    "ringOpening": 70,
+    "ringRadiusU": 5.04,
+    "ringRadiusV": 6.96,
+    "ringMiddleRadius": 4.5,
+    "drones1Radius": 9
+  },
   "checkpoints": [
     {"name": "start room", "activeAtV": 0, "u": 6, "v": 14.52, "rot": 315},
     {"name": "anteroom", "activeAtV": 75.6, "u": 6, "v": 77.4, "rot": 315},

@@ -4,8 +4,8 @@
   "id": "dungeon_finalboss",
   "name": "The Great Leader's Command Center",
   "terrain": "DungeonFinalBoss",
-  "note": "Meowza's Throne (Godleader Meowza, phase 1). Quest dungeon_finalboss_01/02: 'Defeat the Throne of Meowza'. At the entrance, The Viceroy tells you to leave the entrance area and incinerates it in 60 s (barks meowzablocker_countdown_*); the laser gate (meowzalasergateWE) turns on when the quest starts. Meowza has phases B, C and D with lasers, nukes and Spirit Vessels. When she dies she opens the portal to the Three Brothers (meowzaDeath3BrothersPortal) besides the exit.",
-  "source": "Build 190828.2045: units, names, barks, signs, quests and territory come from the configBinary; the Dungeons/dungeon_* file of that build is empty, so the room format and the enemy positions were recreated.",
+  "note": "Trono de Meowza (Godleader Meowza, fase 1). Quest dungeon_finalboss_01/02: 'Defeat the Throne of Meowza'. Na entrada, The Viceroy manda sair da area de entrada e incinera em 60 s (falas meowzablocker_countdown_*); o portao de laser (meowzalasergateWE) liga quando a quest comeca. Meowza tem fases B, C e D com lasers, nukes e Spirit Vessels. Ao morrer abre o portal para os Three Brothers (meowzaDeath3BrothersPortal) alem da saida.",
+  "source": "Build 190828.2045: unidades, nomes, falas, placas, quests e territorio vem do configBinary; o arquivo Dungeons/dungeon_* dessa build e vazio, entao o formato das salas e a posicao dos inimigos foram recriados.",
   "key": "key_finalboss",
   "portalItem": "dungeon_finalboss",
   "quest": "dungeon_finalboss_01",
@@ -20,7 +20,7 @@
     "drawing": {
       "siStart": -20,
       "sjStart": -44,
-      "legend": ". free floor, # wall, - no floor. First line = last sj row (the far end).",
+      "legend": ". chao livre, # muro, - sem chao. Primeira linha = ultima fileira sj (o fundo).",
       "lines": [
         "############################################",
         "############################################",
@@ -119,42 +119,42 @@
   "spawn": {"u": 6.0, "v": -112.1, "rot": 315},
   "points": {
     "boss": {"u": 6.0, "v": 88.9, "rot": 135},
-    "portal": {"u": 6.0, "v": 49.1, "rot": 0, "note": "exit carrier (appears when the boss dies)"},
+    "portal": {"u": 6.0, "v": 49.1, "rot": 0, "note": "porta-avioes de saida (aparece quando o chefe morre)"},
     "portal_3brothers": {"u": -13.9, "v": 49.1, "rot": 0, "note": "meowzaDeath3BrothersPortal -> dungeon_3brothers"}
   },
   "groups": {},
   "areas": {
-    "entrance": {"minU": -15.6, "maxU": 27.6, "minV": -120.6, "maxV": -83.4},
-    "worshippers_gallery": {"minU": -30.6, "maxU": 42.6, "minV": -66.6, "maxV": -5.4},
-    "throne_hall": {"minU": -45.6, "maxU": 57.6, "minV": 17.4, "maxV": 120.6}
+    "entrada": {"minU": -15.6, "maxU": 27.6, "minV": -120.6, "maxV": -83.4},
+    "galeria_dos_fieis": {"minU": -30.6, "maxU": 42.6, "minV": -66.6, "maxV": -5.4},
+    "salao_do_trono": {"minU": -45.6, "maxU": 57.6, "minV": 17.4, "maxV": 120.6}
   },
-  "lines": {"entrance": -120.0, "worshippers_gallery": -66.0, "throne_hall": 18.0},
+  "lines": {"entrada": -120.0, "galeria_dos_fieis": -66.0, "salao_do_trono": 18.0},
   "values": {"tier": 10},
   "checkpoints": [
-    {"name": "entrance", "activeAtV": -120.0, "u": 6.0, "v": -116.1, "rot": 315},
-    {"name": "worshippers_gallery", "activeAtV": -66.0, "u": 6.0, "v": -60.2, "rot": 315},
-    {"name": "throne_hall", "activeAtV": 18.0, "u": 6.0, "v": 27.2, "rot": 315}
+    {"name": "entrada", "activeAtV": -120.0, "u": 6.0, "v": -116.1, "rot": 315},
+    {"name": "galeria_dos_fieis", "activeAtV": -66.0, "u": 6.0, "v": -60.2, "rot": 315},
+    {"name": "salao_do_trono", "activeAtV": 18.0, "u": 6.0, "v": 27.2, "rot": 315}
   ],
   "gates": [
     {
-      "name": "laser gate",
+      "name": "portao de laser",
       "type": "meowzalasergateWE",
       "sj": -25,
       "siFrom": 0,
       "siTo": 3,
       "damageable": false,
       "opensWhen": "quest:dungeon_finalboss_01",
-      "room": "worshippers_gallery"
+      "room": "galeria_dos_fieis"
     },
     {
-      "name": "throne door",
+      "name": "porta do trono",
       "type": "meowzadungeondestroyablewall",
       "sj": 2,
       "siFrom": 0,
       "siTo": 3,
       "damageable": false,
-      "opensWhen": "cleared:worshippers_gallery",
-      "room": "throne_hall"
+      "opensWhen": "cleared:galeria_dos_fieis",
+      "room": "salao_do_trono"
     }
   ],
   "sideGates": [],
@@ -176,7 +176,7 @@
       "aggroRadius": 28,
       "invulnerable": true,
       "barks": {"onWake": "meowza_playerkicker"},
-      "note": "conversation meowza1_warning_belowL30 for pilots below rank 30"
+      "note": "conversa meowza1_warning_belowL30 para pilotos abaixo da patente 30"
     },
     "meowza": {
       "name": "Godleader Meowza",
@@ -205,52 +205,103 @@
         {"belowHealth": 0.12, "summon": "meowzaD2m", "summonCount": 4, "bark": "BOS1_meowzaD0"}
       ]
     },
-    "meowzaB1m": {"name": "Godleader Meowza", "template": "meowzaB1m", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
-    "meowzaB2m": {"name": "Godleader Meowza", "template": "meowzaB2m", "behavior": "charge", "preferredDistance": 2.0, "aggroRadius": 30},
-    "meowzaC1m1": {"name": "Godleader Meowza", "template": "meowzaC1m1", "behavior": "charge", "preferredDistance": 6, "aggroRadius": 30},
-    "meowzaC2m": {"name": "Godleader Meowza", "template": "meowzaC2m", "behavior": "charge", "preferredDistance": 3.0, "aggroRadius": 30},
+    "meowzaB1m": {
+      "name": "Godleader Meowza",
+      "template": "meowzaB1m",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
+    "meowzaB2m": {
+      "name": "Godleader Meowza",
+      "template": "meowzaB2m",
+      "behavior": "charge",
+      "preferredDistance": 2.0,
+      "aggroRadius": 30
+    },
+    "meowzaC1m1": {
+      "name": "Godleader Meowza",
+      "template": "meowzaC1m1",
+      "behavior": "charge",
+      "preferredDistance": 6,
+      "aggroRadius": 30
+    },
+    "meowzaC2m": {
+      "name": "Godleader Meowza",
+      "template": "meowzaC2m",
+      "behavior": "charge",
+      "preferredDistance": 3.0,
+      "aggroRadius": 30
+    },
     "meowzaD2m": {"name": "Godleader Meowza", "template": "meowzaD2m", "behavior": "turret", "aggroRadius": 30},
     "meowzaDEATH": {"name": "Godleader Meowza", "template": "meowzaDEATH", "behavior": "idle", "invulnerable": true},
     "meowzadungeondestroyablewall": {"name": "meowzadungeondestroyablewall", "template": "meowzadungeondestroyablewall", "behavior": "idle"},
-    "meowzahealthnode": {"name": "Spirit Vessel of Meowza", "template": "meowzahealthnode", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
-    "meowzahurtsnake": {"name": "Supplicant of Meowza", "template": "meowzahurtsnake", "behavior": "charge", "preferredDistance": 2.0, "aggroRadius": 30},
+    "meowzahealthnode": {
+      "name": "Spirit Vessel of Meowza",
+      "template": "meowzahealthnode",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
+    "meowzahurtsnake": {
+      "name": "Supplicant of Meowza",
+      "template": "meowzahurtsnake",
+      "behavior": "charge",
+      "preferredDistance": 2.0,
+      "aggroRadius": 30
+    },
     "meowzalaserA": {"name": "Godleader Meowza", "template": "meowzalaserA", "behavior": "turret", "aggroRadius": 30},
     "meowzalaserB": {"name": "Godleader Meowza", "template": "meowzalaserB", "behavior": "turret", "aggroRadius": 30},
     "meowzalaserC": {"name": "Godleader Meowza", "template": "meowzalaserC", "behavior": "turret", "aggroRadius": 30},
     "meowzalaserD": {"name": "Godleader Meowza", "template": "meowzalaserD", "behavior": "turret", "aggroRadius": 30},
     "meowzalasergateWE": {"name": "meowzalasergateWE", "template": "meowzalasergateWE", "behavior": "turret", "aggroRadius": 30},
-    "meowzanuke1m1": {"name": "Godleader Meowza", "template": "meowzanuke1m1", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28, "invulnerable": true},
-    "meowzastardog": {"name": "Hound of Meowza", "template": "meowzastardog", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
-    "meowzaturtle": {"name": "Acolyte of Meowza", "template": "meowzaturtle", "behavior": "chase", "preferredDistance": 4.4, "aggroRadius": 28}
+    "meowzanuke1m1": {
+      "name": "Godleader Meowza",
+      "template": "meowzanuke1m1",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28,
+      "invulnerable": true
+    },
+    "meowzastardog": {
+      "name": "Hound of Meowza",
+      "template": "meowzastardog",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
+    "meowzaturtle": {
+      "name": "Acolyte of Meowza",
+      "template": "meowzaturtle",
+      "behavior": "chase",
+      "preferredDistance": 4.4,
+      "aggroRadius": 28
+    }
   },
   "encounters": [
     {
-      "room": "entrance",
-      "area": "entrance",
+      "room": "entrada",
+      "area": "entrada",
       "wakes": "onEnter",
-      "line": "entrance",
+      "line": "entrada",
       "enemies": [
         {
           "type": "meowzablocker",
-          "pos": [
-            {"u": 6.0, "v": -86.9, "rot": 135}
-          ],
-          "note": "The Viceroy: incineration countdown of the entrance area"
+          "pos": [{"u": 6.0, "v": -86.9, "rot": 135}],
+          "note": "The Viceroy: contagem de incineracao da area de entrada"
         },
         {
           "type": "meowza_playerkicker",
-          "pos": [
-            {"u": 6.0, "v": -102.0, "rot": 135}
-          ],
-          "note": "Banishee: removes weak pilots from the dungeon"
+          "pos": [{"u": 6.0, "v": -102.0, "rot": 135}],
+          "note": "Banishee: tira da dungeon pilotos fracos"
         }
       ]
     },
     {
-      "room": "worshippers_gallery",
-      "area": "worshippers_gallery",
+      "room": "galeria_dos_fieis",
+      "area": "galeria_dos_fieis",
       "wakes": "onEnter",
-      "line": "worshippers_gallery",
+      "line": "galeria_dos_fieis",
       "enemies": [
         {
           "type": "meowzaturtle",
@@ -285,17 +336,12 @@
       "controllers": ["meowzastardogspawner1", "meowzastardogspawner2", "meowzahurtsnakespawner"]
     },
     {
-      "room": "throne_hall",
-      "area": "throne_hall",
+      "room": "salao_do_trono",
+      "area": "salao_do_trono",
       "wakes": "onEnter",
-      "line": "throne_hall",
+      "line": "salao_do_trono",
       "enemies": [
-        {
-          "type": "meowza",
-          "pos": [
-            {"u": 6.0, "v": 88.9, "rot": 135}
-          ]
-        },
+        {"type": "meowza", "pos": [{"u": 6.0, "v": 88.9, "rot": 135}]},
         {
           "type": "meowzahealthnode",
           "pos": [
@@ -306,30 +352,10 @@
           ],
           "note": "Spirit Vessels of Meowza"
         },
-        {
-          "type": "meowzalaserA",
-          "pos": [
-            {"u": 6.0, "v": 115.8, "rot": 135}
-          ]
-        },
-        {
-          "type": "meowzalaserB",
-          "pos": [
-            {"u": -40.8, "v": 69.0, "rot": 135}
-          ]
-        },
-        {
-          "type": "meowzalaserC",
-          "pos": [
-            {"u": 52.8, "v": 69.0, "rot": 135}
-          ]
-        },
-        {
-          "type": "meowzalaserD",
-          "pos": [
-            {"u": 6.0, "v": 64.0, "rot": 135}
-          ]
-        }
+        {"type": "meowzalaserA", "pos": [{"u": 6.0, "v": 115.8, "rot": 135}]},
+        {"type": "meowzalaserB", "pos": [{"u": -40.8, "v": 69.0, "rot": 135}]},
+        {"type": "meowzalaserC", "pos": [{"u": 52.8, "v": 69.0, "rot": 135}]},
+        {"type": "meowzalaserD", "pos": [{"u": 6.0, "v": 64.0, "rot": 135}]}
       ],
       "boss": true,
       "closesOnEnter": true,

@@ -4,8 +4,8 @@
   "id": "dungeon_finalboss2",
   "name": "The Great Leader's Inner Sanctum",
   "terrain": "DungeonFinalBoss2",
-  "note": "Meowza's Sanctum (Godleader Meowza, phase 2; music music_meowza_intro_loop / main_loop). Meowza stays still in the center (10000 health) with the Defense Grid N/S/E/W and summons the souls of the generals the dead (barks meowza2_01..11): frost (Frozen Horror), firering (Phoenix), orochi (Poison God), lasereyegrid (Cyclopus), lightningspiral, infinity, claw, nukes and the Meowzaghasts.",
-  "source": "Build 190828.2045: units, names, barks, signs, quests and territory come from the configBinary; the Dungeons/dungeon_* file of that build is empty, so the room format and the enemy positions were recreated.",
+  "note": "Santuario de Meowza (Godleader Meowza, fase 2; musica music_meowza_intro_loop / main_loop). Meowza fica parada no centro (10000 de vida) com a Defense Grid N/S/L/O e invoca as almas dos generais mortos (falas meowza2_01..11): frost (Frozen Horror), firering (Phoenix), orochi (Poison God), lasereyegrid (Cyclopus), lightningspiral, infinity, claw, nukes e os Meowzaghasts.",
+  "source": "Build 190828.2045: unidades, nomes, falas, placas, quests e territorio vem do configBinary; o arquivo Dungeons/dungeon_* dessa build e vazio, entao o formato das salas e a posicao dos inimigos foram recriados.",
   "exit": {"point": "portal", "when": "death:meowza2"},
   "territory": 73,
   "floor": {
@@ -16,7 +16,7 @@
     "drawing": {
       "siStart": -20,
       "sjStart": -32,
-      "legend": ". free floor, # wall, - no floor. First line = last sj row (the far end).",
+      "legend": ". chao livre, # muro, - sem chao. Primeira linha = ultima fileira sj (o fundo).",
       "lines": [
         "############################################",
         "############################################",
@@ -91,18 +91,18 @@
   "spawn": {"u": 6.0, "v": -76.1, "rot": 315},
   "points": {
     "boss": {"u": 6.0, "v": 35.3, "rot": 135},
-    "portal": {"u": 6.0, "v": 3.6, "rot": 0, "note": "exit carrier (appears when the boss dies)"}
+    "portal": {"u": 6.0, "v": 3.6, "rot": 0, "note": "porta-avioes de saida (aparece quando o chefe morre)"}
   },
   "groups": {},
   "areas": {
-    "entrance": {"minU": -15.6, "maxU": 27.6, "minV": -84.6, "maxV": -47.4},
-    "sanctuary": {"minU": -48.6, "maxU": 60.6, "minV": -24.6, "maxV": 84.6}
+    "entrada": {"minU": -15.6, "maxU": 27.6, "minV": -84.6, "maxV": -47.4},
+    "santuario": {"minU": -48.6, "maxU": 60.6, "minV": -24.6, "maxV": 84.6}
   },
-  "lines": {"entrance": -84.0, "sanctuary": -24.0},
+  "lines": {"entrada": -84.0, "santuario": -24.0},
   "values": {"tier": 10},
   "checkpoints": [
-    {"name": "entrance", "activeAtV": -84.0, "u": 6.0, "v": -80.1, "rot": 315},
-    {"name": "sanctuary", "activeAtV": -24.0, "u": 6.0, "v": -14.4, "rot": 315}
+    {"name": "entrada", "activeAtV": -84.0, "u": 6.0, "v": -80.1, "rot": 315},
+    {"name": "santuario", "activeAtV": -24.0, "u": 6.0, "v": -14.4, "rot": 315}
   ],
   "gates": [],
   "sideGates": [],
@@ -116,7 +116,13 @@
       "aggroRadius": 60,
       "firstShotDelay": 2.0,
       "onDeath": "meowza2DEATH",
-      "barks": {"intro": "meowza2_01..meowza2_11", "onWake": "meowza2_start", "onDeath": "meowza2_death", "onDeath2": "meowza2_death2", "silence": "meowza2_silence_short"},
+      "barks": {
+        "intro": "meowza2_01..meowza2_11",
+        "onWake": "meowza2_start",
+        "onDeath": "meowza2_death",
+        "onDeath2": "meowza2_death2",
+        "silence": "meowza2_silence_short"
+      },
       "phases": [
         {"belowHealth": 0.9, "summon": "meowza2_frost_1", "summonCount": 2},
         {"belowHealth": 0.8, "summon": "meowza2_firering", "summonCount": 1},
@@ -131,59 +137,109 @@
     },
     "9star2": {"name": "9star2", "template": "9star2", "behavior": "turret", "aggroRadius": 30},
     "meowza2DEATH": {"name": "meowza2DEATH", "template": "meowza2DEATH", "behavior": "idle", "invulnerable": true},
-    "meowza2_claw_2": {"name": "Godleader Meowza", "template": "meowza2_claw_2", "behavior": "charge", "preferredDistance": 2.0, "aggroRadius": 30},
-    "meowza2_firering": {"name": "Godleader Meowza", "template": "meowza2_firering", "behavior": "charge", "preferredDistance": 6, "aggroRadius": 30, "invulnerable": true},
-    "meowza2_frost_1": {"name": "Godleader Meowza", "template": "meowza2_frost_1", "behavior": "charge", "preferredDistance": 6, "aggroRadius": 30},
-    "meowza2_hunter": {"name": "Meowzaghast", "template": "meowza2_hunter", "behavior": "charge", "preferredDistance": 6, "aggroRadius": 30},
+    "meowza2_claw_2": {
+      "name": "Godleader Meowza",
+      "template": "meowza2_claw_2",
+      "behavior": "charge",
+      "preferredDistance": 2.0,
+      "aggroRadius": 30
+    },
+    "meowza2_firering": {
+      "name": "Godleader Meowza",
+      "template": "meowza2_firering",
+      "behavior": "charge",
+      "preferredDistance": 6,
+      "aggroRadius": 30,
+      "invulnerable": true
+    },
+    "meowza2_frost_1": {
+      "name": "Godleader Meowza",
+      "template": "meowza2_frost_1",
+      "behavior": "charge",
+      "preferredDistance": 6,
+      "aggroRadius": 30
+    },
+    "meowza2_hunter": {
+      "name": "Meowzaghast",
+      "template": "meowza2_hunter",
+      "behavior": "charge",
+      "preferredDistance": 6,
+      "aggroRadius": 30
+    },
     "meowza2_infinity_2": {"name": "Godleader Meowza", "template": "meowza2_infinity_2", "behavior": "turret", "aggroRadius": 30},
-    "meowza2_lasereye": {"name": "Godleader Meowza", "template": "meowza2_lasereye", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
-    "meowza2_lightningspiral": {"name": "Godleader Meowza", "template": "meowza2_lightningspiral", "behavior": "turret", "aggroRadius": 30},
-    "meowza2_nuke": {"name": "Godleader Meowza", "template": "meowza2_nuke", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28, "invulnerable": true},
+    "meowza2_lasereye": {
+      "name": "Godleader Meowza",
+      "template": "meowza2_lasereye",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
+    "meowza2_lightningspiral": {
+      "name": "Godleader Meowza",
+      "template": "meowza2_lightningspiral",
+      "behavior": "turret",
+      "aggroRadius": 30
+    },
+    "meowza2_nuke": {
+      "name": "Godleader Meowza",
+      "template": "meowza2_nuke",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28,
+      "invulnerable": true
+    },
     "meowza2_orochi_2": {"name": "Godleader Meowza", "template": "meowza2_orochi_2", "behavior": "turret", "aggroRadius": 30},
-    "meowza2_turret_E": {"name": "Godleader Defense Grid", "template": "meowza2_turret_E", "behavior": "turret", "aggroRadius": 30},
-    "meowza2_turret_N": {"name": "Godleader Defense Grid", "template": "meowza2_turret_N", "behavior": "turret", "aggroRadius": 30},
-    "meowza2_turret_S": {"name": "Godleader Defense Grid", "template": "meowza2_turret_S", "behavior": "turret", "aggroRadius": 30},
-    "meowza2_turret_W": {"name": "Godleader Defense Grid", "template": "meowza2_turret_W", "behavior": "turret", "aggroRadius": 30}
+    "meowza2_turret_E": {
+      "name": "Godleader Defense Grid",
+      "template": "meowza2_turret_E",
+      "behavior": "turret",
+      "aggroRadius": 30
+    },
+    "meowza2_turret_N": {
+      "name": "Godleader Defense Grid",
+      "template": "meowza2_turret_N",
+      "behavior": "turret",
+      "aggroRadius": 30
+    },
+    "meowza2_turret_S": {
+      "name": "Godleader Defense Grid",
+      "template": "meowza2_turret_S",
+      "behavior": "turret",
+      "aggroRadius": 30
+    },
+    "meowza2_turret_W": {
+      "name": "Godleader Defense Grid",
+      "template": "meowza2_turret_W",
+      "behavior": "turret",
+      "aggroRadius": 30
+    }
   },
   "encounters": [
     {
-      "room": "sanctuary",
-      "area": "sanctuary",
+      "room": "santuario",
+      "area": "santuario",
       "wakes": "onEnter",
-      "line": "sanctuary",
+      "line": "santuario",
       "enemies": [
-        {
-          "type": "meowza2",
-          "pos": [
-            {"u": 6.0, "v": 35.3, "rot": 135}
-          ]
-        },
+        {"type": "meowza2", "pos": [{"u": 6.0, "v": 35.3, "rot": 135}]},
         {
           "type": "meowza2_turret_N",
-          "pos": [
-            {"u": 6.0, "v": 77.5, "rot": 135}
-          ],
+          "pos": [{"u": 6.0, "v": 77.5, "rot": 135}],
           "note": "Godleader Defense Grid"
         },
         {
           "type": "meowza2_turret_S",
-          "pos": [
-            {"u": 6.0, "v": -16.5, "rot": 135}
-          ],
+          "pos": [{"u": 6.0, "v": -16.5, "rot": 135}],
           "note": "Godleader Defense Grid"
         },
         {
           "type": "meowza2_turret_E",
-          "pos": [
-            {"u": -40.5, "v": 30.0, "rot": 135}
-          ],
+          "pos": [{"u": -40.5, "v": 30.0, "rot": 135}],
           "note": "Godleader Defense Grid"
         },
         {
           "type": "meowza2_turret_W",
-          "pos": [
-            {"u": 52.5, "v": 30.0, "rot": 135}
-          ],
+          "pos": [{"u": 52.5, "v": 30.0, "rot": 135}],
           "note": "Godleader Defense Grid"
         },
         {

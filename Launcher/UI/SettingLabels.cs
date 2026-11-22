@@ -4,7 +4,7 @@ namespace SteambirdsLauncher.UI;
 
 // Names and descriptions of the known keys of the server config files, in English (translated through lang\*.json).
 // In English the description below is shown; in another language its translation, or else the comment above the key
-// in the file (the server writes those comments in Portuguese). Keys that are not listed show their own name and the
+// in the file. Keys that are not listed show their own name and the
 // comment of the file, so new server settings appear in the launcher without changing it.
 internal static class SettingLabels
 {

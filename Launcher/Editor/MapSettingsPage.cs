@@ -78,8 +78,8 @@ internal sealed class MapSettingsPage : EditorPage
             yield return new FieldSpec("key", "Key item", FieldKind.Text) { Help = "Item that opens the dungeon." };
             yield return new FieldSpec("portalItem", "Portal item", FieldKind.Text) { Help = "Id in Items/Consumables/dungeon." };
             yield return new FieldSpec("quest", "Quest", FieldKind.Text) { Help = "Quest of the dungeon." };
-            yield return new FieldSpec("valores.tier", "Tier", FieldKind.Int) { Min = 1, Max = 10, Default = 5, DefaultBool = false };
-            yield return new FieldSpec("valores.territorioDoChefe", "Boss room territory", FieldKind.OptionalNumber)
+            yield return new FieldSpec("values.tier", "Tier", FieldKind.Int) { Min = 1, Max = 10, Default = 5, DefaultBool = false };
+            yield return new FieldSpec("values.bossTerritory", "Boss room territory", FieldKind.OptionalNumber)
             {
                 Help = "Only when the boss room used another territory in the original dungeon."
             };
@@ -102,34 +102,34 @@ internal sealed class MapSettingsPage : EditorPage
         }
 
         yield return FieldSpec.Header("Spawn (nascimento)");
-        yield return new FieldSpec("nascimento.u", "u", FieldKind.OptionalNumber)
+        yield return new FieldSpec("spawn.u", "u", FieldKind.OptionalNumber)
         {
             Help = "Where the plane appears. In dungeons the last checkpoint is used when the map has any."
         };
-        yield return new FieldSpec("nascimento.v", "v", FieldKind.OptionalNumber);
-        yield return new FieldSpec("nascimento.rot", "Rotation", FieldKind.OptionalNumber);
+        yield return new FieldSpec("spawn.v", "v", FieldKind.OptionalNumber);
+        yield return new FieldSpec("spawn.rot", "Rotation", FieldKind.OptionalNumber);
 
         yield return FieldSpec.Header("Floor");
-        yield return new FieldSpec("chao.murosNasBordas", "Automatic walls on the edges", FieldKind.Bool)
+        yield return new FieldSpec("floor.wallsOnEdges", "Automatic walls on the edges", FieldKind.Bool)
         {
             DefaultBool = true,
             Help = "A wall is added on the edge of a tile with floor when the tile next to it has no floor."
         };
-        yield return new FieldSpec("chao.vazioEmVolta", "Void ring (tiles)", FieldKind.Int)
+        yield return new FieldSpec("floor.voidMargin", "Void ring (tiles)", FieldKind.Int)
         {
             Min = 0,
             Max = 20,
             Default = 4,
             Help = "Ring of tiles without floor (dark abyss) around the floor. 0 = none."
         };
-        yield return new FieldSpec("chao.territorioDoVazio", "Void territory", FieldKind.Int)
+        yield return new FieldSpec("floor.voidTerritory", "Void territory", FieldKind.Int)
         {
             Min = 0,
             Max = 255,
             Default = 74,
             Help = "Only picks the \"floor\" of the abyss (74 = dungeonsky, no floor)."
         };
-        yield return new FieldSpec("chao.pecasDoDesenho", "Floor pieces (ids)", FieldKind.IntList)
+        yield return new FieldSpec("floor.drawingPieces", "Floor pieces (ids)", FieldKind.IntList)
         {
             Help = "GroundAsset ids drawn on the slots of the floor drawing, separated by commas.\nThe preview draws the first ones of the list."
         };
@@ -139,7 +139,7 @@ internal sealed class MapSettingsPage : EditorPage
     {
         switch (spec.Key)
         {
-            case "chao.murosNasBordas":
+            case "floor.wallsOnEdges":
                 Document.Floor.AutoBorders = Json.Bool(Document.FloorJson, "wallsOnEdges", true);
                 break;
             case "terrain":

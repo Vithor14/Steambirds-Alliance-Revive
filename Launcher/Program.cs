@@ -20,9 +20,6 @@ internal static class Program
             return;
         }
 
-        // Server files with the old Portuguese names (mapas, contas, progression.json...) get their new names.
-        if (Directory.Exists(LauncherPaths.ServerFolder)) LegacyFiles.Migrate(LauncherPaths.ServerFolder, (_, _) => { });
-
         Application.SetHighDpiMode(HighDpiMode.SystemAware);
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);

@@ -1,147 +1,172 @@
-# Comandos de chat do Steambirds Alliance
+# Steambirds Alliance chat commands
 
-Nov 15, 2026 · @Vithor Temanski Neves Castelo
+Nov 15, 2026 · @Vithor Temanski Neves Castelo (command names updated to English on Nov 22, 2026)
 
-O jogo tem dois grupos de comandos de chat. Os do próprio cliente o jogo resolve sozinho, sem passar pelo servidor. Qualquer outro comando com `/` vai para o servidor: os do servidor oficial se perderam, e hoje quem responde é o nosso servidor (o esboço).
+The game has two groups of chat commands. The client resolves its own commands by itself, without asking the server. Any other command that starts with `/` goes to the server: the official server's commands were lost, and today our server answers them.
 
-Texto sem `/` vai para o chat de proximidade. Duas barras seguidas (`//`) viram uma só.
+Text without `/` goes to the proximity chat. Two slashes in a row (`//`) become one.
 
-## Comandos do próprio jogo (cliente 201219)
+## The game's own commands (client 201219)
 
-As descrições vêm do código do chat do cliente (`ChatManager.cs`) e dos textos de ajuda que o jogo traz. Esses comandos nunca chegam ao servidor, então o nosso servidor não pode criar um comando com os mesmos nomes.
+The descriptions come from the client's chat code (`ChatManager.cs`) and from the help texts the game ships. These commands never reach the server, so our server cannot create a command with the same names.
 
-### Gerais
+### General
 
-| Comando | O que faz | No nosso servidor |
+| Command | What it does | On our server |
 | --- | --- | --- |
-| `/help [comando]` | Lista os comandos comuns, ou explica um (`/help trade`) | Funciona |
-| `/help_all` | Lista todos os comandos do cliente | Funciona |
-| `/options` | Abre o menu de opções | Funciona |
-| `/resetbindings` | Volta os controles ao padrão | Funciona |
-| `/clearsavedlogin` | Apaga o usuário e a senha salvos | Funciona |
-| `/tutorial` | Pede para jogar o tutorial | Funciona (vai para o servidor de tutorial) |
-| `/ingredients` | Abre o painel de ingredientes | Abre, mas vazio |
-| `/die` | Abre o menu para derrubar o próprio avião (vida a 0) | Funciona |
-| `/retire` | Abre o menu para aposentar o avião (no Combat Sim vira `/die`) | Ainda não funciona: o servidor não trata a aposentadoria |
+| `/help [command]` | Lists the common commands, or explains one (`/help trade`) | Works |
+| `/help_all` | Lists every client command | Works |
+| `/options` | Opens the options menu | Works |
+| `/resetbindings` | Puts the controls back to the default | Works |
+| `/clearsavedlogin` | Deletes the saved user name and password | Works |
+| `/tutorial` | Asks to play the tutorial | Works (goes to the tutorial server) |
+| `/ingredients` | Opens the ingredients panel | Opens, but empty |
+| `/die` | Opens the menu to bring your own plane down (health to 0) | Works |
+| `/retire` | Opens the menu to retire the plane (in the Combat Sim it becomes `/die`) | Does not work yet: the server does not handle retirement |
 
 ### Social
 
-Todos dependem de multiplayer, amigos ou flocks, que ainda não existem no nosso servidor.
+All of them depend on multiplayer, friends or flocks, which our server only partly has.
 
-| Comando | O que faz |
+| Command | What it does |
 | --- | --- |
-| `/friend NOME` | Adiciona um amigo que está no mesmo servidor |
-| `/unfriend NOME` | Desfaz a amizade |
-| `/block NOME` / `/unblock NOME` | Bloqueia ou desbloqueia toda interação com o jogador |
-| `/blocklist` | Lista os bloqueados |
-| `/mute NOME` / `/unmute NOME` | Esconde ou mostra as mensagens do jogador |
-| `/mutelist` | Lista os silenciados |
-| `/teleport NOME` (ou `/tp`) | Vai até o jogador. Sem nome, vai até o líder do esquadrão. Se o amigo está em outro servidor, troca de servidor |
-| `/whisper NOME mensagem` (`/w`, `/tell`, `/t`) | Mensagem privada |
-| `/flock mensagem` (`/f`, `/g`) | Chat da flock padrão |
-| `/myflock [nome]` | Lista suas flocks ou troca a padrão |
-| `/trade NOME` | Pede uma troca segura. Sem nome, aceita o último pedido |
-| `/trade_reject` | Recusa o último pedido de troca |
+| `/friend NAME` | Adds a friend who is on the same server |
+| `/unfriend NAME` | Ends the friendship |
+| `/block NAME` / `/unblock NAME` | Blocks or unblocks every interaction with the player |
+| `/blocklist` | Lists the blocked players |
+| `/mute NAME` / `/unmute NAME` | Hides or shows the player's messages |
+| `/mutelist` | Lists the muted players |
+| `/teleport NAME` (or `/tp`) | Goes to the player. With no name, goes to the squad leader. If the friend is on another server, switches server |
+| `/whisper NAME message` (`/w`, `/tell`, `/t`) | Private message |
+| `/flock message` (`/f`, `/g`) | Chat of the default flock |
+| `/myflock [name]` | Lists your flocks or changes the default one |
+| `/trade NAME` | Asks for a safe trade. With no name, accepts the last request |
+| `/trade_reject` | Refuses the last trade request |
 
-### Só para admin
+### Admin only
 
-No nosso servidor todo jogador entra como admin.
+On our server every player joins as an admin.
 
-| Comando | O que faz | No nosso servidor |
+| Command | What it does | On our server |
 | --- | --- | --- |
-| `/sidelength N` | Muda o tamanho da área visível (padrão 11) | Funciona |
-| `/spectate` | Entra no modo espectador | Ainda não funciona |
-| `/follow NOME` | Segue um jogador ou unidade durante o modo espectador | Ainda não funciona |
-| `/combatsim help`, `ui LOCAL`, `start MODO [período] [semente]`, `leaderboard MODO` | Abre e inicia o Combat Sim | Ainda não funciona |
+| `/sidelength N` | Changes the size of the visible area (default 11) | Works |
+| `/spectate` | Enters spectator mode | Does not work yet |
+| `/follow NAME` | Follows a player or unit during spectator mode | Does not work yet |
+| `/combatsim help`, `ui PLACE`, `start MODE [period] [seed]`, `leaderboard MODE` | Opens and starts the Combat Sim | Does not work yet |
 
-### De debug
+### Debug
 
-Só existem quando a versão da Steam liga os comandos de debug; na instalação atual o `/reset_tutorial` já funcionou.
+They only exist when the Steam build turns the debug commands on; in the current installation `/reset_tutorial` has already worked.
 
-| Comando | O que faz |
+| Command | What it does |
 | --- | --- |
-| `/reset_tutorial` | Marca o tutorial como não jogado: o próximo login no Nexus manda para o tutorial de novo |
-| `/reset_client_event_once_keys` | Apaga as marcas de "dica já mostrada" do cliente |
+| `/reset_tutorial` | Marks the tutorial as not played: the next login at the Nexus sends the player to the tutorial again |
+| `/reset_client_event_once_keys` | Clears the client's "hint already shown" marks |
 
-## Comandos do nosso servidor
+## Our server's commands
 
-O servidor tenta, nesta ordem: progressão, dungeons, tutorial e inimigos. Comando que nenhum deles conhece só aparece no log.
+The server tries, in this order: progression, items, dungeons, tutorial and enemies. A command that none of them knows only shows up in the log. All names are in English; the first piece of the chat line is the command, the others are its arguments.
 
-### Progressão
+### Network
 
-Funcionam em qualquer servidor.
-
-| Comando | O que faz |
+| Command | What it does |
 | --- | --- |
-| `/progressao` | Lista os comandos de progressão |
-| `/piloto` | Mostra patente, XP e situação do piloto |
-| `/xp N` | Dá N de XP ao avião |
-| `/nivel N` | Põe o avião no nível N |
-| `/patente N` | Põe o piloto na patente N |
-| `/zerar_piloto` | Zera patente, XP e skills do piloto |
-| `/buff ID` | Dá um buff (sem ID, lista os buffs possíveis) |
-| `/buffs` | Lista os buffs |
-| `/sem_buffs` | Tira todos os buffs |
-| `/retrato` | Sorteia um retrato novo para o piloto |
+| `/players` | Lists the players online (the host's own game is marked) |
+
+Who may use the other commands is decided by `chatCommands` in `network.json`: `everyone`, `host` (only the game on the server's PC) or `none`. `/leave` and `/players` always work.
+
+### Items
+
+Work on any server. Item ids and loot tables: `catalog\item_catalog.md` and `loot_tables\`.
+
+| Command | What it does |
+| --- | --- |
+| `/items` | Lists the item commands |
+| `/item ID [N]` | Puts N of the item in the cargo (up to 20; for example `/item armor_3`) |
+| `/loot [unit] [tier]` | Rolls the loot of a kill in front of you |
+| `/inventory` | Shows the plane's inventory as text |
+| `/clear_cargo` | Empties the cargo |
+| `/currency [ID N]` | Shows the currencies, or adds N to one |
+| `/ingredient ID N` | Adds N of an ingredient |
+| `/bags` | Counts your loot bags in the world and lists the loot tables |
+| `/clear_bags` | Removes your loot bags |
+| `/export_items` | Writes the item catalog again (`catalog\`) |
+
+### Progression
+
+Work on any server.
+
+| Command | What it does |
+| --- | --- |
+| `/progression` | Lists the progression commands |
+| `/pilot` | Shows the pilot's rank, XP and status |
+| `/xp N` | Gives N XP to the plane |
+| `/level N` | Puts the plane at level N |
+| `/rank N` | Puts the pilot at rank N |
+| `/reset_pilot` | Resets the pilot's rank, XP and skills |
+| `/buff ID` | Gives a buff (with no ID, lists the possible buffs) |
+| `/buffs` | Lists the buffs |
+| `/no_buffs` | Takes every buff off |
+| `/portrait` | Rolls a new portrait for the pilot |
 
 ### Dungeons
 
-Servidor de dungeon da v8, ainda não testado no jogo.
+Dungeon server (port 1113).
 
-| Comando | Onde | O que faz |
+| Command | Where | What it does |
 | --- | --- | --- |
-| `/dungeons` | qualquer lugar | Lista as dungeons do `dungeons.json` e se estão abertas |
-| `/dungeon NOME` | qualquer lugar | Vai para a dungeon (`/dungeon bomb`, `/dungeon iron`) |
-| `/dungeonajuda` | qualquer lugar | Ajuda e o estado da dungeon atual |
-| `/sala` | na dungeon | Lista as salas (pontos de controle) |
-| `/sala N` | na dungeon | Pula para a sala N; o que ficou para trás conta como limpo |
-| `/chefe` | na dungeon | Pula para a sala do chefe |
-| `/recomecar` | na dungeon | Recomeça a dungeon do zero |
-| `/sair` | na dungeon | Volta ao Nexus |
+| `/dungeons` | anywhere | Lists the dungeons of `dungeons.json` and whether they are open |
+| `/dungeon NAME` | anywhere | Goes to the dungeon (`/dungeon bomb`, `/dungeon iron`) |
+| `/dungeonhelp` | anywhere | Help and the state of the current dungeon |
+| `/room` | in the dungeon | Lists the rooms (checkpoints) |
+| `/room N` | in the dungeon | Jumps to room N; what was left behind counts as cleared |
+| `/boss` | in the dungeon | Jumps to the boss room |
+| `/restart` | in the dungeon | Restarts the dungeon from the beginning |
+| `/leave` | in the dungeon | Goes back to the Nexus |
 
 ### Tutorial
 
-Só valem dentro do tutorial.
+Only valid inside the tutorial.
 
-| Comando | O que faz |
+| Command | What it does |
 | --- | --- |
-| `/tutorialajuda` | Ajuda e a etapa atual |
-| `/etapa N` | Pula para a etapa: 1 drones, 2 anel de drones, 3 caixa, 4 portão do chefe, 5 portal |
-| `/portal` | Cria o portal para o Nexus à sua frente (ou leva até ele, se já existe) |
-| `/recomecar` | Recomeça o tutorial |
-| `/sair` | Depois do chefe, vai ao Nexus sem entrar no porta-aviões |
+| `/tutorialhelp` | Help and the current step |
+| `/step N` | Jumps to a step: 1 drones, 2 drone ring, 3 crate, 4 boss gate, 5 portal |
+| `/portal` | Creates the portal to the Nexus in front of you (or takes you to it, if it already exists) |
+| `/restart` | Restarts the tutorial |
+| `/leave` | After the boss, goes to the Nexus without entering the carrier |
 
-### Inimigos, para testes
+### Enemies, for tests
 
-Funcionam em qualquer servidor.
+Work on any server.
 
-| Comando | O que faz |
+| Command | What it does |
 | --- | --- |
-| `/inimigos` (ou `/ajudainimigos`) | Lista estes comandos e o estado do encontro |
-| `/onda N` | Pula para a onda N do encontro do `inimigos.json` |
-| `/proxima` | Chama a próxima onda |
-| `/chefe` | Chama a onda do chefe (dentro da dungeon, `/chefe` é o comando da dungeon) |
-| `/inimigo TIPO [qtd]` | Cria inimigos de um tipo do `inimigos.json` perto de você (até 20) |
-| `/spawn TEMPLATE [qtd]` | Cria qualquer unidade do jogo pelo nome do template (até 20) |
-| `/limpar` | Remove todos os inimigos e para as ondas |
-| `/reiniciar` | Recomeça o encontro |
-| `/encontro [nome]` | Lista os encontros ou começa um |
-| `/tipos` | Lista os tipos do `inimigos.json` e o template de cada um |
-| `/catalogo [filtro]` | Procura unidades armadas do jogo (até 15 por vez) |
+| `/enemies` (or `/enemyhelp`) | Lists these commands and the state of the encounter |
+| `/wave N` | Jumps to wave N of the `enemies.json` encounter |
+| `/next` | Calls the next wave |
+| `/boss` | Calls the boss wave (inside a dungeon, `/boss` is the dungeon command) |
+| `/enemy TYPE [count]` | Creates enemies of a type from `enemies.json` near you (up to 20) |
+| `/spawn TEMPLATE [count]` | Creates any unit of the game by its template name (up to 20) |
+| `/clear` | Removes every enemy and stops the waves |
+| `/reset` | Restarts the encounter |
+| `/encounter [name]` | Lists the encounters or starts one |
+| `/types` | Lists the types of `enemies.json` and the template of each |
+| `/catalog [filter]` | Searches the game's armed units (up to 15 at a time) |
 
-### Lojas
+### Stores
 
-Servidor de lojas (`Server\Stores`), ainda não testado no jogo. Também respondem a `/loja` e `/shop`. Para testar compras, dê ouro com `/currency gold 20000`.
+Store server (`Server\Stores`), not tested in the game yet. Also answers to `/loja` and `/shop`. To test purchases, give yourself gold with `/currency gold 20000`.
 
-| Comando | O que faz |
+| Command | What it does |
 | --- | --- |
-| `/store` | Lista os comandos de loja |
-| `/store info` | Mostra se as compras estão ligadas, o modo de preço, as vagas (hangar, loadouts, armazém, cargo; base e compradas) e suas moedas |
-| `/store list [loja]` | Lista as prateleiras de uma loja (`store_general` por padrão; também `store_hangar`, `store_storage`, `store_skill_loadouts`) |
-| `/store buy PRODUTO [PREÇO]` | Compra um produto da primeira prateleira que o tem (PREÇO: `normal` = ouro, ou `iron`) |
-| `/store reset` | Esquece as compras da conta (as vagas voltam à base; itens e moedas ficam) |
-| `/store restock` | Reabastece o estoque do servidor (`stock` do `stores.json`) |
+| `/store` | Lists the store commands |
+| `/store info` | Shows whether purchases are on, the price mode, the slots (hangar, loadouts, storage, cargo; base and bought) and your currencies |
+| `/store list [store]` | Lists the shelves of a store (`store_general` by default; also `store_hangar`, `store_storage`, `store_skill_loadouts`) |
+| `/store buy PRODUCT [PRICE]` | Buys a product from the first shelf that has it (PRICE: `normal` = gold, or `iron`) |
+| `/store reset` | Forgets the purchases of the account (slots go back to the base; items and currencies stay) |
+| `/store restock` | Refills the server stock (`stock` in `stores.json`) |
 
-## Observações
+## Notes
 
-No código do cliente também aparecem textos como `/pilot_levelup/`, `/boss/` e `/countdown/`. Não são comandos para digitar: são modelos de mensagem que o servidor manda e o cliente transforma em texto na tela.
+The client code also has texts such as `/pilot_levelup/`, `/boss/` and `/countdown/`. They are not commands to type: they are message templates that the server sends and the client turns into text on the screen.

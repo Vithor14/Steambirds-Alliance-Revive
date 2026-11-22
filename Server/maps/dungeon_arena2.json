@@ -4,8 +4,8 @@
   "id": "dungeon_arena2",
   "name": "The Elder Arena",
   "terrain": "DungeonArena2",
-  "note": "Elder arena (T10, lightning). After the patch: 15 waves with 2 miniboss phases, 2 s less between waves and Death Wish (spotters) faster after the first shot. Boss: Dark Sphinx, with laser walls and cannons. The waves were driven by arena2master/arena2wave_*.",
-  "source": "Build 190828.2045: units, names, barks, signs, quests and territory come from the configBinary; the Dungeons/dungeon_* file of that build is empty, so the room format and the enemy positions were recreated.",
+  "note": "Arena dos anciaos (T10, raio). Depois do patch: 15 ondas com 2 fases de minichefe, 2 s a menos entre ondas e Death Wish (spotters) mais rapidos depois do primeiro tiro. Chefe: Dark Sphinx, com muros de laser e canhoes. As ondas eram dirigidas por arena2master/arena2wave_*.",
+  "source": "Build 190828.2045: unidades, nomes, falas, placas, quests e territorio vem do configBinary; o arquivo Dungeons/dungeon_* dessa build e vazio, entao o formato das salas e a posicao dos inimigos foram recriados.",
   "key": "key_arena2",
   "portalItem": "dungeon_arena2",
   "exit": {"point": "portal", "when": "death:arenacube"},
@@ -18,7 +18,7 @@
     "drawing": {
       "siStart": -20,
       "sjStart": -36,
-      "legend": ". free floor, # wall, - no floor. First line = last sj row (the far end).",
+      "legend": ". chao livre, # muro, - sem chao. Primeira linha = ultima fileira sj (o fundo).",
       "lines": [
         "------------####################------------",
         "------------####################------------",
@@ -100,24 +100,33 @@
   "buildings": [],
   "spawn": {"u": 6.0, "v": -89.3, "rot": 315},
   "points": {
-    "center": {"u": 6.0, "v": 6.0, "rot": 135},
+    "centro": {"u": 6.0, "v": 6.0, "rot": 135},
     "boss": {"u": 6.0, "v": 15.4, "rot": 135},
     "portal": {"u": 6.0, "v": -12.7, "rot": 0, "note": "porta-avioes de saida"}
   },
   "groups": {},
   "areas": {
-    "entrance": {"minU": -12.6, "maxU": 24.6, "minV": -96.6, "maxV": -65.4},
+    "entrada": {"minU": -12.6, "maxU": 24.6, "minV": -96.6, "maxV": -65.4},
     "arena": {"minU": -42.6, "maxU": 54.6, "minV": -42.6, "maxV": 54.6},
-    "prize": {"minU": -12.6, "maxU": 24.6, "minV": 65.4, "maxV": 90.6}
+    "premio": {"minU": -12.6, "maxU": 24.6, "minV": 65.4, "maxV": 90.6}
   },
-  "lines": {"entrance": -96.0, "arena": -42.0, "prize": 66.0},
+  "lines": {"entrada": -96.0, "arena": -42.0, "premio": 66.0},
   "values": {"tier": 10},
   "checkpoints": [
-    {"name": "entrance", "activeAtV": -96.0, "u": 6.0, "v": -92.6, "rot": 315},
+    {"name": "entrada", "activeAtV": -96.0, "u": 6.0, "v": -92.6, "rot": 315},
     {"name": "arena", "activeAtV": -42.0, "u": 6.0, "v": -33.3, "rot": 315}
   ],
   "gates": [
-    {"name": "prize gate", "type": "arena2_destructiblewall1", "sj": 20, "siFrom": 0, "siTo": 3, "damageable": false, "opensWhen": "death:arenacube", "room": "prize"}
+    {
+      "name": "portao do premio",
+      "type": "arena2_destructiblewall1",
+      "sj": 20,
+      "siFrom": 0,
+      "siTo": 3,
+      "damageable": false,
+      "opensWhen": "death:arenacube",
+      "room": "premio"
+    }
   ],
   "sideGates": [],
   "signs": [],
@@ -140,24 +149,96 @@
     "arena2_destructiblewall1": {"name": "Wall", "template": "arena2_destructiblewall1", "behavior": "idle"},
     "arena2_destructiblewall3": {"name": "arena2_destructiblewall3", "template": "arena2_destructiblewall3", "behavior": "idle"},
     "arena2ballnchain": {"name": "Chains", "template": "arena2ballnchain", "behavior": "turret", "aggroRadius": 30},
-    "arena2beehex": {"name": "Hornet", "template": "arena2beehex", "behavior": "chase", "preferredDistance": 3.3, "aggroRadius": 28},
-    "arena2lasereye": {"name": "Laser X", "template": "arena2lasereye", "behavior": "chase", "preferredDistance": 4.5, "aggroRadius": 28},
-    "arena2spotter": {"name": "Death Wish", "template": "arena2spotter", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
-    "arena2stardog": {"name": "Underdog", "template": "arena2stardog", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
+    "arena2beehex": {
+      "name": "Hornet",
+      "template": "arena2beehex",
+      "behavior": "chase",
+      "preferredDistance": 3.3,
+      "aggroRadius": 28
+    },
+    "arena2lasereye": {
+      "name": "Laser X",
+      "template": "arena2lasereye",
+      "behavior": "chase",
+      "preferredDistance": 4.5,
+      "aggroRadius": 28
+    },
+    "arena2spotter": {
+      "name": "Death Wish",
+      "template": "arena2spotter",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
+    "arena2stardog": {
+      "name": "Underdog",
+      "template": "arena2stardog",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
     "arena2tripod": {"name": "Corpse Pulveriser", "template": "arena2tripod", "behavior": "turret", "aggroRadius": 30},
-    "arena2tripodminionmaster": {"name": "Hex", "template": "arena2tripodminionmaster", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
+    "arena2tripodminionmaster": {
+      "name": "Hex",
+      "template": "arena2tripodminionmaster",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
     "arena2warper": {"name": "Smoke Ninja", "template": "arena2warper", "behavior": "turret", "aggroRadius": 30},
     "arenacubeDEATH": {"name": "Dark Sphinx", "template": "arenacubeDEATH", "behavior": "idle", "invulnerable": true},
-    "arenacubebiglaserwall": {"name": "Dark Sphinx", "template": "arenacubebiglaserwall", "behavior": "chase", "preferredDistance": 4.5, "aggroRadius": 28},
-    "arenacubebiglaserwall2": {"name": "Dark Sphinx", "template": "arenacubebiglaserwall2", "behavior": "chase", "preferredDistance": 4.5, "aggroRadius": 28},
-    "arenacubelasercross": {"name": "Laser X 2", "template": "arenacubelasercross", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
+    "arenacubebiglaserwall": {
+      "name": "Dark Sphinx",
+      "template": "arenacubebiglaserwall",
+      "behavior": "chase",
+      "preferredDistance": 4.5,
+      "aggroRadius": 28
+    },
+    "arenacubebiglaserwall2": {
+      "name": "Dark Sphinx",
+      "template": "arenacubebiglaserwall2",
+      "behavior": "chase",
+      "preferredDistance": 4.5,
+      "aggroRadius": 28
+    },
+    "arenacubelasercross": {
+      "name": "Laser X 2",
+      "template": "arenacubelasercross",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
     "arenacubemini": {"name": "Arena Bomber", "template": "arenacubemini", "behavior": "idle"},
     "arenacubenode": {"name": "Sphinx Cannon", "template": "arenacubenode", "behavior": "turret", "aggroRadius": 30},
-    "arenacubespiral": {"name": "Riddle", "template": "arenacubespiral", "behavior": "charge", "preferredDistance": 2.0, "aggroRadius": 30},
-    "arenacubetendril": {"name": "Riddle", "template": "arenacubetendril", "behavior": "charge", "preferredDistance": 2.0, "aggroRadius": 30},
-    "arenacubetendrilrandom": {"name": "Riddle", "template": "arenacubetendrilrandom", "behavior": "charge", "preferredDistance": 2.0, "aggroRadius": 30},
+    "arenacubespiral": {
+      "name": "Riddle",
+      "template": "arenacubespiral",
+      "behavior": "charge",
+      "preferredDistance": 2.0,
+      "aggroRadius": 30
+    },
+    "arenacubetendril": {
+      "name": "Riddle",
+      "template": "arenacubetendril",
+      "behavior": "charge",
+      "preferredDistance": 2.0,
+      "aggroRadius": 30
+    },
+    "arenacubetendrilrandom": {
+      "name": "Riddle",
+      "template": "arenacubetendrilrandom",
+      "behavior": "charge",
+      "preferredDistance": 2.0,
+      "aggroRadius": 30
+    },
     "beartrap": {"name": "Dark Sphinx", "template": "beartrap", "behavior": "turret", "aggroRadius": 30},
-    "bonusswarm": {"name": "Bonus Pinata", "template": "bonusswarm", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28}
+    "bonusswarm": {
+      "name": "Bonus Pinata",
+      "template": "bonusswarm",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    }
   },
   "encounters": [
     {
@@ -241,10 +322,7 @@
           "groups": [
             {
               "type": "arena2warper",
-              "pos": [
-                {"u": -29.6, "v": 38.8, "rot": 135},
-                {"u": 41.6, "v": 38.8, "rot": 135}
-              ]
+              "pos": [{"u": -29.6, "v": 38.8, "rot": 135}, {"u": 41.6, "v": 38.8, "rot": 135}]
             },
             {
               "type": "arena2beehex",
@@ -263,10 +341,7 @@
           "groups": [
             {
               "type": "arena2tripodminionmaster",
-              "pos": [
-                {"u": -29.6, "v": 34.1, "rot": 135},
-                {"u": 41.6, "v": 34.1, "rot": 135}
-              ]
+              "pos": [{"u": -29.6, "v": 34.1, "rot": 135}, {"u": 41.6, "v": 34.1, "rot": 135}]
             }
           ],
           "message": "Onda 6: Hex"
@@ -285,26 +360,16 @@
             },
             {
               "type": "arena2lasereye",
-              "pos": [
-                {"u": -38.0, "v": 6.0, "rot": 45},
-                {"u": 50.0, "v": 6.0, "rot": 225}
-              ]
+              "pos": [{"u": -38.0, "v": 6.0, "rot": 45}, {"u": 50.0, "v": 6.0, "rot": 225}]
             }
           ],
           "message": "Onda 7: Mistura"
         },
         {
-          "name": "Miniboss: Corpse Pulveriser",
+          "name": "Minichefe: Corpse Pulveriser",
           "delayBeforeSeconds": 4,
-          "groups": [
-            {
-              "type": "arena2tripod",
-              "pos": [
-                {"u": 6.0, "v": 29.4, "rot": 135}
-              ]
-            }
-          ],
-          "message": "Onda 8: Miniboss: Corpse Pulveriser"
+          "groups": [{"type": "arena2tripod", "pos": [{"u": 6.0, "v": 29.4, "rot": 135}]}],
+          "message": "Onda 8: Minichefe: Corpse Pulveriser"
         },
         {
           "name": "Death Wish 2",
@@ -330,10 +395,7 @@
           "groups": [
             {
               "type": "arenacubespiral",
-              "pos": [
-                {"u": -29.6, "v": 38.8, "rot": 135},
-                {"u": 41.6, "v": 38.8, "rot": 135}
-              ]
+              "pos": [{"u": -29.6, "v": 38.8, "rot": 135}, {"u": 41.6, "v": 38.8, "rot": 135}]
             },
             {
               "type": "arenacubetendrilrandom",
@@ -380,10 +442,7 @@
             },
             {
               "type": "arena2stardog",
-              "pos": [
-                {"u": -29.6, "v": 43.4, "rot": 135},
-                {"u": 41.6, "v": 43.4, "rot": 135}
-              ]
+              "pos": [{"u": -29.6, "v": 43.4, "rot": 135}, {"u": 41.6, "v": 43.4, "rot": 135}]
             }
           ],
           "message": "Onda 12: Hornets 2"
@@ -401,12 +460,7 @@
                 {"u": 41.6, "v": 41.6, "rot": 135}
               ]
             },
-            {
-              "type": "arenacubelasercross",
-              "pos": [
-                {"u": 6.0, "v": 34.1, "rot": 135}
-              ]
-            }
+            {"type": "arenacubelasercross", "pos": [{"u": 6.0, "v": 34.1, "rot": 135}]}
           ],
           "message": "Onda 13: Laser X 2"
         },
@@ -424,33 +478,22 @@
             },
             {
               "type": "arena2warper",
-              "pos": [
-                {"u": -38.0, "v": 6.0, "rot": 45},
-                {"u": 50.0, "v": 6.0, "rot": 225}
-              ]
+              "pos": [{"u": -38.0, "v": 6.0, "rot": 45}, {"u": 50.0, "v": 6.0, "rot": 225}]
             },
-            {
-              "type": "arena2tripodminionmaster",
-              "pos": [
-                {"u": 6.0, "v": 38.8, "rot": 135}
-              ]
-            }
+            {"type": "arena2tripodminionmaster", "pos": [{"u": 6.0, "v": 38.8, "rot": 135}]}
           ],
           "message": "Onda 14: Tudo junto"
         },
         {
-          "name": "Miniboss: Chains",
+          "name": "Minichefe: Chains",
           "delayBeforeSeconds": 4,
           "groups": [
             {
               "type": "arena2ballnchain",
-              "pos": [
-                {"u": -12.7, "v": 29.4, "rot": 135},
-                {"u": 24.7, "v": 29.4, "rot": 135}
-              ]
+              "pos": [{"u": -12.7, "v": 29.4, "rot": 135}, {"u": 24.7, "v": 29.4, "rot": 135}]
             }
           ],
-          "message": "Onda 15: Miniboss: Chains"
+          "message": "Onda 15: Minichefe: Chains"
         },
         {
           "name": "Bonus",
@@ -471,12 +514,7 @@
           "name": "Dark Sphinx",
           "delayBeforeSeconds": 6,
           "groups": [
-            {
-              "type": "arenacube",
-              "pos": [
-                {"u": 6.0, "v": 15.4, "rot": 135}
-              ]
-            },
+            {"type": "arenacube", "pos": [{"u": 6.0, "v": 15.4, "rot": 135}]},
             {
               "type": "arenacubenode",
               "pos": [
@@ -487,7 +525,7 @@
               ]
             }
           ],
-          "message": "The Dark Sphinx awakens!"
+          "message": "A Dark Sphinx desperta!"
         }
       ],
       "boss": true,
@@ -509,22 +547,20 @@
             {"u": -7.2, "v": -7.2, "rot": 0},
             {"u": 19.2, "v": -7.2, "rot": 270}
           ],
-          "note": "Sphinx traps on the floor"
+          "note": "armadilhas da Sphinx no chao"
         }
       ]
     },
     {
-      "room": "prize",
-      "area": "prize",
+      "room": "premio",
+      "area": "premio",
       "wakes": "onEnter",
-      "line": "prize",
+      "line": "premio",
       "enemies": [
         {
           "type": "arena2_destructiblewall3",
-          "pos": [
-            {"u": 6.0, "v": 86.6, "rot": 135}
-          ],
-          "note": "no chest of its own in 190828: the loot comes from the Dark Sphinx"
+          "pos": [{"u": 6.0, "v": 86.6, "rot": 135}],
+          "note": "sem bau proprio na 190828: o loot vem da Dark Sphinx"
         }
       ]
     }

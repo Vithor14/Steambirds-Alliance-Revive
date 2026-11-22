@@ -9,7 +9,7 @@ public enum ServerState { Stopped, Starting, Running, Stopping }
 // The server of this PC: server\SteambirdsServer.exe, run the way "Run server.ps1" ran "dotnet run":
 //   - working folder = server\ (maps, configs and accounts are read and written there);
 //   - STEAMBIRDS_GAME / STEAMBIRDS_BEPINEX point to the game, so the server reads the configBinary and the plugin files;
-//   - everything the server prints goes to the console of the Server tab and to logs\servidor-<date>.log.
+//   - everything the server prints goes to the console of the Server tab and to logs\server-<date>.log.
 public sealed class ServerProcess : IDisposable
 {
     // "12:00:00.000 [UDP] [nexus] status 127.0.0.1:50000: Connected (...)" (Program.cs, StartUdp).
@@ -129,7 +129,7 @@ public sealed class ServerProcess : IDisposable
             StartedAt = DateTime.Now;
         }
 
-        WriteLog("=== SERVIDOR STEAMBIRDS (launcher " + LauncherInfo.Version + ") ===");
+        WriteLog("=== STEAMBIRDS SERVER (launcher " + LauncherInfo.Version + ") ===");
         WriteLog("Iniciado em: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"));
         WriteLog("Executavel: " + LauncherPaths.ServerExe);
         WriteLog("Data folder: " + LauncherPaths.ServerFolder);

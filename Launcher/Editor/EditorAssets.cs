@@ -6,7 +6,7 @@ using SteambirdsLauncher.Core;
 
 namespace SteambirdsLauncher.Editor;
 
-// A picture of the game asset made by tools\editor\build_editor_assets.py: top view of the 3D model, lit from
+// A picture of the game asset drawn by SteambirdsGameFiles.exe: top view of the 3D model, lit from
 // above, with the colors of the model. "Half" is half of the side of the picture in world units, so it is drawn at the
 // size the object has in the game. The game textures are not in the picture (AssetRipper did not export them).
 internal sealed class AssetPicture
@@ -43,7 +43,7 @@ internal sealed class AssetPicture
     }
 }
 
-// A unit of the game (one line "unidade" of units_config.txt, written by the Steambirds Quieter plugin).
+// A unit of the game (one line "unit" of units_config.txt, written by the Steambirds Quieter plugin).
 internal sealed class GameUnit
 {
     public string Name { get; init; } = "";
@@ -171,7 +171,7 @@ internal sealed class EditorAssets
         }
     }
 
-    // units_config.txt: "unidade <name> <hash> <tier> <maxHealth> <baseHealth> <minSpeed> <maxSpeed> <turn> <radius>
+    // units_config.txt: "unit <name> <hash> <tier> <maxHealth> <baseHealth> <minSpeed> <maxSpeed> <turn> <radius>
     // <capsule> <birthTime> <homeDistance> <wall> <player> <boss> <islandMin> <islandMax> <weapons> <art> <marks>", TAB separated.
     private void ReadUnits(string? gameFolder)
     {
@@ -189,7 +189,7 @@ internal sealed class EditorAssets
                 if (!File.Exists(path)) continue;
                 foreach (string line in TextFiles.ReadLinesShared(path))
                 {
-                    if (!line.StartsWith("unidade\t", StringComparison.Ordinal)) continue;
+                    if (!line.StartsWith("unit\t", StringComparison.Ordinal)) continue;
                     string[] f = line.Split('\t');
                     if (f.Length < 20) continue;
                     units[f[1]] = new GameUnit

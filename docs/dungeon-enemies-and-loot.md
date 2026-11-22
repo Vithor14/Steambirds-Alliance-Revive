@@ -1,6 +1,6 @@
 # Dungeons: inimigos sem arma, anéis de explosão e loot (v8c, 15/11/2026)
 
-Segue `docs/servidor-de-dungeon.md` (v8/v8b) e `docs/itens-e-loot.md` (v9). Ainda não testado no jogo. Relatório de teste que originou isso: Bomb Factory completa, sem nenhuma dungeon soltando item, bombas sem dano, "bichinhos" imóveis pequenos com tiros curtos e inimigos que só andavam erraticamente.
+Segue `docs/dungeon-server.md` (v8/v8b) e `docs/items-and-loot.md` (v9). Ainda não testado no jogo. Relatório de teste que originou isso: Bomb Factory completa, sem nenhuma dungeon soltando item, bombas sem dano, "bichinhos" imóveis pequenos com tiros curtos e inimigos que só andavam erraticamente.
 
 ## Causas achadas
 
@@ -21,7 +21,7 @@ Segue `docs/servidor-de-dungeon.md` (v8/v8b) e `docs/itens-e-loot.md` (v9). Aind
 - Comportamento de bombas, cadência e valores de loot são reconstrução.
 - A explosão também sai quando o jogador mata a bomba a tiros (aceito).
 - Mudar a órbita afeta também dungeons ainda fechadas (não testadas).
-- Campos novos de mapa: comportamento `kamikaze`, `raioDeContato`, `invocacaoPeriodica.contaNaSala` (documentados em `maps\README.md`).
+- Campos novos de mapa: comportamento `kamikaze`, `raioDeContato`, `invocacaoPeriodica.contaNaSala` (documentados em `docs/map-format.md`).
 
 ## Falta
 

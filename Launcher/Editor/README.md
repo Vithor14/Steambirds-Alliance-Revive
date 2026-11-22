@@ -1,8 +1,6 @@
 # Map editor (`Launcher\Editor`)
 
-The **Map editor** tab of the launcher creates, opens, edits and saves the map files the server uses (`server\maps\*.json`, format described in `Server\maps\README.md`). It draws the map with the game's pieces, so what you see is what the server will build.
-
-Portuguese version: `README.md`.
+The **Map editor** tab of the launcher creates, opens, edits and saves the map files the server uses (`server\maps\*.json`, format described in `docs\map-format.md`). It draws the map with the game's pieces, so what you see is what the server will build.
 
 ## Using it
 
@@ -19,11 +17,11 @@ Saving checks the map first (**Tools → Check map** shows the same list):
 - **Errors** (the dungeon would not work): no floor or floor pieces, floor outside the game grid, no entrance, no exit point, nothing that ends the dungeon, rooms without name or area, groups or gates pointing to a unit type, room or area that does not exist, bad conditions (`cleared:`, `death:`, `quest:`), empty terrain.
 - **Warnings** (it works, but look at it): entrance or exit off the floor, rooms without units, gates that never open, no checkpoints, a unit outside the area of its room.
 
-A map with errors is not saved as a normal map. The dialog offers **Save as draft anyway**, which writes `"rascunho": true` in the file so you can keep working. The mark is only for the editor (the server does not read it), so a draft may not work on the server until the errors are fixed. Before the first save of a session the old file is copied to `server\_backup\mapas-<date>`.
+A map with errors is not saved as a normal map. The dialog offers **Save as draft anyway**, which writes `"draft": true` in the file so you can keep working. The mark is only for the editor (the server does not read it), so a draft may not work on the server until the errors are fixed. Before the first save of a session the old file is copied to `server\_backup\maps-<date>`.
 
 ## Game pictures
 
-The tab reads `editor-assets\` next to the launcher: `ground\<id>.png` (floor pieces), `units\<name>.png` and `thumbs.json`, plus `ground_assets.txt` (names of the floor pieces). They are generated from the game's extracted assets by `tools\editor\build_editor_assets.py`, and `Build launcher.ps1` copies them to `dist\editor-assets`. Without the folder the editor still works and draws shapes and flat colors. The pictures are *previews* (shape and vertex colors of the meshes, not the textures); units without a picture are drawn as a letter.
+The tab reads `editor-assets\` next to the launcher: `ground\<id>.png` (floor pieces), `units\<name>.png` and `thumbs.json`, plus `ground_assets.txt` (names of the floor pieces). They are drawn by `SteambirdsGameFiles.exe` from your own copy of the game, and `Build launcher.ps1` copies them to `dist\editor-assets`. Without the folder the editor still works and draws shapes and flat colors. The pictures are *previews* (shape and vertex colors of the meshes, not the textures); units without a picture are drawn as a letter.
 
 ## The enemy AI editor (future)
 
@@ -47,4 +45,4 @@ The tab reads `editor-assets\` next to the launcher: `ground\<id>.png` (floor pi
 | `MapSettingsPage.cs`, `RoomsPage.cs`, `UnitTypesPage.cs`, `GatesPage.cs`, `PointsPage.cs` | the tabs on the right |
 | `EditorDialogs.cs`, `EditorTheme.cs`, `Json.cs`, `EnemyAiHook.cs` | dialogs, light/dark theme of the menu and buttons, JSON helpers, the AI slot |
 
-To support a new field of the map format, add a `FieldSpec` to the page that owns it (the key is the Portuguese name used in the file; dotted keys edit nested objects), and a check to `MapValidator.cs` when the server needs it. Every text goes through `L.T`/`L.F` (or a `FieldSpec` label/help, translated by `JsonForm`), and its translation goes into `Launcher\lang`.
+To support a new field of the map format, add a `FieldSpec` to the page that owns it (the key is the name used in the file; dotted keys edit nested objects), and a check to `MapValidator.cs` when the server needs it. Every text goes through `L.T`/`L.F` (or a `FieldSpec` label/help, translated by `JsonForm`), and its translation goes into `Launcher\lang`.

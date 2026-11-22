@@ -10,7 +10,7 @@ the game's files, decompiled code and extracted assets are never stored in this 
 
 - **Status and roadmap:** [CHECKLIST.md](CHECKLIST.md) (done, partial and missing, per area; the source of truth).
 - **How to help:** [CONTRIBUTING.md](CONTRIBUTING.md).
-- **Design notes** (Portuguese): [docs/](docs/).
+- **Design notes** (written in Portuguese, English file names): [docs/](docs/).
 
 ## Quick Download (Releases)
 
@@ -99,15 +99,14 @@ dungeons 1113 (UDP), server search 6444 (UDP).
 | Path | What it is |
 |---|---|
 | `Server\` | The game server (.NET 8): HTTP login API and UDP game servers for the Nexus, the tutorial and the dungeons. |
-| `Server\maps\` | Map files (`nexus.json`, `tutorial_walker.json`, `dungeon_*.json`); format in `Server\maps\README.md`. |
+| `Server\maps\` | Map files (`nexus.json`, `tutorial_walker.json`, `dungeon_*.json`); format in [docs/map-format.md](docs/map-format.md). |
 | `Server\*.json` | Settings: progression, items, enemies, dungeons, network. |
 | `Server\loot_tables\` | Loot tables (one file each). |
-| `Server\Compat\` | Converts files and folders written by older versions (Portuguese names). |
 | `Launcher\` | The launcher (WinForms): client, server hosting, settings and the map editor. |
 | `QuieterPlugin\` | BepInEx plugin for the game client: data exports, map editor pictures (export mode) and client-side fixes. |
 | `GameFiles\` | `SteambirdsGameFiles.exe`: takes the game's own files from the player's copy of the game (see its README). |
 | `Packaging\server\` | README and `Start server.cmd` that go into the server release zip. |
-| `tools\` | Python tools: dungeon generator, editor image builder, map migration. |
+| `tools\` | Python tools: dungeon generator, editor image builder. |
 | `docs\` | Design notes (Portuguese). |
 | `CHECKLIST.md` | Status of every area and the suggested order of work. |
 

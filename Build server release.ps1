@@ -36,7 +36,7 @@ $logFile          = Join-Path $buildFolder "release.log"
 # about folders without code that are not in this list), so nothing private or from the game leaks by accident.
 $releaseFolders   = @("maps", "loot_tables")
 
-# Settings in the root of Server\ that never go into the release (development settings and the old single account).
+# Files in the root of Server\ that never go into the release (development settings and account files).
 $excludedRootFiles = @("appsettings.Development.json", "account.json", "inventory.json", "acceptances.json")
 
 # Folders of Server\ that are known and never released: build output, game data, accounts, logs, backups.
@@ -128,7 +128,7 @@ function FindForbiddenFiles($folder) {
     $forbiddenNames = @("configBinary", "ground_assets.txt", "thumbs.json", "item_catalog.json", "item_catalog.md",
         "account.json", "inventory.json", "acceptances.json", "launcher.json", "server-report.txt")
     $forbiddenExtensions = @(".assets", ".ress", ".resource", ".bundle", ".unity3d", ".ogg", ".wav", ".glb", ".fbx", ".png", ".jpg", ".pdb", ".log")
-    $forbiddenFolders = @("accounts", "contas", "data", "dados", "catalog", "catalogo", "client-uploads", "_backup", "logs", "editor-assets", "BepInEx")
+    $forbiddenFolders = @("accounts", "data", "catalog", "client-uploads", "_backup", "logs", "editor-assets", "BepInEx")
     $found = @()
     foreach ($file in @(Get-ChildItem -LiteralPath $folder -File -Recurse -Force)) {
         $relative = $file.FullName.Substring($folder.Length).TrimStart('\')

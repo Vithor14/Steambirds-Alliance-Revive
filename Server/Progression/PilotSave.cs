@@ -1,7 +1,7 @@
 // Pilot data kept in the account file (account.json, "Pilot" object). Same fields the client keeps in
 // Pilot / PlayerData (PilotSerializer, PlayerDataSerializer), plus what the server needs to remember.
 //
-// The plane XP and level live in each plane of the account (Accounts.AviaoSalvo: Xp, Level, BankedPilotXp).
+// The plane XP and level live in each plane of the account (Accounts.SavedPlane: Xp, Level, BankedPilotXp).
 public sealed class PilotSave
 {
     // Pilot rank. Goes up as soon as the pilot XP shown by the client (computedXP) reaches the next target.

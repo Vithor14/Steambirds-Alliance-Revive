@@ -149,7 +149,7 @@ public static class DungeonCatalog
 
             try
             {
-                CatalogFile? read = LegacyNames.Deserialize<CatalogFile>(File.ReadAllText(path), Options);
+                CatalogFile? read = JsonSerializer.Deserialize<CatalogFile>(File.ReadAllText(path), Options);
                 if (read == null) throw new InvalidDataException("empty file");
                 read.Dungeons = (read.Dungeons ?? new List<Entry>()).Where(d => d != null && !string.IsNullOrWhiteSpace(d.Type)).ToList();
                 foreach (Entry d in read.Dungeons)

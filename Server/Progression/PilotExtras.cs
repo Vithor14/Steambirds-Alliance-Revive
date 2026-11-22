@@ -84,7 +84,7 @@ public static class PilotExtras
             {
                 if (line.Length == 0 || line[0] == '#') continue;
                 string[] p = line.Split('\t');
-                if ((p[0] != "part" && p[0] != "parte") || p.Length < 6) continue;
+                if (p[0] != "part" || p.Length < 6) continue;
                 if (!int.TryParse(p[1], NumberStyles.Integer, Inv, out int id) || id <= 0) continue;
                 if (!int.TryParse(p[2], NumberStyles.Integer, Inv, out int slot)) continue;
                 int.TryParse(p[5], NumberStyles.Integer, Inv, out int exclusion);

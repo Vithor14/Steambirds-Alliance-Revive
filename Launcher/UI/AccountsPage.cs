@@ -8,7 +8,7 @@ namespace SteambirdsLauncher.UI;
 //  - Starting state of new accounts: keys of progression.json and items.json the server already uses
 //    (unlocks as a checklist, currencies as one field each).
 //  - The accounts of this server: one per player (Steam account), in server\accounts\<key>\ (account.json +
-//    inventory.json), plus the old single account server\account.json until the host logs in. Each one can be
+//    inventory.json). Each one can be
 //    edited (in its own window) or removed while the server is stopped.
 internal sealed class AccountsPage : UserControl
 {
@@ -179,9 +179,7 @@ internal sealed class AccountsPage : UserControl
         }
         else
         {
-            serverNote.Text = accounts.Any(a => a.IsLegacy)
-                ? L.T("One account per player (Steam account). The old account of the server (account.json) goes to the first player who joins from this PC.")
-                : L.T("One account per player (Steam account), saved in server\\accounts on this PC.");
+            serverNote.Text = L.T("One account per player (Steam account), saved in server\\accounts on this PC.");
             Ui.SetRole(serverNote, TextRole.Muted);
         }
     }
@@ -213,7 +211,7 @@ internal sealed class AccountsPage : UserControl
                 var item = new ListViewItem(new[]
                 {
                     account.Name,
-                    account.SteamId.Length > 0 ? account.SteamId : (account.IsLegacy ? "—" : account.Key),
+                    account.SteamId.Length > 0 ? account.SteamId : account.Key,
                     account.LastSeen.HasValue ? account.LastSeen.Value.ToString("dd/MM/yyyy HH:mm") : "—",
                     pilot != null ? Number(pilot.Level) : "—",
                     data != null ? data.Planes.Count.ToString(CultureInfo.InvariantCulture) : "—",
@@ -233,7 +231,7 @@ internal sealed class AccountsPage : UserControl
             ListViewItem? again = summary.Items.Cast<ListViewItem>()
                 .FirstOrDefault(i => i.Tag is AccountStore.Summary a && string.Equals(a.Folder, selectedFolder, StringComparison.OrdinalIgnoreCase));
             (again ?? summary.Items[0]).Selected = true;
-            accountStatus.Text = L.F("{0} account(s). Read at {1}.", accounts.Count(a => !a.IsLegacy), DateTime.Now.ToString("HH:mm:ss"));
+            accountStatus.Text = L.F("{0} account(s). Read at {1}.", accounts.Count, DateTime.Now.ToString("HH:mm:ss"));
         }
         catch (Exception e)
         {
@@ -300,9 +298,7 @@ internal sealed class AccountsPage : UserControl
     {
         AccountStore.Summary? chosen = Selected;
         if (chosen == null || !ServerStoppedOrWarn()) return;
-        string question = chosen.IsLegacy
-            ? L.T("Remove the old account of the server?\n\naccount.json and inventory.json (pilot, planes, items, currencies) are moved to server\\_backup.")
-            : L.F("Remove the account of {0}?\n\nIts pilot, planes, items and currencies are moved to server\\_backup. The player gets a new account the next time they join.", chosen.Name);
+        string question = L.F("Remove the account of {0}?\n\nIts pilot, planes, items and currencies are moved to server\\_backup. The player gets a new account the next time they join.", chosen.Name);
         if (!Ui.Confirm(FindForm(), question)) return;
         try
         {

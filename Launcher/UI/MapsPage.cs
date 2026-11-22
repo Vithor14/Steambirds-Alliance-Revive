@@ -49,7 +49,7 @@ internal sealed class MapsPage : UserControl
         Ui.Disable(previewButton);
 
         var toolbar = Ui.WrapFlow(saveButton, undoButton, previewButton,
-            Ui.ComingSoon(tip, L.T("Viewing each map here on the server screen is not implemented yet.\nThe dungeon maps have image previews made by tools\\dungeons-190828.")),
+            Ui.ComingSoon(tip, L.T("Viewing each map here on the server screen is not implemented yet.\nOpen a map in the Map editor tab to see it.")),
             statusLabel);
         toolbar.Dock = DockStyle.Top;
 

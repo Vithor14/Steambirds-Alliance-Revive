@@ -230,7 +230,7 @@ public static class Maps
             {
                 if (string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase)) return p;
             }
-            throw Missing("checkpoint", name, "pontosDeControle");
+            throw Missing("checkpoint", name, "checkpoints");
         }
 
         private InvalidOperationException Missing(string what, string name, string section)
@@ -516,7 +516,7 @@ public static class Maps
     private static Map Read(string path)
     {
         string text = File.ReadAllText(path);
-        MapFile? file = LegacyNames.Deserialize<MapFile>(text, JsonOptions);
+        MapFile? file = JsonSerializer.Deserialize<MapFile>(text, JsonOptions);
         if (file == null) throw new InvalidDataException("empty file");
         if (!string.Equals(file.Format, Format, StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("\"format\" should be \"" + Format + "\" (got \"" + file.Format + "\")");

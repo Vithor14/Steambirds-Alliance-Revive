@@ -4,8 +4,8 @@
   "id": "dungeon_temple",
   "name": "Temple of Bast",
   "terrain": "DungeonTemple",
-  "note": "Temple of Bast (T10, water and fire), remade on 2019-08-28: 2 Altar Rooms before the boss. In an altar room the aura is dark and each hit gives a random curse (+50% damage taken, -90% steam, no regeneration, +50% burning); clearing the room swaps it for a light aura, which removes the curses and heals. Miniboss Bast Statue; boss High Priestess Tiffany, whose red Shades drain health up close.",
-  "source": "Build 190828.2045: units, names, barks, signs, quests and territory come from the configBinary; the Dungeons/dungeon_* file of that build is empty, so the room format and the enemy positions were recreated.",
+  "note": "Templo de Bast (T10, agua e fogo), versao refeita em 28/08/2019: 2 Salas de Altar antes do chefe. Numa sala de altar a aura e escura e cada acerto da uma maldicao aleatoria (+50% de dano recebido, -90% de steam, sem regeneracao, +50% de queimadura); limpar a sala troca por aura clara, que tira as maldicoes e cura. Minichefe Bast Statue; chefe High Priestess Tiffany, cujos Shades vermelhos drenam vida de perto.",
+  "source": "Build 190828.2045: unidades, nomes, falas, placas, quests e territorio vem do configBinary; o arquivo Dungeons/dungeon_* dessa build e vazio, entao o formato das salas e a posicao dos inimigos foram recriados.",
   "key": "key_temple",
   "portalItem": "dungeon_temple",
   "exit": {"point": "portal", "when": "death:smokeboss"},
@@ -18,7 +18,7 @@
     "drawing": {
       "siStart": -20,
       "sjStart": -92,
-      "legend": ". free floor, # wall, - no floor. First line = last sj row (the far end).",
+      "legend": ". chao livre, # muro, - sem chao. Primeira linha = ultima fileira sj (o fundo).",
       "lines": [
         "############################################------------",
         "############################################------------",
@@ -217,65 +217,90 @@
   "spawn": {"u": 6.0, "v": -257.3, "rot": 315},
   "points": {
     "boss": {"u": 6.0, "v": 242.5, "rot": 135},
-    "portal": {"u": 6.0, "v": 211.9, "rot": 0, "note": "exit carrier (appears when the boss dies)"}
+    "portal": {"u": 6.0, "v": 211.9, "rot": 0, "note": "porta-avioes de saida (aparece quando o chefe morre)"}
   },
   "groups": {},
   "areas": {
-    "entrance": {"minU": -12.6, "maxU": 24.6, "minV": -264.6, "maxV": -233.4},
+    "entrada": {"minU": -12.6, "maxU": 24.6, "minV": -264.6, "maxV": -233.4},
     "nave": {"minU": -27.6, "maxU": 39.6, "minV": -210.6, "maxV": -155.4},
-    "monks_cloister": {"minU": -24.6, "maxU": 36.6, "minV": -138.6, "maxV": -89.4},
-    "altar_room_1": {"minU": -27.6, "maxU": 39.6, "minV": -72.6, "maxV": -5.4},
-    "statue_gallery": {"minU": -27.6, "maxU": 39.6, "minV": 11.4, "maxV": 72.6},
-    "altar_room_2": {"minU": -27.6, "maxU": 39.6, "minV": 89.4, "maxV": 156.6},
-    "sanctuary": {"minU": -39.6, "maxU": 51.6, "minV": 179.4, "maxV": 270.6},
-    "treasure_room": {"minU": 47.4, "maxU": 90.6, "minV": -135.6, "maxV": -92.4}
+    "claustro_dos_monges": {"minU": -24.6, "maxU": 36.6, "minV": -138.6, "maxV": -89.4},
+    "sala_de_altar_1": {"minU": -27.6, "maxU": 39.6, "minV": -72.6, "maxV": -5.4},
+    "galeria_da_estatua": {"minU": -27.6, "maxU": 39.6, "minV": 11.4, "maxV": 72.6},
+    "sala_de_altar_2": {"minU": -27.6, "maxU": 39.6, "minV": 89.4, "maxV": 156.6},
+    "santuario": {"minU": -39.6, "maxU": 51.6, "minV": 179.4, "maxV": 270.6},
+    "sala_do_tesouro": {"minU": 47.4, "maxU": 90.6, "minV": -135.6, "maxV": -92.4}
   },
-  "lines": {"entrance": -264.0, "nave": -210.0, "monks_cloister": -138.0, "altar_room_1": -72.0, "statue_gallery": 12.0, "altar_room_2": 90.0, "sanctuary": 180.0, "treasure_room": -135.0},
+  "lines": {
+    "entrada": -264.0,
+    "nave": -210.0,
+    "claustro_dos_monges": -138.0,
+    "sala_de_altar_1": -72.0,
+    "galeria_da_estatua": 12.0,
+    "sala_de_altar_2": 90.0,
+    "santuario": 180.0,
+    "sala_do_tesouro": -135.0
+  },
   "values": {"tier": 10},
   "checkpoints": [
-    {"name": "entrance", "activeAtV": -264.0, "u": 6.0, "v": -260.6, "rot": 315},
+    {"name": "entrada", "activeAtV": -264.0, "u": 6.0, "v": -260.6, "rot": 315},
     {"name": "nave", "activeAtV": -210.0, "u": 6.0, "v": -204.7, "rot": 315},
-    {"name": "monks_cloister", "activeAtV": -138.0, "u": 6.0, "v": -133.2, "rot": 315},
-    {"name": "altar_room_1", "activeAtV": -72.0, "u": 6.0, "v": -65.7, "rot": 315},
-    {"name": "statue_gallery", "activeAtV": 12.0, "u": 6.0, "v": 17.8, "rot": 315},
-    {"name": "altar_room_2", "activeAtV": 90.0, "u": 6.0, "v": 96.3, "rot": 315},
-    {"name": "sanctuary", "activeAtV": 180.0, "u": 6.0, "v": 188.2, "rot": 315}
+    {"name": "claustro_dos_monges", "activeAtV": -138.0, "u": 6.0, "v": -133.2, "rot": 315},
+    {"name": "sala_de_altar_1", "activeAtV": -72.0, "u": 6.0, "v": -65.7, "rot": 315},
+    {"name": "galeria_da_estatua", "activeAtV": 12.0, "u": 6.0, "v": 17.8, "rot": 315},
+    {"name": "sala_de_altar_2", "activeAtV": 90.0, "u": 6.0, "v": 96.3, "rot": 315},
+    {"name": "santuario", "activeAtV": 180.0, "u": 6.0, "v": 188.2, "rot": 315}
   ],
   "gates": [
-    {"name": "altar gate 1", "type": "templedungeondestroyablewall", "sj": -27, "siFrom": 0, "siTo": 3, "damageable": true, "room": "altar_room_1"},
     {
-      "name": "gallery gate",
+      "name": "portao do altar 1",
+      "type": "templedungeondestroyablewall",
+      "sj": -27,
+      "siFrom": 0,
+      "siTo": 3,
+      "damageable": true,
+      "room": "sala_de_altar_1"
+    },
+    {
+      "name": "portao da galeria",
       "type": "templedungeondestroyablewallstrong",
       "sj": 1,
       "siFrom": 0,
       "siTo": 3,
       "damageable": false,
-      "opensWhen": "cleared:altar_room_1",
-      "room": "statue_gallery"
+      "opensWhen": "cleared:sala_de_altar_1",
+      "room": "galeria_da_estatua"
     },
     {
-      "name": "altar gate 2",
+      "name": "portao do altar 2",
       "type": "templedungeondestroyablewallstrong",
       "sj": 27,
       "siFrom": 0,
       "siTo": 3,
       "damageable": false,
-      "opensWhen": "cleared:statue_gallery",
-      "room": "altar_room_2"
+      "opensWhen": "cleared:galeria_da_estatua",
+      "room": "sala_de_altar_2"
     },
     {
-      "name": "sanctuary gate",
+      "name": "portao do santuario",
       "type": "templedungeondestroyablewallstrong",
       "sj": 56,
       "siFrom": 0,
       "siTo": 3,
       "damageable": false,
-      "opensWhen": "cleared:altar_room_2",
-      "room": "sanctuary"
+      "opensWhen": "cleared:sala_de_altar_2",
+      "room": "santuario"
     }
   ],
   "sideGates": [
-    {"name": "treasure wall", "type": "templedungeondestroyablewall", "si": 14, "sjFrom": -40, "sjTo": -37, "damageable": true, "room": "treasure_room"}
+    {
+      "name": "parede do tesouro",
+      "type": "templedungeondestroyablewall",
+      "si": 14,
+      "sjFrom": -40,
+      "sjTo": -37,
+      "damageable": true,
+      "room": "sala_do_tesouro"
+    }
   ],
   "signs": [
     {"key": "templedungeonsign1", "u": 6.0, "v": -246.2, "radius": 14, "rot": 0},
@@ -306,7 +331,13 @@
       "aggroRadius": 60,
       "firstShotDelay": 2.0,
       "onDeath": "smokebossDEATH",
-      "barks": {"onWake": "smokeboss_0", "phase": "smokeboss_1", "curse": "smokeboss_curse", "summon": "smokeboss_feed", "onDeath": "smokebossDEATH"},
+      "barks": {
+        "onWake": "smokeboss_0",
+        "phase": "smokeboss_1",
+        "curse": "smokeboss_curse",
+        "summon": "smokeboss_feed",
+        "onDeath": "smokebossDEATH"
+      },
       "phases": [
         {"belowHealth": 0.8, "summon": "smokebossswarm", "summonCount": 4, "message": "Shades!"},
         {"belowHealth": 0.6, "summon": "temple_droneBIG", "summonCount": 2},
@@ -314,25 +345,80 @@
         {"belowHealth": 0.2, "summon": "temple_fireball", "summonCount": 2}
       ]
     },
-    "bansheefake": {"name": "Bast Statue", "template": "bansheefake", "behavior": "charge", "preferredDistance": 6, "aggroRadius": 30},
+    "bansheefake": {
+      "name": "Bast Statue",
+      "template": "bansheefake",
+      "behavior": "charge",
+      "preferredDistance": 6,
+      "aggroRadius": 30
+    },
     "bansheesacrifice": {"name": "Sacrificial Cultist", "template": "bansheesacrifice", "behavior": "turret", "aggroRadius": 30},
-    "duoguard": {"name": "Bast Guardian", "template": "duoguard", "behavior": "chase", "preferredDistance": 3.0, "aggroRadius": 28},
+    "duoguard": {
+      "name": "Bast Guardian",
+      "template": "duoguard",
+      "behavior": "chase",
+      "preferredDistance": 3.0,
+      "aggroRadius": 28
+    },
     "smokebossDEATH": {"name": "High Priestess Tiffany", "template": "smokebossDEATH", "behavior": "idle", "invulnerable": true},
-    "smokebossswarm": {"name": "Shade", "template": "smokebossswarm", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
+    "smokebossswarm": {
+      "name": "Shade",
+      "template": "smokebossswarm",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
     "temple_altar": {"name": "Altar of Bast", "template": "temple_altar", "behavior": "idle"},
-    "temple_banishee": {"name": "Banishee", "template": "temple_banishee", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
-    "temple_cultist": {"name": "Bishop", "template": "temple_cultist", "behavior": "chase", "preferredDistance": 3.3, "aggroRadius": 28},
+    "temple_banishee": {
+      "name": "Banishee",
+      "template": "temple_banishee",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
+    "temple_cultist": {
+      "name": "Bishop",
+      "template": "temple_cultist",
+      "behavior": "chase",
+      "preferredDistance": 3.3,
+      "aggroRadius": 28
+    },
     "temple_cultistBIG": {"name": "High Priestess Tiffany", "template": "temple_cultistBIG", "behavior": "idle"},
-    "temple_droneBIG": {"name": "Godly Drone", "template": "temple_droneBIG", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
-    "temple_fireball": {"name": "Fire Ball", "template": "temple_fireball", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28, "invulnerable": true},
+    "temple_droneBIG": {
+      "name": "Godly Drone",
+      "template": "temple_droneBIG",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
+    "temple_fireball": {
+      "name": "Fire Ball",
+      "template": "temple_fireball",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28,
+      "invulnerable": true
+    },
     "temple_spawner_tower_visible": {"name": "temple_spawner_tower_visible", "template": "temple_spawner_tower_visible", "behavior": "idle"},
     "temple_trooper": {"name": "Priest", "template": "temple_trooper", "behavior": "turret", "aggroRadius": 30},
-    "templedrone": {"name": "Temple Drone", "template": "templedrone", "behavior": "chase", "preferredDistance": 4.1, "aggroRadius": 28},
+    "templedrone": {
+      "name": "Temple Drone",
+      "template": "templedrone",
+      "behavior": "chase",
+      "preferredDistance": 4.1,
+      "aggroRadius": 28
+    },
     "templedungeondestroyablewall": {"name": "Wall", "template": "templedungeondestroyablewall", "behavior": "idle"},
     "templedungeondestroyablewallstrong": {"name": "Wall", "template": "templedungeondestroyablewallstrong", "behavior": "idle"},
     "templedungeontreasure": {"name": "Treasure", "template": "templedungeontreasure", "behavior": "idle", "opensAfterHitSeconds": 1.5},
     "templemonk": {"name": "Maw Guardian", "template": "templemonk", "behavior": "turret", "aggroRadius": 30},
-    "templemonk2": {"name": "Claw Guardian", "template": "templemonk2", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
+    "templemonk2": {
+      "name": "Claw Guardian",
+      "template": "templemonk2",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
     "trooper": {"name": "Cultist", "template": "trooper", "behavior": "turret", "aggroRadius": 30},
     "trooperleader": {"name": "Cultist Dropship", "template": "trooperleader", "behavior": "turret", "aggroRadius": 30},
     "turret": {"name": "Altar of Death", "template": "turret", "behavior": "turret", "aggroRadius": 30},
@@ -347,13 +433,7 @@
       "wakes": "onEnter",
       "line": "nave",
       "enemies": [
-        {
-          "type": "trooperleader",
-          "pos": [
-            {"u": 6.0, "v": -167.5, "rot": 135}
-          ],
-          "note": "Cultist Dropship"
-        },
+        {"type": "trooperleader", "pos": [{"u": 6.0, "v": -167.5, "rot": 135}], "note": "Cultist Dropship"},
         {
           "type": "trooper",
           "pos": [
@@ -366,42 +446,27 @@
         },
         {
           "type": "templedrone",
-          "pos": [
-            {"u": -16.3, "v": -201.1, "rot": 135},
-            {"u": 28.3, "v": -201.1, "rot": 135}
-          ]
+          "pos": [{"u": -16.3, "v": -201.1, "rot": 135}, {"u": 28.3, "v": -201.1, "rot": 135}]
         }
       ]
     },
     {
-      "room": "monks_cloister",
-      "area": "monks_cloister",
+      "room": "claustro_dos_monges",
+      "area": "claustro_dos_monges",
       "wakes": "onEnter",
-      "line": "monks_cloister",
+      "line": "claustro_dos_monges",
       "enemies": [
         {
           "type": "templemonk",
-          "pos": [
-            {"u": -21.1, "v": -114.0, "rot": 45},
-            {"u": 33.1, "v": -114.0, "rot": 225}
-          ],
+          "pos": [{"u": -21.1, "v": -114.0, "rot": 45}, {"u": 33.1, "v": -114.0, "rot": 225}],
           "note": "Maw Guardians"
         },
         {
           "type": "templemonk2",
-          "pos": [
-            {"u": -15.9, "v": -102.6, "rot": 135},
-            {"u": 27.9, "v": -102.6, "rot": 135}
-          ],
+          "pos": [{"u": -15.9, "v": -102.6, "rot": 135}, {"u": 27.9, "v": -102.6, "rot": 135}],
           "note": "Claw Guardians"
         },
-        {
-          "type": "warpmineleader",
-          "pos": [
-            {"u": 6.0, "v": -114.0, "rot": 135}
-          ],
-          "note": "Templar"
-        },
+        {"type": "warpmineleader", "pos": [{"u": 6.0, "v": -114.0, "rot": 135}], "note": "Templar"},
         {
           "type": "warpmine",
           "pos": [
@@ -413,45 +478,33 @@
       ]
     },
     {
-      "room": "treasure_room",
-      "area": "treasure_room",
+      "room": "sala_do_tesouro",
+      "area": "sala_do_tesouro",
       "wakes": "onEnter",
-      "line": "treasure_room",
+      "line": "sala_do_tesouro",
       "enemies": [
         {
           "type": "bansheeleader5treasureroom",
-          "pos": [
-            {"u": 69.0, "v": -106.1, "rot": 135}
-          ],
-          "note": "Bast Statue of the treasure room"
+          "pos": [{"u": 69.0, "v": -106.1, "rot": 135}],
+          "note": "Bast Statue da sala do tesouro"
         },
-        {
-          "type": "templedungeontreasure",
-          "pos": [
-            {"u": 69.0, "v": -119.9, "rot": 135}
-          ]
-        }
+        {"type": "templedungeontreasure", "pos": [{"u": 69.0, "v": -119.9, "rot": 135}]}
       ]
     },
     {
-      "room": "altar_room_1",
-      "area": "altar_room_1",
+      "room": "sala_de_altar_1",
+      "area": "sala_de_altar_1",
       "wakes": "onEnter",
-      "line": "altar_room_1",
+      "line": "sala_de_altar_1",
       "enemies": [
         {
           "type": "temple_altar",
-          "pos": [
-            {"u": 6.0, "v": -32.6, "rot": 135}
-          ],
-          "note": "Altar of Bast (dark aura -> light)"
+          "pos": [{"u": 6.0, "v": -32.6, "rot": 135}],
+          "note": "Altar of Bast (aura escura -> clara)"
         },
         {
           "type": "temple_spawner_tower_visible",
-          "pos": [
-            {"u": -13.1, "v": -16.7, "rot": 135},
-            {"u": 25.1, "v": -16.7, "rot": 135}
-          ],
+          "pos": [{"u": -13.1, "v": -16.7, "rot": 135}, {"u": 25.1, "v": -16.7, "rot": 135}],
           "note": "Summoning Circles"
         },
         {
@@ -483,45 +536,31 @@
           ],
           "note": "Priests"
         },
-        {
-          "type": "temple_cultist",
-          "pos": [
-            {"u": 6.0, "v": -13.6, "rot": 135}
-          ],
-          "note": "Bishop"
-        },
+        {"type": "temple_cultist", "pos": [{"u": 6.0, "v": -13.6, "rot": 135}], "note": "Bishop"},
         {
           "type": "turret",
-          "pos": [
-            {"u": -20.7, "v": -65.7, "rot": 135},
-            {"u": 32.7, "v": -65.7, "rot": 135}
-          ],
+          "pos": [{"u": -20.7, "v": -65.7, "rot": 135}, {"u": 32.7, "v": -65.7, "rot": 135}],
           "note": "Altar of Death"
         }
       ],
       "altarRoom": true,
       "controllers": ["temple_spawner_tower", "temple_spawner_tower2"],
-      "note": "Dark aura while there are enemies: curse buffs of the configBinary (curse_*); cleared -> light aura (heals)."
+      "note": "Aura escura enquanto houver inimigos: buffs de maldicao do configBinary (curse_*); limpa -> aura clara (cura)."
     },
     {
-      "room": "altar_room_2",
-      "area": "altar_room_2",
+      "room": "sala_de_altar_2",
+      "area": "sala_de_altar_2",
       "wakes": "onEnter",
-      "line": "altar_room_2",
+      "line": "sala_de_altar_2",
       "enemies": [
         {
           "type": "temple_altar",
-          "pos": [
-            {"u": 6.0, "v": 129.4, "rot": 135}
-          ],
-          "note": "Altar of Bast (dark aura -> light)"
+          "pos": [{"u": 6.0, "v": 129.4, "rot": 135}],
+          "note": "Altar of Bast (aura escura -> clara)"
         },
         {
           "type": "temple_spawner_tower_visible",
-          "pos": [
-            {"u": -13.1, "v": 145.3, "rot": 135},
-            {"u": 25.1, "v": 145.3, "rot": 135}
-          ],
+          "pos": [{"u": -13.1, "v": 145.3, "rot": 135}, {"u": 25.1, "v": 145.3, "rot": 135}],
           "note": "Summoning Circles"
         },
         {
@@ -553,46 +592,32 @@
           ],
           "note": "Priests"
         },
-        {
-          "type": "temple_cultist",
-          "pos": [
-            {"u": 6.0, "v": 148.4, "rot": 135}
-          ],
-          "note": "Bishop"
-        },
+        {"type": "temple_cultist", "pos": [{"u": 6.0, "v": 148.4, "rot": 135}], "note": "Bishop"},
         {
           "type": "turret",
-          "pos": [
-            {"u": -20.7, "v": 96.3, "rot": 135},
-            {"u": 32.7, "v": 96.3, "rot": 135}
-          ],
+          "pos": [{"u": -20.7, "v": 96.3, "rot": 135}, {"u": 32.7, "v": 96.3, "rot": 135}],
           "note": "Altar of Death"
         }
       ],
       "altarRoom": true,
       "controllers": ["temple_spawner_tower", "temple_spawner_tower2"],
-      "note": "Dark aura while there are enemies: curse buffs of the configBinary (curse_*); cleared -> light aura (heals)."
+      "note": "Aura escura enquanto houver inimigos: buffs de maldicao do configBinary (curse_*); limpa -> aura clara (cura)."
     },
     {
-      "room": "statue_gallery",
-      "area": "statue_gallery",
+      "room": "galeria_da_estatua",
+      "area": "galeria_da_estatua",
       "wakes": "onEnter",
-      "line": "statue_gallery",
+      "line": "galeria_da_estatua",
       "enemies": [
         {
           "type": "bansheeleader5",
-          "pos": [
-            {"u": 6.0, "v": 53.5, "rot": 135}
-          ],
+          "pos": [{"u": 6.0, "v": 53.5, "rot": 135}],
           "miniboss": true,
           "note": "Bast Statue"
         },
         {
           "type": "duoguard",
-          "pos": [
-            {"u": -6.7, "v": 47.8, "rot": 135},
-            {"u": 18.7, "v": 47.8, "rot": 135}
-          ],
+          "pos": [{"u": -6.7, "v": 47.8, "rot": 135}, {"u": 18.7, "v": 47.8, "rot": 135}],
           "note": "Bast Guardians"
         },
         {
@@ -603,37 +628,26 @@
             {"u": -18.2, "v": 63.9, "rot": 135},
             {"u": 30.2, "v": 63.9, "rot": 135}
           ],
-          "note": "fake statues"
+          "note": "estatuas falsas"
         }
       ],
       "miniboss": true,
       "controllers": ["duoguardmaster"]
     },
     {
-      "room": "sanctuary",
-      "area": "sanctuary",
+      "room": "santuario",
+      "area": "santuario",
       "wakes": "onEnter",
-      "line": "sanctuary",
+      "line": "santuario",
       "enemies": [
-        {
-          "type": "smokeboss",
-          "pos": [
-            {"u": 6.0, "v": 242.5, "rot": 135}
-          ]
-        },
+        {"type": "smokeboss", "pos": [{"u": 6.0, "v": 242.5, "rot": 135}]},
         {
           "type": "temple_cultistBIG",
-          "pos": [
-            {"u": -20.3, "v": 255.7, "rot": 135},
-            {"u": 32.3, "v": 255.7, "rot": 135}
-          ]
+          "pos": [{"u": -20.3, "v": 255.7, "rot": 135}, {"u": 32.3, "v": 255.7, "rot": 135}]
         },
         {
           "type": "warpmine2",
-          "pos": [
-            {"u": -24.7, "v": 194.3, "rot": 135},
-            {"u": 36.7, "v": 194.3, "rot": 135}
-          ],
+          "pos": [{"u": -24.7, "v": 194.3, "rot": 135}, {"u": 36.7, "v": 194.3, "rot": 135}],
           "note": "Moon Templars"
         }
       ],

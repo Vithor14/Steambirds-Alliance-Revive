@@ -18,8 +18,8 @@
       ]
     },
     {
-      // Equipamento aleatorio (arma, secundario, motor ou armadura).
-      // usableChance: chance (0-100) de o item ser de algo que a classe do jogador pode equipar.
+      // Random equipment (weapon, secondary, engine or armor).
+      // usableChance: chance (0-100) that the item is something the player's class can equip.
       "usableChance": 40,
       "lootTable": [
         { "weight": 88 },

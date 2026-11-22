@@ -170,7 +170,7 @@ public static partial class Enemies
                 if (line.Length == 0 || line[0] == '#') continue;
                 string[] p = line.Split('\t');
 
-                if ((p[0] == "unit" || p[0] == "unidade") && p.Length >= 19)
+                if (p[0] == "unit" && p.Length >= 19)
                 {
                     var added = new GameUnit
                     {
@@ -192,7 +192,7 @@ public static partial class Enemies
                     };
                     fresh[added.Name] = added;
                 }
-                else if ((p[0] == "gun" || p[0] == "arma") && p.Length >= 19)
+                else if (p[0] == "gun" && p.Length >= 19)
                 {
                     if (!fresh.TryGetValue(p[1], out GameUnit? owner)) continue;
                     owner.Guns.Add(new GameGun
@@ -269,7 +269,7 @@ public static partial class Enemies
             if (modified == configReadAt) return;
             configReadAt = modified;
 
-            EnemiesConfig? loaded = LegacyNames.Deserialize<EnemiesConfig>(File.ReadAllText(path), JsonOptions);
+            EnemiesConfig? loaded = JsonSerializer.Deserialize<EnemiesConfig>(File.ReadAllText(path), JsonOptions);
             if (loaded == null) throw new JsonException("empty file");
             config = Normalize(loaded);
             configLoaded = true;

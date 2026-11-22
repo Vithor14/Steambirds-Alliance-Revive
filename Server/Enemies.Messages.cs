@@ -28,8 +28,8 @@ public static partial class Enemies
                 m.WriteVariableInt32(enemy.ShortId);                      // shortId
                 m.Write(enemy.Model.Hash);                               // templateHash
                 m.Write((short)0);                                      // familyRootTemplateHash
-                m.WriteVariableInt32(0);                                // parentShortId
-                m.WriteVariableInt32(enemy.Team);                         // teamIndex: 2 = aiTeam, 1 = ally
+                m.WriteVariableInt32(enemy.OwnerShortId);               // parentShortId (owner of an ally, else 0)
+                m.WriteVariableInt32(enemy.Team);                        // teamIndex: 2 = aiTeam, 1 = ally
                 m.Write((short)0);                                      // artReplacement
                 m.Write(inst.Server.UniqueIdentifier);                // authority = server
                 m.WriteVariableInt32(0);                                // null unitOptions (GenericUnit does not read options)

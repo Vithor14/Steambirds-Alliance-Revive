@@ -3,7 +3,7 @@
 Referência técnica do tutorial refeito no esboço (cliente 201219.1413). Atualizado em 14/11/2026 (4ª versão) com base no vídeo do Open Beta (https://www.youtube.com/watch?v=zr8a4QtMWSU, canal Iczel Gaming, 2019) e no `configBinary` do cliente.
 
 ## Mapa em arquivo (v5)
-- Desde a v5, o chão, os muros, os pontos, as áreas, as linhas do roteiro, os portões, os pontos de controle e as placas ficam em `Server\maps\tutorial_walker.json`. O formato está em `docs/formato-de-mapas.md`.
+- Desde a v5, o chão, os muros, os pontos, as áreas, as linhas do roteiro, os portões, os pontos de controle e as placas ficam em `Server\maps\tutorial_walker.json`. O formato está em `docs/map-format.md`.
 - O roteiro continua em `TutorialEsboco.cs` e lê cada coisa pelo nome.
 - As medidas abaixo (em tiles a, b) viraram u = 12a, v = 12b no arquivo. O perfil e o pilar estão no "desenho": 84 linhas × 20 colunas, si −8..11, sj 0..83.
 
