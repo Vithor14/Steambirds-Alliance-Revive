@@ -1,5 +1,7 @@
 # Steambirds Alliance Revive
 
+> **Join the community on Discord:** [discord.gg/sNwTk7T4mu](https://discord.gg/sNwTk7T4mu)
+
 Community revival of **Steambirds Alliance**, the Steam flight-combat game whose official servers were shut down in 2021.
 
 The project rebuilds the server the game client expects, as close as possible to the original, and adds a **launcher**
