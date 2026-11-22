@@ -27,6 +27,7 @@ if (-not $root) { $root = "C:\Steambirds" }
 $serverFolder     = Join-Path $root "Server"
 $pluginFolder     = Join-Path $root "QuieterPlugin"
 $gameFilesFolder  = Join-Path $root "GameFiles"
+$sharedFolder     = Join-Path $root "Shared"
 $packagingFolder  = Join-Path $root "Packaging\server"
 $releaseFolder    = Join-Path $root "Release"
 $buildFolder      = Join-Path $releaseFolder "build"
@@ -80,11 +81,15 @@ function RunDotnet($title, [string[]]$arguments) {
 
 # "Name-1.cs", "Name (1).cs", "Name - Copia.cs", "Name - Copy.cs" next to "Name.cs", and the same file in two
 # folders of one project. Only reported here: "Build launcher.ps1" and "Run server.ps1" offer to move them.
-function FindDuplicatedCode($project) {
+# Takes several project folders and checks them together (the server also compiles Shared\EnemyAi).
+function FindDuplicatedCode([string[]]$projects) {
     $found = @()
-    if (-not (Test-Path -LiteralPath $project)) { return $found }
-    $files = @(Get-ChildItem -LiteralPath $project -Filter "*.cs" -File -Recurse -ErrorAction SilentlyContinue |
-        Where-Object { $_.FullName -notmatch '\\(bin|obj|\.vs)\\' })
+    $files = @()
+    foreach ($project in $projects) {
+        if (-not (Test-Path -LiteralPath $project)) { continue }
+        $files += @(Get-ChildItem -LiteralPath $project -Filter "*.cs" -File -Recurse -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -notmatch '\\(bin|obj|\.vs)\\' })
+    }
     foreach ($file in $files) {
         $name = $file.BaseName
         $withoutSuffix = $name -replace '(-\d+| \(\d+\)| - C.pia( \(\d+\))?| - Copy( \(\d+\))?)$', ''
@@ -159,6 +164,8 @@ foreach ($project in @((Join-Path $serverFolder "SteambirdsServer.csproj"), (Joi
 foreach ($file in @("README.md", "Start server.cmd")) {
     if (-not (Test-Path -LiteralPath (Join-Path $packagingFolder $file))) { Fail "$(Join-Path $packagingFolder $file) not found" }
 }
+# SteambirdsServer.csproj compiles ..\Shared\EnemyAi\*.cs: without the folder the build fails with "type not found" errors.
+if (-not (Test-Path -LiteralPath (Join-Path $sharedFolder "EnemyAi"))) { Fail "Shared\EnemyAi not found in $sharedFolder (the server compiles it)." }
 
 # Version of the release (goes in the zip name).
 if (-not $Version) {
@@ -174,7 +181,9 @@ $packageName = "SteambirdsServer-$Version-win-x64"
 Say "Version: $Version"
 
 $duplicates = @()
-foreach ($project in @($serverFolder, $gameFilesFolder, $pluginFolder)) { $duplicates += @(FindDuplicatedCode $project) }
+$duplicates += @(FindDuplicatedCode @($serverFolder, $sharedFolder))   # the server compiles Shared\EnemyAi too
+$duplicates += @(FindDuplicatedCode @($gameFilesFolder))
+$duplicates += @(FindDuplicatedCode @($pluginFolder))
 if ($duplicates.Count -gt 0) {
     Say ""
     Say "Duplicated .cs files (the build fails with CS0101/CS0111):" Yellow

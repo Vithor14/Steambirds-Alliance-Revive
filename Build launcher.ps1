@@ -10,9 +10,10 @@
 # The .exe files are self-contained: whoever receives the dist folder does not need to install .NET.
 #
 # Run it again whenever the server, plugin or launcher code changes. Data copied into dist\server:
-#   - maps, data, loot_tables, items and configs (progression.json, items.json, dungeons.json, enemies.json):
-#     copied when missing in dist or when the Server file is newer. Before a file is replaced, the version the
-#     launcher had goes to dist\server\_backup\<date>.
+#   - maps, data, loot_tables, ai (enemy AI files, which the Enemy AI tab edits) and configs (progression.json,
+#     items.json, stores.json, dungeons.json, enemies.json): copied when missing in dist or when the Server file is
+#     newer. Any other folder of Server\ without code is picked up automatically. Before a file is replaced, the
+#     version the launcher had goes to dist\server\_backup\<date>.
 #   - accounts: the server keeps one per player in server\accounts\<key> (account.json, inventory.json, acceptances.json).
 #     The accounts folder is never copied (dist keeps its own; Run server.ps1 uses the ones in Server).
 #   - network.json (name, ports and who can join): copied like the other configs.
@@ -21,7 +22,8 @@
 #     XP tables, skills and unlocks. dist is in .gitignore: these game files never go to GitHub.
 #
 # Before compiling, it looks for duplicated .cs files ("Name-1.cs" copies, and the same file in two folders, such as
-# LootDrops.cs in the root and in Items\), which make the build fail with CS0101/CS0111.
+# LootDrops.cs in the root and in Items\), which make the build fail with CS0101/CS0111. Shared\EnemyAi (the enemy AI
+# core compiled into BOTH the server and the launcher) is checked together with each of them.
 # Everything shown on screen is also written to Launcher\build\build.log.
 
 $root = $PSScriptRoot
@@ -29,6 +31,7 @@ if (-not $root) { $root = "C:\Steambirds" }
 $serverFolder      = Join-Path $root "Server"
 $pluginFolder      = Join-Path $root "QuieterPlugin"
 $gameFilesFolder   = Join-Path $root "GameFiles"
+$sharedFolder      = Join-Path $root "Shared"
 $launcherFolder    = Join-Path $root "Launcher"
 $buildFolder       = Join-Path $launcherFolder "build"
 $distFolder        = Join-Path $launcherFolder "dist"
@@ -133,10 +136,14 @@ function ResolveCopies($project) {
 # The same file (identical content) in two folders of the project: the compiler reads both and the class is duplicated.
 # The copy deepest in the folders stays (e.g. Items\LootDrops.cs); the others go to _duplicates.
 # Files with the same name and different content only give a warning (they may be different classes).
-function ResolveSameFileInTwoFolders($project) {
-    if (-not (Test-Path -LiteralPath $project)) { return }
-    $files = @(Get-ChildItem -LiteralPath $project -Filter "*.cs" -File -Recurse -ErrorAction SilentlyContinue |
-        Where-Object { $_.FullName -notmatch '\\(bin|obj|\.vs)\\' })
+# Takes several project folders and checks them together: the server and the launcher both compile Shared\EnemyAi.
+function ResolveSameFileInTwoFolders([string[]]$projects) {
+    $files = @()
+    foreach ($project in $projects) {
+        if (-not (Test-Path -LiteralPath $project)) { continue }
+        $files += @(Get-ChildItem -LiteralPath $project -Filter "*.cs" -File -Recurse -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -notmatch '\\(bin|obj|\.vs)\\' })
+    }
     $groups = @($files | Group-Object Name | Where-Object { $_.Count -gt 1 })
     foreach ($group in $groups) {
         $hashes = @($group.Group | ForEach-Object { (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash } | Select-Object -Unique)
@@ -394,13 +401,17 @@ Say "dotnet: $((& dotnet --version 2>&1) -join ' ')"
 
 if (-not (Test-Path -LiteralPath (Join-Path $serverFolder "SteambirdsServer.csproj"))) { Fail "SteambirdsServer.csproj not found in $serverFolder" }
 if (-not (Test-Path -LiteralPath (Join-Path $launcherFolder "SteambirdsLauncher.csproj"))) { Fail "SteambirdsLauncher.csproj not found in $launcherFolder" }
+# Both csproj files compile ..\Shared\EnemyAi\*.cs: without the folder the wildcard matches nothing and the build
+# fails with a flood of "type not found" errors.
+if (-not (Test-Path -LiteralPath (Join-Path $sharedFolder "EnemyAi"))) { Fail "Shared\EnemyAi not found in $sharedFolder (the server and the launcher both compile it)." }
 
 ResolveCopies $serverFolder
 ResolveCopies $pluginFolder
 ResolveCopies $launcherFolder
 ResolveCopies $gameFilesFolder
-ResolveSameFileInTwoFolders $serverFolder
-ResolveSameFileInTwoFolders $launcherFolder
+ResolveCopies $sharedFolder
+ResolveSameFileInTwoFolders @($serverFolder, $sharedFolder)
+ResolveSameFileInTwoFolders @($launcherFolder, $sharedFolder)
 
 CloseDistPrograms
 

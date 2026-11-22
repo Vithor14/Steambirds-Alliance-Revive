@@ -44,7 +44,7 @@ Maintained 100% by the community, with some additions and improvements.
 | `docs/nexus-rebel-city.md` | Rebel City (Nexus) rebuild, buildings, docking, client uploads |
 | `docs/tutorial.md` | walker tutorial (Training Grounds), ClientMapInfo, exit portal |
 | `docs/enemies.md` | enemy AI protocol, scripted enemies, chat commands |
-| `docs/enemy-ai.md` | Enemy AI editor: AI/behavior files (`Serveri`), shared core `Shared\EnemyAi`, launcher tab and simulator (English) |
+| `docs/enemy-ai.md` | Enemy AI editor: AI/behavior files (`Server\ai`), shared core `Shared\EnemyAi`, launcher tab and simulator (English) |
 | `docs/stores.md` | stores: shelves, `ClientReceiveStoreContent` bytes, purchase, slots, `stores.json` (English) |
 
 ## Repository layout
@@ -62,7 +62,7 @@ Maintained 100% by the community, with some additions and improvements.
 - `Launcher\` — WinForms .NET 8 launcher: `Core\`, `UI\`, `Editor\` (map editor tab), `EnemyAi\` (Enemy AI tab and simulator), `lang\`.
   Docs: `Launcher\README.md`, `Launcher\Editor\README.md`.
 - `Shared\EnemyAi\` — enemy AI core (file formats, runtime, flight, gun aim, simulator), compiled into **both** `Server` and `Launcher`
-  (`<Compile Include="..\Shared\EnemyAi\*.cs">`). The AI files themselves live in `Serveri\` (format: `Serveri\README.md`).
+  (`<Compile Include="..\Shared\EnemyAi\*.cs">`). The AI files themselves live in `Server\ai\` (format: `Server\ai\README.md`).
 - `QuieterPlugin\` — BepInEx plugin for the game client (net46): diagnostics, data exports, client-side fixes, and the
   export mode (`GameFilesExport.cs`, env `STEAMBIRDS_EXPORT`) that draws the map editor pictures and closes the game.
 - `GameFiles\` — `SteambirdsGameFiles.exe` (.NET 8 console): takes configBinary, the plugin's data files and the editor

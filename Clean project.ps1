@@ -33,7 +33,7 @@ $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
 # Folders that are never scanned (huge, not ours, or the host's data).
 $skipNames = @(".git", ".claude", "Assets", "Asset ripper", "decompiled", "decompilado", "OldVersions", "VersoesAntigas",
     "accounts", "data", "dist", "Release", "editor-assets", "_backup", "client-uploads", "catalog", "node_modules")
-$projects = @("Server", "Launcher", "QuieterPlugin", "GameFiles")
+$projects = @("Server", "Launcher", "QuieterPlugin", "GameFiles", "Shared")
 
 $actions = New-Object System.Collections.ArrayList   # each: Kind (Delete, Move, Run), Path, Target, Why, Script
 
@@ -86,7 +86,7 @@ function WalkFiles($folder) {
 
 function CodeFilesThatMention($pattern, $exceptFiles) {
     $hits = @()
-    foreach ($project in @("Server", "Launcher", "QuieterPlugin", "GameFiles")) {
+    foreach ($project in $projects) {
         foreach ($file in @(WalkFiles (Join-Path $root $project))) {
             if ($file.Extension -ne ".cs") { continue }
             if ($exceptFiles -contains $file.FullName) { continue }
