@@ -6,7 +6,7 @@
 #     SteambirdsServer\SteambirdsGameFiles.exe    takes the game files from the player's own copy of the game
 #     SteambirdsServer\plugin\QuieterPlugin.dll   the plugin SteambirdsGameFiles.exe installs in the game
 #     SteambirdsServer\Start server.cmd, README.md, LICENSE   (README and .cmd come from Packaging\server)
-#     SteambirdsServer\maps\, loot_tables\ and the settings (network.json, progression.json, items.json...)
+#     SteambirdsServer\maps\, loot_tables\, ai\ (enemy AI files) and the settings (network.json, progression.json, items.json...)
 #
 # NO game file goes into the zip: configBinary, the data files of the plugin (units_config.txt...), the item catalog
 # and the map editor pictures belong to the game. Each player gets them with SteambirdsGameFiles.exe. Player accounts,
@@ -34,7 +34,7 @@ $logFile          = Join-Path $buildFolder "release.log"
 
 # Data folders of Server\ that go into the release. A new data folder must be added here on purpose (the script warns
 # about folders without code that are not in this list), so nothing private or from the game leaks by accident.
-$releaseFolders   = @("maps", "loot_tables")
+$releaseFolders   = @("maps", "loot_tables", "ai")
 
 # Files in the root of Server\ that never go into the release (development settings and account files).
 $excludedRootFiles = @("appsettings.Development.json", "account.json", "inventory.json", "acceptances.json")

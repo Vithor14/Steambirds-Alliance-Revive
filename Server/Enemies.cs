@@ -97,12 +97,36 @@ public static partial class Enemies
         // Visual effect shown on the unit from the start (name of a configBinary "statefulEffects" entry, e.g.
         // "tankShield"). Sent in FieldUpdate EFFECTSTATE1; the id is MonoHash.StatefulEffectId(name).
         public string VisualEffect { get; set; } = "";
+
+        // Id of an AI file (ai\brains\<id>.json, made in the launcher's Enemy AI tab). Empty = the built-in "behavior" above.
+        // A value that is not text (the old "ai" slot of the map editor) is ignored.
+        [JsonConverter(typeof(AiReferenceConverter))]
+        public string Ai { get; set; } = "";
+    }
+
+    // Reads the "ai" field as an id; anything that is not text is skipped instead of making the whole type unreadable.
+    public sealed class AiReferenceConverter : JsonConverter<string>
+    {
+        public override string Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.String) return (reader.GetString() ?? "").Trim();
+            reader.Skip();
+            return "";
+        }
+
+        public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value);
+        }
     }
 
     public sealed class BossPhase
     {
         public float BelowHealth { get; set; } = 0.5f;
         public string Behavior { get; set; } = "";
+        // Changes the AI of the boss when the phase starts (an AI file id). Empty = keeps the one it has.
+        [JsonConverter(typeof(AiReferenceConverter))]
+        public string Ai { get; set; } = "";
         public float SpeedMultiplier { get; set; }
         public float FireRateMultiplier { get; set; }
         public List<int>? Guns { get; set; }
@@ -225,6 +249,9 @@ public static partial class Enemies
         public float MaxTurn;
 
         public string Behavior = "chase";
+        // Running AI file (null = the built-in behavior above). See Enemies.Brains.cs.
+        public SteambirdsAi.AiRuntime? Ai;
+        public double LastDamagedAt = -1;
         public float PhaseSpeedMult = 1f;
         public float PhaseFireRateMult = 1f;
         public List<int> ActiveGuns = new List<int>();
@@ -403,6 +430,7 @@ public static partial class Enemies
         lock (Game.Lock)
         {
             LoadCatalog(log);
+            LoadAi(log);
             LoadConfig(log);
         }
     }
@@ -446,6 +474,7 @@ public static partial class Enemies
                 {
                     nextFileCheck = now + 2.0;
                     LoadCatalog(log);
+                    LoadAi(log);
                     LoadConfig(log);
                 }
 
@@ -517,6 +546,7 @@ public static partial class Enemies
             if (now < enemy.ShieldUntil) return "enemy " + Describe(enemy) + " with a shield";
 
             enemy.Health -= damage;
+            enemy.LastDamagedAt = now;
             enemy.HealthChanged = true;
 
             if (enemy.Health <= 0f)
@@ -597,7 +627,7 @@ public static partial class Enemies
                 case "/enemyhelp":
                     inst = GetInstance(server, connection, role, now);
                     Reply(inst, "Commands: /wave N, /next, /boss, /enemy TYPE [count], /spawn TEMPLATE [count], " +
-                        "/clear, /reset, /encounter [name], /types, /catalog [filter]");
+                        "/clear, /reset, /encounter [name], /types, /catalog [filter], /brains");
                     Reply(inst, "Tutorial: /step N, /portal, /restart (help: /tutorialhelp)");
                     Reply(inst, "Now: " + StateText(inst));
                     break;
@@ -735,6 +765,13 @@ public static partial class Enemies
                         Reply(inst, pair.Key + ": " + (model == null ? "NO TEMPLATE (" + reason + ")" : ModelText(model)) +
                             " | " + pair.Value.Behavior + (pair.Value.Boss ? ", boss" : ""));
                     }
+                    break;
+                }
+
+                case "/brains":
+                {
+                    inst = GetInstance(server, connection, role, now);
+                    ReplyBrains(inst);
                     break;
                 }
 

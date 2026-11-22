@@ -2,23 +2,20 @@ using System.Text.Json.Nodes;
 
 namespace SteambirdsLauncher.Editor;
 
-// Place for the enemy AI editor that will come later (the "Enemy AI" tab and the menu item are grayed until then).
+// The link between the map editor and the Enemy AI tab (Launcher\EnemyAi).
 //
-// What is already prepared for it:
-//   - Every unit type of "types" may carry an "ai" object (AiField). The map editor never touches it and keeps it when
-//     it saves, and the server ignores fields it does not know, so the AI editor can store its graph/script there
-//     without a change in the map format.
-//   - The unit types page shows an "Edit AI..." button that is enabled when a editor is registered in
-//     EnemyAiEditors.Current.
-//   - The save check does not look inside "ai"; an AI editor can add its own check through IEnemyAiEditor.Validate.
-//
-// Place of the enemy AI editor (greyed out until it exists): each type can have an "ai" object, which the map editor
-// keeps and the server ignores.
+// A unit type of a map ("types") picks its AI with "ai": "<id>", the id (file name) of a file of the server's ai\brains
+// folder. The AI itself is not in the map: it lives in its own file, so it can be edited, shared and loaded on its own,
+// and the same AI can serve many maps. The server reads the field; without it (or with an id that does not exist) the unit
+// uses the plain "behavior" of the type.
 internal interface IEnemyAiEditor
 {
     string DisplayName { get; }
 
-    // Opens the editor for one unit type. "beforeChange" saves the undo point, "afterChange" marks the map as changed.
+    // Ids of the AIs that exist (for the list of the "ai" field).
+    IEnumerable<string> BrainIds();
+
+    // Opens the AI tab on the AI the unit type uses (an empty id just opens the tab).
     void Edit(IWin32Window owner, string typeName, JsonObject unitType, Action beforeChange, Action afterChange);
 
     // Problems of the AI of a unit type (shown with the others when the map is saved). May return an empty list.
@@ -29,10 +26,11 @@ internal static class EnemyAiEditors
 {
     public const string AiField = "ai";
 
-    // null until the AI editor exists.
+    // Set by the launcher when the Enemy AI tab exists.
     public static IEnemyAiEditor? Current { get; set; }
 
     public static bool Available => Current != null;
 
-    public static bool HasAi(JsonObject unitType) => unitType[AiField] != null;
+    // The unit type names an AI file.
+    public static bool HasAi(JsonObject unitType) => Json.Str(unitType, AiField).Trim().Length > 0;
 }

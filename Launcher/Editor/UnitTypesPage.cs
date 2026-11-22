@@ -12,6 +12,7 @@ internal sealed class UnitTypesPage : EditorPage
     private readonly JsonForm combatForm;
     private readonly JsonForm deathForm;
     private readonly CollectionPanel phases;
+    private readonly JsonForm aiForm;
     private readonly Button aiButton;
     private readonly Label aiState;
     private readonly ThemedTabControl inner;
@@ -30,9 +31,8 @@ internal sealed class UnitTypesPage : EditorPage
 
         aiState = Ui.Wrapping("", 400, true);
         aiButton = Ui.Button(L.T("Edit AI..."), (_, _) => EditAi());
-        Label soon = Ui.ComingSoon(Context.Tip,
-            L.T("Coming soon: an editor for the AI of the enemies. The AI will be saved in the optional \"ia\" field of the unit type; the map editor already keeps that field and the server ignores it."));
-        TabPage aiPage = BuildAiPage(soon);
+        aiForm = new JsonForm(AiFieldSpecs(), Session.Checkpoint, TabFieldChanged);
+        TabPage aiPage = BuildAiPage();
 
         TabPage combatPage = new TabPage(L.T("Combat")) { Padding = new Padding(2) };
         combatPage.Controls.Add(combatForm);
@@ -56,6 +56,7 @@ internal sealed class UnitTypesPage : EditorPage
         {
             combatForm.Bind(item?.Data);
             deathForm.Bind(item?.Data);
+            aiForm.Bind(item?.Data);
             phases.Reload();
             phases.Enabled = item != null;
             UpdateAiState();
@@ -91,35 +92,50 @@ internal sealed class UnitTypesPage : EditorPage
 
     // ------------------------------------------------------------------ AI slot
 
-    private TabPage BuildAiPage(Label soon)
+    private TabPage BuildAiPage()
     {
         var page = new TabPage(L.T("Enemy AI")) { Padding = new Padding(6) };
         Label title = Ui.Bold(L.T("Enemy AI"));
         Label text = Ui.Wrapping(
-            L.T("The behavior list of the type (Combat tab) is what the server uses today. A custom AI editor will come later: it will keep its data in the \"ia\" field of the unit type. The map editor already preserves that field when it saves."),
+            L.T("The unit can use an AI made in the Enemy AI tab of the launcher. The AI lives in its own file (server\\ai\\brains), not in the map, so the same one can serve many maps and can be shared. Empty = the unit uses the behavior of the Combat tab."),
             400, true);
-        aiButton.Enabled = EnemyAiEditors.Available;
-        soon.Visible = !EnemyAiEditors.Available;
-        var flow = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true };
-        flow.Controls.Add(title);
-        flow.Controls.Add(text);
-        flow.Controls.Add(Ui.Flow(aiButton, soon));
-        flow.Controls.Add(aiState);
-        page.Controls.Add(flow);
+        var table = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1 };
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        table.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+        table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        table.Controls.Add(title, 0, 0);
+        table.Controls.Add(text, 0, 1);
+        table.Controls.Add(aiForm, 0, 2);
+        table.Controls.Add(aiButton, 0, 3);
+        table.Controls.Add(aiState, 0, 4);
+        page.Controls.Add(table);
         return page;
+    }
+
+    private IEnumerable<FieldSpec> AiFieldSpecs()
+    {
+        yield return new FieldSpec(EnemyAiEditors.AiField, "AI (file)", FieldKind.EditableChoice)
+        {
+            Choices = () => EnemyAiEditors.Current?.BrainIds() ?? Enumerable.Empty<string>(),
+            Help = "Id of an AI file of the server's ai\\brains folder. Empty = the \"behavior\" of the Combat tab."
+        };
     }
 
     private void UpdateAiState()
     {
         JsonObject? type = CurrentType;
+        aiButton.Enabled = EnemyAiEditors.Available && type != null;
         if (type == null)
         {
             aiState.Text = "";
             return;
         }
         aiState.Text = EnemyAiEditors.HasAi(type)
-            ? L.T("This type has AI data (\"ia\"). It is kept as it is.")
-            : L.T("This type has no custom AI data.");
+            ? L.F("This type uses the AI \"{0}\".", Json.Str(type, EnemyAiEditors.AiField))
+            : L.T("This type uses the plain behavior of the Combat tab.");
     }
 
     private void EditAi()

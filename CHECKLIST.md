@@ -16,7 +16,7 @@
 | 1 | Base: conexão, login e conta | 12 | 3 | 3 |
 | 2 | Avião, classes e hangar | 6 | 5 | 4 |
 | 3 | Piloto, permadeath e progressão | 0 | 13 | 0 |
-| 4 | Combate e inimigos | 7 | 3 | 4 |
+| 4 | Combate e inimigos | 7 | 4 | 4 |
 | 5 | Itens, inventário e loot | 2 | 11 | 3 |
 | 6 | Rebel City (Nexus) e prédios | 3 | 4 | 6 |
 | 7 | Mundo aberto (ilhas) | 0 | 0 | 9 |
@@ -30,7 +30,7 @@
 | 15 | Launcher base — aba Client (objetivo intermediário) | 2 | 6 | 1 |
 | 16 | Launcher — aba Server | 0 | 8 | 3 |
 | 17 | Launcher standalone (objetivo final) | 0 | 5 | 0 |
-| 18 | Editor de mapas | 2 | 4 | 4 |
+| 18 | Editor de mapas | 2 | 5 | 3 |
 | | **Total** | **49** | **78** | **68** |
 
 Os apêndices (classes, terrenos e chefes) e as observações abaixo ficam fora da conta.
@@ -149,6 +149,7 @@ Código em `Server\Progression` e doc em `docs/progression.md`. Tudo abaixo aind
 - [x] Comandos de teste no chat (`/inimigo`, `/spawn`, `/chefe`, `/onda`, `/catalogo`…)
 - [ ] 🟡 Inimigos atravessam muros (só ficam presos à área da sala)
 - [ ] Rotação visual das torretas (`FIELDMASK_GUNS`)
+- [ ] 🟡 IA em arquivos (22/11, compilada; o simulador e o fluxo de edição foram testados com um programa de teste que abre a aba real, falta usar no jogo): `Serveriehaviors\*.json` e `Serverirains\*.json` (máquina de estados: cada estado age como um comportamento e tem transições com condições), lidos pelo servidor (`Enemies.Brains.cs`) e relidos ao mudar; o tipo de unidade usa `"ai": "<id>"` (também em `phases`). Vem com 6 IAs e 10 comportamentos de exemplo e tipos `ai_*` no `enemies.json` (`/enemy ai_chaser`, `/brains`). Formato em `Serveri\README.md`, código em `docs/enemy-ai.md`. Falta testar no jogo
 - [ ] Comportamento original de cada inimigo: hoje são comportamentos genéricos para 856 unidades armadas; a IA de cada chefe precisa ser recriada a partir de vídeos (Apêndice C)
 - [ ] 🟡 Aliados: `ServerSpawnGreenTeamAlly` `23584` chega e só é registrado
 - [ ] 🟡 Efeitos de status: `ServerReportPlayerEffect` e `ServerShowInstantEffect` chegam e só são registrados; faltam `ClientCloudEffect` `32571`, `ServerReportCloudEffect` `27911`, `ClientInstantEffect` `58535`
@@ -373,7 +374,7 @@ Doc das dungeons recriadas: `docs/dungeons-190828.md`. Servidor de dungeon: `doc
 - [ ] 🟡 Inimigos e encontros por mapa: o servidor de dungeon lê `tipos` e `encontros` de cada mapa (os tipos entram com o prefixo do mapa); no Nexus e no tutorial ainda vale o `enemies.json`
 - [ ] Roteiros de dungeon em arquivo (hoje o roteiro do tutorial está em código)
 - [ ] Coleção de versões de dungeons da comunidade para o host escolher
-- [ ] Editor de IA dos inimigos: a aba e o botão existem acinzentados; cada tipo de unidade já guarda um objeto opcional `"ia"` que o editor preserva e o servidor ignora (`Launcher\Editor\EnemyAiHook.cs`)
+- [ ] 🟡 Editor de IA e comportamentos dos inimigos (22/11): aba **Enemy AI** do launcher (`Launcher\EnemyAi`) com lista de arquivos, editor de estados, transições e condições, comportamentos reutilizáveis, validação, novo/duplicar/renomear/apagar (vai para `_backup`), importar e exportar (um arquivo com a IA e os comportamentos que ela usa) e **simulador** (arte, velocidade, giro e armas de qualquer unidade, jogador que segue cliques, gira ou fica parado, multiplicadores do tipo, perda de vida). O simulador roda o mesmo código do servidor (`Shared\EnemyAi`). Ligado ao editor de mapas (campo `ai` em Units > Enemy AI). Falta: usar com o mouse no launcher real, desfazer/refazer, invocar e escudo dentro da IA, muros e salas no simulador
 
 ---
 

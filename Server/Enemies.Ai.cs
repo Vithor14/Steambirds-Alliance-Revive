@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Lidgren.Network;
+using SteambirdsAi;
 
 // Enemy AI: flight, aim and guns of each tick (called 20 times per second).
 public static partial class Enemies
@@ -76,12 +77,15 @@ public static partial class Enemies
             }
 
             FocusNearest(inst, enemy);
-            Think(inst, enemy, dt, now);
+            Think(inst, enemy, dt, now, log);
             Fire(inst, enemy, now);
 
             // Bombs ("kamikaze"): touching the player blows them up (no XP, no loot: the bomb used itself).
-            if (enemy.Behavior == "kamikaze" && !enemy.Asleep && enemy.Aggro && inst.HasPlayer && inst.PlayerAlive &&
+            if (enemy.Ai == null && enemy.Behavior == "kamikaze" && !enemy.Asleep && enemy.Aggro && inst.HasPlayer && inst.PlayerAlive &&
                 Distance(enemy.X, enemy.Y, inst.PlayerX, inst.PlayerY) <= Math.Max(0.5f, enemy.Type.ContactRadius))
+                (exploded ??= new List<Enemy>()).Add(enemy);
+            // The same, for an AI file: a state with "contact.explodeRadius" or "selfDestruct" asks for it.
+            else if (enemy.Ai != null && !enemy.Asleep && now >= enemy.ActiveAt && enemy.Ai.Out.Explode)
                 (exploded ??= new List<Enemy>()).Add(enemy);
         }
         if (exploded != null)
@@ -211,12 +215,12 @@ public static partial class Enemies
 
     // Plane flight: picks a destination point according to the behavior, turns at most MaxTurn degrees
     // per second and accelerates between the minimum and maximum speed. Rotation 0 = +Y, positive = clockwise.
-    private static void Think(Instance inst, Enemy enemy, float dt, double now)
+    private static void Think(Instance inst, Enemy enemy, float dt, double now, Action<string, string> log)
     {
         if (now < enemy.ActiveAt) return;
 
-        // Walls, chests and wrecks: they do not move or turn.
-        if (enemy.Behavior == "idle")
+        // Walls, chests and wrecks: they do not move or turn. (A unit with an AI file decides by itself.)
+        if (enemy.Behavior == "idle" && enemy.Ai == null)
         {
             enemy.Vel = 0f;
             return;
@@ -238,11 +242,13 @@ public static partial class Enemies
             WakeGroupInternal(inst, enemy, now);
         }
 
-        if (!validTarget) enemy.Aggro = false;
+        // A unit with an AI file: the AI decides when it fights (aggroRadius does not apply).
+        if (enemy.Ai != null) enemy.Aggro = validTarget;
+        else if (!validTarget) enemy.Aggro = false;
         else if (!enemy.Aggro && (enemy.Type.AggroRadius <= 0f || dist <= enemy.Type.AggroRadius)) enemy.Aggro = true;
 
         // Fixed cannon: does not move or turn; it fires straight where it points (see Fire).
-        if (enemy.Behavior == "fixed")
+        if (enemy.Behavior == "fixed" && enemy.Ai == null)
         {
             enemy.Vel = 0f;
             return;
@@ -251,14 +257,20 @@ public static partial class Enemies
         float velMax = enemy.VelMax * enemy.PhaseSpeedMult;
         float velMin = Math.Min(enemy.VelMin * enemy.PhaseSpeedMult, velMax);
         string mode = enemy.Behavior == "escort" ? "escort" : (enemy.Aggro ? enemy.Behavior : "patrol");
-        if (velMax <= 0.05f) mode = "turret";
+        if (enemy.Ai != null) mode = "brain";
+        else if (velMax <= 0.05f) mode = "turret";
         float preferred = Math.Max(2f, enemy.Type.PreferredDistance);
 
         float targetX;
         float targetY;
         float targetVel;
+        bool brainHold = false;
         switch (mode)
         {
+            case "brain":
+                BrainThink(inst, enemy, now, dt, velMin, velMax, validTarget, log, out targetX, out targetY, out targetVel, out brainHold);
+                break;
+
             case "turret":
                 targetX = validTarget ? inst.PlayerX : enemy.X + MathF.Sin(enemy.Rot * Rad);
                 targetY = validTarget ? inst.PlayerY : enemy.Y + MathF.Cos(enemy.Rot * Rad);
@@ -393,20 +405,9 @@ public static partial class Enemies
             targetY = Math.Clamp(targetY, arena.CenterY - limit, arena.CenterY + limit);
         }
 
-        float desired = Heading(enemy.X, enemy.Y, targetX, targetY);
-        float delta = AngleDifference(enemy.Rot, desired);
-        float turn = enemy.MaxTurn * dt;
-        enemy.Rot = NormalizeAngle(enemy.Rot + Math.Clamp(delta, -turn, turn));
-
-        if (mode != "turret" && Math.Abs(delta) > 100f) targetVel = Math.Max(velMin, targetVel * 0.7f);
-        float accel = Math.Max(3f, velMax * 1.5f) * dt;
-        enemy.Vel = Approach(enemy.Vel, targetVel, accel);
-
-        if (enemy.Vel > 0f)
-        {
-            enemy.X += MathF.Sin(enemy.Rot * Rad) * enemy.Vel * dt;
-            enemy.Y += MathF.Cos(enemy.Rot * Rad) * enemy.Vel * dt;
-        }
+        // Turn toward the destination and speed up or slow down (Shared\EnemyAi\AiMath.cs, the same code as the launcher's simulator).
+        AiMotion.Steer(ref enemy.X, ref enemy.Y, ref enemy.Rot, ref enemy.Vel, targetX, targetY, targetVel,
+            velMin, velMax, enemy.MaxTurn, mode == "turret" || brainHold, dt);
 
         if (enemy.FreeRoam) return;
         if (enemy.Area.HasValue)
@@ -439,12 +440,24 @@ public static partial class Enemies
         if (now < enemy.ActiveAt + Math.Max(0f, enemy.Type.FirstShotDelay)) return;
         bool canAim = enemy.Aggro && inst.HasPlayer && inst.PlayerAlive;
         float fireRateMult = Positive(enemy.Type.FireRateMultiplier) * enemy.PhaseFireRateMult;
+
+        // An AI file decides, state by state, whether the unit shoots, with which guns, how fast, how far and how it aims.
+        AiOutput? brain = enemy.Ai?.Out;
+        float aimLead = enemy.Type.AimLead;
+        float rangeOverride = 0f;
+        if (brain != null)
+        {
+            if (!brain.FireEnabled) return;
+            fireRateMult *= brain.RateMult;
+            rangeOverride = brain.Range;
+            if (brain.AimLead >= 0f) aimLead = brain.AimLead;
+        }
         fireRateMult *= DungeonFireScale(inst, enemy, fireRateMult);
 
         foreach (GunState gun in enemy.Guns)
         {
             GameGun m = gun.Model;
-            if (enemy.ActiveGuns.Count > 0 && !enemy.ActiveGuns.Contains(m.Index)) continue;
+            if (!GunAllowed(enemy, m.Index)) continue;
             if (m.Damage <= 0f) continue;
 
             if (gun.Ammo <= 0)
@@ -457,20 +470,20 @@ public static partial class Enemies
             float tx = inst.PlayerX;
             float ty = inst.PlayerY;
             float dist = Distance(enemy.X, enemy.Y, tx, ty);
-            float range = enemy.Type.ShotRange > 0f ? enemy.Type.ShotRange : GunRange(m);
+            float range = rangeOverride > 0f ? rangeOverride : enemy.Type.ShotRange > 0f ? enemy.Type.ShotRange : GunRange(m);
             if (dist > range) continue;
 
             float gunRotation;
-            if (enemy.Behavior == "fixed")
+            if (enemy.Behavior == "fixed" && enemy.Ai == null)
             {
                 // Fixed cannon: the burst goes straight out of the gun's mouth, without looking for the player.
                 gunRotation = m.Angle;
             }
             else
             {
-                if (enemy.Type.AimLead > 0f && m.Speed > 0.5f)
+                if (aimLead > 0f && m.Speed > 0.5f)
                 {
-                    float t = dist / m.Speed * enemy.Type.AimLead;
+                    float t = dist / m.Speed * aimLead;
                     tx += inst.PlayerVX * t;
                     ty += inst.PlayerVY * t;
                 }
@@ -507,7 +520,7 @@ public static partial class Enemies
         {
             GameGun m = gun.Model;
             if (m.Damage <= 0f) continue;
-            if (enemy.ActiveGuns.Count > 0 && !enemy.ActiveGuns.Contains(m.Index)) continue;
+            if (!GunAllowed(enemy, m.Index)) continue;
             float rate = (m.FireRate > 0.05f ? m.FireRate : 2f) * fireRateMult * scale;
             float bullets = rate * Math.Max(1, m.Multi);
             if (m.Burst > 1 && m.Burst < 1000 && m.Reload > 0f)
@@ -523,74 +536,16 @@ public static partial class Enemies
     }
 
     // Angle of the gun (relative to the unit's front) for this shot. False = the player is outside the arc.
+    // The patterns live in Shared\EnemyAi\AiMath.cs (AiGunAim), shared with the launcher's simulator.
     private static bool AimGun(GunState gun, bool freeAim, float relative, double now, out float rotation)
     {
         GameGun m = gun.Model;
-        float center = m.Angle;
-        float halfArc = m.Arc > 0.5f ? m.Arc * 0.5f : 30f;
-        float deviation = AngleDifference(center, relative);
-
-        switch (m.Mode)
-        {
-            case 5: // Sprinkler: spiral, no aiming
-            case 6: // SprinklerTurnback
-                gun.Turn = NormalizeAngle(gun.Turn + 23f);
-                rotation = center + gun.Turn;
-                return true;
-
-            case 3: // Hose: sweeps the arc from side to side
-                rotation = center + halfArc * MathF.Sin((float)(now * 3.0));
-                return Math.Abs(deviation) <= halfArc + 30f;
-
-            case 1: // ArcRight: crosses the arc during the charge
-            case 2: // ArcLeft
-            {
-                int burst = Math.Max(1, m.Burst);
-                float progress = burst <= 1 ? 0.5f : (float)(burst - gun.Ammo) / (burst - 1);
-                float direction = m.Mode == 1 ? 1f : -1f;
-                rotation = center - direction * halfArc + direction * 2f * halfArc * progress;
-                return Math.Abs(deviation) <= halfArc + 20f;
-            }
-
-            case 7: // JustShootDammit: shoots where the gun points
-                rotation = center;
-                // 360-degree arc (bullet rings): shoots in any direction, without needing to face it.
-                return m.Arc >= 359f || Math.Abs(deviation) <= 60f;
-        }
-
-        // Aimed
-        if (freeAim || m.Arc >= 359f)
-        {
-            rotation = relative;
-            return true;
-        }
-        if (m.Arc > 0.5f)
-        {
-            if (Math.Abs(deviation) > halfArc + 5f)
-            {
-                rotation = 0f;
-                return false;
-            }
-            rotation = center + Math.Clamp(deviation, -halfArc, halfArc);
-            return true;
-        }
-
-        // No arc: a gun fixed forward, with a small correction.
-        if (Math.Abs(deviation) > 35f)
-        {
-            rotation = 0f;
-            return false;
-        }
-        rotation = center + Math.Clamp(deviation, -8f, 8f);
-        return true;
+        return AiGunAim.TryAim(m.Mode, m.Angle, m.Arc, m.Burst, gun.Ammo, ref gun.Turn, freeAim, relative, now, out rotation);
     }
 
     private static float GunRange(GameGun m)
     {
-        float flight = m.Speed * m.Duration;
-        float range = m.Range > 0.1f ? m.Range : flight;
-        if (flight > 0.1f) range = Math.Min(range, flight * 1.1f);
-        return range > 0.5f ? range : 18f;
+        return AiGunAim.Range(m.Speed, m.Duration, m.Range);
     }
 
 }

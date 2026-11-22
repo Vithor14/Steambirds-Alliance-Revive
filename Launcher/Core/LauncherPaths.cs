@@ -22,6 +22,8 @@ public static class LauncherPaths
     public static string ServerExeName => "SteambirdsServer.exe";
     public static string ServerExe => Path.Combine(ServerFolder, ServerExeName);
     public static string MapsFolder => Path.Combine(ServerFolder, "maps");
+    // Enemy AI files: aiehaviors\*.json and airains\*.json (the Enemy AI tab edits them; the server reads them).
+    public static string AiFolder => Path.Combine(ServerFolder, "ai");
     public static string BackupFolder => Path.Combine(ServerFolder, "_backup");
 
     public static string PluginFolder => Path.Combine(BaseFolder, "plugin");

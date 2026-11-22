@@ -1,0 +1,14 @@
+{
+  "format": 1,
+  "id": "turret_idle",
+  "name": "Turret (idle)",
+  "author": "Steambirds Revive",
+  "description": "Stands still and looks at the player without shooting.",
+  "move": {
+    "mode": "hold",
+    "face": true
+  },
+  "fire": {
+    "enabled": false
+  }
+}

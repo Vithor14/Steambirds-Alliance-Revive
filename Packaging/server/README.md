@@ -18,6 +18,7 @@ Unofficial community project: https://github.com/Vithor14/Steambirds-Alliance-Re
 | `stores.json` | what the stores sell, how prices are charged (gold / iron / free), discounts, stock and limits |
 | `maps\` | Nexus, tutorial and dungeon maps (format in `maps\README.md`) |
 | `loot_tables\` | loot tables |
+| `ai\` | enemy AI files (`brains\*.json`, `behaviors\*.json`), made in the launcher's Enemy AI tab; format in `ai\README.md`. Copy files in or out to share them |
 
 The `.json` files accept `//` comments; each setting is explained in the file. The server writes `accounts\` (one
 folder per player), `catalog\` and `_backup\` here while it runs.

@@ -66,11 +66,6 @@ internal sealed class MapEditorTab : UserControl
         AddPage(L.T("Units"), typesPage);
         AddPage(L.T("Gates"), gatesPage);
         AddPage(L.T("Points"), pointsPage);
-        var aiPage = new TabPage(L.T("Enemy AI"));
-        ThemedTabControl.MarkNotImplemented(aiPage,
-            L.T("Coming soon: an editor for the AI of the enemies. It will be saved in the optional \"ia\" field of each unit type, which the map editor already keeps."));
-        pages.TabPages.Add(aiPage);
-        allTabs.Add(aiPage);
         pages.SelectedIndexChanged += (_, _) => ReloadStalePage();
 
         // ---- left palette
@@ -437,8 +432,8 @@ internal sealed class MapEditorTab : UserControl
         tools.DropDownItems.Add(Item(L.T("Edit the file text..."), EditText));
         tools.DropDownItems.Add(new ToolStripSeparator());
         var ai = new ToolStripMenuItem(L.T("Enemy AI editor...")) { Enabled = EnemyAiEditors.Available };
-        if (!ai.Enabled) ai.ToolTipText = L.T("Coming soon: an editor for the AI of the enemies.");
-        ai.Click += (_, _) => Ui.ShowInfo(this, L.T("Open the Units page, pick a unit type and press \"Edit AI...\"."));
+        if (!ai.Enabled) ai.ToolTipText = L.T("The Enemy AI tab of the launcher is not available.");
+        ai.Click += (_, _) => EnemyAiEditors.Current?.Edit(this, "", new System.Text.Json.Nodes.JsonObject(), () => { }, () => { });
         tools.DropDownItems.Add(ai);
 
         menu.Items.AddRange(new ToolStripItem[] { file, edit, view, tools });

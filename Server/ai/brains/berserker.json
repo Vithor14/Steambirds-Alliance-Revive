@@ -1,0 +1,72 @@
+{
+  "format": 1,
+  "id": "berserker",
+  "name": "Berserker",
+  "author": "Steambirds Revive",
+  "description": "Circles the player like a chaser. Under 40% health it gets angry: it dives and passes again and again and shoots 60% faster. Example of states with their own values (no behavior file).",
+  "initial": "circle",
+  "states": [
+    {
+      "id": "circle",
+      "behavior": "orbit_close",
+      "transitions": [
+        {
+          "to": "enrage_dive",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "enrage_dive",
+      "message": "It is furious!",
+      "move": {
+        "mode": "approach",
+        "lead": 0.5,
+        "speed": 1.0
+      },
+      "fire": {
+        "enabled": true,
+        "rateMult": 1.6
+      },
+      "transitions": [
+        {
+          "to": "enrage_pass",
+          "when": [
+            {
+              "type": "playerWithin",
+              "value": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "enrage_pass",
+      "move": {
+        "mode": "straight",
+        "speed": 1.0
+      },
+      "fire": {
+        "enabled": true,
+        "rateMult": 1.6
+      },
+      "transitions": [
+        {
+          "to": "enrage_dive",
+          "when": [
+            {
+              "type": "timeInState",
+              "value": 1.0,
+              "max": 1.8
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

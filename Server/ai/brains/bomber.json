@@ -1,0 +1,40 @@
+{
+  "format": 1,
+  "id": "bomber",
+  "name": "Bomber",
+  "author": "Steambirds Revive",
+  "description": "Waits near home. When a player comes within 70 units it flies at them and blows up on contact (the built-in \"kamikaze\").",
+  "initial": "wait",
+  "states": [
+    {
+      "id": "wait",
+      "behavior": "patrol_home",
+      "transitions": [
+        {
+          "to": "run",
+          "when": [
+            {
+              "type": "playerWithin",
+              "value": 70
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "run",
+      "behavior": "bomb_run",
+      "transitions": [
+        {
+          "to": "wait",
+          "when": [
+            {
+              "type": "hasTarget",
+              "not": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

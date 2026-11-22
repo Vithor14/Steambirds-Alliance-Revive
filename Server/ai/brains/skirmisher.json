@@ -1,0 +1,54 @@
+{
+  "format": 1,
+  "id": "skirmisher",
+  "name": "Skirmisher",
+  "author": "Steambirds Revive",
+  "description": "Circles at a distance. When the player gets too close, or hits it, it backs off for a few seconds and comes back.",
+  "initial": "circle",
+  "states": [
+    {
+      "id": "circle",
+      "behavior": "orbit_wide",
+      "transitions": [
+        {
+          "to": "back_off",
+          "when": [
+            {
+              "type": "playerWithin",
+              "value": 9
+            }
+          ]
+        },
+        {
+          "to": "back_off",
+          "when": [
+            {
+              "type": "recentlyHit",
+              "value": 0.4
+            },
+            {
+              "type": "chance",
+              "value": 0.6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "back_off",
+      "behavior": "retreat",
+      "transitions": [
+        {
+          "to": "circle",
+          "when": [
+            {
+              "type": "timeInState",
+              "value": 1.5,
+              "max": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

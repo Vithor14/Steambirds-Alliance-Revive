@@ -7,7 +7,7 @@ The **Map editor** tab of the launcher creates, opens, edits and saves the map f
 - **File → New map...** starts from a dungeon of the game (a copy of its map, the original file is not touched) or from an **empty dungeon**. **Open...** loads any `.json` map; **Open a map of the server** lists `server\mapas`. **Save** / **Save as...** write the file (the file name becomes the map id: lowercase letters, digits and `_`). `Ctrl+N`, `Ctrl+O`, `Ctrl+S`.
 - **Left side**: the tools. *Terrain* (Select / move, Floor, Walls), *Dungeon* (Entrance, Exit, Checkpoint, Gate, Enemy) and *Markers* (Point, Group point, Area, Line, Route, Sign), and the options of the chosen tool: only the options that tool uses are shown (enemy type and room for Enemy, gate type for Gate, group name for Group point, rectangle for Floor and Walls, walls by tile for Walls, snap for the tools that place or move points). Hover an option to see what it changes.
 - **Middle**: the map. Left button uses the tool, middle button (or right button with Select, or `Space`+drag) moves the view, the wheel zooms. `Delete` removes, `Q`/`E` rotate (enemies, decoration, points and the entrance turn on the map by their `rot`; floor pieces of `floor.pieces` are drawn with their rotation, counter-clockwise relative to the tile) (`Shift` = 45°), arrows nudge, `Ctrl+D` duplicates, `Ctrl+Z`/`Ctrl+Y` undo and redo, `F` fits the map, `Esc` goes back to Select.
-- **Right side**: one tab per kind of data — *Map* (name, terrain, territory, entrance, exit, floor), *Rooms* (rooms, their enemies and waves), *Units* (unit types: combat, death and summons, phases), *Gates*, *Points* (points, groups, areas, lines, values, routes, checkpoints, signs, decoration, buildings, floor pieces) and *Enemy AI* (grayed out, see below). When an object is selected on the map, only the tabs that have its fields stay (an enemy: Rooms and Units; a gate: Gates; a point, area, line, route, checkpoint, sign or decoration: Points; the entrance: Map) and the first one is selected by itself; click an empty spot of the map to bring every tab back. Hover a field or its name for a tip about what it changes.
+- **Right side**: one tab per kind of data — *Map* (name, terrain, territory, entrance, exit, floor), *Rooms* (rooms, their enemies and waves), *Units* (unit types: combat, death and summons, phases), *Gates*, *Points* (points, groups, areas, lines, values, routes, checkpoints, signs, decoration, buildings, floor pieces). The AI of an enemy is chosen in *Units → Enemy AI* (see below). When an object is selected on the map, only the tabs that have its fields stay (an enemy: Rooms and Units; a gate: Gates; a point, area, line, route, checkpoint, sign or decoration: Points; the entrance: Map) and the first one is selected by itself; click an empty spot of the map to bring every tab back. Hover a field or its name for a tip about what it changes.
 - **View → Game pictures** switches between the pictures of the game and plain shapes. **Tools → Edit the file text...** shows the JSON as it will be saved.
 
 ## Saving
@@ -23,12 +23,13 @@ A map with errors is not saved as a normal map. The dialog offers **Save as draf
 
 The tab reads `editor-assets\` next to the launcher: `ground\<id>.png` (floor pieces), `units\<name>.png` and `thumbs.json`, plus `ground_assets.txt` (names of the floor pieces). They are drawn by `SteambirdsGameFiles.exe` from your own copy of the game, and `Build launcher.ps1` copies them to `dist\editor-assets`. Without the folder the editor still works and draws shapes and flat colors. The pictures are *previews* (shape and vertex colors of the meshes, not the textures); units without a picture are drawn as a letter.
 
-## The enemy AI editor (future)
+## The enemy AI of a unit type
 
-*Tools → Enemy AI editor...*, the *Enemy AI* tab and the *Edit AI...* button of the *Units* tab are grayed out on purpose. The slot already exists in the code (`EnemyAiHook.cs`):
+A unit type may name an AI with `"ai": "<id>"`: the id (file name) of a file of `serverirains`, made in the launcher's **Enemy AI** tab (format: `serveri\README.md`). The AI is **not stored in the map**: it is its own file, so the same AI serves many maps and can be shared. *Units → Enemy AI* has the field (with the list of AIs) and *Edit AI...* (also *Tools → Enemy AI editor...*), which opens the Enemy AI tab on that AI. Empty = the plain *Behavior* of the *Combat* tab.
 
-- each unit type may carry an optional `"ia"` object. The editor keeps it untouched when it opens and saves a map, undo/redo and renames included; the server ignores it;
-- a future editor implements `IEnemyAiEditor` (`DisplayName`, `Edit(...)`, `Validate(...)`), registers it in `EnemyAiEditors`, and the grayed buttons turn on by themselves; `Validate` results show up in *Check map*.
+- The editor keeps the `ai` field when it opens and saves a map, undo/redo and renames included. An old `"ai"` that is not text is ignored by the server.
+- *Check map* warns when a unit type names an AI that is not in the `ai` folder (the server then uses the type's normal behavior).
+- Code: `EnemyAiHook.cs` (`IEnemyAiEditor`, implemented by `EnemyAi\AiEditorBridge`), the AI page of `UnitTypesPage.cs`, the check in `MapValidator.cs`.
 
 ## Code
 

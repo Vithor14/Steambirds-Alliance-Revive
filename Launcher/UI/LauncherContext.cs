@@ -83,6 +83,9 @@ internal sealed class LauncherContext : IDisposable
     // Set by the main window: selects the Settings tab (the Client tab links to it).
     public Action? OpenSettingsTab { get; set; }
 
+    // Set by the main window: selects the Enemy AI tab, on the AI with this id when it exists (the map editor uses it).
+    public Action<string?>? OpenAiTab { get; set; }
+
     // True while the launcher is closing (the report is then written by MainForm itself).
     public bool ShuttingDown { get; set; }
 

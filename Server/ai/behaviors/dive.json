@@ -1,0 +1,15 @@
+{
+  "format": 1,
+  "id": "dive",
+  "name": "Dive at the player",
+  "author": "Steambirds Revive",
+  "description": "Flies straight at the player, aiming a little ahead of where the plane is going, and shoots on the way.",
+  "move": {
+    "mode": "approach",
+    "lead": 0.4,
+    "speed": 1.0
+  },
+  "fire": {
+    "enabled": true
+  }
+}

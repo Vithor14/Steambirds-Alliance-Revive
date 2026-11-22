@@ -1,0 +1,15 @@
+{
+  "format": 1,
+  "id": "pass_through",
+  "name": "Pass through",
+  "author": "Steambirds Revive",
+  "description": "Keeps flying straight ahead, so the unit goes past the player after a dive.",
+  "move": {
+    "mode": "straight",
+    "speed": 1.0
+  },
+  "fire": {
+    "enabled": true,
+    "rateMult": 0.6
+  }
+}

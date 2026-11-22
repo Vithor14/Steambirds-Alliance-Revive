@@ -1,0 +1,18 @@
+{
+  "format": 1,
+  "id": "orbit_wide",
+  "name": "Orbit wide",
+  "author": "Steambirds Revive",
+  "description": "A wide circle: it shoots from far away and is hard to reach.",
+  "move": {
+    "mode": "orbit",
+    "distance": 24,
+    "deviation": 40,
+    "speed": 0.6,
+    "farSpeed": 1.0,
+    "farFactor": 1.5
+  },
+  "fire": {
+    "enabled": true
+  }
+}

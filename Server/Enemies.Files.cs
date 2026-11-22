@@ -330,6 +330,7 @@ public static partial class Enemies
 
     private static void Validate(Action<string, string> log)
     {
+        ValidateAiReferences(log);
         foreach (EncounterConfig e in config.Encounters)
         {
             for (int i = 0; i < e.Waves.Count; i++)

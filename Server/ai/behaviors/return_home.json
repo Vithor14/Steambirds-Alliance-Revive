@@ -1,0 +1,14 @@
+{
+  "format": 1,
+  "id": "return_home",
+  "name": "Return home",
+  "author": "Steambirds Revive",
+  "description": "Goes back to the place where the unit was born and circles there. Does not shoot.",
+  "move": {
+    "mode": "home",
+    "speed": 0.8
+  },
+  "fire": {
+    "enabled": false
+  }
+}

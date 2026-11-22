@@ -1,11 +1,12 @@
 # Steambirds Alliance Revive — Launcher
 
-Launcher of the project (Portuguese version: `LEIA-ME.md`), with four tabs:
+Launcher of the project (Portuguese version: `LEIA-ME.md`), with five tabs:
 
 - **Client**: downloads the game with Steam, sets the player name, lists the servers (this PC, the local network and VPNs like Radmin and Hamachi, or a typed IP) and opens the game on the chosen server. Its console shows `BepInEx\LogOutput.log` and the Unity `Player.log` while the game runs.
 - **Server**: hosts the server of this PC (what `Run server.ps1` did) for this PC and for players of other PCs, shows its output in a console and edits its settings, its network (name, ports, who can join) and the accounts of the players.
 - **Settings**: theme, launcher language, game folder and language, server search port, and buttons to open folders and files.
 - **Map editor**: creates, opens, edits and saves the map files of the server (dungeons, Nexus, tutorial) with the pieces of the game. See `Editor\README.md`.
+- **Enemy AI**: builds the AI of the enemies (states, movement, when to shoot) and its reusable behaviors, each saved as its own `.json` file in `server\ai`, and simulates them with the art and guns of any game unit. See below.
 
 The launcher opens in **English**. Other languages: *Settings → Appearance → Launcher language* (`lang\README.md` explains how to add one).
 
@@ -53,7 +54,17 @@ When the launcher opens and `Steambirds.exe` is not in the game folder, a window
 
 ## Map editor tab
 
-Draws the map of the server (`server\maps\*.json`) with the floor pieces and units of the game. New map from a dungeon of the game or an empty dungeon, open, save (the file name is the map id), undo and redo, and a check before saving that asks for the required objects (floor, entrance, exit point, something that ends the dungeon). A map with errors can be saved only as a draft (`"rascunho": true`). Every kind of data the server reads from a dungeon map has a place in it: floor and walls, entrance, exit, checkpoints, gates, rooms with enemies and waves, unit types with phases and summons, points, areas, lines, routes, signs, decoration and buildings. The *Enemy AI* editor is grayed out for now; the slot (`"ia"` in each unit type) is already kept. Details, keys and code map: `Editor\README.md`.
+Draws the map of the server (`server\maps\*.json`) with the floor pieces and units of the game. New map from a dungeon of the game or an empty dungeon, open, save (the file name is the map id), undo and redo, and a check before saving that asks for the required objects (floor, entrance, exit point, something that ends the dungeon). A map with errors can be saved only as a draft (`"rascunho": true`). Every kind of data the server reads from a dungeon map has a place in it: floor and walls, entrance, exit, checkpoints, gates, rooms with enemies and waves, unit types with phases and summons, points, areas, lines, routes, signs, decoration and buildings. A unit type picks its AI in *Units → Enemy AI* (`"ai": "<id>"`), and *Edit AI...* opens the Enemy AI tab on it. Details, keys and code map: `Editor\README.md`.
+
+## Enemy AI tab
+
+Every AI and every behavior is its own file (`server\ai\brains\<id>.json`, `server\ai\behaviors\<id>.json`), so they can be edited, shared and loaded as needed; the server reads the folder again by itself when a file changes. Format: `server\ai\README.md`; code map: `docs\enemy-ai.md`.
+
+- **Left**: the files. *New AI*, *New behavior*, *Duplicate*, *Rename...*, *Delete* (the file goes to `server\_backup`), *Save*, *Save all*, *Revert*, *Reload*, *Open folder*. *Export...* writes one file with an AI and the behaviors it uses; *Import...* adds a shared file to yours without overwriting anything.
+- **Middle**: the editor. An **AI** is a set of *states*; each state uses a *behavior* file or its own values (movement, weapons, contact) and has *transitions* with conditions (player closer than, time in state, health below, was hit, chance...). A **behavior** is one way of acting. Below it, the problems of the file (the same checks the server makes).
+- **Right**: the simulator. It loads the art, speed, turning and guns of any game unit and runs the AI against a player plane that follows your clicks, flies in a circle or stands still, with the unit type's multipliers, health loss and "player gone" to test the conditions. It runs the same code as the server (`Shared\EnemyAi`).
+
+To use an AI in the game, write `"ai": "<id>"` in a unit type of `enemies.json` or of a map; in the game chat `/brains` lists what the server loaded, and `enemies.json` has demo types (`/enemy ai_chaser`, `ai_bomber`, `ai_charger`, `ai_skirmisher`, `ai_sentry`, `ai_berserker`).
 
 ## Server tab
 
@@ -78,6 +89,7 @@ Every player has their own account on the host's PC (pilot, planes, items, finis
 - `Core\`: everything that is not a screen — server and game processes, logs, report, `.json` with comments, `dungeons.json`, `network.json` (`ServerNetworkFile`), accounts (`AccountStore`, `AccountFile`), server search (`ServerBrowser`, `LocalNetworks`), the Steam account (`SteamAccount`), the depot download (`DepotDownload`), the firewall rule (`FirewallRule`), languages (`Lang`).
 - `Core\GameData\`: reading the game's configBinary (classes, unlocks, currencies, ingredients, XP tables, languages).
 - `Editor\`: the map editor tab (the document, the canvas, the forms and the checks; see `Editor\README.md`).
+- `EnemyAi\`: the Enemy AI tab (`AiTab`, `AiStore`, the brain and behavior editors, `AiSimView`). The AI core itself is `..\Shared\EnemyAi`, compiled into the launcher and the server.
 - `UI\`: the screens — `MainForm`, `ClientTab`, `DepotDownloadForm`, `ServerTab`, `NetworkPage`, `SettingsTab`, `AccountsPage`, `AccountEditorForm`, `MapsPage`, `SettingsPage`, `StorePage` (with `StoreProductsView` and `StoreShelvesView`), `MoneyPanels`, `ConsoleView`, `Theme` and `LauncherContext` (state shared by the tabs, including the server list).
 
 Every text shown on screen goes through `L.T("...")` / `L.F("... {0}", value)`, and its translation goes into `Launcher\lang\pt-BR.json` and `_template.json`.

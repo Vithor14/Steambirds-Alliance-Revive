@@ -55,6 +55,26 @@ internal sealed class GameUnit
     public int Weapons { get; init; }
     // Name of the prefab that draws the unit ("arte" column).
     public string Art { get; init; } = "";
+    // Flight and guns, for the Enemy AI simulator.
+    public double VelMin { get; init; }
+    public double VelMax { get; init; }
+    public double Turn { get; init; }
+    public List<SteambirdsAi.AiGunStats> Guns { get; } = new List<SteambirdsAi.AiGunStats>();
+
+    public bool Armed => Guns.Any(g => g.Damage > 0f);
+
+    // What the simulator needs to fly and shoot this unit.
+    public SteambirdsAi.AiUnitStats ToStats() => new SteambirdsAi.AiUnitStats
+    {
+        Name = Name,
+        Art = Art,
+        MaxHealth = (float)MaxHealth,
+        VelMin = (float)VelMin,
+        VelMax = (float)VelMax,
+        Turn = (float)Turn,
+        Radius = (float)Radius,
+        Guns = Guns.ToList()
+    };
 }
 
 // Everything the editor knows about the game assets: floor pieces and walls (names by id), the units (catalog and
@@ -189,6 +209,29 @@ internal sealed class EditorAssets
                 if (!File.Exists(path)) continue;
                 foreach (string line in TextFiles.ReadLinesShared(path))
                 {
+                    if (line.StartsWith("gun\t", StringComparison.Ordinal))
+                    {
+                        // gun <unit> <index> <name> <mode> <angle> <arc> <?> <rof> <burst> <cooldown> <damage> <speed> <duration> <range> <multi>
+                        string[] g = line.Split('\t');
+                        if (g.Length < 19 || !units.TryGetValue(g[1], out GameUnit? owner)) continue;
+                        owner.Guns.Add(new SteambirdsAi.AiGunStats
+                        {
+                            Index = (int)ParseNumber(g[2]),
+                            Name = g[3],
+                            Mode = (int)ParseNumber(g[4]),
+                            Angle = (float)ParseNumber(g[5]),
+                            Arc = (float)ParseNumber(g[6]),
+                            FireRate = (float)ParseNumber(g[8]),
+                            Burst = Math.Max(1, (int)ParseNumber(g[9])),
+                            Reload = (float)ParseNumber(g[10]),
+                            Damage = (float)ParseNumber(g[11]),
+                            Speed = (float)ParseNumber(g[12]),
+                            Duration = (float)ParseNumber(g[13]),
+                            Range = (float)ParseNumber(g[14]),
+                            Multi = Math.Max(1, (int)ParseNumber(g[15]))
+                        });
+                        continue;
+                    }
                     if (!line.StartsWith("unit\t", StringComparison.Ordinal)) continue;
                     string[] f = line.Split('\t');
                     if (f.Length < 20) continue;
@@ -197,6 +240,9 @@ internal sealed class EditorAssets
                         Name = f[1],
                         Tier = (int)ParseNumber(f[3]),
                         MaxHealth = ParseNumber(f[4]),
+                        VelMin = ParseNumber(f[6]),
+                        VelMax = ParseNumber(f[7]),
+                        Turn = ParseNumber(f[8]),
                         Radius = ParseNumber(f[9]),
                         Wall = f[13] == "1",
                         Boss = f[15] == "1",
