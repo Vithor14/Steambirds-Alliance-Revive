@@ -2,14 +2,14 @@
 # Starts the project's server (development mode, dotnet run). When you press Ctrl+C, everything is written to one txt
 # (server output + game logs) in C:\Steambirds\server-report.txt
 #
-# Before starting, it checks for duplicated .cs files (e.g. SpawnEsboco-1.cs), which make the build fail
+# Before starting, it checks for duplicated .cs files (e.g. PlaneSpawn-1.cs), which make the build fail
 # with CS0101/CS0111.
 # In the report, the IL dumped by HarmonyX and the Unity asset warnings are summarized,
 # and each game log gets a list of its most frequent errors.
 
 $serverFolder      = "C:\Steambirds\Server"
 $pluginFolder      = "C:\Steambirds\QuieterPlugin"
-$duplicatesFolder  = "C:\Steambirds\_duplicados"
+$duplicatesFolder  = "C:\Steambirds\_duplicates"
 $bepInExFolder     = "C:\Program Files (x86)\Steam\steamapps\content\app_386010\depot_386011\BepInEx"
 $playerLog         = "C:\Users\Vithor Castelo\AppData\LocalLow\SpryFox\Steambirds Alliance\Player.log"
 $reportFile        = "C:\Steambirds\server-report.txt"
@@ -38,7 +38,7 @@ function FindDuplicates($folder) {
 }
 
 # Shows the duplicates and, if the user agrees, keeps only the newest of each pair.
-# Nothing is deleted: the file that goes out is moved to the _duplicados folder, outside the projects.
+# Nothing is deleted: the file that goes out is moved to the _duplicates folder, outside the projects.
 function ResolveDuplicates($folder) {
     $duplicates = @(FindDuplicates $folder)
     if ($duplicates.Count -eq 0) { return }
@@ -224,7 +224,7 @@ try {
     Write-Report ""
     Write-Report "=== SERVER OUTPUT (dotnet run) ==="
 
-    # The server reads BepInEx\acoes_config.txt (written by the plugin) to create the skill clouds.
+    # The server reads BepInEx\actions_config.txt (written by the plugin) to create the skill clouds.
     $env:STEAMBIRDS_BEPINEX = $bepInExFolder
 
     Set-Location $serverFolder
@@ -244,8 +244,12 @@ finally {
 
     AppendFile "Unity Player.log (last 4000 lines)" $playerLog 4000 $true
 
-    # Server account (planes and finished dungeons): shows whether the tutorial was marked as completed.
-    AppendFile "Server\account.json" (Join-Path $serverFolder "account.json") 0 $false
+    # Accounts of the players (planes and finished dungeons): shows whether the tutorial was marked as completed.
+    $accountFiles = @(Get-ChildItem -LiteralPath (Join-Path $serverFolder "accounts") -Filter "account.json" -File -Recurse -ErrorAction SilentlyContinue |
+        Select-Object -First 20)
+    foreach ($accountFile in $accountFiles) {
+        AppendFile ("Server\accounts\" + $accountFile.Directory.Name + "\account.json") $accountFile.FullName 0 $false
+    }
 
     $txts = @(Get-ChildItem -LiteralPath $bepInExFolder -Filter "*.txt" -File -ErrorAction SilentlyContinue |
         Sort-Object FullName)

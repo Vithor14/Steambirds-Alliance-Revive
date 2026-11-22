@@ -4,8 +4,8 @@
   "id": "dungeon_arena",
   "name": "The Arena",
   "terrain": "DungeonArena1",
-  "note": "Colosseum (T5). A single arena with waves announced by horns and a cheering crowd. 10 waves; on the 10th two identical minibosses come at the same time (March 2019 patch). Then Commodus. The the original waves were driven by the invisible units arenamaster/arenawave_*.",
-  "source": "Build 190828.2045: units, names, barks, signs, quests and territory come from the configBinary; the Dungeons/dungeon_* file of that build is empty, so the room format and the enemy positions were recreated.",
+  "note": "Coliseu (T5). Uma arena so, com ondas anunciadas por cornetas e torcida. 10 ondas; na 10 vem dois minichefes iguais ao mesmo tempo (patch de marco/2019). Depois, Commodus. As ondas originais eram dirigidas pelas unidades invisiveis arenamaster/arenawave_*.",
+  "source": "Build 190828.2045: unidades, nomes, falas, placas, quests e territorio vem do configBinary; o arquivo Dungeons/dungeon_* dessa build e vazio, entao o formato das salas e a posicao dos inimigos foram recriados.",
   "key": "key_arena1",
   "portalItem": "dungeon_arena1",
   "exit": {"point": "portal", "when": "death:swarmboss"},
@@ -18,7 +18,7 @@
     "drawing": {
       "siStart": -20,
       "sjStart": -36,
-      "legend": ". free floor, # wall, - no floor. First line = last sj row (the far end).",
+      "legend": ". chao livre, # muro, - sem chao. Primeira linha = ultima fileira sj (o fundo).",
       "lines": [
         "------------####################------------",
         "------------####################------------",
@@ -100,24 +100,33 @@
   "buildings": [],
   "spawn": {"u": 6.0, "v": -89.3, "rot": 315},
   "points": {
-    "center": {"u": 6.0, "v": 6.0, "rot": 135},
+    "centro": {"u": 6.0, "v": 6.0, "rot": 135},
     "boss": {"u": 6.0, "v": 29.4, "rot": 135},
-    "portal": {"u": 6.0, "v": -3.4, "rot": 0, "note": "exit carrier"}
+    "portal": {"u": 6.0, "v": -3.4, "rot": 0, "note": "porta-avioes de saida"}
   },
   "groups": {},
   "areas": {
-    "entrance": {"minU": -12.6, "maxU": 24.6, "minV": -96.6, "maxV": -65.4},
+    "entrada": {"minU": -12.6, "maxU": 24.6, "minV": -96.6, "maxV": -65.4},
     "arena": {"minU": -42.6, "maxU": 54.6, "minV": -42.6, "maxV": 54.6},
-    "prize": {"minU": -12.6, "maxU": 24.6, "minV": 65.4, "maxV": 90.6}
+    "premio": {"minU": -12.6, "maxU": 24.6, "minV": 65.4, "maxV": 90.6}
   },
-  "lines": {"entrance": -96.0, "arena": -42.0, "prize": 66.0},
+  "lines": {"entrada": -96.0, "arena": -42.0, "premio": 66.0},
   "values": {"tier": 5},
   "checkpoints": [
-    {"name": "entrance", "activeAtV": -96.0, "u": 6.0, "v": -92.6, "rot": 315},
+    {"name": "entrada", "activeAtV": -96.0, "u": 6.0, "v": -92.6, "rot": 315},
     {"name": "arena", "activeAtV": -42.0, "u": 6.0, "v": -33.3, "rot": 315}
   ],
   "gates": [
-    {"name": "prize gate", "type": "arena2_destructiblewall1", "sj": 20, "siFrom": 0, "siTo": 3, "damageable": false, "opensWhen": "death:swarmboss", "room": "prize"}
+    {
+      "name": "portao do premio",
+      "type": "arena2_destructiblewall1",
+      "sj": 20,
+      "siFrom": 0,
+      "siTo": 3,
+      "damageable": false,
+      "opensWhen": "death:swarmboss",
+      "room": "premio"
+    }
   ],
   "sideGates": [],
   "signs": [],
@@ -142,24 +151,83 @@
       "behavior": "idle",
       "health": 1750,
       "dpsChest": {"seconds": 25, "reward": "arenadungeontreasureBIG_reward"},
-      "note": "DPS chest: starts counting at the first hit; breaking it in 25 s swaps it for arenadungeontreasureBIG_reward. Health and time are a reconstruction (change 'health' and 'dpsChest.seconds' freely)."
+      "note": "Bau de DPS: comeca a contar no primeiro tiro; quebrar em 25 s troca por arenadungeontreasureBIG_reward. Vida e tempo sao reconstrucao (ajuste 'vida' e 'bauDeDps.segundos' a vontade)."
     },
     "arena2_destructiblewall1": {"name": "Wall", "template": "arena2_destructiblewall1", "behavior": "idle"},
-    "arenaangel": {"name": "Chariot", "template": "arenaangel", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
-    "arenacloud": {"name": "Smog Beast", "template": "arenacloud", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
-    "arenacloudleader": {"name": "Smog Beast", "template": "arenacloudleader", "behavior": "circle", "preferredDistance": 2.0, "aggroRadius": 32},
+    "arenaangel": {
+      "name": "Chariot",
+      "template": "arenaangel",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
+    "arenacloud": {
+      "name": "Smog Beast",
+      "template": "arenacloud",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
+    "arenacloudleader": {
+      "name": "Smog Beast",
+      "template": "arenacloudleader",
+      "behavior": "circle",
+      "preferredDistance": 2.0,
+      "aggroRadius": 32
+    },
     "arenadungeontreasure": {"name": "Treasure", "template": "arenadungeontreasure", "behavior": "idle", "opensAfterHitSeconds": 1.5},
-    "arenadungeontreasureBIG_reward": {"name": "Big Treasure", "template": "arenadungeontreasureBIG_reward", "behavior": "idle", "opensAfterHitSeconds": 1.5},
-    "arenalasereye": {"name": "Heckler", "template": "arenalasereye", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
-    "arenasniper": {"name": "Malicious Acolyte", "template": "arenasniper", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
-    "arenaswarm": {"name": "Frenzied Mob", "template": "arenaswarm", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
+    "arenadungeontreasureBIG_reward": {
+      "name": "Big Treasure",
+      "template": "arenadungeontreasureBIG_reward",
+      "behavior": "idle",
+      "opensAfterHitSeconds": 1.5
+    },
+    "arenalasereye": {
+      "name": "Heckler",
+      "template": "arenalasereye",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
+    "arenasniper": {
+      "name": "Malicious Acolyte",
+      "template": "arenasniper",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
+    "arenaswarm": {
+      "name": "Frenzied Mob",
+      "template": "arenaswarm",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
     "arenatackler": {"name": "Exotic Rhino", "template": "arenatackler", "behavior": "turret", "aggroRadius": 30},
     "arenatetra": {"name": "Bruiser", "template": "arenatetra", "behavior": "turret", "aggroRadius": 30},
-    "arenawhaleshark": {"name": "Frenzied Shark", "template": "arenawhaleshark", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
-    "bonusswarm": {"name": "Bonus Pinata", "template": "bonusswarm", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
+    "arenawhaleshark": {
+      "name": "Frenzied Shark",
+      "template": "arenawhaleshark",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
+    "bonusswarm": {
+      "name": "Bonus Pinata",
+      "template": "bonusswarm",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
     "swarmbossDEATH": {"name": "Commodus", "template": "swarmbossDEATH", "behavior": "idle", "invulnerable": true},
     "swarmbossswarm": {"name": "Commodus Mob", "template": "swarmbossswarm", "behavior": "turret", "aggroRadius": 30},
-    "swarmbosstrap": {"name": "swarmbosstrap", "template": "swarmbosstrap", "behavior": "charge", "preferredDistance": 6, "aggroRadius": 30}
+    "swarmbosstrap": {
+      "name": "swarmbosstrap",
+      "template": "swarmbosstrap",
+      "behavior": "charge",
+      "preferredDistance": 6,
+      "aggroRadius": 30
+    }
   },
   "encounters": [
     {
@@ -195,10 +263,7 @@
           "groups": [
             {
               "type": "arenacloudleader",
-              "pos": [
-                {"u": -29.6, "v": 43.4, "rot": 135},
-                {"u": 41.6, "v": 43.4, "rot": 135}
-              ]
+              "pos": [{"u": -29.6, "v": 43.4, "rot": 135}, {"u": 41.6, "v": 43.4, "rot": 135}]
             },
             {
               "type": "arenacloud",
@@ -253,15 +318,8 @@
         {
           "name": "Bruiser",
           "delayBeforeSeconds": 4,
-          "groups": [
-            {
-              "type": "arenatetra",
-              "pos": [
-                {"u": 6.0, "v": 34.1, "rot": 135}
-              ]
-            }
-          ],
-          "message": "Wave 5: Bruiser"
+          "groups": [{"type": "arenatetra", "pos": [{"u": 6.0, "v": 34.1, "rot": 135}]}],
+          "message": "Onda 5: Bruiser"
         },
         {
           "name": "Carruagens",
@@ -283,10 +341,7 @@
           "groups": [
             {
               "type": "arenatackler",
-              "pos": [
-                {"u": -38.0, "v": 6.0, "rot": 45},
-                {"u": 50.0, "v": 6.0, "rot": 225}
-              ]
+              "pos": [{"u": -38.0, "v": 6.0, "rot": 45}, {"u": 50.0, "v": 6.0, "rot": 225}]
             },
             {
               "type": "arenaswarm",
@@ -305,10 +360,7 @@
           "groups": [
             {
               "type": "arenawhaleshark",
-              "pos": [
-                {"u": -29.6, "v": 38.8, "rot": 135},
-                {"u": 41.6, "v": 38.8, "rot": 135}
-              ]
+              "pos": [{"u": -29.6, "v": 38.8, "rot": 135}, {"u": 41.6, "v": 38.8, "rot": 135}]
             }
           ]
         },
@@ -318,39 +370,25 @@
           "groups": [
             {
               "type": "arenasniper",
-              "pos": [
-                {"u": -29.6, "v": -29.6, "rot": 135},
-                {"u": 41.6, "v": -29.6, "rot": 135}
-              ]
+              "pos": [{"u": -29.6, "v": -29.6, "rot": 135}, {"u": 41.6, "v": -29.6, "rot": 135}]
             },
             {
               "type": "arenalasereye",
-              "pos": [
-                {"u": -29.6, "v": 43.4, "rot": 135},
-                {"u": 41.6, "v": 43.4, "rot": 135}
-              ]
+              "pos": [{"u": -29.6, "v": 43.4, "rot": 135}, {"u": 41.6, "v": 43.4, "rot": 135}]
             },
-            {
-              "type": "arenacloudleader",
-              "pos": [
-                {"u": 6.0, "v": 38.8, "rot": 135}
-              ]
-            }
+            {"type": "arenacloudleader", "pos": [{"u": 6.0, "v": 38.8, "rot": 135}]}
           ]
         },
         {
-          "name": "Two minibosses",
+          "name": "Dois minichefes",
           "delayBeforeSeconds": 4,
           "groups": [
             {
               "type": "arenatetra",
-              "pos": [
-                {"u": -12.7, "v": 34.1, "rot": 135},
-                {"u": 24.7, "v": 34.1, "rot": 135}
-              ]
+              "pos": [{"u": -12.7, "v": 34.1, "rot": 135}, {"u": 24.7, "v": 34.1, "rot": 135}]
             }
           ],
-          "message": "Wave 10: two Bruisers!"
+          "message": "Onda 10: dois Bruisers!"
         },
         {
           "name": "Bonus",
@@ -370,15 +408,8 @@
         {
           "name": "Commodus",
           "delayBeforeSeconds": 6,
-          "groups": [
-            {
-              "type": "swarmboss",
-              "pos": [
-                {"u": 6.0, "v": 29.4, "rot": 135}
-              ]
-            }
-          ],
-          "message": "Commodus enters the arena!"
+          "groups": [{"type": "swarmboss", "pos": [{"u": 6.0, "v": 29.4, "rot": 135}]}],
+          "message": "Commodus entra na arena!"
         }
       ],
       "boss": true,
@@ -394,32 +425,18 @@
       "enemies": []
     },
     {
-      "room": "prize",
-      "area": "prize",
+      "room": "premio",
+      "area": "premio",
       "wakes": "onEnter",
-      "line": "prize",
-      "enemies": [
-        {
-          "type": "arenadungeontreasureBIG",
-          "pos": [
-            {"u": 6.0, "v": 80.2, "rot": 135}
-          ]
-        }
-      ]
+      "line": "premio",
+      "enemies": [{"type": "arenadungeontreasureBIG", "pos": [{"u": 6.0, "v": 80.2, "rot": 135}]}]
     },
     {
-      "room": "entrance",
-      "area": "entrance",
+      "room": "entrada",
+      "area": "entrada",
       "wakes": "onEnter",
-      "line": "entrance",
-      "enemies": [
-        {
-          "type": "arenadungeontreasure",
-          "pos": [
-            {"u": -5.8, "v": -71.3, "rot": 135}
-          ]
-        }
-      ]
+      "line": "entrada",
+      "enemies": [{"type": "arenadungeontreasure", "pos": [{"u": -5.8, "v": -71.3, "rot": 135}]}]
     }
   ]
 }

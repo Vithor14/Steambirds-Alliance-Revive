@@ -3,7 +3,7 @@ namespace SteambirdsLauncher.Core.GameData;
 // What the launcher takes from the game's configBinary, read once per game folder (about half a second).
 // Without the game (or with a configBinary it cannot read) the lists fall back to what the project already knows,
 // so every screen keeps working; Error says why.
-public sealed class GameConfig
+public sealed partial class GameConfig
 {
     public sealed class Locale
     {
@@ -270,6 +270,8 @@ public sealed class GameConfig
             if (level.Points.Count > 0) PilotScore.Add(level);
         }
         PilotScore.Sort((a, b) => a.PilotLevel.CompareTo(b.PilotLevel));
+
+        ReadStore(files);
     }
 
     private static XpTable? ReadTable(ConfigNode node)
@@ -292,7 +294,7 @@ public sealed class GameConfig
             foreach (string id in KnownClasses)
                 Classes.Add(new PlaneClass { Id = id, Name = id, UnlockItem = "playerclass_" + id });
         }
-        foreach (string currency in new[] { "newscrap", "gold" })
+        foreach (string currency in new[] { "newscrap", "gold", "iron" })
         {
             if (!Currencies.Contains(currency)) Currencies.Add(currency);
         }

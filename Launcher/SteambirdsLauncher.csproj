@@ -22,9 +22,4 @@
     <DefaultItemExcludes>$(DefaultItemExcludes);build\**;dist\**</DefaultItemExcludes>
   </PropertyGroup>
 
-  <ItemGroup>
-    <!-- Old (Portuguese) names of the map format, shared with the server; see Editor\LegacyNames.cs. -->
-    <EmbeddedResource Include="..\Server\legacy-names.json" LogicalName="legacy-names.json" Link="legacy-names.json" />
-  </ItemGroup>
-
 </Project>

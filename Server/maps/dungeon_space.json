@@ -4,8 +4,8 @@
   "id": "dungeon_space",
   "name": "Super Secret Base",
   "terrain": "DungeonSpace",
-  "note": "Secret military base (T10, ice/lightning). Fixed Sentinels, Defender Cannons, Winter Guards on platforms, Concealed Turrets, the Omega squadron and an ambush room (gates close and enemies appear). Miniboss Mammoth-1; boss Doomsday Mechanism, the super weapon, with a cannon, launch towers, 4 Mammoth-2 and the Omega squadron.",
-  "source": "Build 190828.2045: units, names, barks, signs, quests and territory come from the configBinary; the Dungeons/dungeon_* file of that build is empty, so the room format and the enemy positions were recreated.",
+  "note": "Base militar secreta (T10, gelo/raio). Sentinelas fixas, Defender Cannons, Winter Guards em plataformas, Concealed Turrets, a esquadrilha Omega e uma sala de emboscada (portoes fecham e inimigos surgem). Minichefe Mammoth-1; chefe Doomsday Mechanism, a super-arma, com canhao, torres de lancamento, 4 Mammoth-2 e a esquadrilha Omega.",
+  "source": "Build 190828.2045: unidades, nomes, falas, placas, quests e territorio vem do configBinary; o arquivo Dungeons/dungeon_* dessa build e vazio, entao o formato das salas e a posicao dos inimigos foram recriados.",
   "key": "key_space",
   "portalItem": "dungeon_space",
   "exit": {"point": "portal", "when": "death:avatar"},
@@ -18,7 +18,7 @@
     "drawing": {
       "siStart": -20,
       "sjStart": -92,
-      "legend": ". free floor, # wall, - no floor. First line = last sj row (the far end).",
+      "legend": ". chao livre, # muro, - sem chao. Primeira linha = ultima fileira sj (o fundo).",
       "lines": [
         "############################################--------",
         "############################################--------",
@@ -213,56 +213,90 @@
   "spawn": {"u": 6.0, "v": -257.3, "rot": 315},
   "points": {
     "boss": {"u": 6.0, "v": 236.5, "rot": 135},
-    "portal": {"u": 6.0, "v": 205.9, "rot": 0, "note": "exit carrier (appears when the boss dies)"}
+    "portal": {"u": 6.0, "v": 205.9, "rot": 0, "note": "porta-avioes de saida (aparece quando o chefe morre)"}
   },
   "groups": {},
   "areas": {
-    "entrance": {"minU": -12.6, "maxU": 24.6, "minV": -264.6, "maxV": -233.4},
-    "control_post": {"minU": -27.6, "maxU": 39.6, "minV": -210.6, "maxV": -161.4},
-    "winter_courtyard": {"minU": -30.6, "maxU": 42.6, "minV": -144.6, "maxV": -83.4},
-    "ambush_room": {"minU": -27.6, "maxU": 39.6, "minV": -66.6, "maxV": 0.6},
-    "omega_runway": {"minU": -24.6, "maxU": 36.6, "minV": 17.4, "maxV": 72.6},
-    "mammoth_hangar": {"minU": -27.6, "maxU": 39.6, "minV": 89.4, "maxV": 150.6},
-    "doomsday_silo": {"minU": -39.6, "maxU": 51.6, "minV": 173.4, "maxV": 264.6},
-    "warehouse": {"minU": 53.4, "maxU": 84.6, "minV": -129.6, "maxV": -98.4}
+    "entrada": {"minU": -12.6, "maxU": 24.6, "minV": -264.6, "maxV": -233.4},
+    "posto_de_controle": {"minU": -27.6, "maxU": 39.6, "minV": -210.6, "maxV": -161.4},
+    "patio_de_inverno": {"minU": -30.6, "maxU": 42.6, "minV": -144.6, "maxV": -83.4},
+    "sala_da_emboscada": {"minU": -27.6, "maxU": 39.6, "minV": -66.6, "maxV": 0.6},
+    "pista_omega": {"minU": -24.6, "maxU": 36.6, "minV": 17.4, "maxV": 72.6},
+    "hangar_do_mammoth": {"minU": -27.6, "maxU": 39.6, "minV": 89.4, "maxV": 150.6},
+    "silo_do_doomsday": {"minU": -39.6, "maxU": 51.6, "minV": 173.4, "maxV": 264.6},
+    "almoxarifado": {"minU": 53.4, "maxU": 84.6, "minV": -129.6, "maxV": -98.4}
   },
-  "lines": {"entrance": -264.0, "control_post": -210.0, "winter_courtyard": -144.0, "ambush_room": -66.0, "omega_runway": 18.0, "mammoth_hangar": 90.0, "doomsday_silo": 174.0, "warehouse": -129.0},
+  "lines": {
+    "entrada": -264.0,
+    "posto_de_controle": -210.0,
+    "patio_de_inverno": -144.0,
+    "sala_da_emboscada": -66.0,
+    "pista_omega": 18.0,
+    "hangar_do_mammoth": 90.0,
+    "silo_do_doomsday": 174.0,
+    "almoxarifado": -129.0
+  },
   "values": {"tier": 10},
   "checkpoints": [
-    {"name": "entrance", "activeAtV": -264.0, "u": 6.0, "v": -260.6, "rot": 315},
-    {"name": "control_post", "activeAtV": -210.0, "u": 6.0, "v": -205.2, "rot": 315},
-    {"name": "winter_courtyard", "activeAtV": -144.0, "u": 6.0, "v": -138.2, "rot": 315},
-    {"name": "ambush_room", "activeAtV": -66.0, "u": 6.0, "v": -59.7, "rot": 315},
-    {"name": "omega_runway", "activeAtV": 18.0, "u": 6.0, "v": 23.3, "rot": 315},
-    {"name": "mammoth_hangar", "activeAtV": 90.0, "u": 6.0, "v": 95.8, "rot": 315},
-    {"name": "doomsday_silo", "activeAtV": 174.0, "u": 6.0, "v": 182.2, "rot": 315}
+    {"name": "entrada", "activeAtV": -264.0, "u": 6.0, "v": -260.6, "rot": 315},
+    {"name": "posto_de_controle", "activeAtV": -210.0, "u": 6.0, "v": -205.2, "rot": 315},
+    {"name": "patio_de_inverno", "activeAtV": -144.0, "u": 6.0, "v": -138.2, "rot": 315},
+    {"name": "sala_da_emboscada", "activeAtV": -66.0, "u": 6.0, "v": -59.7, "rot": 315},
+    {"name": "pista_omega", "activeAtV": 18.0, "u": 6.0, "v": 23.3, "rot": 315},
+    {"name": "hangar_do_mammoth", "activeAtV": 90.0, "u": 6.0, "v": 95.8, "rot": 315},
+    {"name": "silo_do_doomsday", "activeAtV": 174.0, "u": 6.0, "v": 182.2, "rot": 315}
   ],
   "gates": [
-    {"name": "ambush gate (entrance)", "type": "ambushgate", "sj": -25, "siFrom": 0, "siTo": 3, "damageable": true, "room": "ambush_room"},
-    {"name": "ambush gate (exit)", "type": "ambushgate", "sj": 3, "siFrom": 0, "siTo": 3, "damageable": false, "opensWhen": "cleared:ambush_room", "room": "omega_runway"},
     {
-      "name": "hangar gate",
+      "name": "portao da emboscada (entrada)",
+      "type": "ambushgate",
+      "sj": -25,
+      "siFrom": 0,
+      "siTo": 3,
+      "damageable": true,
+      "room": "sala_da_emboscada"
+    },
+    {
+      "name": "portao da emboscada (saida)",
+      "type": "ambushgate",
+      "sj": 3,
+      "siFrom": 0,
+      "siTo": 3,
+      "damageable": false,
+      "opensWhen": "cleared:sala_da_emboscada",
+      "room": "pista_omega"
+    },
+    {
+      "name": "portao do hangar",
       "type": "spacedungeondestroyablewall",
       "sj": 27,
       "siFrom": 0,
       "siTo": 3,
       "damageable": false,
-      "opensWhen": "cleared:omega_runway",
-      "room": "mammoth_hangar"
+      "opensWhen": "cleared:pista_omega",
+      "room": "hangar_do_mammoth"
     },
     {
-      "name": "silo gate",
+      "name": "portao do silo",
       "type": "spacedungeondestroyablewall",
       "sj": 54,
       "siFrom": 0,
       "siTo": 3,
       "damageable": false,
-      "opensWhen": "cleared:mammoth_hangar",
-      "room": "doomsday_silo"
+      "opensWhen": "cleared:hangar_do_mammoth",
+      "room": "silo_do_doomsday"
     }
   ],
   "sideGates": [
-    {"name": "warehouse wall", "type": "spacedungeondestroyablewall", "si": 16, "sjFrom": -40, "sjTo": -37, "damageable": true, "room": "warehouse"}
+    {
+      "name": "parede do almoxarifado",
+      "type": "spacedungeondestroyablewall",
+      "si": 16,
+      "sjFrom": -40,
+      "sjTo": -37,
+      "damageable": true,
+      "room": "almoxarifado"
+    }
   ],
   "signs": [
     {"key": "spacedungeonsign1", "u": 6.0, "v": -246.2, "radius": 14, "rot": 0},
@@ -276,9 +310,7 @@
       "behavior": "circle",
       "aggroRadius": 45,
       "firstShotDelay": 1.5,
-      "phases": [
-        {"belowHealth": 0.5, "summon": "battlemechshieldbomb", "summonCount": 3}
-      ]
+      "phases": [{"belowHealth": 0.5, "summon": "battlemechshieldbomb", "summonCount": 3}]
     },
     "avatar": {
       "name": "Doomsday Mechanism",
@@ -290,22 +322,65 @@
       "onDeath": "avatarDEATH",
       "barks": {"onWake": "avatar", "onDeath": "avatarDEATH"},
       "phases": [
-        {"belowHealth": 0.8, "summon": "avatarnova1", "summonCount": 1, "message": "Omega taking off!"},
+        {"belowHealth": 0.8, "summon": "avatarnova1", "summonCount": 1, "message": "Omega decolando!"},
         {"belowHealth": 0.6, "summon": "avatarbattlemech", "summonCount": 2},
         {"belowHealth": 0.4, "summon": "avatarbattlemechshieldbomb", "summonCount": 4},
-        {"belowHealth": 0.25, "summon": "avatarbattlemech3", "summonCount": 2, "message": "Mammoth-2 in the field!"}
+        {
+          "belowHealth": 0.25,
+          "summon": "avatarbattlemech3",
+          "summonCount": 2,
+          "message": "Mammoth-2 em campo!"
+        }
       ]
     },
     "ambushgate": {"name": "ambushgate", "template": "ambushgate", "behavior": "idle"},
     "avatarDEATH": {"name": "Doomsday Mechanism", "template": "avatarDEATH", "behavior": "idle", "invulnerable": true},
-    "avatarbattlemech": {"name": "Mammoth-2", "template": "avatarbattlemech", "miniboss": true, "behavior": "circle", "aggroRadius": 45, "firstShotDelay": 1.5},
-    "avatarbattlemech3": {"name": "Mammoth-2", "template": "avatarbattlemech3", "miniboss": true, "behavior": "circle", "aggroRadius": 45, "firstShotDelay": 1.5},
-    "avatarbattlemechshieldbomb": {"name": "avatarbattlemechshieldbomb", "template": "avatarbattlemechshieldbomb", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
+    "avatarbattlemech": {
+      "name": "Mammoth-2",
+      "template": "avatarbattlemech",
+      "miniboss": true,
+      "behavior": "circle",
+      "aggroRadius": 45,
+      "firstShotDelay": 1.5
+    },
+    "avatarbattlemech3": {
+      "name": "Mammoth-2",
+      "template": "avatarbattlemech3",
+      "miniboss": true,
+      "behavior": "circle",
+      "aggroRadius": 45,
+      "firstShotDelay": 1.5
+    },
+    "avatarbattlemechshieldbomb": {
+      "name": "avatarbattlemechshieldbomb",
+      "template": "avatarbattlemechshieldbomb",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
     "avatarcannon": {"name": "Doomsday Mechanism", "template": "avatarcannon", "behavior": "turret", "aggroRadius": 30},
-    "avatarlaunchtower": {"name": "avatarlaunchtower", "template": "avatarlaunchtower", "behavior": "charge", "preferredDistance": 6, "aggroRadius": 30},
-    "avatarlaunchtower2": {"name": "avatarlaunchtower2", "template": "avatarlaunchtower2", "behavior": "charge", "preferredDistance": 6, "aggroRadius": 30},
+    "avatarlaunchtower": {
+      "name": "avatarlaunchtower",
+      "template": "avatarlaunchtower",
+      "behavior": "charge",
+      "preferredDistance": 6,
+      "aggroRadius": 30
+    },
+    "avatarlaunchtower2": {
+      "name": "avatarlaunchtower2",
+      "template": "avatarlaunchtower2",
+      "behavior": "charge",
+      "preferredDistance": 6,
+      "aggroRadius": 30
+    },
     "avatarnova1": {"name": "Omega", "template": "avatarnova1", "behavior": "turret", "aggroRadius": 30},
-    "battlemechshieldbomb": {"name": "Bomb", "template": "battlemechshieldbomb", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
+    "battlemechshieldbomb": {
+      "name": "Bomb",
+      "template": "battlemechshieldbomb",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
     "blocker": {"name": "Sentinel-2", "template": "blocker", "behavior": "turret", "aggroRadius": 30},
     "blocker0": {"name": "Sentinel-1", "template": "blocker0", "behavior": "turret", "aggroRadius": 30},
     "blocker2slider": {"name": "Sentinel-2B", "template": "blocker2slider", "behavior": "turret", "aggroRadius": 30},
@@ -321,57 +396,79 @@
     "nova6": {"name": "Omega", "template": "nova6", "behavior": "turret", "aggroRadius": 30},
     "spacedungeondestroyablewall": {"name": "Wall", "template": "spacedungeondestroyablewall", "behavior": "idle"},
     "spacedungeontreasure": {"name": "Treasure", "template": "spacedungeontreasure", "behavior": "idle", "opensAfterHitSeconds": 1.5},
-    "spaceturret": {"name": "Concealed Turret", "template": "spaceturret", "behavior": "charge", "preferredDistance": 6, "aggroRadius": 30},
-    "sunfox": {"name": "Winter Guard", "template": "sunfox", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
-    "sunfoxbig": {"name": "Winter Commander", "template": "sunfoxbig", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
-    "sunfoxleader": {"name": "Gun Platform", "template": "sunfoxleader", "behavior": "circle", "preferredDistance": 9, "aggroRadius": 32},
-    "sunfoxleaderchill": {"name": "Gun Platform", "template": "sunfoxleaderchill", "behavior": "circle", "preferredDistance": 9, "aggroRadius": 32},
-    "sunfoxtrap": {"name": "Winter Guard", "template": "sunfoxtrap", "behavior": "charge", "preferredDistance": 6, "aggroRadius": 30, "invulnerable": true}
+    "spaceturret": {
+      "name": "Concealed Turret",
+      "template": "spaceturret",
+      "behavior": "charge",
+      "preferredDistance": 6,
+      "aggroRadius": 30
+    },
+    "sunfox": {
+      "name": "Winter Guard",
+      "template": "sunfox",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
+    "sunfoxbig": {
+      "name": "Winter Commander",
+      "template": "sunfoxbig",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
+    "sunfoxleader": {
+      "name": "Gun Platform",
+      "template": "sunfoxleader",
+      "behavior": "circle",
+      "preferredDistance": 9,
+      "aggroRadius": 32
+    },
+    "sunfoxleaderchill": {
+      "name": "Gun Platform",
+      "template": "sunfoxleaderchill",
+      "behavior": "circle",
+      "preferredDistance": 9,
+      "aggroRadius": 32
+    },
+    "sunfoxtrap": {
+      "name": "Winter Guard",
+      "template": "sunfoxtrap",
+      "behavior": "charge",
+      "preferredDistance": 6,
+      "aggroRadius": 30,
+      "invulnerable": true
+    }
   },
   "encounters": [
     {
-      "room": "control_post",
-      "area": "control_post",
+      "room": "posto_de_controle",
+      "area": "posto_de_controle",
       "wakes": "onEnter",
-      "line": "control_post",
+      "line": "posto_de_controle",
       "enemies": [
         {
           "type": "blocker0",
-          "pos": [
-            {"u": -18.2, "v": -181.4, "rot": 135},
-            {"u": 30.2, "v": -181.4, "rot": 135}
-          ],
+          "pos": [{"u": -18.2, "v": -181.4, "rot": 135}, {"u": 30.2, "v": -181.4, "rot": 135}],
           "note": "Sentinel-1"
         },
-        {
-          "type": "blocker",
-          "pos": [
-            {"u": 6.0, "v": -170.0, "rot": 135}
-          ],
-          "note": "Sentinel-2"
-        },
+        {"type": "blocker", "pos": [{"u": 6.0, "v": -170.0, "rot": 135}], "note": "Sentinel-2"},
         {
           "type": "spaceturret",
-          "pos": [
-            {"u": -19.4, "v": -204.2, "rot": 135},
-            {"u": 31.4, "v": -204.2, "rot": 135}
-          ],
+          "pos": [{"u": -19.4, "v": -204.2, "rot": 135}, {"u": 31.4, "v": -204.2, "rot": 135}],
           "note": "Concealed Turret"
         }
       ]
     },
     {
-      "room": "winter_courtyard",
-      "area": "winter_courtyard",
+      "room": "patio_de_inverno",
+      "area": "patio_de_inverno",
       "wakes": "onEnter",
-      "line": "winter_courtyard",
+      "line": "patio_de_inverno",
       "enemies": [
         {
           "type": "sunfoxleader",
-          "pos": [
-            {"u": -7.9, "v": -102.5, "rot": 135},
-            {"u": 19.9, "v": -102.5, "rot": 135}
-          ],
+          "pos": [{"u": -7.9, "v": -102.5, "rot": 135}, {"u": 19.9, "v": -102.5, "rot": 135}],
           "note": "Gun Platform"
         },
         {
@@ -384,41 +481,22 @@
           ],
           "note": "Winter Guard"
         },
-        {
-          "type": "sunfoxbig",
-          "pos": [
-            {"u": 6.0, "v": -91.0, "rot": 135}
-          ],
-          "note": "Winter Commander"
-        },
-        {
-          "type": "mage",
-          "pos": [
-            {"u": 6.0, "v": -131.3, "rot": 135}
-          ],
-          "note": "Defender Cannon"
-        }
+        {"type": "sunfoxbig", "pos": [{"u": 6.0, "v": -91.0, "rot": 135}], "note": "Winter Commander"},
+        {"type": "mage", "pos": [{"u": 6.0, "v": -131.3, "rot": 135}], "note": "Defender Cannon"}
       ]
     },
     {
-      "room": "warehouse",
-      "area": "warehouse",
+      "room": "almoxarifado",
+      "area": "almoxarifado",
       "wakes": "onEnter",
-      "line": "warehouse",
-      "enemies": [
-        {
-          "type": "spacedungeontreasure",
-          "pos": [
-            {"u": 69.0, "v": -111.2, "rot": 135}
-          ]
-        }
-      ]
+      "line": "almoxarifado",
+      "enemies": [{"type": "spacedungeontreasure", "pos": [{"u": 69.0, "v": -111.2, "rot": 135}]}]
     },
     {
-      "room": "ambush_room",
-      "area": "ambush_room",
+      "room": "sala_da_emboscada",
+      "area": "sala_da_emboscada",
       "wakes": "onEnter",
-      "line": "ambush_room",
+      "line": "sala_da_emboscada",
       "enemies": [
         {
           "type": "blocker3",
@@ -433,7 +511,7 @@
       ],
       "closesOnEnter": true,
       "controllers": ["ambushmaster", "ambushgatespawner", "ambushgate"],
-      "note": "Ambush: the gates close and the waves appear (spawners ambushenemyspawner_*).",
+      "note": "Emboscada: os portoes fecham e as ondas surgem (spawners ambushenemyspawner_*).",
       "waves": [
         {
           "name": "Torretas",
@@ -465,10 +543,7 @@
             },
             {
               "type": "sunfoxleaderchill",
-              "pos": [
-                {"u": -18.2, "v": -45.7, "rot": 315},
-                {"u": 30.2, "v": -45.7, "rot": 315}
-              ]
+              "pos": [{"u": -18.2, "v": -45.7, "rot": 315}, {"u": 30.2, "v": -45.7, "rot": 315}]
             }
           ]
         },
@@ -476,12 +551,7 @@
           "name": "Canhao",
           "delayBeforeSeconds": 4,
           "groups": [
-            {
-              "type": "mage",
-              "pos": [
-                {"u": 6.0, "v": -26.6, "rot": 135}
-              ]
-            },
+            {"type": "mage", "pos": [{"u": 6.0, "v": -26.6, "rot": 135}]},
             {
               "type": "sunfoxtrap",
               "pos": [
@@ -497,141 +567,78 @@
           "name": "Omega",
           "delayBeforeSeconds": 4,
           "groups": [
-            {
-              "type": "nova1",
-              "pos": [
-                {"u": 6.0, "v": -10.7, "rot": 135}
-              ]
-            },
+            {"type": "nova1", "pos": [{"u": 6.0, "v": -10.7, "rot": 135}]},
             {
               "type": "nova2",
-              "pos": [
-                {"u": -0.4, "v": -13.9, "rot": 135},
-                {"u": 12.4, "v": -13.9, "rot": 135}
-              ]
+              "pos": [{"u": -0.4, "v": -13.9, "rot": 135}, {"u": 12.4, "v": -13.9, "rot": 135}]
             }
           ]
         }
       ]
     },
     {
-      "room": "omega_runway",
-      "area": "omega_runway",
+      "room": "pista_omega",
+      "area": "pista_omega",
       "wakes": "onEnter",
-      "line": "omega_runway",
+      "line": "pista_omega",
       "enemies": [
         {
           "type": "nova1",
-          "pos": [
-            {"u": 6.0, "v": 60.5, "rot": 135}
-          ],
-          "note": "Omega squadron (nova1 leader, nova2-6 in formation)"
+          "pos": [{"u": 6.0, "v": 60.5, "rot": 135}],
+          "note": "esquadrilha Omega (nova1 lider, nova2-6 em formacao)"
         },
-        {
-          "type": "nova2",
-          "pos": [
-            {"u": -0.9, "v": 56.4, "rot": 135}
-          ]
-        },
-        {
-          "type": "nova3",
-          "pos": [
-            {"u": 12.9, "v": 56.4, "rot": 135}
-          ]
-        },
-        {
-          "type": "nova4",
-          "pos": [
-            {"u": -7.8, "v": 52.2, "rot": 135}
-          ]
-        },
-        {
-          "type": "nova5",
-          "pos": [
-            {"u": 19.8, "v": 52.2, "rot": 135}
-          ]
-        },
-        {
-          "type": "nova6",
-          "pos": [
-            {"u": 6.0, "v": 52.2, "rot": 135}
-          ]
-        },
+        {"type": "nova2", "pos": [{"u": -0.9, "v": 56.4, "rot": 135}]},
+        {"type": "nova3", "pos": [{"u": 12.9, "v": 56.4, "rot": 135}]},
+        {"type": "nova4", "pos": [{"u": -7.8, "v": 52.2, "rot": 135}]},
+        {"type": "nova5", "pos": [{"u": 19.8, "v": 52.2, "rot": 135}]},
+        {"type": "nova6", "pos": [{"u": 6.0, "v": 52.2, "rot": 135}]},
         {
           "type": "blocker2slider",
-          "pos": [
-            {"u": -21.1, "v": 34.7, "rot": 45},
-            {"u": 33.1, "v": 34.7, "rot": 225}
-          ],
-          "note": "Sliding Sentinel-2B"
+          "pos": [{"u": -21.1, "v": 34.7, "rot": 45}, {"u": 33.1, "v": 34.7, "rot": 225}],
+          "note": "Sentinel-2B deslizante"
         }
       ]
     },
     {
-      "room": "mammoth_hangar",
-      "area": "mammoth_hangar",
+      "room": "hangar_do_mammoth",
+      "area": "hangar_do_mammoth",
       "wakes": "onEnter",
-      "line": "mammoth_hangar",
+      "line": "hangar_do_mammoth",
       "enemies": [
         {
           "type": "battlemech",
-          "pos": [
-            {"u": 6.0, "v": 131.5, "rot": 135}
-          ],
+          "pos": [{"u": 6.0, "v": 131.5, "rot": 135}],
           "miniboss": true,
           "note": "Mammoth-1"
         },
         {
           "type": "blocker4",
-          "pos": [
-            {"u": -19.4, "v": 97.0, "rot": 135},
-            {"u": 31.4, "v": 97.0, "rot": 135}
-          ],
+          "pos": [{"u": -19.4, "v": 97.0, "rot": 135}, {"u": 31.4, "v": 97.0, "rot": 135}],
           "note": "Sentinel-3D"
         },
         {
           "type": "blocker5",
-          "pos": [
-            {"u": -19.4, "v": 143.0, "rot": 135},
-            {"u": 31.4, "v": 143.0, "rot": 135}
-          ],
+          "pos": [{"u": -19.4, "v": 143.0, "rot": 135}, {"u": 31.4, "v": 143.0, "rot": 135}],
           "note": "Sentinel-2D"
         }
       ],
       "miniboss": true
     },
     {
-      "room": "doomsday_silo",
-      "area": "doomsday_silo",
+      "room": "silo_do_doomsday",
+      "area": "silo_do_doomsday",
       "wakes": "onEnter",
-      "line": "doomsday_silo",
+      "line": "silo_do_doomsday",
       "enemies": [
-        {
-          "type": "avatar",
-          "pos": [
-            {"u": 6.0, "v": 236.5, "rot": 135}
-          ]
-        },
-        {
-          "type": "avatarcannon",
-          "pos": [
-            {"u": 6.0, "v": 255.8, "rot": 135}
-          ],
-          "note": "Doomsday cannon"
-        },
+        {"type": "avatar", "pos": [{"u": 6.0, "v": 236.5, "rot": 135}]},
+        {"type": "avatarcannon", "pos": [{"u": 6.0, "v": 255.8, "rot": 135}], "note": "canhao do Doomsday"},
         {
           "type": "avatarlaunchtower",
-          "pos": [
-            {"u": -24.7, "v": 249.7, "rot": 135},
-            {"u": 36.7, "v": 249.7, "rot": 135}
-          ]
+          "pos": [{"u": -24.7, "v": 249.7, "rot": 135}, {"u": 36.7, "v": 249.7, "rot": 135}]
         },
         {
           "type": "avatarlaunchtower2",
-          "pos": [
-            {"u": -24.7, "v": 219.0, "rot": 135},
-            {"u": 36.7, "v": 219.0, "rot": 135}
-          ]
+          "pos": [{"u": -24.7, "v": 219.0, "rot": 135}, {"u": 36.7, "v": 219.0, "rot": 135}]
         }
       ],
       "boss": true,

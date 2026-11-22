@@ -8,12 +8,13 @@ namespace SteambirdsLauncher.UI;
 //  - Starting state of new accounts: keys of progression.json and items.json the server already uses
 //    (unlocks as a checklist, currencies as one field each).
 //  - The accounts of this server: one per player (Steam account), in server\accounts\<key>\ (account.json +
-//    inventory.json), plus the old single account server\account.json until the host logs in. Each one can be
+//    inventory.json). Each one can be
 //    edited (in its own window) or removed while the server is stopped.
 internal sealed class AccountsPage : UserControl
 {
     private readonly LauncherContext context;
     private readonly SettingsPage newAccounts;
+    private readonly AccountMoneyPanel accountMoney;
     private readonly ListView summary;
     private readonly ListView planes;
     private readonly Label accountStatus;
@@ -32,9 +33,9 @@ internal sealed class AccountsPage : UserControl
 
         var pilotSection = new SettingsSection(L.T("Pilot"), "progression.json", SettingsSection.Only("startingPilotLevel", "startingUnlocks"));
         pilotSection.CustomEditors["startingUnlocks"] = UnlockEditor;
-        var itemsSection = new SettingsSection(L.T("Currencies, ingredients and items"), "items.json",
-            SettingsSection.Only("startingCurrencies", "startingIngredients", "startingStorageItems"));
-        itemsSection.CustomEditors["startingCurrencies"] = CurrencyEditor;
+        // The starting money has its own panel at the right (StartingMoneyPanel).
+        var itemsSection = new SettingsSection(L.T("Ingredients and items"), "items.json",
+            SettingsSection.Only("startingIngredients", "startingStorageItems"));
         newAccounts = new SettingsPage(tip,
             L.T("Used for new accounts: the first time a player (Steam account) joins this server. The other progression and item settings are in the Progression and Items and loot tabs."),
             pilotSection, itemsSection)
@@ -51,6 +52,7 @@ internal sealed class AccountsPage : UserControl
         summary.DoubleClick += (_, _) => EditAccount();
         planes = Ui.Grid((L.T("Plane"), 160), (L.T("Variant"), 100), (L.T("Level"), 60), (L.T("XP"), 80), (L.T("Plane id"), 230));
 
+        accountMoney = new AccountMoneyPanel(context) { Dock = DockStyle.Right, Width = 300, Padding = new Padding(8, 0, 0, 0) };
         accountStatus = Ui.Note("");
         editButton = Ui.Button(L.T("Edit account..."), (_, _) => EditAccount());
         removeButton = Ui.Button(L.T("Remove account"), (_, _) => RemoveAccount());
@@ -76,6 +78,7 @@ internal sealed class AccountsPage : UserControl
         var accountsPanel = new Panel { Dock = DockStyle.Fill };
         accountsPanel.Resize += (_, _) => serverNote.MaximumSize = new Size(Math.Max(200, accountsPanel.ClientSize.Width - 10), 0);
         accountsPanel.Controls.Add(planes);
+        accountsPanel.Controls.Add(accountMoney);
         accountsPanel.Controls.Add(planesTitle);
         accountsPanel.Controls.Add(summary);
         accountsPanel.Controls.Add(serverNote);
@@ -85,12 +88,20 @@ internal sealed class AccountsPage : UserControl
         accountsGroup.Controls.Add(accountsPanel);
         var newAccountsGroup = new GroupBox { Text = L.T("Starting state of new accounts"), Dock = DockStyle.Fill, Padding = new Padding(8, 6, 8, 6) };
         newAccountsGroup.Controls.Add(newAccounts);
+        var startingMoneyGroup = new GroupBox { Text = L.T("Starting money of new accounts"), Dock = DockStyle.Fill, Padding = new Padding(8, 6, 8, 6) };
+        startingMoneyGroup.Controls.Add(new StartingMoneyPanel(context) { Dock = DockStyle.Fill });
+        var topRow = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1 };
+        topRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        topRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 360f));
+        topRow.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        topRow.Controls.Add(newAccountsGroup, 0, 0);
+        topRow.Controls.Add(startingMoneyGroup, 1, 0);
 
         var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2 };
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        root.RowStyles.Add(new RowStyle(SizeType.Percent, 45f));
-        root.RowStyles.Add(new RowStyle(SizeType.Percent, 55f));
-        root.Controls.Add(newAccountsGroup, 0, 0);
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 38f));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 62f));
+        root.Controls.Add(topRow, 0, 0);
         root.Controls.Add(accountsGroup, 0, 1);
         Controls.Add(root);
 
@@ -119,20 +130,6 @@ internal sealed class AccountsPage : UserControl
         return editor;
     }
 
-    private SettingEditor? CurrencyEditor(SettingsSection section, JsoncProperty property)
-    {
-        Dictionary<string, int>? values = ReadIntObject(property.RawValue);
-        if (values == null) return null;
-        var fields = new CurrencyFields(context.GameData.Currencies) { Anchor = AnchorStyles.Left | AnchorStyles.Top };
-        fields.SetValue(values);
-        Dictionary<string, int> baseline = fields.GetValue();
-        SettingEditor editor = SettingEditor.Custom(section, property, fields,
-            () => CurrencyFields.ToJson(fields.GetValue()),
-            () => !SameAmounts(fields.GetValue(), baseline));
-        fields.Changed += editor.NotifyChanged;
-        return editor;
-    }
-
     private void OnGameDataChanged()
     {
         // The lists of classes and currencies come from the game: rebuild the editors (unless there are edits).
@@ -158,34 +155,11 @@ internal sealed class AccountsPage : UserControl
         }
     }
 
-    private static Dictionary<string, int>? ReadIntObject(string raw)
-    {
-        try
-        {
-            using JsonDocument document = JsonDocument.Parse(raw, JsoncFile.ParseOptions);
-            if (document.RootElement.ValueKind != JsonValueKind.Object) return null;
-            var result = new Dictionary<string, int>(StringComparer.Ordinal);
-            foreach (JsonProperty property in document.RootElement.EnumerateObject())
-            {
-                if (property.Value.ValueKind != JsonValueKind.Number) return null;
-                result[property.Name] = property.Value.TryGetInt32(out int amount) ? amount : (int)Math.Round(property.Value.GetDouble());
-            }
-            return result;
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
-    }
-
     private static string ToJsonArray(List<string> values) =>
         values.Count == 0 ? "[]" : "[ " + string.Join(", ", values.Select(JsoncFile.FormatString)) + " ]";
 
     private static bool SameItems(List<string> a, List<string> b) =>
         a.Count == b.Count && a.All(x => b.Contains(x, StringComparer.OrdinalIgnoreCase));
-
-    private static bool SameAmounts(Dictionary<string, int> a, Dictionary<string, int> b) =>
-        a.Count == b.Count && a.All(p => b.TryGetValue(p.Key, out int v) && v == p.Value);
 
     // ------------------------------------------------------------------ the accounts
 
@@ -205,9 +179,7 @@ internal sealed class AccountsPage : UserControl
         }
         else
         {
-            serverNote.Text = accounts.Any(a => a.IsLegacy)
-                ? L.T("One account per player (Steam account). The old account of the server (account.json) goes to the first player who joins from this PC.")
-                : L.T("One account per player (Steam account), saved in server\\accounts on this PC.");
+            serverNote.Text = L.T("One account per player (Steam account), saved in server\\accounts on this PC.");
             Ui.SetRole(serverNote, TextRole.Muted);
         }
     }
@@ -239,7 +211,7 @@ internal sealed class AccountsPage : UserControl
                 var item = new ListViewItem(new[]
                 {
                     account.Name,
-                    account.SteamId.Length > 0 ? account.SteamId : (account.IsLegacy ? "—" : account.Key),
+                    account.SteamId.Length > 0 ? account.SteamId : account.Key,
                     account.LastSeen.HasValue ? account.LastSeen.Value.ToString("dd/MM/yyyy HH:mm") : "—",
                     pilot != null ? Number(pilot.Level) : "—",
                     data != null ? data.Planes.Count.ToString(CultureInfo.InvariantCulture) : "—",
@@ -259,7 +231,7 @@ internal sealed class AccountsPage : UserControl
             ListViewItem? again = summary.Items.Cast<ListViewItem>()
                 .FirstOrDefault(i => i.Tag is AccountStore.Summary a && string.Equals(a.Folder, selectedFolder, StringComparison.OrdinalIgnoreCase));
             (again ?? summary.Items[0]).Selected = true;
-            accountStatus.Text = L.F("{0} account(s). Read at {1}.", accounts.Count(a => !a.IsLegacy), DateTime.Now.ToString("HH:mm:ss"));
+            accountStatus.Text = L.F("{0} account(s). Read at {1}.", accounts.Count, DateTime.Now.ToString("HH:mm:ss"));
         }
         catch (Exception e)
         {
@@ -290,6 +262,7 @@ internal sealed class AccountsPage : UserControl
         {
             planes.EndUpdate();
             UpdateButtons();
+            accountMoney.Show(Selected);
         }
     }
 
@@ -325,9 +298,7 @@ internal sealed class AccountsPage : UserControl
     {
         AccountStore.Summary? chosen = Selected;
         if (chosen == null || !ServerStoppedOrWarn()) return;
-        string question = chosen.IsLegacy
-            ? L.T("Remove the old account of the server?\n\naccount.json and inventory.json (pilot, planes, items, currencies) are moved to server\\_backup.")
-            : L.F("Remove the account of {0}?\n\nIts pilot, planes, items and currencies are moved to server\\_backup. The player gets a new account the next time they join.", chosen.Name);
+        string question = L.F("Remove the account of {0}?\n\nIts pilot, planes, items and currencies are moved to server\\_backup. The player gets a new account the next time they join.", chosen.Name);
         if (!Ui.Confirm(FindForm(), question)) return;
         try
         {

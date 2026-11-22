@@ -33,28 +33,28 @@ Maintained 100% by the community, with some additions and improvements.
 
 | File | Topic |
 |---|---|
-| `docs/multiplayer-e-contas.md` | login flow, one account per player, `network.json`, server search, launcher 0.3.0, next multiplayer step |
-| `docs/servidor-de-dungeon.md` | dungeon server (port 1113): architecture, flow, Iron Lair / Bomb Factory test |
+| `docs/multiplayer-and-accounts.md` | login flow, one account per player, `network.json`, server search, launcher 0.3.0, next multiplayer step |
+| `docs/dungeon-server.md` | dungeon server (port 1113): architecture, flow, Iron Lair / Bomb Factory test |
 | `docs/dungeons-190828.md` | the 17 recreated dungeons of build 190828; what is original and what is rebuilt |
-| `docs/dungeon-inimigos-e-loot-v8c.md` | kamikaze bombs, weapon reach vs orbit distance, dungeon loot tables |
-| `docs/itens-e-loot.md` | items, authoritative inventory, loot bags, workshop, bit-alignment fix |
-| `docs/progressao.md` | plane and pilot XP, permadeath, skills, career rewards, `progression.json` |
-| `docs/formato-de-mapas.md` | map JSON format, coordinates, dungeon fields, `MapaEsboco.cs` |
+| `docs/dungeon-enemies-and-loot.md` | kamikaze bombs, weapon reach vs orbit distance, dungeon loot tables |
+| `docs/items-and-loot.md` | items, authoritative inventory, loot bags, workshop, bit-alignment fix |
+| `docs/progression.md` | plane and pilot XP, permadeath, skills, career rewards, `progression.json` |
+| `docs/map-format.md` | map JSON format, coordinates, dungeon fields, `Maps.cs` |
 | `docs/nexus-rebel-city.md` | Rebel City (Nexus) rebuild, buildings, docking, client uploads |
-| `docs/tutorial-esboco.md` | walker tutorial (Training Grounds), ClientMapInfo, exit portal |
-| `docs/inimigos-esboco.md` | enemy AI protocol, scripted enemies, chat commands |
+| `docs/tutorial.md` | walker tutorial (Training Grounds), ClientMapInfo, exit portal |
+| `docs/enemies.md` | enemy AI protocol, scripted enemies, chat commands |
+| `docs/stores.md` | stores: shelves, `ClientReceiveStoreContent` bytes, purchase, slots, `stores.json` (English) |
 
 ## Repository layout
 
 - `Server\` — the server (.NET 8: ASP.NET for the HTTP "Ozy" API, Lidgren UDP for "Copper"). Project `SteambirdsServer.csproj`.
   - Folders by topic: `GameData`, `Progression`, `Items`, `Dungeons`, `Network`, `Planes`, `Skills`, `Compat`.
-    Top-level files: `Program.cs` (startup, network loop), `Game.cs` (client messages), `Enemies.cs` (AI, waves),
+    Top-level files: `Program*.cs` (`Program.cs` startup and `Main`, `Program.Transfers.cs` server switches and plane spawn,
+    `Program.Messages.cs` host messages, `Program.Udp.cs` network loop, `Program.Http.cs` login), `Game.cs` (client messages), `Enemies.cs` (AI, waves),
     `Tutorial.cs` (walker tutorial script), `Maps.cs` (map files), `Accounts.cs`, `PlayerData.cs`, `Ground.cs`, `MapInfo.cs`,
     `Nexus.cs`, `WorldObjects.cs`, `PlaneSpawn.cs`, `CopperReader.cs`, `MessageCatalog.cs`, `MessageLog.cs`.
-  - Compatibility: `Compat\LegacyNames.cs` and `Compat\LegacyFiles.cs` read files and folders written by older versions
-    (Portuguese names) and convert them. Tables: `legacy-names.json` (embedded in the server and in the launcher).
   - Host configs: `progression.json`, `items.json`, `enemies.json`, `dungeons.json`, `network.json`.
-  - Maps: `maps\*.json` (format: `maps\README.md`, `maps\README-dungeons.md`). Loot: `loot_tables\`.
+  - Maps: `maps\*.json` (format: `docs/map-format.md`). Loot: `loot_tables\`.
   - Game data exported by the plugin (gitignored, copied from the game): `data\`. Item catalog written by the server: `catalog\`.
   - Accounts: `accounts\<key>\` (gitignored). Chat messages of the client: `Game.cs`; message IDs: `MessageCatalog.cs`.
 - `Launcher\` — WinForms .NET 8 launcher: `Core\`, `UI\`, `Editor\` (map editor tab), `lang\`.
@@ -64,11 +64,10 @@ Maintained 100% by the community, with some additions and improvements.
 - `GameFiles\` — `SteambirdsGameFiles.exe` (.NET 8 console): takes configBinary, the plugin's data files and the editor
   pictures from each player's own copy of the game (installs BepInEx + plugin, opens the game once). See its README.
 - `Packaging\server\` — README and `Start server.cmd` of the server release zip.
-- `tools\` — Python tools: `dungeons-190828` (dungeon generator), `editor` (editor image builder), `maps` (map migration).
 - `docs\` — design notes (Portuguese snapshots, see the table above).
-- `decompilado\` — decompiled client (Assembly-CSharp and firstpass). Reference only, very large, gitignored:
+- `decompiled\` — decompiled client (Assembly-CSharp and firstpass). Reference only, very large, gitignored:
   **search it** (`rg` / `Select-String`), never read whole folders.
-- `VersoesAntigas\`, `Assets\`, `Asset ripper\` — older builds and extracted assets (gitignored, not ours).
+- `OldVersions\`, `Assets\`, `Asset ripper\` — older builds and extracted assets (gitignored, not ours).
 - `Chat commands.md` — in-game chat commands.
 
 ## Build and verify — do it yourself after every change
@@ -89,7 +88,7 @@ dotnet build GameFiles\SteambirdsGameFiles.csproj -nologo -v q -clp:ErrorsOnly
 - The plugin references the game's DLLs at
   `C:\Program Files (x86)\Steam\steamapps\content\app_386010\depot_386011` (BepInEx and `Steambirds_Data\Managed`).
 - If the server build fails because a file is locked (MSB3027 / MSB3021), the server is running: ask the user to stop it.
-- Duplicate `.cs` copies (`Name-1.cs`, `Name (1).cs`, `Name - Copia.cs`, or the same file in two folders, such as
+- Duplicate `.cs` copies (`Name-1.cs`, `Name (1).cs`, `Name - Copy.cs`, or the same file in two folders, such as
   `LootDrops.cs` in the root and in `Items\`) break the build with CS0101 / CS0111. Never leave copies behind.
 
 The user's scripts are **interactive** (`Read-Host`). Do not run them yourself unless the user asks, or the session hangs:
@@ -98,23 +97,25 @@ The user's scripts are **interactive** (`Read-Host`). Do not run them yourself u
   (server output + game logs; large: search it instead of reading it all).
 - `Run game.ps1` — opens the game against the local server (`OZY_URL` + `-connecttolocal`). Steam must be open.
 - `Build launcher.ps1` — publishes server and launcher (self-contained) into `Launcher\dist`, copies maps, data,
-  configs and the plugin. Log: `Launcher\build\compilacao.log`.
+  configs and the plugin. Log: `Launcher\build\build.log`.
 - `Build plugin.ps1` — builds the plugin and copies it into the game's `BepInEx\plugins`.
 - `Build server release.ps1` — builds `Release\SteambirdsServer-<version>-win-x64.zip` for GitHub Releases (server,
   `SteambirdsGameFiles.exe`, plugin, settings, maps; refuses to zip game files, accounts or logs).
 - `Push to GitHub.ps1 "message"` — commit and push.
+- `Clean project.ps1` — removes build output, logs, duplicate copies and other garbage (`-WhatIf` only lists them).
 
 In-game testing is done by the user. When they report a test, read `server-report.txt`,
 `Launcher\dist\logs\` and `Player.log` with targeted searches.
 
 ## Rules
 
-- Identifiers, comments and READMEs in English (Portuguese optional). Old Portuguese names only survive in the
-  compatibility layer (`Compat\`), the `docs\` snapshots and the game's own data.
+- Identifiers, comments and READMEs in English (Portuguese optional). There is no compatibility layer for the old
+  Portuguese names: files, folders, map fields and plugin data written by older versions are not read. Portuguese only
+  survives in the `docs\` snapshots, the launcher's translation (`Launcher\lang\pt-BR.json`, `LEIA-ME.md`) and the game's own data.
 - Split different parts of the project into different files so each one can be maintained on its own. Don't grow big
-  files (`InimigosEsboco.cs` is ~120 KB, `JogoEsboco.cs` ~60 KB): read only the ranges you need.
-- Maps and game content go in data files, never hardcoded (map editor, community dungeons). Map field names are still
-  Portuguese (`chao`, `enfeites`, `predios`...): rename them to English **before** the editor ships (checklist section 14).
+  files (`Enemies.cs`, `Game.cs` and the like are split into `partial` files by topic): read only the ranges you need.
+- Maps and game content go in data files, never hardcoded (map editor, community dungeons). Map field names are in
+  English (`floor`, `decor`, `buildings`...).
 - Launcher: a feature that does not exist yet in the game/server still gets its menu, greyed out and disabled.
 - Stay as close as possible to the original game. Anything rebuilt without original data must be documented as a
   reconstruction and, when it makes sense, be configurable by the host.

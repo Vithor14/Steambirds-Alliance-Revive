@@ -35,7 +35,7 @@
     <Reference Include="Assembly-CSharp">
       <HintPath>$(GameDir)\Steambirds_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
-    <!-- NetBuffer: a ClientMapInfo e serializada com o proprio serializador do jogo (mapinfo_config.txt). -->
+    <!-- NetBuffer: the ClientMapInfo is serialized with the game's own serializer (mapinfo_config.txt). -->
     <Reference Include="Lidgren.Network">
       <HintPath>$(GameDir)\Steambirds_Data\Managed\Lidgren.Network.dll</HintPath>
       <Private>false</Private>

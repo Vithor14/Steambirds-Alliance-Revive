@@ -9,6 +9,7 @@ public static class ProgressionHandler
 
     private const ushort MsgServerReceivePortrait = 12150;            // Portrait
     private const ushort MsgServerRequestSkillLoadoutRename = 12152;  // int loadoutIndex, string newName
+    private const ushort MsgServerRetirePlane = 12153;                // string characterId (hangar "Retire plane")
     private const ushort MsgServerRecordLevelupUIShown = 12158;       // int lastXPLevelupShown, int lastLevelupShown
     private const ushort MsgServerRequestVagueCareerRewards = 12159;
     private const ushort MsgServerRequestCareerRewardDelivery = 12161;
@@ -31,6 +32,10 @@ public static class ProgressionHandler
         string tag = "[" + role + "]";
         switch (id)
         {
+            case MsgServerRetirePlane:
+                PlaneRetirement.Retire(server, connection, role, msg.ReadString() ?? "");
+                return true;
+
             case MsgServerRecordLevelupUIShown:
             {
                 int lastXp = msg.ReadInt32();
@@ -175,7 +180,7 @@ public static class ProgressionHandler
                 if (characterId == null || number <= 0)
                 {
                     Chat(server, connection, characterId == null ? "You need a live plane." :
-                        "Use /level N (1 a " + ProgressionData.PlaneLevels.TopLevel + ").");
+                        "Use /level N (1 to " + ProgressionData.PlaneLevels.TopLevel + ").");
                     return true;
                 }
                 bool done = PilotProgression.SetPlaneLevel(server, connection, role, characterId, number);
@@ -185,7 +190,7 @@ public static class ProgressionHandler
             case "/rank":
                 if (number <= 0)
                 {
-                    Chat(server, connection, "Use /rank N (1 a " + ProgressionData.PilotLevels.TopLevel + ").");
+                    Chat(server, connection, "Use /rank N (1 to " + ProgressionData.PilotLevels.TopLevel + ").");
                     return true;
                 }
                 PilotProgression.SetPilotLevel(server, connection, role, number);

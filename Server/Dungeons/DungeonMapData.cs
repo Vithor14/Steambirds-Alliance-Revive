@@ -115,7 +115,7 @@ public static class DungeonMapData
         public List<WaveDef>? Waves { get; set; }
     }
 
-    // Dungeon fields of a unit type (the rest goes to Enemies.TipoDeInimigo).
+    // Dungeon fields of a unit type (the rest goes to Enemies.EnemyType).
     public sealed class UnitExtras
     {
         public bool Miniboss { get; set; }
@@ -245,7 +245,7 @@ public static class DungeonMapData
     private static Loaded Read(string mapId, string path, float healthMultiplier)
     {
         string text = File.ReadAllText(path);
-        DungeonFile? file = LegacyNames.Deserialize<DungeonFile>(text, Options);
+        DungeonFile? file = JsonSerializer.Deserialize<DungeonFile>(text, Options);
         if (file == null) throw new InvalidDataException("empty file");
 
         var data = new Loaded { MapId = mapId, Path = path, File = file, HealthMultiplier = healthMultiplier };

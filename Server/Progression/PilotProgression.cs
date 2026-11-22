@@ -13,7 +13,7 @@ using Lidgren.Network;
 //    from the server (ClientUpdatePlayer), so the server raises it as soon as that computed XP reaches the next
 //    target, and moves the baseline so the computed XP does not jump (the table depends on the rank).
 //    meowzaDB's pilot XP calculator (meowzadb.com/xp) describes the same rule: 65% in real time, the other 35%
-//    only when the plane was retired. This client has no "retire" button (ServerRetirePlane is never sent).
+//    only when the plane was retired (hangar "Retire plane": ServerRetirePlane, handled in PlaneRetirement.cs).
 //  - when the plane is destroyed the client waits, staring at the crash site, for ClientDeathSummaryInformation
 //    (DeathWrapupStateMachine.WaitingForStats). The real-time share of that plane goes into the baseline (the
 //    client stops counting the plane), plus an optional bonus (progression.json deathPilotXpBonus), and the plane
@@ -440,7 +440,7 @@ public static class PilotProgression
 
     // Raises the rank while the computed XP reaches the next target. The conversion table depends on the rank, so
     // after each rank the baseline moves to keep the computed XP where it was. Returns true if the rank went up.
-    private static bool UpdatePilotRank(Accounts.AccountData d)
+    internal static bool UpdatePilotRank(Accounts.AccountData d)
     {
         PilotSave pilot = d.Pilot;
         int top = ProgressionData.PilotLevels.TopLevel;
@@ -518,6 +518,9 @@ public static class PilotProgression
                 result.PlaneLevel, className, result.PilotLevelBefore, result.PilotLevelAfter, result.PilotXpDelta, result.PilotXpTotal, false));
             ProgressionMessages.Send(server, connection, m => ProgressionMessages.WriteClientUpdatePlayer(m, "", 0, 0,
                 result.PilotBaselineXp, result.PilotLevelAfter, result.Unlocks, false));
+
+            // Buffs the plane had started end with it: the next plane must not inherit them.
+            PilotExtras.PlaneBuffsEnded(server, connection, role, characterId);
 
             if (result.PlaneKept != null)
             {
@@ -694,7 +697,7 @@ public static class PilotProgression
 
     // PlayerData.unlocks: what the account has (only grows). Sources: the walker (always), startingClassUnlocks,
     // the "unlocks" rules of the game (always / classLevelGreater, checked with highestLevels) and progression.json.
-    private static void RefreshUnlocks(Accounts.AccountData d)
+    internal static void RefreshUnlocks(Accounts.AccountData d)
     {
         ProgressionSettings settings = ProgressionSettingsFile.Current;
         List<string> unlocks = d.Pilot.Unlocks;
@@ -738,12 +741,14 @@ public static class PilotProgression
         return Accounts.Read(d => new List<string>(d.Pilot.Unlocks));
     }
 
-    // Skill loadouts the pilot has (progression.json, or the game's base value).
+    // Skill loadouts the pilot has: the host's base value (progression.json, or the game's base value) plus the ones
+    // the account bought in the store (Stores\StoreAccounts).
     public static int SkillLoadoutSlots()
     {
         int slots = ProgressionSettingsFile.Current.SkillLoadoutSlots;
         if (slots <= 0) slots = ProgressionData.BaseSkillLoadoutSlots;
-        return Math.Clamp(slots, 1, 10);
+        slots = Math.Clamp(slots, 1, StoreRules.MaxSkillLoadouts) + StoreAccounts.Count(StoreAccounts.SkillLoadoutSlot);
+        return Math.Clamp(slots, 1, StoreRules.MaxSkillLoadouts);
     }
 
     // Text for the /pilot command.

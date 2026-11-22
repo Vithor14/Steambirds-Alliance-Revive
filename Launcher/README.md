@@ -1,6 +1,6 @@
 # Steambirds Alliance Revive — Launcher
 
-Launcher of the project (Portuguese version: `README.md`), with four tabs:
+Launcher of the project (Portuguese version: `LEIA-ME.md`), with four tabs:
 
 - **Client**: downloads the game with Steam, sets the player name, lists the servers (this PC, the local network and VPNs like Radmin and Hamachi, or a typed IP) and opens the game on the chosen server. Its console shows `BepInEx\LogOutput.log` and the Unity `Player.log` while the game runs.
 - **Server**: hosts the server of this PC (what `Run server.ps1` did) for this PC and for players of other PCs, shows its output in a console and edits its settings, its network (name, ports, who can join) and the accounts of the players.
@@ -17,7 +17,7 @@ In the project folder (`C:\Steambirds`), run **`Build launcher.ps1`** (right cli
 
 1. looks for duplicated `.cs` files (copies like `Name-1.cs`, or the same file in two folders);
 2. builds the server (`Server`), the plugin (`QuieterPlugin`) and the launcher as *self-contained* executables (nobody needs .NET installed);
-3. assembles **`Launcher\dist`**, with the languages of `Launcher\lang` in `dist\lang` and the pictures of the map editor (`Launcher\editor-assets`, made by `tools\editor\build_editor_assets.py` from the extracted game assets, not in git) in `dist\editor-assets`.
+3. assembles **`Launcher\dist`**, with the languages of `Launcher\lang` in `dist\lang` and the pictures of the map editor (`Launcher\editor-assets`, drawn by `SteambirdsGameFiles.exe` from your own copy of the game, not in git) in `dist\editor-assets`.
 
 Then open `Launcher\dist\SteambirdsLauncher.exe`. Run the script again whenever the code of the server, the plugin or the launcher changes. The build log is `Launcher\build\build.log`.
 
@@ -31,12 +31,10 @@ Then open `Launcher\dist\SteambirdsLauncher.exe`. Run the script again whenever 
 | `logs\` | server logs per session, client console logs, `server-report.txt` (report) and launcher errors |
 | `server\` | the server and its data: `maps`, `data`, `loot_tables`, `catalog` and the settings (`progression.json`, `items.json`, `dungeons.json`, `enemies.json`, `network.json`) |
 | `server\accounts\<key>\` | one account per player (`steam_<SteamID>`): `account.json`, `inventory.json`, `acceptances.json` |
-| `server\_backup\` | copies made before files are replaced or accounts are saved, removed or moved |
+| `server\_backup\` | copies made before files are replaced or accounts are changed or removed |
 | `plugin\QuieterPlugin.dll` | the plugin, which *Install plugin* copies to the game's `BepInEx\plugins` |
 
-The old single account (`account.json` in the server folder, from before the accounts per player) goes to the **first player who joins from the server's own PC**, with a copy in `server\_backup\migration-<date>`.
-
-Before sharing the `dist` folder, delete the accounts and logs (`server\accounts`, `server\account.json`, `server\acceptances.json`, `server\inventory.json`, `server\client-uploads`, `server\_backup`, `logs`, `launcher.json`, `lang\*.missing.json`).
+Before sharing the `dist` folder, delete the accounts and logs (`server\accounts`, `server\client-uploads`, `server\_backup`, `logs`, `launcher.json`, `lang\*.missing.json`).
 
 ## Client tab
 
@@ -56,7 +54,8 @@ Draws the map of the server (`server\maps\*.json`) with the floor pieces and uni
 
 - **Start / Stop / Restart**, the state of the server, its name, ports and whether it accepts other PCs.
 - **Console**, **Progression**, **Items and loot**, **Enemies and difficulty**, **Maps and dungeons**: as before (screens built from the server's own `.json` files).
-- **Accounts**: the starting state of new accounts, and the **list of accounts** (one per player: name, Steam ID, last played, rank, planes, kills...), with the planes of the selected one. *Edit account...* and *Remove account* only work while the launcher's server is stopped.
+- **Store**: everything of `stores.json`. *General* (purchases on/off, gold and iron or free, discount on every price, pre-release products), *Prices and products* (the 294 products of the game with their price, the host's discount, stock and limit per account, the price the player pays "now", search, category filter and bulk changes on the products shown) and *Shelves* (which stores are open and what each section sells, with a product picker for include / exclude). Prices can only go down (the game draws the price itself): the discount, 0 to 100%, is the dial. Saving keeps the comments of the file and the server reads it again by itself.
+- **Accounts**: the starting state of new accounts (with its own **starting money** panel: gold, iron...), and the **list of accounts** (one per player: name, Steam ID, last played, rank, planes, kills...), with the planes of the selected one. *Edit account...* and *Remove account* only work while the launcher's server is stopped. The **money of the selected account** has its own panel (also only with the server stopped; with it running, give money with `/currency gold 5000` in the game chat).
 - **Network and multiplayer**: the **addresses to share** with other players (one per network: local network, Radmin VPN, Hamachi...), the **Windows Firewall** rule (*Allow in the Windows Firewall* creates an inbound rule for `server\SteambirdsServer.exe` on every network; Windows asks for administrator permission) and the settings of `network.json`: server name, players of other PCs, server search, maximum players, who can use chat commands (`everyone`, `host`, `none`), welcome message and the **ports** (TCP login, UDP Nexus, tutorial, dungeon and search). Ports and "players of other PCs" change when the server restarts; the server reads the rest again by itself.
 
 ## Playing with other people
@@ -74,6 +73,6 @@ Every player has their own account on the host's PC (pilot, planes, items, finis
 - `Core\`: everything that is not a screen — server and game processes, logs, report, `.json` with comments, `dungeons.json`, `network.json` (`ServerNetworkFile`), accounts (`AccountStore`, `AccountFile`), server search (`ServerBrowser`, `LocalNetworks`), the Steam account (`SteamAccount`), the depot download (`DepotDownload`), the firewall rule (`FirewallRule`), languages (`Lang`).
 - `Core\GameData\`: reading the game's configBinary (classes, unlocks, currencies, ingredients, XP tables, languages).
 - `Editor\`: the map editor tab (the document, the canvas, the forms and the checks; see `Editor\README.md`).
-- `UI\`: the screens — `MainForm`, `ClientTab`, `DepotDownloadForm`, `ServerTab`, `NetworkPage`, `SettingsTab`, `AccountsPage`, `AccountEditorForm`, `MapsPage`, `SettingsPage`, `ConsoleView`, `Theme` and `LauncherContext` (state shared by the tabs, including the server list).
+- `UI\`: the screens — `MainForm`, `ClientTab`, `DepotDownloadForm`, `ServerTab`, `NetworkPage`, `SettingsTab`, `AccountsPage`, `AccountEditorForm`, `MapsPage`, `SettingsPage`, `StorePage` (with `StoreProductsView` and `StoreShelvesView`), `MoneyPanels`, `ConsoleView`, `Theme` and `LauncherContext` (state shared by the tabs, including the server list).
 
 Every text shown on screen goes through `L.T("...")` / `L.F("... {0}", value)`, and its translation goes into `Launcher\lang\pt-BR.json` and `_template.json`.

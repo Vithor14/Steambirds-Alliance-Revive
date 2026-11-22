@@ -4,8 +4,8 @@
   "id": "dungeon_thief",
   "name": "The Vaults",
   "terrain": "DungeonThief",
-  "note": "The Empire's vaults (T10, poison). Quest 'Become Worthy of Treasure!': the Strange Altar to Horus is near the entrance; go through the 3 Security Rooms (Security Chief 001/002/003, signs 'Security Room: Level 00X'), take the Golden Key at the end, escort the key back to the altar while Guard Dropships ambush you, touch the Essence of Worthiness and open the treasure. Lasers, laser grids, X-Mines and delivery carts on the way. No final boss.",
-  "source": "Build 190828.2045: units, names, barks, signs, quests and territory come from the configBinary; the Dungeons/dungeon_* file of that build is empty, so the room format and the enemy positions were recreated.",
+  "note": "Os cofres do Imperio (T10, veneno). Missao 'Become Worthy of Treasure!': o Altar Estranho a Horus fica perto da entrada; passe pelas 3 Salas de Seguranca (Security Chief 001/002/003, placas 'Security Room: Level 00X'), pegue a Chave Dourada no fim, escolte a chave de volta ao altar enquanto Guard Dropships emboscam, toque a Essence of Worthiness e abra o tesouro. Lasers, grades de laser, X-Mines e carrinhos de entrega pelo caminho. Sem chefe final.",
+  "source": "Build 190828.2045: unidades, nomes, falas, placas, quests e territorio vem do configBinary; o arquivo Dungeons/dungeon_* dessa build e vazio, entao o formato das salas e a posicao dos inimigos foram recriados.",
   "key": "key_thief",
   "portalItem": "dungeon_thief",
   "quest": "dungeon_thief_01",
@@ -19,7 +19,7 @@
     "drawing": {
       "siStart": -16,
       "sjStart": -104,
-      "legend": ". free floor, # wall, - no floor. First line = last sj row (the far end).",
+      "legend": ". chao livre, # muro, - sem chao. Primeira linha = ultima fileira sj (o fundo).",
       "lines": [
         "----############################----------------",
         "----############################----------------",
@@ -237,56 +237,83 @@
   "buildings": [],
   "spawn": {"u": 6.0, "v": -293.3, "rot": 315},
   "points": {
-    "altar": {"u": 6.0, "v": -219.8, "rot": 135, "note": "Strange Altar to Horus: receives the key and turns into the treasure"},
-    "portal": {"u": 6.0, "v": -235.3, "rot": 0, "note": "exit carrier (after the treasure)"}
+    "altar": {"u": 6.0, "v": -219.8, "rot": 135, "note": "Strange Altar to Horus: recebe a chave e vira o tesouro"},
+    "portal": {"u": 6.0, "v": -235.3, "rot": 0, "note": "porta-avioes de saida (depois do tesouro)"}
   },
   "groups": {
-    "ambushes": [
+    "emboscadas": [
       {"u": 6.0, "v": 135.0, "rot": 315},
       {"u": 6.0, "v": -9.0, "rot": 315},
       {"u": 6.0, "v": -153.0, "rot": 315}
     ]
   },
   "areas": {
-    "entrance": {"minU": -12.6, "maxU": 24.6, "minV": -300.6, "maxV": -269.4},
-    "altar_hall": {"minU": -27.6, "maxU": 39.6, "minV": -252.6, "maxV": -197.4},
-    "laser_corridor": {"minU": -12.6, "maxU": 24.6, "minV": -186.6, "maxV": -119.4},
-    "security_001": {"minU": -24.6, "maxU": 36.6, "minV": -108.6, "maxV": -53.4},
-    "rails": {"minU": -27.6, "maxU": 39.6, "minV": -36.6, "maxV": 18.6},
-    "security_002": {"minU": -24.6, "maxU": 36.6, "minV": 35.4, "maxV": 90.6},
-    "minefield": {"minU": -27.6, "maxU": 39.6, "minV": 107.4, "maxV": 162.6},
-    "security_003": {"minU": -24.6, "maxU": 36.6, "minV": 179.4, "maxV": 234.6},
-    "key_chamber": {"minU": -18.6, "maxU": 30.6, "minV": 251.4, "maxV": 294.6},
-    "side_vault": {"minU": 50.4, "maxU": 81.6, "minV": -24.6, "maxV": 6.6}
+    "entrada": {"minU": -12.6, "maxU": 24.6, "minV": -300.6, "maxV": -269.4},
+    "salao_do_altar": {"minU": -27.6, "maxU": 39.6, "minV": -252.6, "maxV": -197.4},
+    "corredor_dos_lasers": {"minU": -12.6, "maxU": 24.6, "minV": -186.6, "maxV": -119.4},
+    "seguranca_001": {"minU": -24.6, "maxU": 36.6, "minV": -108.6, "maxV": -53.4},
+    "trilhos": {"minU": -27.6, "maxU": 39.6, "minV": -36.6, "maxV": 18.6},
+    "seguranca_002": {"minU": -24.6, "maxU": 36.6, "minV": 35.4, "maxV": 90.6},
+    "campo_minado": {"minU": -27.6, "maxU": 39.6, "minV": 107.4, "maxV": 162.6},
+    "seguranca_003": {"minU": -24.6, "maxU": 36.6, "minV": 179.4, "maxV": 234.6},
+    "camara_da_chave": {"minU": -18.6, "maxU": 30.6, "minV": 251.4, "maxV": 294.6},
+    "cofre_lateral": {"minU": 50.4, "maxU": 81.6, "minV": -24.6, "maxV": 6.6}
   },
   "lines": {
-    "entrance": -300.0,
-    "altar_hall": -252.0,
-    "laser_corridor": -186.0,
-    "security_001": -108.0,
-    "rails": -36.0,
-    "security_002": 36.0,
-    "minefield": 108.0,
-    "security_003": 180.0,
-    "key_chamber": 252.0,
-    "side_vault": -24.0
+    "entrada": -300.0,
+    "salao_do_altar": -252.0,
+    "corredor_dos_lasers": -186.0,
+    "seguranca_001": -108.0,
+    "trilhos": -36.0,
+    "seguranca_002": 36.0,
+    "campo_minado": 108.0,
+    "seguranca_003": 180.0,
+    "camara_da_chave": 252.0,
+    "cofre_lateral": -24.0
   },
   "values": {"tier": 10},
   "checkpoints": [
-    {"name": "entrance", "activeAtV": -300.0, "u": 6.0, "v": -296.6, "rot": 315},
-    {"name": "altar_hall", "activeAtV": -252.0, "u": 6.0, "v": -246.7, "rot": 315},
-    {"name": "laser_corridor", "activeAtV": -186.0, "u": 6.0, "v": -179.7, "rot": 315},
-    {"name": "security_001", "activeAtV": -108.0, "u": 6.0, "v": -102.7, "rot": 315},
-    {"name": "rails", "activeAtV": -36.0, "u": 6.0, "v": -30.7, "rot": 315},
-    {"name": "security_002", "activeAtV": 36.0, "u": 6.0, "v": 41.3, "rot": 315},
-    {"name": "minefield", "activeAtV": 108.0, "u": 6.0, "v": 113.3, "rot": 315},
-    {"name": "security_003", "activeAtV": 180.0, "u": 6.0, "v": 185.3, "rot": 315},
-    {"name": "key_chamber", "activeAtV": 252.0, "u": 6.0, "v": 256.4, "rot": 315}
+    {"name": "entrada", "activeAtV": -300.0, "u": 6.0, "v": -296.6, "rot": 315},
+    {"name": "salao_do_altar", "activeAtV": -252.0, "u": 6.0, "v": -246.7, "rot": 315},
+    {"name": "corredor_dos_lasers", "activeAtV": -186.0, "u": 6.0, "v": -179.7, "rot": 315},
+    {"name": "seguranca_001", "activeAtV": -108.0, "u": 6.0, "v": -102.7, "rot": 315},
+    {"name": "trilhos", "activeAtV": -36.0, "u": 6.0, "v": -30.7, "rot": 315},
+    {"name": "seguranca_002", "activeAtV": 36.0, "u": 6.0, "v": 41.3, "rot": 315},
+    {"name": "campo_minado", "activeAtV": 108.0, "u": 6.0, "v": 113.3, "rot": 315},
+    {"name": "seguranca_003", "activeAtV": 180.0, "u": 6.0, "v": 185.3, "rot": 315},
+    {"name": "camara_da_chave", "activeAtV": 252.0, "u": 6.0, "v": 256.4, "rot": 315}
   ],
   "gates": [
-    {"name": "locked door 1", "type": "thiefdungeonwallgate1", "sj": 9, "siFrom": 0, "siTo": 3, "damageable": false, "opensWhen": "death:keylock", "room": "security_002"},
-    {"name": "locked door 2", "type": "thiefdungeonwallgate2", "sj": 57, "siFrom": 0, "siTo": 3, "damageable": false, "opensWhen": "death:keylock2", "room": "security_003"},
-    {"name": "locked door 3", "type": "thiefdungeonwallgate3", "sj": 81, "siFrom": 0, "siTo": 3, "damageable": false, "opensWhen": "death:keylock3", "room": "key_chamber"}
+    {
+      "name": "porta trancada 1",
+      "type": "thiefdungeonwallgate1",
+      "sj": 9,
+      "siFrom": 0,
+      "siTo": 3,
+      "damageable": false,
+      "opensWhen": "death:keylock",
+      "room": "seguranca_002"
+    },
+    {
+      "name": "porta trancada 2",
+      "type": "thiefdungeonwallgate2",
+      "sj": 57,
+      "siFrom": 0,
+      "siTo": 3,
+      "damageable": false,
+      "opensWhen": "death:keylock2",
+      "room": "seguranca_003"
+    },
+    {
+      "name": "porta trancada 3",
+      "type": "thiefdungeonwallgate3",
+      "sj": 81,
+      "siFrom": 0,
+      "siTo": 3,
+      "damageable": false,
+      "opensWhen": "death:keylock3",
+      "room": "camara_da_chave"
+    }
   ],
   "sideGates": [],
   "signs": [
@@ -343,97 +370,148 @@
       "invulnerable": true,
       "team": 2,
       "freeRoam": true,
-      "note": "Golden Key. When it gets near the altar it becomes thiefkey_glow (Essence of Worthiness)"
+      "note": "Chave Dourada. Ao chegar perto do altar vira thiefkey_glow (Essence of Worthiness)"
     },
-    "thiefkey_glow": {"name": "Essence of Worthiness", "template": "thiefkey_glow", "behavior": "idle", "preferredDistance": 7, "aggroRadius": 28, "invulnerable": true},
+    "thiefkey_glow": {
+      "name": "Essence of Worthiness",
+      "template": "thiefkey_glow",
+      "behavior": "idle",
+      "preferredDistance": 7,
+      "aggroRadius": 28,
+      "invulnerable": true
+    },
     "thieftrooperleader": {"name": "Guard Dropship", "template": "thieftrooperleader", "behavior": "idle"},
-    "thiefchesttreasure": {"name": "Strange Altar to Horus", "template": "thiefchesttreasure", "behavior": "idle", "opensAfterHitSeconds": 1.5},
-    "thiefidol1_awake": {"name": "thiefidol1_awake", "template": "thiefidol1_awake", "behavior": "turret", "aggroRadius": 30, "invulnerable": true},
-    "thiefidol2_awake": {"name": "thiefidol2_awake", "template": "thiefidol2_awake", "behavior": "turret", "aggroRadius": 30, "invulnerable": true},
-    "thiefidol3_awake": {"name": "thiefidol3_awake", "template": "thiefidol3_awake", "behavior": "turret", "aggroRadius": 30, "invulnerable": true},
+    "thiefchesttreasure": {
+      "name": "Strange Altar to Horus",
+      "template": "thiefchesttreasure",
+      "behavior": "idle",
+      "opensAfterHitSeconds": 1.5
+    },
+    "thiefidol1_awake": {
+      "name": "thiefidol1_awake",
+      "template": "thiefidol1_awake",
+      "behavior": "turret",
+      "aggroRadius": 30,
+      "invulnerable": true
+    },
+    "thiefidol2_awake": {
+      "name": "thiefidol2_awake",
+      "template": "thiefidol2_awake",
+      "behavior": "turret",
+      "aggroRadius": 30,
+      "invulnerable": true
+    },
+    "thiefidol3_awake": {
+      "name": "thiefidol3_awake",
+      "template": "thiefidol3_awake",
+      "behavior": "turret",
+      "aggroRadius": 30,
+      "invulnerable": true
+    },
     "cart": {"name": "Delivery Drone", "template": "cart", "behavior": "idle"},
-    "keynode": {"name": "Security Node", "template": "keynode", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
+    "keynode": {
+      "name": "Security Node",
+      "template": "keynode",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
     "lasergateWE": {"name": "Laser Gate", "template": "lasergateWE", "behavior": "turret", "aggroRadius": 30},
     "lasergrid": {"name": "Laser Grid", "template": "lasergrid", "behavior": "turret", "aggroRadius": 30},
-    "shockeye": {"name": "Shock Eye", "template": "shockeye", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
+    "shockeye": {
+      "name": "Shock Eye",
+      "template": "shockeye",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
     "thiefdungeontreasure": {"name": "Treasure", "template": "thiefdungeontreasure", "behavior": "idle", "opensAfterHitSeconds": 1.5},
     "thiefdungeonwallgate1": {"name": "Locked", "template": "thiefdungeonwallgate1", "behavior": "idle", "invulnerable": true},
     "thiefdungeonwallgate2": {"name": "Locked", "template": "thiefdungeonwallgate2", "behavior": "idle", "invulnerable": true},
-    "thiefdungeonwallgate3": {"name": "thiefdungeonwallgate3", "template": "thiefdungeonwallgate3", "behavior": "idle", "invulnerable": true},
-    "thieffence": {"name": "Security Node", "template": "thieffence", "behavior": "chase", "preferredDistance": 4.0, "aggroRadius": 28},
-    "thieffenceleader": {"name": "Security Satellite", "template": "thieffenceleader", "behavior": "circle", "preferredDistance": 5.2, "aggroRadius": 32},
-    "thiefguard": {"name": "Immortal Guard", "template": "thiefguard", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
+    "thiefdungeonwallgate3": {
+      "name": "thiefdungeonwallgate3",
+      "template": "thiefdungeonwallgate3",
+      "behavior": "idle",
+      "invulnerable": true
+    },
+    "thieffence": {
+      "name": "Security Node",
+      "template": "thieffence",
+      "behavior": "chase",
+      "preferredDistance": 4.0,
+      "aggroRadius": 28
+    },
+    "thieffenceleader": {
+      "name": "Security Satellite",
+      "template": "thieffenceleader",
+      "behavior": "circle",
+      "preferredDistance": 5.2,
+      "aggroRadius": 32
+    },
+    "thiefguard": {
+      "name": "Immortal Guard",
+      "template": "thiefguard",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
     "thiefidol1": {"name": "Horus Idol", "template": "thiefidol1", "behavior": "idle"},
     "thiefidol2": {"name": "Geb Idol", "template": "thiefidol2", "behavior": "idle"},
     "thiefidol3": {"name": "Thoth Idol", "template": "thiefidol3", "behavior": "idle"},
     "thieftrooper": {"name": "Treasure Guard", "template": "thieftrooper", "behavior": "turret", "aggroRadius": 30},
     "thiefturretstrong": {"name": "Anti-theft Turret", "template": "thiefturretstrong", "behavior": "turret", "aggroRadius": 30},
-    "thiefwatcher": {"name": "Thief Zapper", "template": "thiefwatcher", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
+    "thiefwatcher": {
+      "name": "Thief Zapper",
+      "template": "thiefwatcher",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
     "trapmine": {"name": "X-Mine II", "template": "trapmine", "behavior": "turret", "aggroRadius": 30},
     "trapmineshort": {"name": "X-Mine", "template": "trapmineshort", "behavior": "turret", "aggroRadius": 30}
   },
   "encounters": [
     {
-      "room": "altar_hall",
-      "area": "altar_hall",
+      "room": "salao_do_altar",
+      "area": "salao_do_altar",
       "wakes": "onEnter",
-      "line": "altar_hall",
+      "line": "salao_do_altar",
       "enemies": [
         {
           "type": "thiefchest",
-          "pos": [
-            {"u": 6.0, "v": -219.8, "rot": 135}
-          ],
-          "note": "Strange Altar to Horus (barks thiefchest_pray, _0.._4)"
+          "pos": [{"u": 6.0, "v": -219.8, "rot": 135}],
+          "note": "Strange Altar to Horus (falas thiefchest_pray, _0.._4)"
         },
         {
           "type": "thieftrooper",
-          "pos": [
-            {"u": -18.2, "v": -204.4, "rot": 135},
-            {"u": 30.2, "v": -204.4, "rot": 135}
-          ],
+          "pos": [{"u": -18.2, "v": -204.4, "rot": 135}, {"u": 30.2, "v": -204.4, "rot": 135}],
           "note": "Treasure Guard"
         }
       ]
     },
     {
-      "room": "laser_corridor",
-      "area": "laser_corridor",
+      "room": "corredor_dos_lasers",
+      "area": "corredor_dos_lasers",
       "wakes": "onEnter",
-      "line": "laser_corridor",
+      "line": "corredor_dos_lasers",
       "enemies": [
-        {
-          "type": "lasergateWE",
-          "pos": [
-            {"u": 6.0, "v": -165.7, "rot": 135}
-          ]
-        },
-        {
-          "type": "lasergateWE",
-          "pos": [
-            {"u": 6.0, "v": -140.3, "rot": 135}
-          ]
-        },
+        {"type": "lasergateWE", "pos": [{"u": 6.0, "v": -165.7, "rot": 135}]},
+        {"type": "lasergateWE", "pos": [{"u": 6.0, "v": -140.3, "rot": 135}]},
         {
           "type": "shockeye",
-          "pos": [
-            {"u": -9.8, "v": -153.0, "rot": 45},
-            {"u": 21.8, "v": -153.0, "rot": 225}
-          ]
+          "pos": [{"u": -9.8, "v": -153.0, "rot": 45}, {"u": 21.8, "v": -153.0, "rot": 225}]
         }
       ]
     },
     {
-      "room": "security_001",
-      "area": "security_001",
+      "room": "seguranca_001",
+      "area": "seguranca_001",
       "wakes": "onEnter",
-      "line": "security_001",
+      "line": "seguranca_001",
       "enemies": [
         {
           "type": "keylock",
-          "pos": [
-            {"u": 6.0, "v": -73.3, "rot": 135}
-          ],
+          "pos": [{"u": 6.0, "v": -73.3, "rot": 135}],
           "miniboss": true,
           "note": "Security Chief 001"
         },
@@ -448,25 +526,21 @@
         },
         {
           "type": "thiefidol1",
-          "pos": [
-            {"u": 6.0, "v": -57.8, "rot": 135}
-          ],
-          "note": "idol (Horus, Geb, Thoth): wakes up when the boss falls"
+          "pos": [{"u": 6.0, "v": -57.8, "rot": 135}],
+          "note": "idolo (Horus, Geb, Thoth): acorda quando o chefe cai"
         }
       ],
       "miniboss": true
     },
     {
-      "room": "security_002",
-      "area": "security_002",
+      "room": "seguranca_002",
+      "area": "seguranca_002",
       "wakes": "onEnter",
-      "line": "security_002",
+      "line": "seguranca_002",
       "enemies": [
         {
           "type": "keylock2",
-          "pos": [
-            {"u": 6.0, "v": 70.7, "rot": 135}
-          ],
+          "pos": [{"u": 6.0, "v": 70.7, "rot": 135}],
           "miniboss": true,
           "note": "Security Chief 002"
         },
@@ -481,25 +555,21 @@
         },
         {
           "type": "thiefidol2",
-          "pos": [
-            {"u": 6.0, "v": 86.2, "rot": 135}
-          ],
-          "note": "idol (Horus, Geb, Thoth): wakes up when the boss falls"
+          "pos": [{"u": 6.0, "v": 86.2, "rot": 135}],
+          "note": "idolo (Horus, Geb, Thoth): acorda quando o chefe cai"
         }
       ],
       "miniboss": true
     },
     {
-      "room": "security_003",
-      "area": "security_003",
+      "room": "seguranca_003",
+      "area": "seguranca_003",
       "wakes": "onEnter",
-      "line": "security_003",
+      "line": "seguranca_003",
       "enemies": [
         {
           "type": "keylock3",
-          "pos": [
-            {"u": 6.0, "v": 214.7, "rot": 135}
-          ],
+          "pos": [{"u": 6.0, "v": 214.7, "rot": 135}],
           "miniboss": true,
           "note": "Security Chief 003"
         },
@@ -514,35 +584,24 @@
         },
         {
           "type": "thiefidol3",
-          "pos": [
-            {"u": 6.0, "v": 230.2, "rot": 135}
-          ],
-          "note": "idol (Horus, Geb, Thoth): wakes up when the boss falls"
+          "pos": [{"u": 6.0, "v": 230.2, "rot": 135}],
+          "note": "idolo (Horus, Geb, Thoth): acorda quando o chefe cai"
         }
       ],
       "miniboss": true
     },
     {
-      "room": "rails",
-      "area": "rails",
+      "room": "trilhos",
+      "area": "trilhos",
       "wakes": "onEnter",
-      "line": "rails",
+      "line": "trilhos",
       "enemies": [
         {
           "type": "cart",
-          "pos": [
-            {"u": -6.7, "v": -27.1, "rot": 315},
-            {"u": 18.7, "v": 9.1, "rot": 135}
-          ],
-          "note": "Delivery Drones on the rails (cartspawner N/S)"
+          "pos": [{"u": -6.7, "v": -27.1, "rot": 315}, {"u": 18.7, "v": 9.1, "rot": 135}],
+          "note": "Delivery Drones nos trilhos (cartspawner N/S)"
         },
-        {
-          "type": "thieffenceleader",
-          "pos": [
-            {"u": 6.0, "v": -9.0, "rot": 135}
-          ],
-          "note": "Security Satellite"
-        },
+        {"type": "thieffenceleader", "pos": [{"u": 6.0, "v": -9.0, "rot": 135}], "note": "Security Satellite"},
         {
           "type": "thieffence",
           "pos": [
@@ -554,41 +613,30 @@
         },
         {
           "type": "thiefturretstrong",
-          "pos": [
-            {"u": -20.7, "v": -30.7, "rot": 135},
-            {"u": 32.7, "v": -30.7, "rot": 135}
-          ]
+          "pos": [{"u": -20.7, "v": -30.7, "rot": 135}, {"u": 32.7, "v": -30.7, "rot": 135}]
         }
       ],
       "controllers": ["cartspawnerN", "cartspawnerS", "cartstopper", "cartwheelmaster"]
     },
     {
-      "room": "side_vault",
-      "area": "side_vault",
+      "room": "cofre_lateral",
+      "area": "cofre_lateral",
       "wakes": "onEnter",
-      "line": "side_vault",
+      "line": "cofre_lateral",
       "enemies": [
-        {
-          "type": "thiefdungeontreasure",
-          "pos": [
-            {"u": 66.0, "v": -6.2, "rot": 135}
-          ]
-        },
+        {"type": "thiefdungeontreasure", "pos": [{"u": 66.0, "v": -6.2, "rot": 135}]},
         {
           "type": "trapmineshort",
-          "pos": [
-            {"u": 55.5, "v": -14.5, "rot": 135},
-            {"u": 76.5, "v": -14.5, "rot": 135}
-          ],
+          "pos": [{"u": 55.5, "v": -14.5, "rot": 135}, {"u": 76.5, "v": -14.5, "rot": 135}],
           "note": "X-Mine"
         }
       ]
     },
     {
-      "room": "minefield",
-      "area": "minefield",
+      "room": "campo_minado",
+      "area": "campo_minado",
       "wakes": "onEnter",
-      "line": "minefield",
+      "line": "campo_minado",
       "enemies": [
         {
           "type": "trapmine",
@@ -611,38 +659,28 @@
           ],
           "note": "Thief Zappers"
         },
-        {
-          "type": "lasergrid",
-          "pos": [
-            {"u": 6.0, "v": 135.0, "rot": 135}
-          ]
-        }
+        {"type": "lasergrid", "pos": [{"u": 6.0, "v": 135.0, "rot": 135}]}
       ]
     },
     {
-      "room": "key_chamber",
-      "area": "key_chamber",
+      "room": "camara_da_chave",
+      "area": "camara_da_chave",
       "wakes": "onEnter",
-      "line": "key_chamber",
+      "line": "camara_da_chave",
       "enemies": [
         {
           "type": "thiefguard",
-          "pos": [
-            {"u": -11.3, "v": 284.9, "rot": 135},
-            {"u": 23.3, "v": 284.9, "rot": 135}
-          ],
+          "pos": [{"u": -11.3, "v": 284.9, "rot": 135}, {"u": 23.3, "v": 284.9, "rot": 135}],
           "note": "Immortal Guards"
         },
         {
           "type": "thiefkey",
-          "pos": [
-            {"u": 6.0, "v": 275.0, "rot": 135}
-          ],
-          "note": "Golden Key: follows the player to the altar"
+          "pos": [{"u": 6.0, "v": 275.0, "rot": 135}],
+          "note": "Golden Key: segue o jogador ate o altar"
         }
       ],
-      "note": "When the key is taken, Guard Dropships (thieftrooperleader) appear at the points of the group 'ambushes' from time to time until the key reaches the altar.",
-      "ambush": {"type": "thieftrooperleader", "group": "ambushes", "intervalSeconds": 20}
+      "note": "Ao pegar a chave, Guard Dropships (thieftrooperleader) aparecem nos pontos do grupo 'emboscadas' de tempos em tempos ate a chave chegar ao altar.",
+      "ambush": {"type": "thieftrooperleader", "grupo": "emboscadas", "intervalSeconds": 20}
     }
   ]
 }

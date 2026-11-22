@@ -1,6 +1,6 @@
 # Servidor de dungeon (v8, 15/11/2026)
 
-Testado no jogo em 15/11 (Iron Lair e Bomb Factory): compilou e rodou, o fluxo inteiro funcionou (veja "Teste de 15/11"). A correção do atirador invisível (v8b) ainda não foi testada (o ambiente não tem dotnet; o código foi revisado à mão). Doc para quem hospeda: `Server\maps\README-dungeons.md`. Formato dos campos: `maps\README.md` e `docs/formato-de-mapas.md`.
+Testado no jogo em 15/11 (Iron Lair e Bomb Factory): compilou e rodou, o fluxo inteiro funcionou (veja "Teste de 15/11"). A correção do atirador invisível (v8b) ainda não foi testada (o ambiente não tem dotnet; o código foi revisado à mão). Doc para quem hospeda: `Server\maps\README-dungeons.md`. Formato dos campos: `docs/map-format.md` e `docs/map-format.md`.
 
 ## Arquitetura
 

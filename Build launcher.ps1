@@ -15,8 +15,6 @@
 #     launcher had goes to dist\server\_backup\<date>.
 #   - accounts: the server keeps one per player in server\accounts\<key> (account.json, inventory.json, acceptances.json).
 #     The accounts folder is never copied (dist keeps its own; Run server.ps1 uses the ones in Server).
-#     The old single account (account.json, acceptances.json, inventory.json in the root) is only copied the first time,
-#     while dist has no accounts yet: the server hands it to the first player who joins from the host PC.
 #   - network.json (name, ports and who can join): copied like the other configs.
 #   - game data: configBinary (from the installed game, Steambirds_Data\StreamingAssets) and portraits_config.txt
 #     (from the game's BepInEx folder) go to dist\server\data, so a host PC WITHOUT the game still has items, loot,
@@ -34,9 +32,8 @@ $gameFilesFolder   = Join-Path $root "GameFiles"
 $launcherFolder    = Join-Path $root "Launcher"
 $buildFolder       = Join-Path $launcherFolder "build"
 $distFolder        = Join-Path $launcherFolder "dist"
-$duplicatesFolder  = Join-Path $root "_duplicados"
+$duplicatesFolder  = Join-Path $root "_duplicates"
 $buildLog          = Join-Path $buildFolder "build.log"
-$accountFiles      = @("account.json", "acceptances.json", "inventory.json")
 
 New-Item -ItemType Directory -Force -Path $buildFolder | Out-Null
 $script:log = New-Object System.IO.StreamWriter($buildLog, $false, (New-Object System.Text.UTF8Encoding($false)))
@@ -134,7 +131,7 @@ function ResolveCopies($project) {
 }
 
 # The same file (identical content) in two folders of the project: the compiler reads both and the class is duplicated.
-# The copy deepest in the folders stays (e.g. Items\LootDrops.cs); the others go to _duplicados.
+# The copy deepest in the folders stays (e.g. Items\LootDrops.cs); the others go to _duplicates.
 # Files with the same name and different content only give a warning (they may be different classes).
 function ResolveSameFileInTwoFolders($project) {
     if (-not (Test-Path -LiteralPath $project)) { return }
@@ -253,8 +250,7 @@ function CopyServerData() {
     # Files in the root: configs (.json) and texts (.md). appsettings.json always comes from the project.
     $rootFiles = @(Get-ChildItem -LiteralPath $serverFolder -File | Where-Object {
         (@(".json", ".md") -contains $_.Extension.ToLowerInvariant()) -and
-        ($_.Name -ne "appsettings.Development.json") -and ($_.Name -ne "appsettings.json") -and
-        ($accountFiles -notcontains $_.Name)
+        ($_.Name -ne "appsettings.Development.json") -and ($_.Name -ne "appsettings.json")
     })
     foreach ($file in $rootFiles) {
         CopyIfNewer $file.FullName (Join-Path $distServerFolder $file.Name) $file.Name
@@ -262,25 +258,11 @@ function CopyServerData() {
     $appsettings = Join-Path $serverFolder "appsettings.json"
     if (Test-Path -LiteralPath $appsettings) { Copy-Item -LiteralPath $appsettings -Destination $distServerFolder -Force }
 
-    # Accounts: one per player in server\accounts (never copied). The old root account is only copied the first time,
-    # while dist still has no accounts folder (after the server hands it to the host, it leaves the root).
+    # Accounts: one per player in server\accounts (never copied).
     $distAccountsFolder = Join-Path $distServerFolder "accounts"
     if (Test-Path -LiteralPath $distAccountsFolder) {
         $accountCount = @(Get-ChildItem -LiteralPath $distAccountsFolder -Directory -ErrorAction SilentlyContinue).Count
         Say "  accounts: $accountCount player account(s) in server\accounts (kept)"
-    }
-    else {
-        foreach ($account in $accountFiles) {
-            $source = Join-Path $serverFolder $account
-            $target = Join-Path $distServerFolder $account
-            if (Test-Path -LiteralPath $target) {
-                Say "  $account : kept the one from the launcher"
-            }
-            elseif (Test-Path -LiteralPath $source) {
-                Copy-Item -LiteralPath $source -Destination $target -Force
-                Say "  $account : copied from Server (first time; it goes to the first player on this PC)"
-            }
-        }
     }
 
     Say ("  {0} new file(s), {1} updated, {2} unchanged" -f $script:newFiles, $script:updated, $script:unchanged)
@@ -377,7 +359,7 @@ function CopyLanguages() {
 
 # Launcher\editor-assets -> dist\editor-assets: the game's pictures (floor pieces and units, small PNGs), the list of
 # floor piece names (ground_assets.txt) and thumbs.json, which the Map editor tab draws. They are generated from the
-# game's extracted assets by tools\editor\build_editor_assets.py. Without them the editor still works (shapes and flat colors).
+# game by SteambirdsGameFiles.exe. Without them the editor still works (shapes and flat colors).
 function CopyEditorAssets() {
     $source = Join-Path $launcherFolder "editor-assets"
     $target = Join-Path $distFolder "editor-assets"

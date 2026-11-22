@@ -11,9 +11,4 @@
     <PackageReference Include="Lidgren.Network" Version="1.0.2" />
   </ItemGroup>
 
-  <ItemGroup>
-    <!-- Old (Portuguese) names of the map, enemies and account formats; see Compat\LegacyNames.cs. -->
-    <EmbeddedResource Include="legacy-names.json" LogicalName="legacy-names.json" />
-  </ItemGroup>
-
 </Project>

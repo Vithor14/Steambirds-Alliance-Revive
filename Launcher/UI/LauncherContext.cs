@@ -265,7 +265,7 @@ internal sealed class LauncherContext : IDisposable
     {
         if (line.StartsWith(">>", StringComparison.Ordinal)) return LineKind.Launcher;
         if (line.Contains("[ERROR]", StringComparison.Ordinal) || line.Contains(" ERROR ", StringComparison.Ordinal) ||
-            line.Contains("ERRO em", StringComparison.Ordinal) || LogSummary.LooksLikeError(line))
+            LogSummary.LooksLikeError(line))
             return LineKind.Error;
         if (line.Contains("[WELCOME]", StringComparison.Ordinal) || line.Contains("listening on", StringComparison.Ordinal))
             return LineKind.Good;
@@ -298,7 +298,7 @@ internal sealed class LauncherContext : IDisposable
         WriteClientLog(text);
     }
 
-    // logs\cliente-<date>.log: what the client console showed in this launcher session.
+    // logs\client-<date>.log: what the client console showed in this launcher session.
     private void WriteClientLog(string text)
     {
         lock (clientLogGate)
@@ -309,7 +309,7 @@ internal sealed class LauncherContext : IDisposable
                 if (clientLog == null)
                 {
                     LauncherPaths.EnsureLogsFolder();
-                    string path = Path.Combine(LauncherPaths.LogsFolder, "cliente-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".log");
+                    string path = Path.Combine(LauncherPaths.LogsFolder, "client-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".log");
                     clientLog = new StreamWriter(new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete),
                         new UTF8Encoding(false)) { AutoFlush = true };
                     TrimOldClientLogs(path);
@@ -327,7 +327,7 @@ internal sealed class LauncherContext : IDisposable
     {
         try
         {
-            FileInfo[] files = new DirectoryInfo(LauncherPaths.LogsFolder).GetFiles("cliente-*.log")
+            FileInfo[] files = new DirectoryInfo(LauncherPaths.LogsFolder).GetFiles("client-*.log")
                 .Where(f => !string.Equals(f.FullName, current, StringComparison.OrdinalIgnoreCase))
                 .OrderByDescending(f => f.LastWriteTimeUtc).ToArray();
             for (int i = 29; i < files.Length; i++) files[i].Delete();

@@ -42,11 +42,14 @@ public static partial class Game
         int multiple = msg.ReadByte();
         float damage = msg.ReadSingle();
         int effect = msg.ReadByte();
-        msg.ReadSingle(); // effectAmount
-        msg.ReadSingle(); // effectTime
+        float effectAmount = msg.ReadSingle();
+        float effectTime = msg.ReadSingle();
         float elementalDamage = msg.ReadSingle(); // effectDamage
         int owner = msg.ReadInt32();
         CopperReader.Death death = CopperReader.ReadDeath(msg);
+
+        // Bullets of the turrets of the server: the server already took their damage off (Enemies.Allies.cs).
+        if (owner != j.PlaneShortId && Enemies.IsAllyUnit(msg.SenderConnection, owner)) return;
 
         float totalDamage = (damage + Math.Max(0f, elementalDamage)) * Math.Max(1, multiple);
 
@@ -57,6 +60,10 @@ public static partial class Game
         totalDamage *= bonus;
 
         string? onEnemy = Enemies.TakeDamage(msg.SenderConnection, target, totalDamage, now, log);
+
+        // Stun (bandit EMP): the enemy stops for effectTime seconds.
+        string? effectText = Enemies.ApplyHitEffect(msg.SenderConnection, target, effect, effectAmount, effectTime, now, log);
+        if (effectText != null) onEnemy = onEnemy == null ? effectText : onEnemy + ", " + effectText;
 
         j.Hits++;
         j.Damage += totalDamage;
@@ -143,6 +150,7 @@ public static partial class Game
 
         if (ProgressionHandler.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
         if (InventoryHandler.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
+        if (StoreHandler.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
         // Dungeons (/dungeons, /dungeon X; inside a dungeon /room, /boss, /leave, /restart) before the tutorial,
         // which also uses /leave and /restart: DungeonServer.Command only takes those inside a dungeon.
         if (DungeonServer.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
@@ -272,10 +280,14 @@ public static partial class Game
         j.Units[shortId] = new Unit { ShortId = shortId, Prefab = cloud.PrefabIndex, X = x, Y = y, Rotation = rotation };
 
         // Damage clouds/blasts: damage boost for the allies inside (Skills\DamageBoost.cs).
-        DamageBoost.CloudCreated(server, connection, j.Peer, j.Role, ownerShortId, name, x, y, cloud.FinalRadius, duration, now, log);
+        DamageBoost.CloudCreated(server, connection, j.Peer, j.Role, ownerShortId, name, x, y, cloud.FinalRadius, duration, now, log,
+            cloud.AttachedToOwner);
 
         // Poison clouds hurt the server enemies (Skills\CloudDamage.cs): on the client the cloud never reaches them.
         CloudDamage.CloudCreated(connection, name, x, y, cloud.FinalRadius, duration, now, log);
+
+        // Heal and shield clouds: the server heals and gives back shielded damage (Game.CloudEffects.cs).
+        CloudEffectCreated(j, cloud, name, x, y, duration, now, log);
 
         log("SKILL", j.Role + " cloud skill '" + name + "' used by the unit " + ownerShortId + where +
             " -> created the unit " + shortId + " (prefab " + cloud.PrefabIndex + " " + cloud.Prefab +

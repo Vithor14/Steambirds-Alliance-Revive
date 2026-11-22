@@ -2,7 +2,7 @@
 
 Remontagem do Rebel City do Open Beta (cliente 201219.1413) no esboço. Criado em 14/11/2026 (4ª versão; ajustes na 4.1 a 4.4).
 
-**Desde a v5, a planta fica em `Server\maps\nexus.json`** (formato em `docs/formato-de-mapas.md`).
+**Desde a v5, a planta fica em `Server\maps\nexus.json`** (formato em `docs/map-format.md`).
 - O arquivo usa u = A + 3 e v = B + 3 em relação às coordenadas (A, B) desta página.
 - O `NexusEsboco.cs` só lê o arquivo e manda chão, enfeites e prédios.
 - As tools `preview2.py` e `encostar.py` (de um chat antigo; não estão no repositório) leem o `nexus.json`.

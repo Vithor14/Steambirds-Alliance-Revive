@@ -1,64 +1,64 @@
-# Tabelas de loot
+# Loot tables
 
-Cada arquivo `.json` desta pasta é **uma tabela de loot**. Para criar uma tabela nova basta colocar um arquivo aqui:
-o servidor relê a pasta sozinho (a cada 2 segundos) e não precisa mudar nada no código. Arquivos podem ficar em
-subpastas e aceitam comentários `//`.
+Each `.json` file in this folder is **one loot table**. To create a new table, just drop a file here:
+the server rereads the folder by itself (every 2 seconds) and nothing in the code has to change. Files may sit in
+subfolders and accept `//` comments.
 
-O formato é o mesmo `LootTableDef` que o jogo usa nas configs das unidades, então dá para copiar tabelas do jogo
-para cá e vice-versa.
+The format is the same `LootTableDef` that the game uses in the unit configs, so tables can be copied from the game
+to here and back.
 
-## Campos do arquivo
+## File fields
 
-| Campo | O que faz |
+| Field | What it does |
 |---|---|
-| `id` | Nome da tabela (sem ele, vale o nome do arquivo). É o nome usado em `items.json` e nos `lootTableId`. |
-| `description` | Texto livre. |
-| `replaces` | `lootTableId`s das unidades do jogo que esta tabela substitui. Aceita `*` (ex.: `"*boss*"`, `"tier7minion"`). |
-| `units` | Unidades (`templateName`) que **sempre** usam esta tabela, no lugar do loot do jogo. Aceita `*`. |
-| `rolls` | Lista de sorteios. Cada sorteio escolhe **um** grupo de itens pelo peso. |
+| `id` | Name of the table (without it, the file name is used). It is the name used in `items.json` and in `lootTableId`s. |
+| `description` | Free text. |
+| `replaces` | `lootTableId`s of the game's units that this table replaces. Accepts `*` (e.g. `"*boss*"`, `"tier7minion"`). |
+| `units` | Units (`templateName`) that **always** use this table, in place of the game's loot. Accepts `*`. |
+| `rolls` | List of rolls. Each roll picks **one** group of items by weight. |
 
-Cada sorteio (`LootTableDef`):
+Each roll (`LootTableDef`):
 
-| Campo | O que faz |
+| Field | What it does |
 |---|---|
-| `lootTable` | Grupos com `weight` (peso) e `items`. Um grupo sem `items` é "nada". |
-| `usableChance` | 0 a 100: chance de os itens aleatórios serem de algo que a classe do jogador pode equipar. |
-| `ensureUsableSlots` | Ex.: `["MainGun"]`: itens desses slots sempre servem para a classe. |
-| `conditions` | Condições do jogo: `pilotLevelAboveOrEq`, `planeClass`, `planeLevelAboveOrEq`, `buff`, `isAdmin`, `isAlways`, `or`, `not`, `and`. Extra do servidor: `difficulty` (`normal`, `difficult`, `lethal`). |
+| `lootTable` | Groups with `weight` and `items`. A group without `items` means "nothing". |
+| `usableChance` | 0 to 100: chance that the random items are something the player's class can equip. |
+| `ensureUsableSlots` | E.g. `["MainGun"]`: items of those slots always fit the class. |
+| `conditions` | The game's conditions: `pilotLevelAboveOrEq`, `planeClass`, `planeLevelAboveOrEq`, `buff`, `isAdmin`, `isAlways`, `or`, `not`, `and`. Server extra: `difficulty` (`normal`, `difficult`, `lethal`). |
 
-Cada item:
+Each item:
 
-| Forma | Resultado |
+| Form | Result |
 |---|---|
-| `{ "id": "armor_3" }` | Exatamente esse item (veja `catalog\item_catalog.md`). |
-| `{ "slot": "Armor", "tier": 2 }` | Um item aleatório desse slot e tier. |
-| `{ "tier": 1 }` | Um item aleatório de arma principal, secundário, motor ou armadura. |
-| `{ "slot": "Health", "tier": 1 }` | Vida (ou `Energy`, vapor): coletada na hora. |
-| `{ "instant": { "currency_id": "newscrap", "currency_amount": 10 } }` | Entregue na hora, sem saco. Também: `planeXp`, `pilotXp`, `unlocks`, `ingredient_id` + `ingredient_amount`, `buff`. |
+| `{ "id": "armor_3" }` | Exactly that item (see `catalog\item_catalog.md`). |
+| `{ "slot": "Armor", "tier": 2 }` | A random item of that slot and tier. |
+| `{ "tier": 1 }` | A random main weapon, secondary, engine or armor. |
+| `{ "slot": "Health", "tier": 1 }` | Health (or `Energy`, steam): collected at once. |
+| `{ "instant": { "currency_id": "newscrap", "currency_amount": 10 } }` | Delivered at once, without a bag. Also: `planeXp`, `pilotXp`, `unlocks`, `ingredient_id` + `ingredient_amount`, `buff`. |
 
-O `tier` é **relativo ao inimigo**, como no jogo: `tier 1` = tier do inimigo, `tier 2` = um acima. O resultado
-fica entre 1 e 10.
+The `tier` is **relative to the enemy**, as in the game: `tier 1` = the enemy's tier, `tier 2` = one above. The result
+stays between 1 and 10.
 
-## Qual tabela cada inimigo usa
+## Which table each enemy uses
 
-1. Se alguma tabela tem a unidade em `units`, só ela vale.
-2. Senão, o loot que a própria unidade tem no jogo (`loot` e `lootGlobal`):
-   - tabelas embutidas (ex.: a chave de dungeon que alguns inimigos soltam) são sorteadas como estão;
-   - cada `lootTableId` usa a tabela com esse `id`, ou a de `replaces` mais específico.
-   (desligável em `items.json`: `useGameUnitLoot`)
-3. Se nada disso resolveu: `normalLootTable` (inimigos comuns) ou `bossLootTable` (chefes) do `items.json`.
+1. If some table lists the unit in `units`, only that table counts.
+2. Otherwise, the loot the unit itself has in the game (`loot` and `lootGlobal`):
+   - embedded tables (e.g. the dungeon key that some enemies drop) are rolled as they are;
+   - each `lootTableId` uses the table with that `id`, or the one with the most specific `replaces`.
+   (can be turned off in `items.json`: `useGameUnitLoot`)
+3. If none of that resolved: `normalLootTable` (regular enemies) or `bossLootTable` (bosses) of `items.json`.
 
-Entradas do jogo com nome `..._normal`, `..._difficult` e `..._lethal` só valem na dificuldade de `items.json`
+Game entries named `..._normal`, `..._difficult` and `..._lethal` only count at the difficulty set in `items.json`
 (`dungeonDifficulty`).
 
-As tabelas por nome do servidor original (`tier7minion`, `tiernboss`, `tier10treasure`...) não estão no cliente.
-Para recriar uma delas com fidelidade, crie um arquivo com esse `id`: ele passa a valer na hora.
+The original server's named tables (`tier7minion`, `tiernboss`, `tier10treasure`...) are not in the client.
+To recreate one of them faithfully, create a file with that `id`: it takes effect at once.
 
-## Testar
+## Testing
 
-No chat do jogo: `/loot` (inimigo comum), `/loot boss 3` (chefe tier 3), `/loot tutorialwalkerdungeontreasure`,
-`/bags` (lista as tabelas carregadas) e `/clear_bags`.
+In the game chat: `/loot` (regular enemy), `/loot boss 3` (tier 3 boss), `/loot tutorialwalkerdungeontreasure`,
+`/bags` (lists the loaded tables) and `/clear_bags`.
 
-## Tabelas das dungeons
+## Dungeon tables
 
-`dungeon_chest`, `dungeon_chest_big`, `dungeon_miniboss` e `dungeon_no_loot` listam em `units` os inimigos de cada dungeon (gerado por `tools\dungeons-190828\make_loot_tables.py`; para refazer: `python make_loot_tables.py ..\..\Server\maps ..\..\Server\loot_tables`). Pode editar a mão os pesos e itens; rodar o script de novo sobrescreve. A `dungeon_no_loot` tem um sorteio vazio de propósito (muros, barris, bombas, minas, destroços).
+`dungeon_chest`, `dungeon_chest_big`, `dungeon_miniboss` and `dungeon_no_loot` list in `units` the enemies of each dungeon (generated by `tools\dungeons-190828\make_loot_tables.py`; to redo it: `python make_loot_tables.py ..\..\Server\maps ..\..\Server\loot_tables`). You can edit the weights and items by hand; running the script again overwrites them. `dungeon_no_loot` has an empty roll on purpose (walls, barrels, bombs, mines, debris).

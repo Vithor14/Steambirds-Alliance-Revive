@@ -4,7 +4,7 @@ namespace SteambirdsLauncher.UI;
 
 // Names and descriptions of the known keys of the server config files, in English (translated through lang\*.json).
 // In English the description below is shown; in another language its translation, or else the comment above the key
-// in the file (the server writes those comments in Portuguese). Keys that are not listed show their own name and the
+// in the file. Keys that are not listed show their own name and the
 // comment of the file, so new server settings appear in the launcher without changing it.
 internal static class SettingLabels
 {
@@ -65,8 +65,10 @@ internal static class SettingLabels
             "Equipped items that go to the storage when the plane goes down (DeathLootConfig.salvageRandomEquipment). The \"death\" config is empty in this game version, so the original here is 0."),
         ["degradeSalvagedItems"] = new SettingInfo("Saved items lose condition",
             "Items saved when the plane goes down lose condition (wear), and supercharged ones lose the bonus."),
+        ["trashDropsInWorld"] = new SettingInfo("Dropped items go to the world",
+            "The \"Drop\" entry of the inventory menu puts the item in the world, in a loot bag next to the plane. Off: the item is trashed instead (and recycled when the next option is on)."),
         ["mulchOnTrash"] = new SettingInfo("Recycle items thrown in the trash",
-            "\"Trash\" in the inventory recycles the item into the recycling currency (the game's \"mulching\" config)."),
+            "\"Trash\" in the inventory recycles the item into the recycling currency (the game's \"mulching\" config). Only used when dropped items do not go to the world."),
         ["reforgeEnabled"] = new SettingInfo("Reforge and supercharge in the Workshop", "The game's \"reforging\" config."),
         ["startingCurrencies"] = new SettingInfo("Starting currencies", "Currencies of a new account."),
         ["startingIngredients"] = new SettingInfo("Starting ingredients",
@@ -75,6 +77,21 @@ internal static class SettingLabels
             "Items a new account gets in the storage, for example [\"armor_2\", \"engine_speed_2\"] (ids in catalog\\item_catalog.md)."),
         ["exportItemCatalog"] = new SettingInfo("Export the item catalog",
             "Writes catalog\\item_catalog.md and .json when the server starts and the game version changed."),
+
+        // ---------------------------------------------------------------- stores.json
+        ["purchasesEnabled"] = new SettingInfo("Purchases enabled",
+            "Off: the stores open, but every purchase is refused."),
+        ["priceMode"] = new SettingInfo("How prices are charged",
+            "currency = the account pays with its own gold and iron (like the original, without the Steam packages; give gold with /currency gold N, items.json startingCurrencies or the Accounts tab). free = every product costs 0 and the game shows \"100% off\".",
+            new[] { "currency", "free" }),
+        ["discountPercent"] = new SettingInfo("Discount on every price (%)",
+            "Percent taken off every price, from 0 to 100. The game shows it as \"x% off\". A product can have its own value in the product rules."),
+        ["showPreRelease"] = new SettingInfo("Sell pre-release products",
+            "The game marks a few trails and emotes as pre-release and does not show them. On = they are sold too."),
+        ["stores"] = new SettingInfo("Rules per store",
+            "Keys: store_general, store_hangar, store_storage, store_skill_loadouts. Each store has \"enabled\" and \"sections\" (section id, for example general_account, general_keys, general_sales) with \"enabled\", \"include\" and \"exclude\": lists of product ids or \"tag:<tag>\". \"include\" adds products to what the game's rule puts in the section. general_sales is the sale shelf: empty until you add products to its \"include\". Example: { \"store_general\": { \"sections\": { \"general_keys\": { \"enabled\": false } } } }"),
+        ["products"] = new SettingInfo("Rules per product",
+            "By product id (for example hangar_slot, store_skill_loadout_slot, store_key_eye). \"enabled\": false hides it everywhere. \"discount\": percent off (0-100). \"stock\": units the whole server can sell (0 = no limit). \"maxPerAccount\": times each account can buy it (0 = the game's own limit). Example: { \"hangar_slot\": { \"discount\": 50, \"maxPerAccount\": 5 } }"),
 
         // ---------------------------------------------------------------- network.json
         ["serverName"] = new SettingInfo("Server name", "Name shown in the server lists of the launchers."),

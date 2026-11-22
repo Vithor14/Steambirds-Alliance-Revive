@@ -42,7 +42,7 @@ public static partial class Game
                 if (line.Length == 0 || line[0] == '#') continue;
                 string[] p = line.Split('\t');
 
-                if ((p[0] == "cloud" || p[0] == "nuvem") && p.Length >= 11)
+                if (p[0] == "cloud" && p.Length >= 11)
                 {
                     if (!short.TryParse(p[2], NumberStyles.Integer, Inv, out short hash)) continue;
                     if (!int.TryParse(p[4], NumberStyles.Integer, Inv, out int index)) continue;
@@ -61,7 +61,7 @@ public static partial class Game
                         Resolvable = p[10] == "1"
                     };
                 }
-                else if ((p[0] == "maneuver" || p[0] == "manobra") && p.Length >= 3)
+                else if (p[0] == "maneuver" && p.Length >= 3)
                 {
                     if (int.TryParse(p[2], NumberStyles.Integer, Inv, out int maneuverHash)) newManeuvers[maneuverHash] = p[1];
                 }

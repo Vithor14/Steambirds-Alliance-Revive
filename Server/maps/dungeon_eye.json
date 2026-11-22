@@ -4,8 +4,8 @@
   "id": "dungeon_eye",
   "name": "Crypt of Cathulhu",
   "terrain": "DungeonEye",
-  "note": "Ancient temple of the Deep Ones (T9, water). Eye rooms: Laser Eyes, fixed laser pointers, spinning lasers, Gazers (5-shot laser at once), Scanners (a lot of damage up close), Cat Eyes in orbit and Poppers. Two Psychopus (minibosses) and the Cyclopus in a room with rotating lasers.",
-  "source": "Build 190828.2045: units, names, barks, signs, quests and territory come from the configBinary; the Dungeons/dungeon_* file of that build is empty, so the room format and the enemy positions were recreated.",
+  "note": "Templo antigo dos Deep Ones (T9, agua). Salas de olhos: Laser Eyes, ponteiros de laser fixos, lasers que giram, Gazers (laser de 5 tiros juntos), Scanners (muito dano de perto), Cat Eyes em orbita e Poppers. Dois Psychopus (minichefes) e o Cyclopus numa sala com lasers giratorios.",
+  "source": "Build 190828.2045: unidades, nomes, falas, placas, quests e territorio vem do configBinary; o arquivo Dungeons/dungeon_* dessa build e vazio, entao o formato das salas e a posicao dos inimigos foram recriados.",
   "key": "key_eye",
   "portalItem": "dungeon_eye",
   "exit": {"point": "portal", "when": "death:octopus"},
@@ -18,7 +18,7 @@
     "drawing": {
       "siStart": -36,
       "sjStart": -76,
-      "legend": ". free floor, # wall, - no floor. First line = last sj row (the far end).",
+      "legend": ". chao livre, # muro, - sem chao. Primeira linha = ultima fileira sj (o fundo).",
       "lines": [
         "--------------------####################################--------------------",
         "--------------------####################################--------------------",
@@ -177,55 +177,71 @@
   "spawn": {"u": 6.0, "v": -209.3, "rot": 315},
   "points": {
     "boss": {"u": 6.0, "v": 172.3, "rot": 135},
-    "portal": {"u": 6.0, "v": 143.8, "rot": 0, "note": "exit carrier (appears when the boss dies)"}
+    "portal": {"u": 6.0, "v": 143.8, "rot": 0, "note": "porta-avioes de saida (aparece quando o chefe morre)"}
   },
   "groups": {},
   "areas": {
-    "entrance": {"minU": -12.6, "maxU": 24.6, "minV": -216.6, "maxV": -185.4},
-    "eye_gallery": {"minU": -24.6, "maxU": 36.6, "minV": -162.6, "maxV": -113.4},
-    "gazer_hall": {"minU": -27.6, "maxU": 39.6, "minV": -96.6, "maxV": -41.4},
-    "laser_corridor": {"minU": -12.6, "maxU": 24.6, "minV": -30.6, "maxV": 30.6},
-    "atrium": {"minU": -24.6, "maxU": 36.6, "minV": 41.4, "maxV": 90.6},
-    "cyclopus_hall": {"minU": -36.6, "maxU": 48.6, "minV": 113.4, "maxV": 198.6},
-    "psychopus_chamber_1": {"minU": -90.6, "maxU": -41.4, "minV": 41.4, "maxV": 90.6},
-    "psychopus_chamber_2": {"minU": 53.4, "maxU": 102.6, "minV": 41.4, "maxV": 90.6},
-    "treasure": {"minU": 50.4, "maxU": 81.6, "minV": -84.6, "maxV": -53.4}
+    "entrada": {"minU": -12.6, "maxU": 24.6, "minV": -216.6, "maxV": -185.4},
+    "galeria_dos_olhos": {"minU": -24.6, "maxU": 36.6, "minV": -162.6, "maxV": -113.4},
+    "salao_dos_gazers": {"minU": -27.6, "maxU": 39.6, "minV": -96.6, "maxV": -41.4},
+    "corredor_dos_lasers": {"minU": -12.6, "maxU": 24.6, "minV": -30.6, "maxV": 30.6},
+    "atrio": {"minU": -24.6, "maxU": 36.6, "minV": 41.4, "maxV": 90.6},
+    "salao_do_cyclopus": {"minU": -36.6, "maxU": 48.6, "minV": 113.4, "maxV": 198.6},
+    "camara_do_psychopus_1": {"minU": -90.6, "maxU": -41.4, "minV": 41.4, "maxV": 90.6},
+    "camara_do_psychopus_2": {"minU": 53.4, "maxU": 102.6, "minV": 41.4, "maxV": 90.6},
+    "tesouro": {"minU": 50.4, "maxU": 81.6, "minV": -84.6, "maxV": -53.4}
   },
   "lines": {
-    "entrance": -216.0,
-    "eye_gallery": -162.0,
-    "gazer_hall": -96.0,
-    "laser_corridor": -30.0,
-    "atrium": 42.0,
-    "cyclopus_hall": 114.0,
-    "psychopus_chamber_1": 42.0,
-    "psychopus_chamber_2": 42.0,
-    "treasure": -84.0
+    "entrada": -216.0,
+    "galeria_dos_olhos": -162.0,
+    "salao_dos_gazers": -96.0,
+    "corredor_dos_lasers": -30.0,
+    "atrio": 42.0,
+    "salao_do_cyclopus": 114.0,
+    "camara_do_psychopus_1": 42.0,
+    "camara_do_psychopus_2": 42.0,
+    "tesouro": -84.0
   },
   "values": {"tier": 9},
   "checkpoints": [
-    {"name": "entrance", "activeAtV": -216.0, "u": 6.0, "v": -212.6, "rot": 315},
-    {"name": "eye_gallery", "activeAtV": -162.0, "u": 6.0, "v": -157.2, "rot": 315},
-    {"name": "gazer_hall", "activeAtV": -96.0, "u": 6.0, "v": -90.7, "rot": 315},
-    {"name": "laser_corridor", "activeAtV": -30.0, "u": 6.0, "v": -24.2, "rot": 315},
-    {"name": "atrium", "activeAtV": 42.0, "u": 6.0, "v": 46.8, "rot": 315},
-    {"name": "cyclopus_hall", "activeAtV": 114.0, "u": 6.0, "v": 121.7, "rot": 315}
+    {"name": "entrada", "activeAtV": -216.0, "u": 6.0, "v": -212.6, "rot": 315},
+    {"name": "galeria_dos_olhos", "activeAtV": -162.0, "u": 6.0, "v": -157.2, "rot": 315},
+    {"name": "salao_dos_gazers", "activeAtV": -96.0, "u": 6.0, "v": -90.7, "rot": 315},
+    {"name": "corredor_dos_lasers", "activeAtV": -30.0, "u": 6.0, "v": -24.2, "rot": 315},
+    {"name": "atrio", "activeAtV": 42.0, "u": 6.0, "v": 46.8, "rot": 315},
+    {"name": "salao_do_cyclopus", "activeAtV": 114.0, "u": 6.0, "v": 121.7, "rot": 315}
   ],
   "gates": [
-    {"name": "barricade", "type": "eyedungeondestroyablewall_barricade", "sj": -12, "siFrom": 0, "siTo": 3, "damageable": true, "room": "laser_corridor"},
     {
-      "name": "cyclopus gate",
+      "name": "barricada",
+      "type": "eyedungeondestroyablewall_barricade",
+      "sj": -12,
+      "siFrom": 0,
+      "siTo": 3,
+      "damageable": true,
+      "room": "corredor_dos_lasers"
+    },
+    {
+      "name": "portao do cyclopus",
       "type": "eyedungeondestroyablewallstrong",
       "sj": 34,
       "siFrom": 0,
       "siTo": 3,
       "damageable": false,
-      "opensWhen": "cleared:psychopus_chamber_1+cleared:psychopus_chamber_2",
-      "room": "cyclopus_hall"
+      "opensWhen": "cleared:camara_do_psychopus_1+cleared:camara_do_psychopus_2",
+      "room": "salao_do_cyclopus"
     }
   ],
   "sideGates": [
-    {"name": "treasure wall", "type": "eyedungeondestroyablewall", "si": 15, "sjFrom": -25, "sjTo": -22, "damageable": true, "room": "treasure"}
+    {
+      "name": "parede do tesouro",
+      "type": "eyedungeondestroyablewall",
+      "si": 15,
+      "sjFrom": -25,
+      "sjTo": -22,
+      "damageable": true,
+      "room": "tesouro"
+    }
   ],
   "signs": [
     {"key": "eyedungeonsign1", "u": 6.0, "v": -198.2, "radius": 14, "rot": 0},
@@ -246,40 +262,148 @@
         {"belowHealth": 0.33, "summon": "octopuslaser3", "summonCount": 2}
       ]
     },
-    "cyclopus": {"name": "Psychopus", "template": "cyclopus", "miniboss": true, "behavior": "turret", "aggroRadius": 45, "firstShotDelay": 1.5},
-    "cyclopus2": {"name": "Psychopus", "template": "cyclopus2", "miniboss": true, "behavior": "turret", "aggroRadius": 45, "firstShotDelay": 1.5},
-    "cyclopuslaser": {"name": "Psychopus Eye", "template": "cyclopuslaser", "behavior": "chase", "preferredDistance": 4.5, "aggroRadius": 28},
+    "cyclopus": {
+      "name": "Psychopus",
+      "template": "cyclopus",
+      "miniboss": true,
+      "behavior": "turret",
+      "aggroRadius": 45,
+      "firstShotDelay": 1.5
+    },
+    "cyclopus2": {
+      "name": "Psychopus",
+      "template": "cyclopus2",
+      "miniboss": true,
+      "behavior": "turret",
+      "aggroRadius": 45,
+      "firstShotDelay": 1.5
+    },
+    "cyclopuslaser": {
+      "name": "Psychopus Eye",
+      "template": "cyclopuslaser",
+      "behavior": "chase",
+      "preferredDistance": 4.5,
+      "aggroRadius": 28
+    },
     "eyedungeondestroyablewall": {"name": "Wall", "template": "eyedungeondestroyablewall", "behavior": "idle"},
-    "eyedungeondestroyablewall_barricade": {"name": "eyedungeondestroyablewall_barricade", "template": "eyedungeondestroyablewall_barricade", "behavior": "idle"},
+    "eyedungeondestroyablewall_barricade": {
+      "name": "eyedungeondestroyablewall_barricade",
+      "template": "eyedungeondestroyablewall_barricade",
+      "behavior": "idle"
+    },
     "eyedungeondestroyablewallstrong": {"name": "Wall", "template": "eyedungeondestroyablewallstrong", "behavior": "idle"},
     "eyedungeontreasure": {"name": "Treasure", "template": "eyedungeontreasure", "behavior": "idle", "opensAfterHitSeconds": 1.5},
-    "lasereye": {"name": "Laser Eye", "template": "lasereye", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
-    "laserpointer_E": {"name": "laserpointer_E", "template": "laserpointer_E", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
-    "laserpointer_W": {"name": "laserpointer_W", "template": "laserpointer_W", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
-    "laserspinner_CCW_N": {"name": "laserspinner_CCW_N", "template": "laserspinner_CCW_N", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
-    "laserspinner_CW_N": {"name": "laserspinner_CW_N", "template": "laserspinner_CW_N", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
-    "laserspinner_long_CCW_N": {"name": "laserspinner_long_CCW_N", "template": "laserspinner_long_CCW_N", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
-    "laserspinner_long_CW_N": {"name": "laserspinner_long_CW_N", "template": "laserspinner_long_CW_N", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
+    "lasereye": {
+      "name": "Laser Eye",
+      "template": "lasereye",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
+    "laserpointer_E": {
+      "name": "laserpointer_E",
+      "template": "laserpointer_E",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
+    "laserpointer_W": {
+      "name": "laserpointer_W",
+      "template": "laserpointer_W",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
+    "laserspinner_CCW_N": {
+      "name": "laserspinner_CCW_N",
+      "template": "laserspinner_CCW_N",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
+    "laserspinner_CW_N": {
+      "name": "laserspinner_CW_N",
+      "template": "laserspinner_CW_N",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
+    "laserspinner_long_CCW_N": {
+      "name": "laserspinner_long_CCW_N",
+      "template": "laserspinner_long_CCW_N",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
+    "laserspinner_long_CW_N": {
+      "name": "laserspinner_long_CW_N",
+      "template": "laserspinner_long_CW_N",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
     "octopusDEATH": {"name": "Cyclopus", "template": "octopusDEATH", "behavior": "idle", "invulnerable": true},
-    "octopuslaser": {"name": "Watcher", "template": "octopuslaser", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
-    "octopuslaser2": {"name": "Cyclopus", "template": "octopuslaser2", "behavior": "chase", "preferredDistance": 4.5, "aggroRadius": 28},
-    "octopuslaser3": {"name": "Cyclopus", "template": "octopuslaser3", "behavior": "chase", "preferredDistance": 4.5, "aggroRadius": 28},
-    "orbiter": {"name": "Cat Eye", "template": "orbiter", "behavior": "chase", "preferredDistance": 4.5, "aggroRadius": 28},
+    "octopuslaser": {
+      "name": "Watcher",
+      "template": "octopuslaser",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
+    "octopuslaser2": {
+      "name": "Cyclopus",
+      "template": "octopuslaser2",
+      "behavior": "chase",
+      "preferredDistance": 4.5,
+      "aggroRadius": 28
+    },
+    "octopuslaser3": {
+      "name": "Cyclopus",
+      "template": "octopuslaser3",
+      "behavior": "chase",
+      "preferredDistance": 4.5,
+      "aggroRadius": 28
+    },
+    "orbiter": {
+      "name": "Cat Eye",
+      "template": "orbiter",
+      "behavior": "chase",
+      "preferredDistance": 4.5,
+      "aggroRadius": 28
+    },
     "popper": {"name": "Popper", "template": "popper", "behavior": "idle"},
     "popper2": {"name": "Mini Popper", "template": "popper2", "behavior": "idle"},
-    "poppermini": {"name": "Popper Jr.", "template": "poppermini", "behavior": "chase", "preferredDistance": 2.2, "aggroRadius": 28},
+    "poppermini": {
+      "name": "Popper Jr.",
+      "template": "poppermini",
+      "behavior": "chase",
+      "preferredDistance": 2.2,
+      "aggroRadius": 28
+    },
     "scanner": {"name": "Scanner", "template": "scanner", "behavior": "turret", "aggroRadius": 30},
     "teslaeye": {"name": "Tesla Eye", "template": "teslaeye", "behavior": "turret", "aggroRadius": 30},
-    "triguard": {"name": "Gazer", "template": "triguard", "behavior": "chase", "preferredDistance": 2.2, "aggroRadius": 28},
-    "triguardleader": {"name": "Gazer", "template": "triguardleader", "behavior": "circle", "preferredDistance": 9, "aggroRadius": 32},
+    "triguard": {
+      "name": "Gazer",
+      "template": "triguard",
+      "behavior": "chase",
+      "preferredDistance": 2.2,
+      "aggroRadius": 28
+    },
+    "triguardleader": {
+      "name": "Gazer",
+      "template": "triguardleader",
+      "behavior": "circle",
+      "preferredDistance": 9,
+      "aggroRadius": 32
+    },
     "warper": {"name": "Watcher", "template": "warper", "behavior": "turret", "aggroRadius": 30}
   },
   "encounters": [
     {
-      "room": "eye_gallery",
-      "area": "eye_gallery",
+      "room": "galeria_dos_olhos",
+      "area": "galeria_dos_olhos",
       "wakes": "onEnter",
-      "line": "eye_gallery",
+      "line": "galeria_dos_olhos",
       "enemies": [
         {
           "type": "lasereye",
@@ -291,39 +415,22 @@
         },
         {
           "type": "laserpointer_E",
-          "pos": [
-            {"u": -21.1, "v": -147.1, "rot": 45},
-            {"u": -21.1, "v": -128.9, "rot": 45}
-          ]
+          "pos": [{"u": -21.1, "v": -147.1, "rot": 45}, {"u": -21.1, "v": -128.9, "rot": 45}]
         },
         {
           "type": "laserpointer_W",
-          "pos": [
-            {"u": 33.1, "v": -142.6, "rot": 225},
-            {"u": 33.1, "v": -124.3, "rot": 225}
-          ]
+          "pos": [{"u": 33.1, "v": -142.6, "rot": 225}, {"u": 33.1, "v": -124.3, "rot": 225}]
         },
-        {
-          "type": "popper",
-          "pos": [
-            {"u": 6.0, "v": -138.0, "rot": 135}
-          ]
-        }
+        {"type": "popper", "pos": [{"u": 6.0, "v": -138.0, "rot": 135}]}
       ]
     },
     {
-      "room": "gazer_hall",
-      "area": "gazer_hall",
+      "room": "salao_dos_gazers",
+      "area": "salao_dos_gazers",
       "wakes": "onEnter",
-      "line": "gazer_hall",
+      "line": "salao_dos_gazers",
       "enemies": [
-        {
-          "type": "triguardleader",
-          "pos": [
-            {"u": 6.0, "v": -56.1, "rot": 135}
-          ],
-          "note": "Gazer leader"
-        },
+        {"type": "triguardleader", "pos": [{"u": 6.0, "v": -56.1, "rot": 135}], "note": "Gazer lider"},
         {
           "type": "triguard",
           "pos": [
@@ -334,10 +441,7 @@
         },
         {
           "type": "scanner",
-          "pos": [
-            {"u": -18.2, "v": -88.6, "rot": 135},
-            {"u": 30.2, "v": -88.6, "rot": 135}
-          ]
+          "pos": [{"u": -18.2, "v": -88.6, "rot": 135}, {"u": 30.2, "v": -88.6, "rot": 135}]
         },
         {
           "type": "orbiter",
@@ -347,71 +451,40 @@
             {"u": -3.5, "v": -76.7, "rot": 45},
             {"u": 6.0, "v": -84.5, "rot": 315}
           ],
-          "note": "Cat Eyes (they orbit the orbitermaster)"
+          "note": "Cat Eyes (orbitam o orbitermaster)"
         }
       ]
     },
     {
-      "room": "treasure",
-      "area": "treasure",
+      "room": "tesouro",
+      "area": "tesouro",
       "wakes": "onEnter",
-      "line": "treasure",
+      "line": "tesouro",
+      "enemies": [{"type": "eyedungeontreasure", "pos": [{"u": 66.0, "v": -66.2, "rot": 135}]}]
+    },
+    {
+      "room": "corredor_dos_lasers",
+      "area": "corredor_dos_lasers",
+      "wakes": "onEnter",
+      "line": "corredor_dos_lasers",
       "enemies": [
-        {
-          "type": "eyedungeontreasure",
-          "pos": [
-            {"u": 66.0, "v": -66.2, "rot": 135}
-          ]
-        }
+        {"type": "laserspinner_CW_N", "pos": [{"u": 6.0, "v": -11.5, "rot": 135}]},
+        {"type": "laserspinner_CCW_N", "pos": [{"u": 6.0, "v": 14.4, "rot": 135}]},
+        {"type": "poppermini", "pos": [{"u": -6.8, "v": 0.0, "rot": 135}, {"u": 18.8, "v": 0.0, "rot": 135}]}
       ]
     },
     {
-      "room": "laser_corridor",
-      "area": "laser_corridor",
+      "room": "atrio",
+      "area": "atrio",
       "wakes": "onEnter",
-      "line": "laser_corridor",
-      "enemies": [
-        {
-          "type": "laserspinner_CW_N",
-          "pos": [
-            {"u": 6.0, "v": -11.5, "rot": 135}
-          ]
-        },
-        {
-          "type": "laserspinner_CCW_N",
-          "pos": [
-            {"u": 6.0, "v": 14.4, "rot": 135}
-          ]
-        },
-        {
-          "type": "poppermini",
-          "pos": [
-            {"u": -6.8, "v": 0.0, "rot": 135},
-            {"u": 18.8, "v": 0.0, "rot": 135}
-          ]
-        }
-      ]
-    },
-    {
-      "room": "atrium",
-      "area": "atrium",
-      "wakes": "onEnter",
-      "line": "atrium",
+      "line": "atrio",
       "enemies": [
         {
           "type": "warper",
-          "pos": [
-            {"u": -15.9, "v": 79.7, "rot": 135},
-            {"u": 27.9, "v": 79.7, "rot": 135}
-          ],
+          "pos": [{"u": -15.9, "v": 79.7, "rot": 135}, {"u": 27.9, "v": 79.7, "rot": 135}],
           "note": "Watchers"
         },
-        {
-          "type": "teslaeye",
-          "pos": [
-            {"u": 6.0, "v": 66.0, "rot": 135}
-          ]
-        },
+        {"type": "teslaeye", "pos": [{"u": 6.0, "v": 66.0, "rot": 135}]},
         {
           "type": "popper2",
           "pos": [
@@ -424,18 +497,12 @@
       ]
     },
     {
-      "room": "psychopus_chamber_1",
-      "area": "psychopus_chamber_1",
+      "room": "camara_do_psychopus_1",
+      "area": "camara_do_psychopus_1",
       "wakes": "onEnter",
-      "line": "psychopus_chamber_1",
+      "line": "camara_do_psychopus_1",
       "enemies": [
-        {
-          "type": "cyclopus",
-          "pos": [
-            {"u": -66.0, "v": 68.3, "rot": 135}
-          ],
-          "miniboss": true
-        },
+        {"type": "cyclopus", "pos": [{"u": -66.0, "v": 68.3, "rot": 135}], "miniboss": true},
         {
           "type": "cyclopuslaser",
           "pos": [
@@ -448,18 +515,12 @@
       "miniboss": true
     },
     {
-      "room": "psychopus_chamber_2",
-      "area": "psychopus_chamber_2",
+      "room": "camara_do_psychopus_2",
+      "area": "camara_do_psychopus_2",
       "wakes": "onEnter",
-      "line": "psychopus_chamber_2",
+      "line": "camara_do_psychopus_2",
       "enemies": [
-        {
-          "type": "cyclopus2",
-          "pos": [
-            {"u": 78.0, "v": 68.3, "rot": 135}
-          ],
-          "miniboss": true
-        },
+        {"type": "cyclopus2", "pos": [{"u": 78.0, "v": 68.3, "rot": 135}], "miniboss": true},
         {
           "type": "cyclopuslaser",
           "pos": [
@@ -472,36 +533,21 @@
       "miniboss": true
     },
     {
-      "room": "cyclopus_hall",
-      "area": "cyclopus_hall",
+      "room": "salao_do_cyclopus",
+      "area": "salao_do_cyclopus",
       "wakes": "onEnter",
-      "line": "cyclopus_hall",
+      "line": "salao_do_cyclopus",
       "enemies": [
-        {
-          "type": "octopus",
-          "pos": [
-            {"u": 6.0, "v": 172.3, "rot": 135}
-          ]
-        },
+        {"type": "octopus", "pos": [{"u": 6.0, "v": 172.3, "rot": 135}]},
         {
           "type": "laserspinner_long_CW_N",
-          "pos": [
-            {"u": -14.4, "v": 147.8, "rot": 135}
-          ],
-          "note": "'can spawn in a room with rotating lasers' (wiki)"
+          "pos": [{"u": -14.4, "v": 147.8, "rot": 135}],
+          "note": "'pode nascer numa sala com lasers giratorios' (wiki)"
         },
-        {
-          "type": "laserspinner_long_CCW_N",
-          "pos": [
-            {"u": 26.4, "v": 147.8, "rot": 135}
-          ]
-        },
+        {"type": "laserspinner_long_CCW_N", "pos": [{"u": 26.4, "v": 147.8, "rot": 135}]},
         {
           "type": "octopuslaser",
-          "pos": [
-            {"u": -25.0, "v": 188.6, "rot": 135},
-            {"u": 37.0, "v": 188.6, "rot": 135}
-          ],
+          "pos": [{"u": -25.0, "v": 188.6, "rot": 135}, {"u": 37.0, "v": 188.6, "rot": 135}],
           "note": "Watchers"
         }
       ],

@@ -56,6 +56,7 @@ internal sealed class SettingsPage : UserControl
     private readonly Button undoButton;
     private readonly Label statusLabel;
     private readonly Label introLabel;
+    private readonly Control toolbar;
     private readonly List<SettingEditor> editors = new List<SettingEditor>();
     private readonly List<Label> wrappingLabels = new List<Label>();
     private readonly Dictionary<string, DateTime> loadedStamps = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
@@ -74,7 +75,7 @@ internal sealed class SettingsPage : UserControl
         undoButton.Enabled = false;
         statusLabel = Ui.Note("");
 
-        var toolbar = Ui.WrapFlow(saveButton, undoButton, statusLabel);
+        toolbar = Ui.WrapFlow(saveButton, undoButton, statusLabel);
         toolbar.Dock = DockStyle.Top;
 
         introLabel = Ui.Wrapping(intro, 600, gray: true);
@@ -109,6 +110,14 @@ internal sealed class SettingsPage : UserControl
     }
 
     public bool HasUnsavedChanges => editors.Any(e => e.IsChanged);
+
+    // Extra button in the toolbar, before the status text (for example a shortcut to a folder the settings point to).
+    public void AddToolbarButton(string text, EventHandler onClick)
+    {
+        Button button = Ui.Button(text, onClick);
+        toolbar.Controls.Add(button);
+        toolbar.Controls.SetChildIndex(button, toolbar.Controls.GetChildIndex(statusLabel));
+    }
 
     // Reads the files again (drops unsaved edits).
     public void Reload()

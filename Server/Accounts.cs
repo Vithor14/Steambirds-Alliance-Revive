@@ -23,8 +23,6 @@ using Lidgren.Network;
 //    player to the tutorial at the Nexus (GameClient.IsInitialTutorialPossible);
 //  - the pilot (Progression/PilotSave.cs): rank, XP, skills, loadouts, portrait, buffs, unlocks.
 //
-// The old single account (account.json, inventory.json and acceptances.json in the server folder) goes to the first
-// player who logs in from this PC (the host), with a copy in _backup\migration-<date>.
 // To see the tutorial again: /reset_tutorial in the chat, or /tutorial at the Nexus.
 public static class Accounts
 {
@@ -159,6 +157,8 @@ public static class Accounts
     private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
     {
         PropertyNameCaseInsensitive = true,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        AllowTrailingCommas = true,
         WriteIndented = true
     };
 
@@ -171,10 +171,6 @@ public static class Accounts
 
     public static string BaseFolder => Directory.GetCurrentDirectory();
     public static string AccountsFolder => Path.Combine(BaseFolder, AccountsFolderName);
-    private static string LegacyAccountPath => Path.Combine(BaseFolder, AccountFileName);
-
-    // true while the old single account (account.json in the server folder) waits for the host's first login.
-    public static bool LegacyAccountWaiting => File.Exists(LegacyAccountPath);
 
     // ================================================================== startup and accounts
 
@@ -193,14 +189,12 @@ public static class Accounts
             catch
             {
             }
-            log("ACCOUNT", AccountsFolder + ": " + onDisk + " account(s) saved, one per player (loaded at each one's login)" +
-                (LegacyAccountWaiting ? "; the old account " + LegacyAccountPath + " goes to the first player who joins from this PC" : ""));
+            log("ACCOUNT", AccountsFolder + ": " + onDisk + " account(s) saved, one per player (loaded at each one's login)");
         }
     }
 
-    // Account of a player (loaded from accounts\<key> or created). canInheritLegacy: the player is on this PC, so a
-    // waiting old single account (account.json in the server folder) becomes theirs when they have no account yet.
-    public static Account GetOrCreate(string key, string name, string? steamId, bool canInheritLegacy, out string note)
+    // Account of a player (loaded from accounts\<key> or created).
+    public static Account GetOrCreate(string key, string name, string? steamId, out string note)
     {
         note = "";
         key = SteamTicket.Clean(key);
@@ -210,15 +204,9 @@ public static class Accounts
             {
                 string folder = Path.Combine(AccountsFolder, key);
                 bool exists = File.Exists(Path.Combine(folder, AccountFileName));
-                if (!exists && canInheritLegacy && LegacyAccountWaiting)
-                {
-                    string? backup = MigrateLegacy(folder);
-                    note = backup != null ? "inherited the server's old account (copy in " + backup + ")" : "";
-                    exists = File.Exists(Path.Combine(folder, AccountFileName));
-                }
                 account = LoadFrom(key, folder);
                 loaded[key] = account;
-                if (!exists && note.Length == 0) note = "new account";
+                if (!exists) note = "new account";
             }
 
             AccountData d = account.Data;
@@ -290,7 +278,7 @@ public static class Accounts
             {
                 Type? type = frame.GetMethod()?.DeclaringType;
                 string typeName = type?.FullName ?? "";
-                if (typeName.StartsWith("ContaEsboco", StringComparison.Ordinal) || typeName.StartsWith("InventoryStore", StringComparison.Ordinal)) continue;
+                if (typeName.StartsWith("InventoryStore", StringComparison.Ordinal)) continue;
                 where = typeName + "." + frame.GetMethod()?.Name;
                 break;
             }
@@ -492,7 +480,7 @@ public static class Accounts
             try
             {
                 string text = File.ReadAllText(path);
-                read = LegacyNames.Deserialize<AccountData>(text, JsonOptions);
+                read = JsonSerializer.Deserialize<AccountData>(text, JsonOptions);
                 using JsonDocument document = JsonDocument.Parse(text);
                 foreach (JsonProperty property in document.RootElement.EnumerateObject())
                 {
@@ -552,32 +540,6 @@ public static class Accounts
             ", pilot rank " + data.Pilot.Level + " (" + data.Pilot.BaselineXp + " XP)" + (account.NewPilot ? " [new pilot]" : "") +
             ", finished dungeons: " + (data.FinishedDungeons.Count == 0 ? "none (the client asks for the tutorial)" : string.Join(", ", data.FinishedDungeons)));
         return account;
-    }
-
-    // Moves the old single account (account.json, inventory.json, acceptances.json of the server folder) into folder.
-    // Returns the backup folder, or null when nothing was moved.
-    private static string? MigrateLegacy(string folder)
-    {
-        try
-        {
-            string backup = Path.Combine(BaseFolder, "_backup", "migration-" + DateTime.Now.ToString("yyyyMMdd-HHmmss"));
-            Directory.CreateDirectory(backup);
-            Directory.CreateDirectory(folder);
-            foreach (string name in new[] { AccountFileName, InventoryFileName, AcceptancesFileName })
-            {
-                string source = Path.Combine(BaseFolder, name);
-                if (!File.Exists(source)) continue;
-                File.Copy(source, Path.Combine(backup, name), overwrite: true);
-                File.Move(source, Path.Combine(folder, name), overwrite: true);
-            }
-            log("ACCOUNT", "old server account moved to " + folder + " (copy in " + backup + ")");
-            return backup;
-        }
-        catch (Exception e)
-        {
-            log("ACCOUNT", "could not move the old account to " + folder + ": " + e.Message);
-            return null;
-        }
     }
 
     private static void SaveUnlocked(Account account)

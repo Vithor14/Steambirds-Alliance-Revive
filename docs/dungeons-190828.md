@@ -1,6 +1,6 @@
 # Dungeons da build 190828 (recriadas)
 
-Situação em 15/11/2026. Os mapas ficam em `Server\maps\dungeon_*.json`, gerados por `tools\dungeons-190828\dungeons_190828.py`. O formato e os campos novos estão em `maps\README.md` (e em `docs/formato-de-mapas.md`). Desde a v8 eles rodam no servidor de dungeon (`docs/servidor-de-dungeon.md`); só Iron Lair e Bomb Factory estão ligadas no `dungeons.json` (testadas em 15/11; a Bomb Factory ganhou a correção dos barris, v8b).
+Situação em 15/11/2026. Os mapas ficam em `Server\maps\dungeon_*.json`, gerados por `tools\dungeons-190828\dungeons_190828.py`. O formato e os campos novos estão em `docs/map-format.md` (e em `docs/map-format.md`). Desde a v8 eles rodam no servidor de dungeon (`docs/dungeon-server.md`); só Iron Lair e Bomb Factory estão ligadas no `dungeons.json` (testadas em 15/11; a Bomb Factory ganhou a correção dos barris, v8b).
 
 ## O que se achou no configBinary
 

@@ -5,7 +5,7 @@ namespace SteambirdsLauncher.Editor;
 
 // The floor of a map: the tiles that have floor and the closed (wall) sub-cells inside them.
 //
-// In the file ("chao.desenho") the floor is a text drawing, one character per sub-cell of 3 u:
+// In the file ("floor.drawing") the floor is a text drawing, one character per sub-cell of 3 u:
 //   '.' free floor, '#' wall, '-' no floor.
 // A tile has floor when any of its 16 sub-cells is not '-'. When "wallsOnEdges" is on the server adds a wall on the
 // edge sub-cells of a tile whose neighbour on that side has no floor. The editor keeps only the real walls that
@@ -116,7 +116,7 @@ internal sealed class FloorGrid
 
     // ------------------------------------------------------------------ file
 
-    // Reads "floor" (murosNasBordas and desenho). Characters other than . and # count as no floor.
+    // Reads "floor" (wallsOnEdges and drawing). Characters other than . and # count as no floor.
     public void Load(JsonObject floorJson)
     {
         Clear();
@@ -146,7 +146,7 @@ internal sealed class FloorGrid
         }
     }
 
-    // Writes "chao.murosNasBordas" and "chao.desenho" (the other fields of "floor" are not touched).
+    // Writes "floor.wallsOnEdges" and "floor.drawing" (the other fields of "floor" are not touched).
     public void Save(JsonObject floorJson)
     {
         floorJson["wallsOnEdges"] = AutoBorders;

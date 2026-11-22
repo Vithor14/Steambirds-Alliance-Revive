@@ -5,7 +5,7 @@ namespace SteambirdsLauncher.Core;
 // The game file "configBinary" (every config of the game: items, loot, XP tables, skills, unlocks, plane classes)
 // as the server of this launcher sees it.
 //
-// The server looks for it in this order (Server DadosDoJogo.LugaresDoConfigBinary), with
+// The server looks for it in this order (Server GameDataFiles.ConfigBinaryPlaces), with
 // STEAMBIRDS_GAME = the launcher's game folder:
 //   1. server\data\configBinary            copy that travels with the launcher (Build launcher.ps1 puts it there)
 //   2. <game folder>\Steambirds_Data\StreamingAssets\configBinary

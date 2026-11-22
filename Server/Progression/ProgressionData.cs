@@ -19,7 +19,7 @@ using System.Globalization;
 //   career_rewards / death                 only shown in the log for now (formats still unknown)
 //   Texts/<locale>/planeclasses            class names for the death screen
 //
-// If the configBinary cannot be read, the tables of build 190828 (the old configBinary in VersoesAntigas)
+// If the configBinary cannot be read, the tables of build 190828 (the old configBinary in OldVersions)
 // are used, so XP still works; skill changes are then trusted to the client.
 public static class ProgressionData
 {
@@ -175,7 +175,7 @@ public static class ProgressionData
 
     // ------------------------------------------------------------------ data
 
-    // Build 190828 (VersoesAntigas\386011-1702765646885248947): used only without a readable configBinary.
+    // Build 190828 (OldVersions\386011-1702765646885248947): used only without a readable configBinary.
     private static readonly int[] FallbackPlaneXp =
     {
         50, 200, 350, 700, 1200, 1900, 2700, 4000, 5500, 7500, 10000, 13000, 17000, 20000, 25000, 30000, 36000, 45000, 54000
@@ -213,6 +213,10 @@ public static class ProgressionData
     public static float[] HealthTiers { get; private set; } = FallbackHealthTiers;
     public static float RealTimePlaneXpProportion { get; private set; } = 0.65f;
     public static int XpLimitForMaxLevel { get; private set; } = 40000;
+    // Retiring a plane pays its not-yet-counted pilot XP also as currency: XP / PilotXpPer1Currency of PilotXpCurrencyId, only from the threshold.
+    public static int PilotXpPer1Currency { get; private set; }
+    public static int PilotXpCurrencyAwardThreshold { get; private set; } = 10;
+    public static string PilotXpCurrencyId { get; private set; } = "scrap";
     public static int BaseSkillLoadoutSlots { get; private set; } = 1;
     public static float DefaultDamageThreshold { get; private set; } = 0.005f;
     public static float NearbyPlayersRadius { get; private set; } = 15f;
@@ -256,6 +260,9 @@ public static class ProgressionData
         if (pilot != null) PilotLevels = pilot;
         RealTimePlaneXpProportion = global["realTimePlaneXPProportion"].AsFloat(0.65f);
         XpLimitForMaxLevel = global["xpLimitForMaxLevel"].AsInt(XpLimitForMaxLevel);
+        PilotXpPer1Currency = global["pilotXpPer1Currency"].AsInt(PilotXpPer1Currency);
+        PilotXpCurrencyAwardThreshold = global["pilotXpCurrencyAwardThreshold"].AsInt(PilotXpCurrencyAwardThreshold);
+        PilotXpCurrencyId = global["pilotXpCurrencyId"].AsString(PilotXpCurrencyId);
         BaseSkillLoadoutSlots = Math.Max(1, global["baseSkillLoadoutSlots"].AsInt(1));
         DefaultDamageThreshold = global["defaultDamageThreshold"].AsFloat(DefaultDamageThreshold);
         NearbyPlayersRadius = global["reliableStats_nearbyPlayerCountRadius"].AsFloat(15f);
