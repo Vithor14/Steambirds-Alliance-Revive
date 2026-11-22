@@ -14,12 +14,12 @@ public static class ReportWriter
         string reportPath = LauncherPaths.ReportFile;
         using var writer = new StreamWriter(reportPath, false, new UTF8Encoding(false));
 
-        writer.WriteLine("=== STEAMBIRDS REPORT ===");
-        writer.WriteLine("Gerado em: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"));
+        writer.WriteLine("=== STEAMBIRDS REVIVE REPORT ===");
+        writer.WriteLine("Generated at: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"));
         writer.WriteLine("Windows: " + Environment.OSVersion.VersionString);
         writer.WriteLine("Launcher: " + LauncherInfo.Version + " (" + LauncherPaths.BaseFolder + ")");
         writer.WriteLine("Server: " + DescribeFile(LauncherPaths.ServerExe));
-        writer.WriteLine("Plugin incluido no launcher: " + DescribeFile(LauncherPaths.BundledPlugin) + PluginVersionText(LauncherPaths.BundledPlugin));
+        writer.WriteLine("Plugin bundled with the launcher: " + DescribeFile(LauncherPaths.BundledPlugin) + PluginVersionText(LauncherPaths.BundledPlugin));
         if (GameInstall.HasGame(gameFolder))
         {
             string build = GameInstall.ReadBuildId(gameFolder);
@@ -78,7 +78,7 @@ public static class ReportWriter
     {
         writer.WriteLine();
         writer.WriteLine(new string('=', 70));
-        writer.WriteLine("ARQUIVO: " + title);
+        writer.WriteLine("FILE: " + title);
 
         if (!File.Exists(path))
         {
@@ -87,8 +87,8 @@ public static class ReportWriter
         }
 
         var info = new FileInfo(path);
-        writer.WriteLine("CAMINHO: " + path);
-        writer.WriteLine("MODIFICADO: " + info.LastWriteTime.ToString("dd/MM/yyyy HH:mm:ss"));
+        writer.WriteLine("PATH: " + path);
+        writer.WriteLine("MODIFIED: " + info.LastWriteTime.ToString("dd/MM/yyyy HH:mm:ss"));
         writer.WriteLine(new string('=', 70));
 
         if (info.Length == 0)
@@ -109,7 +109,7 @@ public static class ReportWriter
             var filter = new NoiseFilter();
             lines = lines.Where(filter.Keep).ToList();
             if (filter.IlLinesHidden > 0)
-                writer.WriteLine("(" + filter.IlLinesHidden + " linhas de IL do HarmonyX omitidas; o plugin 1.13.0 desliga esse despejo na origem)");
+                writer.WriteLine("(" + filter.IlLinesHidden + " lines of HarmonyX IL omitted; plugin 1.13.0 and newer turns this dump off at the source)");
             if (filter.MissingScriptWarnings > 0)
                 writer.WriteLine("(" + filter.MissingScriptWarnings + " warnings 'The referenced script on this Behaviour ... is missing!' omitted: they come from the game assets, not from the server)");
 
@@ -118,7 +118,7 @@ public static class ReportWriter
             if (errors.Count == 0) writer.WriteLine("(no error or exception line)");
             foreach (KeyValuePair<string, int> error in errors)
                 writer.WriteLine(error.Value.ToString().PadLeft(5) + "x  " + error.Key);
-            writer.WriteLine("--- conteudo ---");
+            writer.WriteLine("--- content ---");
         }
 
         if (lastLines > 0 && lines.Count > lastLines)

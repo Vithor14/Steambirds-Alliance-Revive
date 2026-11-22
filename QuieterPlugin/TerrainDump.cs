@@ -34,7 +34,7 @@ public class DumpTerrain : BaseUnityPlugin
         try
         {
             File.WriteAllText(file,
-                "=== terrain dump started " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " ===" + Environment.NewLine);
+                "=== terrain dump started " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + " ===" + Environment.NewLine);
         }
         catch
         {
@@ -53,7 +53,7 @@ public class DumpTerrain : BaseUnityPlugin
         {
             var terrain = ReadMember(GameClient.Instance, "CurrentTerrainConfig") as TerrainConfig;
             if (terrain == null) return;
-            terrainName = terrain.name ?? "sem_nome";
+            terrainName = terrain.name ?? "unnamed";
         }
         catch
         {

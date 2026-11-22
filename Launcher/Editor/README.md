@@ -17,7 +17,7 @@ Saving checks the map first (**Tools → Check map** shows the same list):
 - **Errors** (the dungeon would not work): no floor or floor pieces, floor outside the game grid, no entrance, no exit point, nothing that ends the dungeon, rooms without name or area, groups or gates pointing to a unit type, room or area that does not exist, bad conditions (`cleared:`, `death:`, `quest:`), empty terrain.
 - **Warnings** (it works, but look at it): entrance or exit off the floor, rooms without units, gates that never open, no checkpoints, a unit outside the area of its room.
 
-A map with errors is not saved as a normal map. The dialog offers **Save as draft anyway**, which writes `"draft": true` in the file so you can keep working. The mark is only for the editor (the server does not read it), so a draft may not work on the server until the errors are fixed. Before the first save of a session the old file is copied to `server\_backup\mapas-<date>`.
+A map with errors is not saved as a normal map. The dialog offers **Save as draft anyway**, which writes `"draft": true` in the file so you can keep working. The mark is only for the editor (the server does not read it), so a draft may not work on the server until the errors are fixed. Before the first save of a session the old file is copied to `server\_backup\maps-<date>`.
 
 ## Game pictures
 

@@ -34,7 +34,6 @@ $buildFolder       = Join-Path $launcherFolder "build"
 $distFolder        = Join-Path $launcherFolder "dist"
 $duplicatesFolder  = Join-Path $root "_duplicates"
 $buildLog          = Join-Path $buildFolder "build.log"
-$accountFiles      = @("account.json", "acceptances.json", "inventory.json")
 
 New-Item -ItemType Directory -Force -Path $buildFolder | Out-Null
 $script:log = New-Object System.IO.StreamWriter($buildLog, $false, (New-Object System.Text.UTF8Encoding($false)))
@@ -251,8 +250,7 @@ function CopyServerData() {
     # Files in the root: configs (.json) and texts (.md). appsettings.json always comes from the project.
     $rootFiles = @(Get-ChildItem -LiteralPath $serverFolder -File | Where-Object {
         (@(".json", ".md") -contains $_.Extension.ToLowerInvariant()) -and
-        ($_.Name -ne "appsettings.Development.json") -and ($_.Name -ne "appsettings.json") -and
-        ($accountFiles -notcontains $_.Name)
+        ($_.Name -ne "appsettings.Development.json") -and ($_.Name -ne "appsettings.json")
     })
     foreach ($file in $rootFiles) {
         CopyIfNewer $file.FullName (Join-Path $distServerFolder $file.Name) $file.Name
@@ -260,7 +258,7 @@ function CopyServerData() {
     $appsettings = Join-Path $serverFolder "appsettings.json"
     if (Test-Path -LiteralPath $appsettings) { Copy-Item -LiteralPath $appsettings -Destination $distServerFolder -Force }
 
-    # Accounts: one per player in server\accounts (never copied: dist keeps its own).
+    # Accounts: one per player in server\accounts (never copied).
     $distAccountsFolder = Join-Path $distServerFolder "accounts"
     if (Test-Path -LiteralPath $distAccountsFolder) {
         $accountCount = @(Get-ChildItem -LiteralPath $distAccountsFolder -Directory -ErrorAction SilentlyContinue).Count

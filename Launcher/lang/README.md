@@ -38,7 +38,7 @@ Copy those lines into `<code>.json`, translate the values, and delete the `.miss
 The last part of `_template.json` (after `"_settings_descriptions"`) has the descriptions shown under the
 server settings (Server tab → Progression, Items and loot, Enemies and difficulty, Accounts, Network and multiplayer).
 They are optional: without a translation, the launcher shows the comment the server writes above each key of
-its `.json` files.
+its `.json` files, which is in English.
 
 ## Game language
 

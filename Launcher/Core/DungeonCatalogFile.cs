@@ -3,7 +3,6 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-using SteambirdsLauncher.Editor;
 namespace SteambirdsLauncher.Core;
 
 // server\dungeons.json (read by Dungeons\DungeonCatalog.cs): which dungeons the host offers, the map file of each one,

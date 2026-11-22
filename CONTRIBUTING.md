@@ -19,8 +19,6 @@ the next person and keep the game's files out of the repository.
   hardcode content in C# when it can be a file the host or the community can edit.
 - **Stay close to the original game.** Anything rebuilt without original data must be marked as a reconstruction (in the
   file that holds it, or in a comment) and, when it makes sense, be configurable.
-- **No compatibility layer for old names.** When you rename a field, a file or a folder, rename it everywhere (code,
-  maps, docs, scripts) in the same change. Do not add code that reads the old name.
 - **Split big files.** Do not grow a file past about 60 KB. Use `partial` classes split by topic (see
   `Server\Enemies*.cs`) or a new file per topic.
 
@@ -30,7 +28,7 @@ the next person and keep the game's files out of the repository.
 - Nullable reference types are on. Do not silence warnings with `!` when a real check is possible.
 - Use the existing helpers (`Json`, `TextFiles`, `ConfigBinary`, `Maps`) instead of writing new ones.
 - Comments explain *why* (the game's behavior, the protocol rule, the reconstruction), not what the code does.
-- Log lines start with a tag in capitals in square brackets, like `[ENEMY]`, `[MAP]`, `[ACCOUNT]`. Keep the tags in English.
+- Log lines start with a tag in capitals in square brackets, like `[ENEMY]`, `[MAP]`, `[DUNGEON]`. Keep the tags in English.
 
 ## Build and test
 

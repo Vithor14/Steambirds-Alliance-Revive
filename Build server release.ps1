@@ -36,7 +36,7 @@ $logFile          = Join-Path $buildFolder "release.log"
 # about folders without code that are not in this list), so nothing private or from the game leaks by accident.
 $releaseFolders   = @("maps", "loot_tables")
 
-# Settings in the root of Server\ that never go into the release (development settings and stray account files).
+# Files in the root of Server\ that never go into the release (development settings and account files).
 $excludedRootFiles = @("appsettings.Development.json", "account.json", "inventory.json", "acceptances.json")
 
 # Folders of Server\ that are known and never released: build output, game data, accounts, logs, backups.

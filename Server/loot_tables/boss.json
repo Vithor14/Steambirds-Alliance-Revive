@@ -10,7 +10,7 @@
 
   "rolls": [
     {
-      // Sempre um equipamento um tier acima, de algo que a classe do jogador pode equipar.
+      // Always one piece of equipment one tier above, of something the player's class can equip.
       "usableChance": 100,
       "lootTable": [
         { "weight": 1, "items": [ { "tier": 2 } ] }

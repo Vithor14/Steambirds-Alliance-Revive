@@ -265,7 +265,7 @@ internal sealed class LauncherContext : IDisposable
     {
         if (line.StartsWith(">>", StringComparison.Ordinal)) return LineKind.Launcher;
         if (line.Contains("[ERROR]", StringComparison.Ordinal) || line.Contains(" ERROR ", StringComparison.Ordinal) ||
-            line.Contains("ERRO em", StringComparison.Ordinal) || LogSummary.LooksLikeError(line))
+            LogSummary.LooksLikeError(line))
             return LineKind.Error;
         if (line.Contains("[WELCOME]", StringComparison.Ordinal) || line.Contains("listening on", StringComparison.Ordinal))
             return LineKind.Good;

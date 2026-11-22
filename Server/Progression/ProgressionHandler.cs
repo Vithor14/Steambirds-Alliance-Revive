@@ -175,7 +175,7 @@ public static class ProgressionHandler
                 if (characterId == null || number <= 0)
                 {
                     Chat(server, connection, characterId == null ? "You need a live plane." :
-                        "Use /level N (1 a " + ProgressionData.PlaneLevels.TopLevel + ").");
+                        "Use /level N (1 to " + ProgressionData.PlaneLevels.TopLevel + ").");
                     return true;
                 }
                 bool done = PilotProgression.SetPlaneLevel(server, connection, role, characterId, number);
@@ -185,7 +185,7 @@ public static class ProgressionHandler
             case "/rank":
                 if (number <= 0)
                 {
-                    Chat(server, connection, "Use /rank N (1 a " + ProgressionData.PilotLevels.TopLevel + ").");
+                    Chat(server, connection, "Use /rank N (1 to " + ProgressionData.PilotLevels.TopLevel + ").");
                     return true;
                 }
                 PilotProgression.SetPilotLevel(server, connection, role, number);

@@ -193,7 +193,7 @@ public static class Accounts
         }
     }
 
-    // Account of a player (loaded from accounts\<key> or created). note says when the account is new.
+    // Account of a player (loaded from accounts\<key> or created).
     public static Account GetOrCreate(string key, string name, string? steamId, out string note)
     {
         note = "";
@@ -278,7 +278,7 @@ public static class Accounts
             {
                 Type? type = frame.GetMethod()?.DeclaringType;
                 string typeName = type?.FullName ?? "";
-                if (typeName.StartsWith("Accounts", StringComparison.Ordinal) || typeName.StartsWith("InventoryStore", StringComparison.Ordinal)) continue;
+                if (typeName.StartsWith("InventoryStore", StringComparison.Ordinal)) continue;
                 where = typeName + "." + frame.GetMethod()?.Name;
                 break;
             }

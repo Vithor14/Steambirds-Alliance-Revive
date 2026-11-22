@@ -244,8 +244,12 @@ finally {
 
     AppendFile "Unity Player.log (last 4000 lines)" $playerLog 4000 $true
 
-    # Server account (planes and finished dungeons): shows whether the tutorial was marked as completed.
-    AppendFile "Server\account.json" (Join-Path $serverFolder "account.json") 0 $false
+    # Accounts of the players (planes and finished dungeons): shows whether the tutorial was marked as completed.
+    $accountFiles = @(Get-ChildItem -LiteralPath (Join-Path $serverFolder "accounts") -Filter "account.json" -File -Recurse -ErrorAction SilentlyContinue |
+        Select-Object -First 20)
+    foreach ($accountFile in $accountFiles) {
+        AppendFile ("Server\accounts\" + $accountFile.Directory.Name + "\account.json") $accountFile.FullName 0 $false
+    }
 
     $txts = @(Get-ChildItem -LiteralPath $bepInExFolder -Filter "*.txt" -File -ErrorAction SilentlyContinue |
         Sort-Object FullName)

@@ -1,8 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using SteambirdsLauncher.Editor;
-
 namespace SteambirdsLauncher.Core;
 
 // Read-only view of an account.json (Server\Accounts.cs): one per player in server\accounts\<key>\. AccountStore edits them.

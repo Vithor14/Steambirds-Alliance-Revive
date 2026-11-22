@@ -318,7 +318,7 @@ public static partial class Tutorial
                     string? arg = pieces.Count > 1 ? pieces[1].Trim() : null;
                     if (!int.TryParse(arg, NumberStyles.Integer, Inv, out int number) || number < 1 || number > 5)
                     {
-                        WorldObjects.SendChat(server, connection, "Use /step N (1 a 5).");
+                        WorldObjects.SendChat(server, connection, "Use /step N (1 to 5).");
                         break;
                     }
                     JumpToStage(sess, number, now, log);

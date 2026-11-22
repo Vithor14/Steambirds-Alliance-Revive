@@ -47,8 +47,9 @@ Maintained 100% by the community, with some additions and improvements.
 ## Repository layout
 
 - `Server\` — the server (.NET 8: ASP.NET for the HTTP "Ozy" API, Lidgren UDP for "Copper"). Project `SteambirdsServer.csproj`.
-  - Folders by topic: `GameData`, `Progression`, `Items`, `Dungeons`, `Network`, `Planes`, `Skills`.
-    Top-level files: `Program.cs` (startup, network loop), `Game.cs` (client messages), `Enemies.cs` (AI, waves),
+  - Folders by topic: `GameData`, `Progression`, `Items`, `Dungeons`, `Network`, `Planes`, `Skills`, `Compat`.
+    Top-level files: `Program*.cs` (`Program.cs` startup and `Main`, `Program.Transfers.cs` server switches and plane spawn,
+    `Program.Messages.cs` host messages, `Program.Udp.cs` network loop, `Program.Http.cs` login), `Game.cs` (client messages), `Enemies.cs` (AI, waves),
     `Tutorial.cs` (walker tutorial script), `Maps.cs` (map files), `Accounts.cs`, `PlayerData.cs`, `Ground.cs`, `MapInfo.cs`,
     `Nexus.cs`, `WorldObjects.cs`, `PlaneSpawn.cs`, `CopperReader.cs`, `MessageCatalog.cs`, `MessageLog.cs`.
   - Host configs: `progression.json`, `items.json`, `enemies.json`, `dungeons.json`, `network.json`.
@@ -107,13 +108,13 @@ In-game testing is done by the user. When they report a test, read `server-repor
 
 ## Rules
 
-- Identifiers, file and folder names, comments and READMEs in English (a Portuguese version is optional). There is no
-  compatibility layer for old names: the project is treated as if it started with the English names. The only Portuguese
-  left is the content of the `docs\` snapshots, the checklist prose, `lang\pt-BR.json` and the game's own data.
+- Identifiers, comments and READMEs in English (Portuguese optional). There is no compatibility layer for the old
+  Portuguese names: files, folders, map fields and plugin data written by older versions are not read. Portuguese only
+  survives in the `docs\` snapshots, the launcher's translation (`Launcher\lang\pt-BR.json`, `LEIA-ME.md`) and the game's own data.
 - Split different parts of the project into different files so each one can be maintained on its own. Don't grow big
-  files (keep each one under ~60 KB; use `partial` classes by topic, as in `Enemies*.cs`): read only the ranges you need.
-- Maps and game content go in data files, never hardcoded (map editor, community dungeons). Map field names are
-  English (`floor`, `decor`, `buildings`...); the format is `steambirds-map`, version 1 (`docs/map-format.md`).
+  files (`Enemies.cs`, `Game.cs` and the like are split into `partial` files by topic): read only the ranges you need.
+- Maps and game content go in data files, never hardcoded (map editor, community dungeons). Map field names are in
+  English (`floor`, `decor`, `buildings`...).
 - Launcher: a feature that does not exist yet in the game/server still gets its menu, greyed out and disabled.
 - Stay as close as possible to the original game. Anything rebuilt without original data must be documented as a
   reconstruction and, when it makes sense, be configurable by the host.

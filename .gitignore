@@ -13,6 +13,7 @@ __pycache__/
 # Local files and old copies that must never be published
 FileList.txt
 /_duplicates/
+/_removed-portuguese/
 *.zip
 
 # Game files and the decompiled client (not ours: they belong to Steam and to the game's developer)
@@ -32,9 +33,6 @@ FileList.txt
 /Server/accounts/
 /Server/_backup/
 /Server/client-uploads/
-/Server/account.json
-/Server/inventory.json
-/Server/acceptances.json
 
 # Server: logs and reports written while it runs
 /Server/logs/

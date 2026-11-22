@@ -2,7 +2,6 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-using SteambirdsLauncher.Editor;
 namespace SteambirdsLauncher.Core;
 
 // The accounts of the server: one folder per player in server\accounts\<key>\ (key = steam_<SteamID64>), with

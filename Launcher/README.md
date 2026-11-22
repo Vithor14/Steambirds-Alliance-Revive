@@ -1,6 +1,6 @@
 # Steambirds Alliance Revive — Launcher
 
-Launcher of the project, with four tabs:
+Launcher of the project (Portuguese version: `LEIA-ME.md`), with four tabs:
 
 - **Client**: downloads the game with Steam, sets the player name, lists the servers (this PC, the local network and VPNs like Radmin and Hamachi, or a typed IP) and opens the game on the chosen server. Its console shows `BepInEx\LogOutput.log` and the Unity `Player.log` while the game runs.
 - **Server**: hosts the server of this PC (what `Run server.ps1` did) for this PC and for players of other PCs, shows its output in a console and edits its settings, its network (name, ports, who can join) and the accounts of the players.

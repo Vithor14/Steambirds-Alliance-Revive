@@ -106,8 +106,8 @@ dungeons 1113 (UDP), server search 6444 (UDP).
 | `QuieterPlugin\` | BepInEx plugin for the game client: data exports, map editor pictures (export mode) and client-side fixes. |
 | `GameFiles\` | `SteambirdsGameFiles.exe`: takes the game's own files from the player's copy of the game (see its README). |
 | `Packaging\server\` | README and `Start server.cmd` that go into the server release zip. |
-| `docs\` | Design notes (written in Portuguese). |
-| `Clean project.ps1` | Removes build output, logs, duplicate copies and other garbage (`-WhatIf` only lists them). |
+| `tools\` | Python tools: dungeon generator, editor image builder. |
+| `docs\` | Design notes (Portuguese). |
 | `CHECKLIST.md` | Status of every area and the suggested order of work. |
 
 ## License

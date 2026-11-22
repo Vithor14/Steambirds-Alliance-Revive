@@ -130,8 +130,8 @@ public sealed class ServerProcess : IDisposable
         }
 
         WriteLog("=== STEAMBIRDS SERVER (launcher " + LauncherInfo.Version + ") ===");
-        WriteLog("Started at: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-        WriteLog("Executable: " + LauncherPaths.ServerExe);
+        WriteLog("Iniciado em: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"));
+        WriteLog("Executavel: " + LauncherPaths.ServerExe);
         WriteLog("Data folder: " + LauncherPaths.ServerFolder);
         WriteLog("Game folder (STEAMBIRDS_GAME): " + (string.IsNullOrWhiteSpace(gameFolder) ? "(not set)" : gameFolder));
         WriteLog("");
