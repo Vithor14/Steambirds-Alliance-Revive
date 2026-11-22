@@ -493,6 +493,8 @@ public static partial class Enemies
             }
 
             SendShot(inst, enemy, m, gunRotation, now);
+            gun.Aim = gunRotation;
+            gun.AimAt = now;
             gun.Ammo--;
 
             float fireRate = (m.FireRate > 0.05f ? m.FireRate : 2f) * fireRateMult;

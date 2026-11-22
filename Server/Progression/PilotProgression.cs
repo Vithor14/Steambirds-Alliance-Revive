@@ -258,7 +258,7 @@ public static class PilotProgression
             else if (xp > 0)
             {
                 awarded = AwardPlaneXp(server, connection, role, characterId, xp, settings.CapXpPerKill, "kill of " + templateName +
-                    " (tier " + tier + ")");
+                    " (tier " + tier + ")", boosted: true);
             }
 
             ProgressionData.UnitXpInfo? unit = ProgressionData.GetUnit(templateName);
@@ -277,11 +277,13 @@ public static class PilotProgression
 
     // Adds plane XP to a plane of the account and tells the client. Returns the XP actually added.
     // cap: GameServer.GetXpActuallyAwarded (half of the current level, or xpLimitForMaxLevel at max level).
-    public static int AwardPlaneXp(NetServer server, NetConnection connection, string role, string characterId, int amount, bool cap, string reason)
+    // boosted: the account's XP boost (PlaneXpBoost) applies, as it does to kills in GameServer.GetXpActuallyAwarded.
+    public static int AwardPlaneXp(NetServer server, NetConnection connection, string role, string characterId, int amount, bool cap, string reason,
+        bool boosted = false)
     {
         lock (Game.Lock)
         {
-            PlaneXpResult? result = Accounts.Change(d => AddPlaneXp(d, characterId, amount, cap));
+            PlaneXpResult? result = Accounts.Change(d => AddPlaneXp(d, characterId, boosted ? PlaneXpBoost.Boost(d.Pilot, amount) : amount, cap));
             if (result == null)
             {
                 log("XP", "[" + role + "] " + reason + ": plane " + characterId + " is not in the account, XP lost");

@@ -36,6 +36,10 @@ public static class ProgressionHandler
                 PlaneRetirement.Retire(server, connection, role, msg.ReadString() ?? "");
                 return true;
 
+            case PlaneVariants.MsgServerRequestChangePlaneVariant:
+                PlaneVariants.Handle(server, connection, role, msg, log);
+                return true;
+
             case MsgServerRecordLevelupUIShown:
             {
                 int lastXp = msg.ReadInt32();

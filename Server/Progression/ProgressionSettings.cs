@@ -74,7 +74,7 @@ public sealed class CareerRewardSetting
 public sealed class CareerRewardItem
 {
     // QuestRewardType: Item, PlaneXp, PilotXp, Unlock, Quest, Currency, AccountItem, Ingredient.
-    // The server delivers PilotXp, PlaneXp and Unlock; the others are only shown until inventory exists.
+    // The server delivers PilotXp, PlaneXp, Unlock and Item (id = item, amount = how many); the others are only shown.
     public string Type { get; set; } = "PilotXp";
     public string Id { get; set; } = "";
     public int Amount { get; set; }

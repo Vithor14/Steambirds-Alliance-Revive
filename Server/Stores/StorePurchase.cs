@@ -97,12 +97,15 @@ public static class StorePurchase
             if (action == "use_instantly")
             {
                 List<ItemActionEffect> read = ItemActions.Read(def, out string? unsupported);
-                if (unsupported == null && read.Count > 0)
+                // Dyes need the client to repaint the plane and keys send the player away: they stay in the inventory for the player.
+                bool needsPlayer = read.Any(e => e.Kind == "deco" || e.Kind == "dungeonkey");
+                if (unsupported == null && read.Count > 0 && !needsPlayer)
                 {
                     effects.AddRange(read);
                     continue;
                 }
-                notes.Add(defId + " cannot be used by the server yet (" + unsupported + "): it went to the inventory");
+                notes.Add(defId + (needsPlayer ? " is used by the player" : " cannot be used by the server yet (" + unsupported + ")") +
+                          ": it went to the inventory");
             }
             else if (action.StartsWith("use_", StringComparison.Ordinal))
             {
@@ -180,6 +183,8 @@ public static class StorePurchase
             if (!applyOnClient.Contains(p.Item.DefId)) continue;
             StoredItem used = p.Item;
             InventoryHandler.Send(server, connection, m => InventoryWire.WriteClientConsumedItemOnPickup(m, used));
+            ItemDef? usedDef = ItemCatalog.Get(used.DefId);
+            if (usedDef != null) ItemActions.Apply(server, connection, role, ItemActions.Read(usedDef, out _));   // the server keeps the paint too
             notes.Add(used.DefId + " applied to the plane");
         }
         if (product.Unlocks.Count > 0) InventoryHandler.AddUnlocks(server, connection, product.Unlocks);

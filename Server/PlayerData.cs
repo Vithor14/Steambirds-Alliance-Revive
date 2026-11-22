@@ -208,7 +208,7 @@ public static class PlayerData
         buf.Write(planeVariant);              // planeVariant
         buf.Write((byte)Math.Clamp(level, 1, 255)); // level (byte; the client starts at 1)
         buf.WriteVariableInt32(Math.Max(0, xp));    // XP
-        buf.Write((byte)0);                   // Decoration.source = 0 (no colors, livery or trails)
+        PlaneDecoration.Write(buf, Accounts.GetPlane(characterId)?.Decoration);   // decoration (DecorationSerializer)
         buf.Write("");                        // combatSimMode
         buf.Write(0);                         // combatSimVer
         buf.Write(0);                         // combatSimSeed
@@ -373,7 +373,10 @@ public static class PlayerData
         buf.WriteVariableInt32(ItemSettingsFile.Current.ExtraCargoSlots + StoreAccounts.Count(StoreAccounts.InventorySlot)); // numAdditionalInventorySlots (items.json + store)
         buf.WriteVariableInt32(HangarSlots); // numHangarSlots (progression.json: hangarSlots + store)
         buf.WriteVariableInt32(PilotProgression.SkillLoadoutSlots()); // numSkillLoadoutSlots (progression.json: skillLoadoutSlots + store)
-        buf.WriteVariableInt32(0);             // planeXpAdditionalPercentage (0: no "until" after it)
+        // planeXpAdditionalPercentage and, when it is not 0, its "until" (unix seconds): the boost of the xp consumables
+        int boost = PlaneXpBoost.ActivePercent(pilot);
+        buf.WriteVariableInt32(boost);
+        if (boost != 0) buf.WriteVariableInt32(pilot.PlaneXpBoostUntil);
 
         buf.WriteVariableInt32(planes.Count);  // planes
         foreach (Accounts.SavedPlane plane in planes)
@@ -483,12 +486,13 @@ public static class PlayerData
     // (the same order as the client's PlayerScript.CreateEntOptions):
     // short class, short variant, GeneralID account (16 bytes), GeneralID character (16 bytes), decoration.
     // Decoration with source = 0 (1 byte), the same as WritePlaneRecord already sends.
-    public static void WritePlaneOptions(NetBuffer buf, short netIdClass, short netIdVariant, byte[] accountId, byte[] characterId)
+    public static void WritePlaneOptions(NetBuffer buf, short netIdClass, short netIdVariant, byte[] accountId, byte[] characterId,
+        SavedDecoration? decoration = null)
     {
         buf.Write(netIdClass);
         buf.Write(netIdVariant);
         WriteGeneralId(buf, accountId);
         WriteGeneralId(buf, characterId);
-        buf.Write((byte)0);
+        PlaneDecoration.Write(buf, decoration);
     }
 }

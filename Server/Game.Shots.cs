@@ -47,6 +47,11 @@ public static partial class Game
         float elementalDamage = msg.ReadSingle(); // effectDamage
         int owner = msg.ReadInt32();
         CopperReader.Death death = CopperReader.ReadDeath(msg);
+        bool bulletEnds = msg.ReadBoolean();      // shouldKillBullet: the bullet stops here (it does not pierce)
+
+        // The other players still see this bullet flying: it ends where it hit, on their screens too.
+        if (bulletEnds && death.HasPosition && owner == j.PlaneShortId)
+            PlayerRelay.BulletHit(j.Peer, bullet, death.X, death.Y, death.Rotation, death.BulletResult);
 
         // Bullets of the turrets of the server: the server already took their damage off (Enemies.Allies.cs).
         if (owner != j.PlaneShortId && Enemies.IsAllyUnit(msg.SenderConnection, owner)) return;

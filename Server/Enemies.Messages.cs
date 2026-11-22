@@ -73,7 +73,7 @@ public static partial class Enemies
             m.Write((byte)0);
             bool withHealth = enemy.HealthChanged || now - enemy.LastHealthSent > 2.0;
             bool withEffect = enemy.EffectChanged;
-            WriteFields(m, enemy, withHealth, withEffect);
+            WriteFields(m, enemy, withHealth, withEffect, BuildGunSignal(inst, enemy, now));
             enemy.EffectChanged = false;
             if (withHealth)
             {
@@ -88,9 +88,10 @@ public static partial class Enemies
     // FieldUpdateSerializer.Write: mask, then position (x1024), velocity (x1024), rotation (x32), health (x512, fraction).
     // withEffect: also the visual effect (EFFECTSTATE1 = 8192, short id; 0 turns it off). The client reads the fields in
     // the order of FieldUpdateSerializer: position, velocity, rotation, (aim, state), health, ..., effect state 1.
-    private static void WriteFields(NetBuffer m, Enemy enemy, bool withHealth, bool withEffect = false)
+    // guns: FIELDMASK_GUNS (4096), the angle of each turret (Enemies.Guns.cs); null = nothing to say.
+    private static void WriteFields(NetBuffer m, Enemy enemy, bool withHealth, bool withEffect = false, byte[]? guns = null)
     {
-        uint mask = 1u | 2u | 4u | (withHealth ? 8u : 0u) | (withEffect ? 8192u : 0u);
+        uint mask = 1u | 2u | 4u | (withHealth ? 8u : 0u) | (guns != null ? 4096u : 0u) | (withEffect ? 8192u : 0u);
         float vx = MathF.Sin(enemy.Rot * Rad) * enemy.Vel;
         float vy = MathF.Cos(enemy.Rot * Rad) * enemy.Vel;
 
@@ -101,6 +102,11 @@ public static partial class Enemies
         WriteScaled(m, vy, 1024f);
         WriteScaled(m, NormalizeAngle(enemy.Rot), 32f);
         if (withHealth) WriteScaled(m, Math.Clamp(enemy.Health / enemy.MaxHp, 0f, 1f), 512f);
+        if (guns != null)
+        {
+            m.WriteVariableInt32(guns.Length);
+            m.Write(guns);
+        }
         if (withEffect) m.Write(enemy.EffectId);
     }
 

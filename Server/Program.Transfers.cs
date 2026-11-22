@@ -88,7 +88,7 @@ public static partial class Program
         }
 
         var options = server.CreateMessage();
-        PlayerData.WritePlaneOptions(options, netClass, netVariant, Accounts.AccountId, idBytes);
+        PlayerData.WritePlaneOptions(options, netClass, netVariant, Accounts.AccountId, idBytes, record.Decoration);
 
         var peerId = connection.RemoteUniqueIdentifier;
         var currentTime = (float)Clock.Elapsed.TotalSeconds;
@@ -129,7 +129,7 @@ public static partial class Program
         Game.PlaneCreated(connection, RoleName(role), shortId, spawnX, spawnY, Clock.Elapsed.TotalSeconds, characterId, record.Class);
         // Multiplayer: the plane appears for the other players of the server, and theirs for this one.
         PlayerRelay.PlaneSpawned(connection, characterId, idBytes, record.Class, netClass, netVariant, model.Hash,
-            Accounts.Pilot().Level, spawnX, spawnY, spawnRot, Clock.Elapsed.TotalSeconds);
+            Accounts.Pilot().Level, spawnX, spawnY, spawnRot, Clock.Elapsed.TotalSeconds, record.Decoration);
         // Progression: statistics of nearby players (pilot skills) from now on.
         PilotProgression.PlaneSpawned(server, connection, RoleName(role), characterId, Clock.Elapsed.TotalSeconds);
 

@@ -20,7 +20,7 @@ using Lidgren.Network;
 // The shot time of GunFire is the shooter's own clock (Time.fixedTime). The observers compare it with the server clock, so
 // the relay converts it with the offset the shooter reports in every input message (ClockSample).
 // Skill clouds of a player (poison, heal, damage blast...) are created for every member of the room by the Skills module
-// (PlayerRelay.Observers); TriggerOtherPlayerSkill is not relayed yet.
+// (PlayerRelay.Observers); TriggerOtherPlayerSkill is forwarded to the cloud's owner (ForwardSkillTrigger).
 public static class PlayerRelay
 {
     public const string NexusRoom = "nexus";
@@ -71,6 +71,7 @@ public static class PlayerRelay
         public string? ClassId;
         public short NetClass;
         public short NetVariant;
+        public SavedDecoration? Decoration;
         public short Template;
         public float X;
         public float Y;
@@ -132,7 +133,8 @@ public static class PlayerRelay
 
     // The player's plane entered the world (SpawnPlane in Program.cs). It is shown to everybody and everybody is shown to it.
     public static void PlaneSpawned(NetConnection connection, string characterId, byte[] characterBytes,
-        string classId, short netClass, short netVariant, short template, int rank, float x, float y, float rotation, double now)
+        string classId, short netClass, short netVariant, short template, int rank, float x, float y, float rotation, double now,
+        SavedDecoration? decoration = null)
     {
         lock (Gate)
         {
@@ -148,6 +150,7 @@ public static class PlayerRelay
             member.ClassId = classId;
             member.NetClass = netClass;
             member.NetVariant = netVariant;
+            member.Decoration = decoration?.Copy();
             member.Template = template;
             member.Rank = Math.Max(1, rank);
             member.X = x;
@@ -160,6 +163,51 @@ public static class PlayerRelay
                 SendSpawn(other, member, now);
                 if (other.RelayId != 0) SendSpawn(member, other, now);
             }
+        }
+    }
+
+    // A bullet of this player hit something (ServerReportBulletHit): the observers who see the bullet end it at the same place
+    // (ClientKillBullet). Their copy carries the relay id of the owner instead of the owner's own unit id.
+    public static void BulletHit(long peer, ulong bullet, float x, float y, float rotation, int result)
+    {
+        lock (Gate)
+        {
+            if (!members.TryGetValue(peer, out Member? owner) || owner.RelayId == 0) return;
+            ulong id = ((ulong)(uint)owner.RelayId << 32) | (bullet & 0xFFFFFFFFUL);
+            foreach (Member observer in members.Values)
+            {
+                if (observer == owner || !observer.Seen.Contains(peer)) continue;
+                ScreenEffects.KillBullet(observer.Server, observer.Connection, id, x, y, rotation, result);
+            }
+        }
+    }
+
+    // TriggerOtherPlayerSkill: the owner of the plane with this relay id (same room as the sender) gets TriggerPlayerSkill.
+    public static bool ForwardSkillTrigger(NetConnection from, byte trigger, float amount, int relayId, out string ownerName)
+    {
+        ownerName = "";
+        lock (Gate)
+        {
+            if (!members.TryGetValue(from.RemoteUniqueIdentifier, out Member? sender)) return false;
+            Member? owner = members.Values.FirstOrDefault(m => m != sender && m.RelayId == relayId && m.Room == sender.Room &&
+                                                               m.Connection.Status == NetConnectionStatus.Connected);
+            if (owner == null) return false;
+            ownerName = owner.Name;
+            ProgressionMessages.Send(owner.Server, owner.Connection, m => ProgressionMessages.WriteTriggerPlayerSkill(m, trigger, amount));
+            return true;
+        }
+    }
+
+    // The player picked another variant (skin): players who see the plane from now on get the new one. Those who already
+    // see it keep the old look until the plane spawns again.
+    public static void VariantChanged(NetConnection? connection, short netVariant)
+    {
+        if (connection == null) return;
+        lock (Gate)
+        {
+            if (!members.TryGetValue(connection.RemoteUniqueIdentifier, out Member? member)) return;
+            member.NetVariant = netVariant;
+            member.Decoration = null;   // a new variant brings its own look
         }
     }
 
@@ -407,7 +455,7 @@ public static class PlayerRelay
         if (owner.RelayId == 0 || owner.CharacterBytes == null) return;
 
         NetOutgoingMessage options = observer.Server.CreateMessage();
-        PlayerData.WritePlaneOptions(options, owner.NetClass, owner.NetVariant, owner.Account, owner.CharacterBytes);
+        PlayerData.WritePlaneOptions(options, owner.NetClass, owner.NetVariant, owner.Account, owner.CharacterBytes, owner.Decoration);
 
         NetOutgoingMessage m = observer.Server.CreateMessage();
         m.Write(MsgSpawnUnitsBatch);

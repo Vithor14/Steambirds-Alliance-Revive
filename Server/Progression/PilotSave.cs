@@ -36,6 +36,14 @@ public sealed class PilotSave
     // Career rewards already delivered (ids).
     public List<string> CareerRewardsDelivered { get; set; } = new List<string>();
 
+    // Plane XP boost (PlayerData.planeXpAdditionalPercentage / ...Until, from the "planexpboost" consumables): extra % on the XP
+    // of every kill until the unix time (seconds). Progression\PlaneXpBoost.cs.
+    public int PlaneXpBoostPercent { get; set; }
+    public int PlaneXpBoostUntil { get; set; }
+
+    // Items of career rewards that found no room in the cargo or the storage: delivered at the next login or rank up.
+    public List<string> PendingRewardItems { get; set; } = new List<string>();
+
     // Statistics kept by the server (not sent to the client yet).
     public int Kills { get; set; }
     public int BossKills { get; set; }
@@ -61,6 +69,8 @@ public sealed class PilotSave
         Unlocks ??= new List<string>();
         Unlocks.RemoveAll(string.IsNullOrEmpty);
         CareerRewardsDelivered ??= new List<string>();
+        PendingRewardItems ??= new List<string>();
+        if (PlaneXpBoostPercent < 0) PlaneXpBoostPercent = 0;
     }
 
     // Loadout list with at least "count" entries (new ones empty and without a name).
@@ -93,6 +103,9 @@ public sealed class PilotSave
             HighestLevels = new Dictionary<string, int>(HighestLevels),
             Unlocks = new List<string>(Unlocks),
             CareerRewardsDelivered = new List<string>(CareerRewardsDelivered),
+            PendingRewardItems = new List<string>(PendingRewardItems),
+            PlaneXpBoostPercent = PlaneXpBoostPercent,
+            PlaneXpBoostUntil = PlaneXpBoostUntil,
             Kills = Kills,
             BossKills = BossKills,
             PlanesLost = PlanesLost,

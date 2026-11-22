@@ -290,6 +290,10 @@ public static partial class Game
                     HandleSpawnAlly(j, msg, now, log);
                     return true;
 
+                case MsgTriggerOtherPlayerSkill:
+                    HandleTriggerOtherPlayerSkill(msg, j, times, log);
+                    return true;
+
                 case MsgReportCloudHeal:
                     // The client healed itself with a cloud: the server does not heal again (Game.CloudEffects.cs).
                     j.LastClientHeal = now;

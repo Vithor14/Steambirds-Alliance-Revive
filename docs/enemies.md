@@ -33,5 +33,5 @@ As IAs e os comportamentos também podem vir de arquivos (`Server\ai\`), feitos 
 `/inimigos`, `/onda N`, `/proxima`, `/chefe`, `/inimigo TIPO [qtd]`, `/spawn TEMPLATE [qtd]`, `/limpar`, `/reiniciar`, `/encontro [nome]`, `/tipos`, `/catalogo [filtro]`. No tutorial: `/etapa N`, `/portal`, `/recomecar`, `/tutorialajuda`.
 
 ## Pendências conhecidas
-- Sem XP/loot ao abater; sem rotação visual das torretas (`FIELDMASK_GUNS`).
+- Sem XP/loot ao abater (essa nota é antiga: hoje há XP e loot); a rotação visual das torretas existe desde 22/11 (`Enemies.Guns.cs`, `FIELDMASK_GUNS`: armas "Aimed" seguem o jogador, as de padrão mostram o ângulo do último tiro). Efeitos de tela em `ScreenEffects.cs` (opções em `enemies.json` `effects`).
 - Inimigos do servidor atravessam muros de chão (só ficam presos à área da sala).

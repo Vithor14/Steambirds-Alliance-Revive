@@ -284,6 +284,11 @@ public static partial class DungeonServer
         }
 
         Chat(s, s.Entry.Label + " completed! The exit carrier is arriving.");
+        foreach (NetConnection member in s.Members.ToList())
+        {
+            ScreenEffects.MissionAccomplished(s.Server, member);
+            ScreenEffects.BossDeathShake(s.Server, member);
+        }
         log("DUNGEON", "[dungeon] " + s.Entry.Label + " completed in " + (now - s.StartedAt).ToString("0", Inv) + " s" +
             (taken > 0 ? " (" + taken + " remaining unit(s) exploded)" : ""));
 

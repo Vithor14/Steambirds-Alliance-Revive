@@ -3,14 +3,17 @@ using Lidgren.Network;
 // The "actions" of consumable items (ItemConfig.boundActions) when an item is consumed or devoured on pickup.
 // The client runs the item's actions on its own plane BEFORE asking the server (GameClient: Perform, then
 // invTransport.Consume): health/steam, clouds, guns, maneuvers, buffs and summons need nothing here.
-// The server delivers what lives in the account: unlocks, plane variants, currencies, account buffs and
-// ingredients. Dyes, dungeon keys and the XP boost still have no server side, so items with them are refused
+// The server delivers what lives in the account: unlocks, plane variants, currencies, account buffs, ingredients, the plane XP
+// boost (PlaneXpBoost), dyes and trails (PlaneDecoration: the client repaints the plane, the server keeps the result) and dungeon
+// keys (DungeonKeys: the drop ship takes the player to the dungeon). An item with an action the server does not know is refused
 // (the item stays) instead of being used up for nothing.
 public sealed class ItemActionEffect
 {
-    public string Kind = "";      // unlock, currency, buff, ingredient
+    public string Kind = "";      // unlock, currency, buff, ingredient, xpboost, dungeonkey, deco
     public string Id = "";
-    public int Amount;
+    public int Amount;            // xpboost: extra percentage
+    public int Duration;          // xpboost: seconds
+    public ConfigNode? Node;      // deco: the action's settings
 }
 
 public static class ItemActions
@@ -78,6 +81,24 @@ public static class ItemActions
                         effects.Add(new ItemActionEffect { Kind = "buff", Id = id });
                         break;
                     }
+                    case "planexpboost":
+                    {
+                        int percent = v["additionalPercentage"].AsInt(0);
+                        int duration = v["duration"].AsInt(0);
+                        if (percent <= 0 || duration <= 0) { unsupported ??= "planexpboost without percentage or duration"; break; }
+                        effects.Add(new ItemActionEffect { Kind = "xpboost", Amount = percent, Duration = duration });
+                        break;
+                    }
+                    case "dungeon":
+                    {
+                        string type = v["type"].AsString("");
+                        if (type.Length == 0) { unsupported ??= "dungeon key without a type"; break; }
+                        effects.Add(new ItemActionEffect { Kind = "dungeonkey", Id = type });
+                        break;
+                    }
+                    case "deco":
+                        effects.Add(new ItemActionEffect { Kind = "deco", Node = v });
+                        break;
                     case "ingredient":
                     {
                         string id = v["ingredient_id"].AsString("");
@@ -128,6 +149,27 @@ public static class ItemActions
         return Math.Max(1, def.Amount);
     }
 
+    // Things that must be true before the item is spent. null = go ahead; otherwise the client's error text key (the use is
+    // refused and the item stays). why = the reason for the log.
+    public static string? Check(NetConnection connection, string role, List<ItemActionEffect> effects, out string why)
+    {
+        why = "";
+        foreach (ItemActionEffect e in effects)
+        {
+            if (e.Kind == "dungeonkey")
+            {
+                string? error = DungeonKeys.Check(role, e.Id, out why);
+                if (error != null) return error;
+            }
+            else if (e.Kind == "deco" && Game.GetPlaneCharacterId(connection) == null)
+            {
+                why = "dyes and trails need a live plane";
+                return "consumable_item_error_invalid_data";
+            }
+        }
+        return null;
+    }
+
     // Delivers the effects and tells the client. Returns a short text for the log.
     public static string Apply(NetServer server, NetConnection connection, string role, List<ItemActionEffect> effects)
     {
@@ -162,6 +204,24 @@ public static class ItemActions
             InventoryHandler.Send(server, connection, m => InventoryWire.WriteClientUpdateIngredients(m, null, ingredientDeltas));
             texts.Add(string.Join(", ", ingredientDeltas.Select(p => "+" + p.Value + " " + p.Key)));
         }
+
+        foreach (ItemActionEffect boost in effects.Where(e => e.Kind == "xpboost"))
+            texts.Add(PlaneXpBoost.Grant(server, connection, role, boost.Amount, boost.Duration));
+
+        foreach (ItemActionEffect deco in effects.Where(e => e.Kind == "deco" && e.Node != null))
+        {
+            string? characterId = Game.GetPlaneCharacterId(connection);
+            if (characterId == null) { texts.Add("paint: no live plane, not saved"); continue; }
+            string painted = Accounts.Change(d =>
+            {
+                Accounts.SavedPlane? plane = d.Planes.FirstOrDefault(p => p.CharacterId == characterId);
+                return plane == null ? "the plane is not in the account" : PlaneDecoration.Apply(plane, deco.Node!);
+            });
+            texts.Add("paint: " + painted);
+        }
+
+        foreach (ItemActionEffect key in effects.Where(e => e.Kind == "dungeonkey"))
+            texts.Add(DungeonKeys.Use(server, connection, role, key.Id));
 
         foreach (ItemActionEffect buff in effects.Where(e => e.Kind == "buff"))
         {

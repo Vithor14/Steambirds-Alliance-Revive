@@ -29,3 +29,11 @@ Primeiro teste no jogo (15/11, 15:42): o sorteio funciona (`[LOOT] ... soltou N 
 ## Falta
 
 Confirmar no jogo a coleta (`21818` → `ClientInvAdd`, `4422`, `25386`); consumíveis `deco`/`dungeon`/`planexpboost`; recompensas de carreira do tipo item; loot com vários jogadores; `upgradeCaps`.
+
+## Consumíveis novos e recompensas de item (22/11/2026, sem teste no jogo)
+
+- **Pinturas e rastros (`deco`):** o cliente repinta o avião na hora (`DecorationAction.Perform`) e só depois pede o `ServerInvConsumeItem`; o servidor guarda o resultado no avião da conta (`SavedPlane.Decoration`, `Planes\PlaneDecoration.cs`) e o escreve no `PlaneRecord`, nas opções do spawn e nas do relay. Cores base = config `unitColors` + decoração da variante (`playerclasses` `variants[].decoration`); `cleanColors`/`cleanLivery`/`cleanTrails` voltam ao da variante. Id de rede do rastro = hash Mono do id (como `TemplateHash`). Trocar de variante apaga a pintura salva (o cliente faz o mesmo).
+- **Chaves de dungeon (`dungeon`, `key_*`):** "summon a drop ship". `DungeonKeys.Check` só deixa usar no Nexus, para uma dungeon que o `dungeons.json` oferece e está aberta; senão o RPC falha e o item fica. Ao gastar, `DungeonKeys.Use` manda o jogador para a dungeon com o avião, como um carrier.
+- **Bônus de XP (`planexpboost`):** ver `Progression\PlaneXpBoost.cs` (`PilotSave.PlaneXpBoostPercent/Until`). O XP de abate sobe o % antes do limite por abate.
+- **Recompensas de carreira do tipo Item:** `Items\ItemDelivery.Give` põe no cargo do avião vivo ou no armazém; o que não couber fica em `PilotSave.PendingRewardItems` e é tentado de novo no login, ao subir de patente e no pedido de entrega.
+- Na loja, "usar na hora" de tinta e chave deixa o item no inventário (precisam do jogador); o "usar e guardar" de tinta manda o `ClientConsumedItemOnPickup` e o servidor também guarda a pintura.

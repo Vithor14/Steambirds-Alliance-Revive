@@ -324,11 +324,45 @@ public static class PilotExtras
             (rewards.Count == 0 ? " (progression.json: careerRewards is empty)" : ": " + string.Join(", ", rewards.Select(r => r.Id + "@" + r.PilotLevel))));
     }
 
+    // Reward items (type Item: id = item, amount = how many) go to the cargo or the storage (Items\ItemDelivery). The ones with no
+    // room are kept in the pilot and tried again at the next login, rank up or delivery request.
+    private static void DeliverRewardItems(NetServer server, NetConnection connection, string role, List<CareerRewardSetting> delivered)
+    {
+        var due = new List<string>();
+        foreach (CareerRewardSetting reward in delivered)
+        {
+            foreach (CareerRewardItem item in reward.Rewards)
+            {
+                if (ProgressionMessages.RewardTypeIndex(item.Type) != 0 || string.IsNullOrWhiteSpace(item.Id)) continue;
+                for (int i = 0; i < Math.Clamp(item.Amount, 1, 50); i++) due.Add(item.Id);
+            }
+        }
+        List<string> pending = Accounts.Change(d =>
+        {
+            due.InsertRange(0, d.Pilot.PendingRewardItems);
+            d.Pilot.PendingRewardItems.Clear();
+            return due;
+        });
+        if (pending.Count == 0) return;
+
+        List<string> leftover = ItemDelivery.Give(server, connection, role, pending, "career reward");
+        if (leftover.Count > 0)
+        {
+            Accounts.Change(d =>
+            {
+                d.Pilot.PendingRewardItems.AddRange(leftover);
+                return 0;
+            });
+            WorldObjects.SendChat(server, connection, leftover.Count + " reward item(s) are waiting: free a slot in the cargo or the storage.");
+        }
+    }
+
     // Delivers every career reward the pilot rank already reached. Also answers ServerRequestCareerRewardDelivery.
     public static void DeliverCareerRewards(NetServer server, NetConnection connection, string role)
     {
         List<CareerRewardSetting> all = SortedRewards();
-        if (all.Count == 0) return;
+        // Items that found no room before try again now.
+        if (all.Count == 0 && Accounts.Pilot().PendingRewardItems.Count == 0) return;
 
         List<CareerRewardSetting> delivered = Accounts.Change(d =>
         {
@@ -347,6 +381,7 @@ public static class PilotExtras
             }
             return now;
         });
+        DeliverRewardItems(server, connection, role, delivered);
         if (delivered.Count == 0) return;
 
         // Plane XP goes to the live plane, if there is one.

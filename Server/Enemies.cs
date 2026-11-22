@@ -46,6 +46,8 @@ public static partial class Enemies
     public sealed class EnemiesConfig
     {
         public bool ChatWarnings { get; set; } = true;
+        // Sparks, camera shake and banners the server asks the client for (ScreenEffects.cs).
+        public ScreenEffects.Settings Effects { get; set; } = new ScreenEffects.Settings();
         public float GlobalHealthMultiplier { get; set; } = 1f;
         public ArenaConfig Arena { get; set; } = new ArenaConfig();
         public Dictionary<string, EnemyType> Types { get; set; } = new Dictionary<string, EnemyType>();
@@ -224,6 +226,9 @@ public static partial class Enemies
         public double NextShot;
         public double ReloadUntil;
         public float Turn;        // current position of the spiral patterns
+        public float Aim = float.NaN;      // last shot angle (relative to the unit's front), for the visual turret
+        public double AimAt;               // when that shot was fired
+        public float SentAim = float.NaN;  // angle the clients were last told (FIELDMASK_GUNS)
     }
 
     private sealed class Enemy
@@ -406,6 +411,9 @@ public static partial class Enemies
     private static readonly Random rng = new Random();
 
     private static EnemiesConfig config = new EnemiesConfig();
+
+    // Screen effects of enemies.json ("effects").
+    public static ScreenEffects.Settings Effects => config.Effects ?? new ScreenEffects.Settings();
     private static bool configLoaded;
 
     // Types that a script registers in the code: they apply when enemies.json does not have a type with the same key.
@@ -557,7 +565,11 @@ public static partial class Enemies
                 log("ENEMY", inst.Role + " " + Describe(enemy) + " destroyed at (" + Num(enemy.X) + ", " + Num(enemy.Y) +
                     ") after " + enemy.Shots + " shot(s) | kills: " + inst.Kills +
                     ", left " + inst.Enemies.Count);
-                if (enemy.Boss) Warn(inst, enemy.Type.Name + " was defeated!");
+                if (enemy.Boss)
+                {
+                    Warn(inst, enemy.Type.Name + " was defeated!");
+                    foreach (NetConnection member in inst.Members.ToList()) ScreenEffects.BossDeathShake(inst.Server, member);
+                }
                 // Progression (Progression/PilotProgression.cs): plane XP, "on kill" skills and the after-fight text
                 // of the bosses. Only real enemies (the AI's team); script allies give no XP.
                 // With several players in the instance, every one of them gets the XP and their own loot bags.

@@ -122,6 +122,7 @@ public sealed class PlaneClassInfo
     public HashSet<string> AllowedItemTags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, string> StartingItems = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase); // slot -> item
     public Dictionary<string, string> VariantUnlocks = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase); // variant -> unlock item
+    public Dictionary<string, ConfigNode> VariantDecorations = new Dictionary<string, ConfigNode>(StringComparer.OrdinalIgnoreCase); // variant -> its decoration (colors, livery, trails)
 
     // PlayerClassConfig.DoesAllowItemTag: an item without tag fits every class.
     public bool AllowsTag(string tag) => string.IsNullOrEmpty(tag) || AllowedItemTags.Contains(tag);
@@ -382,7 +383,9 @@ public static class ItemCatalog
             foreach (ConfigNode variant in c["variants"].Items)
             {
                 string vid = variant["id"].AsString("");
-                if (vid.Length > 0) info.VariantUnlocks[vid] = variant["unlockItemId"].AsString("");
+                if (vid.Length == 0) continue;
+                info.VariantUnlocks[vid] = variant["unlockItemId"].AsString("");
+                if (variant["decoration"].IsDictionary) info.VariantDecorations[vid] = variant["decoration"];
             }
             result[pair.Key] = info;
         }

@@ -6,7 +6,7 @@ public static partial class InventoryHandler
 {
     // Consumable items: the client already ran the actions on its plane (health, steam, clouds); the account
     // effects (unlocks, currencies, buffs, ingredients) are delivered here and the item loses one use (or leaves).
-    // Actions with no server side yet (dyes, dungeon keys, XP boost) make the RPC fail, so the item is not lost.
+    // Actions with no server side make the RPC fail, so the item is not lost; dyes, dungeon keys and XP boosts are delivered in ItemActions.
     private static void Consume(NetServer server, NetConnection connection, string role, ushort rpc, string characterId, InvPos pos)
     {
         string tag = "[" + role + "]";
@@ -34,6 +34,14 @@ public static partial class InventoryHandler
         {
             Send(server, connection, m => InventoryWire.WriteRpcFault(m, rpc, "consumable_item_error_not_supported"));
             log("INVENTORY", tag + " consume " + item.DefId + ": action '" + unsupported + "' does not exist on the server yet (the item stays)");
+            return;
+        }
+
+        string? refused = ItemActions.Check(connection, role, effects, out string why);
+        if (refused != null)
+        {
+            Send(server, connection, m => InventoryWire.WriteRpcFault(m, rpc, refused));
+            log("INVENTORY", tag + " consume " + item.DefId + " refused: " + why + " (the item stays)");
             return;
         }
 

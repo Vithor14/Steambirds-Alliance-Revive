@@ -77,7 +77,7 @@ O teste mostrou que aviões, animação de tiro, inimigos, portões e o reset da
 - **Nuvens para todos:** `Game.CreateCloud` manda o spawn da nuvem ao dono e aos outros jogadores da sala que veem o avião dele (`PlayerRelay.Observers`); dentro das opções da nuvem o dono vai com o id que o receptor conhece (próprio shortId ou id de relay). Quem entra depois da nuvem criada não a vê (dura segundos).
 - **Veneno (Old Faithful):** a nuvem de veneno só causa dano no cliente que é autoridade do alvo, e os inimigos são do servidor; `Skills\CloudDamage.cs` aplica `effect` de vida por segundo (configBinary `clouds`) aos inimigos dentro do raio, via `Enemies.DamageArea`. O multiplicador de dano do avião do original não é conhecido (`CloudDamage.DamageMultiplier = 1`).
 
-Ainda não repassa: `TriggerOtherPlayerSkill` `65043`, `GunFireBatch` `62327`, `61257`/`26781` (o estado vem pelo `UpdateUnitsBatch`), loot compartilhado fora das dungeons.
+Repassado em 22/11: `TriggerOtherPlayerSkill` `65043` (`Game.SkillRelay.cs`: o gatilho vai para o dono da nuvem como `TriggerPlayerSkill` `65038`) e o fim das balas (`PlayerRelay.BulletHit` → `ClientKillBullet` `8267`: a bala de um jogador termina onde acertou na tela dos outros, com o id de relay do dono no `BulletId`). Ainda não repassa: `GunFireBatch` `62327`, `61257`/`26781` (o estado vem pelo `UpdateUnitsBatch`). O loot já é por jogador (cada membro sorteia o próprio).
 
 ## Dungeons compartilhadas (17/11/2026, escrito sem compilar, ainda não testado)
 

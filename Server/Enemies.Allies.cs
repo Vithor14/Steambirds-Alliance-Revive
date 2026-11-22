@@ -252,7 +252,11 @@ public static partial class Enemies
             gun.NextShot = now + betweenShots;
             gun.ReloadUntil = now + Math.Max(Math.Max(0f, m.Reload), betweenShots);
 
+            float hitX = target.X;
+            float hitY = target.Y;
             TakeDamage(owner, target.ShortId, m.Damage * Math.Max(1, m.Multi), now, log);
+            // The turret bullets are only drawn: the spark shows where the damage landed.
+            foreach (NetConnection member in inst.Members.ToList()) ScreenEffects.ShowDamage(inst.Server, member, hitX, hitY, turret.Rot + 180f);
             if (!inst.Enemies.ContainsKey(target.ShortId)) break;
         }
     }

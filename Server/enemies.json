@@ -17,6 +17,17 @@
   // "opensAfterHitSeconds": seconds for a chest to open after the first hit. "freeRoam": flies outside the room.
 
   "chatWarnings": true,
+
+  // Small effects asked of the client (ScreenEffects.cs). damageSparks: spark where a player's turret hit an enemy.
+  // remoteBulletKill: a player's bullet ends where it hit on the screens of the other players. missionAccomplished: the banner
+  // when a dungeon is cleared. bossDeathShakeLevel / bossDeathShakeSeconds: camera shake when a boss dies and a dungeon is cleared (0 = off).
+  "effects": {
+    "damageSparks": true,
+    "remoteBulletKill": true,
+    "missionAccomplished": true,
+    "bossDeathShakeLevel": 0.8,
+    "bossDeathShakeSeconds": 0.9
+  },
   "globalHealthMultiplier": 0.7,
 
   // Square where enemies without a room stay (center +- limit). In the tutorial each room has its own area.

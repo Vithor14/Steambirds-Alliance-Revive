@@ -45,6 +45,10 @@ public static class Accounts
         // when the plane comes back from the fall and can fall again.
         public int BankedPilotXp { get; set; }
 
+        // Colors, livery and trails the plane carries (PlaneRecord.decoration), after dyes and trails were used on it.
+        // null = the default look of the class and variant (the client works it out). Planes\PlaneDecoration.cs.
+        public SavedDecoration? Decoration { get; set; }
+
         public SavedPlane Copy()
         {
             return new SavedPlane
@@ -54,7 +58,8 @@ public static class Accounts
                 Variant = Variant,
                 Xp = Xp,
                 Level = Level,
-                BankedPilotXp = BankedPilotXp
+                BankedPilotXp = BankedPilotXp,
+                Decoration = Decoration?.Copy()
             };
         }
     }
