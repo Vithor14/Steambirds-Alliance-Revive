@@ -285,6 +285,23 @@ public static class PilotExtras
         log("BUFF", "[" + role + "] " + removed + " buff(s) removed (auditId " + auditId + ")");
     }
 
+    // A plane fell or was retired: the buffs it started (BuffInstance.startCharacterId) end with it, so the next plane does not
+    // inherit them. The client gets the new list (ClientUpdatePlayerBuffs).
+    public static void PlaneBuffsEnded(NetServer server, NetConnection connection, string role, string? characterId)
+    {
+        if (string.IsNullOrEmpty(characterId)) return;
+        List<BuffSave>? left = Accounts.Change(d =>
+        {
+            int removed = d.Pilot.Buffs.RemoveAll(b => string.Equals(b.StartCharacterId, characterId, StringComparison.Ordinal));
+            return removed > 0 ? BuffsToSend(d.Pilot) : null;
+        });
+        if (left == null) return;
+
+        int auditId = Interlocked.Increment(ref nextAuditId);
+        ProgressionMessages.Send(server, connection, m => ProgressionMessages.WriteClientUpdatePlayerBuffs(m, left, auditId));
+        log("BUFF", "[" + role + "] the buffs of plane " + characterId + " ended with it (" + left.Count + " buff(s) left, auditId " + auditId + ")");
+    }
+
     public static string BuffListText()
     {
         if (ProgressionData.Buffs.Count == 0) return "No buff in the configBinary.";

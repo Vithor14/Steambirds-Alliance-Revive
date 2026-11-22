@@ -9,6 +9,7 @@ public static class ProgressionHandler
 
     private const ushort MsgServerReceivePortrait = 12150;            // Portrait
     private const ushort MsgServerRequestSkillLoadoutRename = 12152;  // int loadoutIndex, string newName
+    private const ushort MsgServerRetirePlane = 12153;                // string characterId (hangar "Retire plane")
     private const ushort MsgServerRecordLevelupUIShown = 12158;       // int lastXPLevelupShown, int lastLevelupShown
     private const ushort MsgServerRequestVagueCareerRewards = 12159;
     private const ushort MsgServerRequestCareerRewardDelivery = 12161;
@@ -31,6 +32,10 @@ public static class ProgressionHandler
         string tag = "[" + role + "]";
         switch (id)
         {
+            case MsgServerRetirePlane:
+                PlaneRetirement.Retire(server, connection, role, msg.ReadString() ?? "");
+                return true;
+
             case MsgServerRecordLevelupUIShown:
             {
                 int lastXp = msg.ReadInt32();

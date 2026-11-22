@@ -45,7 +45,11 @@ public sealed class ItemSettings
     // Salvaged items lose condition (InventoryItem.DegradeCondition) and supercharged ones lose the extra stats.
     public bool DegradeSalvagedItems { get; set; } = true;
 
-    // "Trash" in the inventory recycles the item into the mulch currency (MulchConfig).
+    // The "Drop" entry of the inventory menu (the client sends it as Trash) puts the item in the world in a loot bag.
+    // Off: it is trashed instead (and recycled when mulchOnTrash is on).
+    public bool TrashDropsInWorld { get; set; } = true;
+
+    // "Trash" in the inventory recycles the item into the mulch currency (MulchConfig). Only used when trashDropsInWorld is off.
     public bool MulchOnTrash { get; set; } = true;
 
     // Reforging and supercharging at the Workshop (ReforgeConfig).
@@ -144,7 +148,7 @@ public static class ItemSettingsFile
             current = read;
             log("ITEMS", FilePath + " read: loot " + (read.LootEnabled ? "on x" + read.LootRolls : "off") +
                 ", tables '" + read.NormalLootTable + "'/'" + read.BossLootTable + "', cargo " + (read.SharedCargoForAllPlanes ? "shared" : "per plane") +
-                " (+" + read.ExtraCargoSlots + " slots), storage +" + read.ExtraStorageSlots + " slots, recycling " + (read.MulchOnTrash ? "yes" : "no") +
+                " (+" + read.ExtraCargoSlots + " slots), storage +" + read.ExtraStorageSlots + " slots, drop in world " + (read.TrashDropsInWorld ? "yes" : "no") + ", recycling " + (read.MulchOnTrash ? "yes" : "no") +
                 ", reforge " + (read.ReforgeEnabled ? "yes" : "no") + ", save on fall " + read.DeathSalvageRandomEquipment + " item(s)");
             if (read.UnknownKeys != null && read.UnknownKeys.Count > 0)
                 log("ITEMS", "key(s) this version does not use in " + FileName + ": " + string.Join(", ", read.UnknownKeys.Keys));
@@ -198,7 +202,11 @@ public static class ItemSettingsFile
   // Salvaged items lose condition (wear) and supercharged ones lose the bonus.
   ""degradeSalvagedItems"": true,
 
+  // The ""Drop"" entry of the inventory menu puts the item in the world, in a loot bag (false = trash it instead).
+  ""trashDropsInWorld"": true,
+
   // ""Trash"" in the inventory recycles the item into the recycling currency (the game's ""mulching"" config).
+  // Only used when trashDropsInWorld is false.
   ""mulchOnTrash"": true,
 
   // Reforging and supercharging at the Workshop (the game's ""reforging"" config).

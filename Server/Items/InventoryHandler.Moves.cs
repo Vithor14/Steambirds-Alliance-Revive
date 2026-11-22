@@ -79,15 +79,23 @@ public static partial class InventoryHandler
         byte destination, double now)
     {
         EnsureKnownPlane(characterId);
+        // This client's "Drop" entry of the inventory menu sends Trash (InventoryDisplay -> TrashItemInCargoSlot), and only a drag to the
+        // in-world zone sends Drop. So Trash puts the item in the world too, unless the host turned trashDropsInWorld off (then it recycles).
         bool trash = destination == DestinationTrash;
-        bool mulch = trash && ItemSettingsFile.Current.MulchOnTrash;
+        bool toWorld = !trash || ItemSettingsFile.Current.TrashDropsInWorld;
+        bool mulch = !toWorld && ItemSettingsFile.Current.MulchOnTrash;
         string? why = null;
         StoredItem? removed = null;
         int value = 0;
         Dictionary<string, int>? currencies = null;
 
+        // Dropping needs a live plane to put the bag next to: without one the item stays in the cargo (it is never lost).
+        float planeX = 0f, planeY = 0f;
+        bool planeAlive = Game.GetPlane(connection.RemoteUniqueIdentifier, out planeX, out planeY, out bool alive, out _) && alive;
+
         int result = InventoryStore.Change(d =>
         {
+            if (toWorld && !planeAlive) { why = "no live plane to drop the item next to"; return Refused; }
             InvAccess? a = InventoryStore.Resolve(d, characterId);
             if (a == null) { why = "unknown inventory"; return Refused; }
             if (pos.Location != InvPos.LocCargo || !InventoryStore.PositionExists(a, pos)) { why = "only cargo items can be dropped"; return Refused; }
@@ -116,16 +124,15 @@ public static partial class InventoryHandler
 
         if (currencies != null) SendCurrencies(server, connection, currencies);
 
-        if (!trash && Game.GetPlane(connection.RemoteUniqueIdentifier, out float x, out float y, out bool alive, out _) && alive)
+        if (toWorld)
         {
-            // Drop: the item goes back to the world in a bag next to the plane (it can be picked up again).
-            int bag = LootDrops.SpawnBag(server, connection, removed, x, y, now, "dropped by the player");
+            // Drop: the item goes back to the world in a bag at the plane (it can be picked up again after a second).
+            int bag = LootDrops.SpawnBag(server, connection, removed, planeX, planeY, now, "dropped by the player");
             log("INVENTORY", tag + " " + removed + " dropped into the world (bag " + bag + ") of " + pos);
         }
         else
         {
-            log("INVENTORY", tag + " " + removed + (trash ? " went to the trash" + (mulch ? ": +" + value + " " + ItemCatalog.MulchCurrency : "") :
-                " discarded (no plane in the world)") + " of " + pos);
+            log("INVENTORY", tag + " " + removed + " went to the trash" + (mulch ? ": +" + value + " " + ItemCatalog.MulchCurrency : "") + " of " + pos);
         }
     }
 

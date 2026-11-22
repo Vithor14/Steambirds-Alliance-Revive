@@ -56,10 +56,12 @@ internal sealed class ServerTab : UserControl
             L.T("Pilot, planes and skills (progression.json). Can be changed with the server running: it reads the file again by itself."),
             new SettingsSection(L.T("Progression"), "progression.json", SettingsSection.AllExcept("startingPilotLevel", "startingUnlocks"))));
 
-        var itemsPage = Page(L.T("Items and loot"), new SettingsPage(tip,
+        var itemsSettings = new SettingsPage(tip,
             L.T("Loot, cargo, storage, reforge and what is lost when a plane goes down (items.json). The loot tables are in server\\loot_tables. Can be changed with the server running."),
             new SettingsSection(L.T("Items and loot"), "items.json",
-                SettingsSection.AllExcept("startingCurrencies", "startingIngredients", "startingStorageItems", "dungeonDifficulty"))));
+                SettingsSection.AllExcept("startingCurrencies", "startingIngredients", "startingStorageItems", "dungeonDifficulty")));
+        itemsSettings.AddToolbarButton(L.T("Edit loot tables"), (_, _) => Ui.OpenFolder(FindForm(), LauncherPaths.ServerFile("loot_tables")));
+        var itemsPage = Page(L.T("Items and loot"), itemsSettings);
 
         var storesPage = Page(L.T("Store"), new StorePage(context));
 

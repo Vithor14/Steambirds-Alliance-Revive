@@ -27,6 +27,7 @@ public static class PlayerData
 {
     public const ushort MsgServerRequestCreateCharacter = 54849; // 0xD641
     public const ushort MsgClientAddPlane = 55110;               // 0xD746
+    public const ushort MsgClientRemovePlane = 55111;            // 0xD747
     public const ushort MsgClientWelcomeMessage = 48913;         // 0xBF11
     public const ushort MsgServerAcceptLegalNotice = 54200;      // 0xD3B8
     public const ushort MsgClientUpdateLegalNoticeAcceptances = 54201; // 0xD3B9
@@ -244,6 +245,15 @@ public static class PlayerData
         int level = StartingPlaneLevel, int xp = 0)
     {
         buf.Write(MsgClientAddPlane);
+        WritePlaneRecord(buf, accountId, characterId, planeClass, planeVariant, level, xp);
+    }
+
+    // GeneratedDispatcher.Pack_ClientRemovePlane (ID 55111): the plane leaves the client's hangar (same record as ClientAddPlane).
+    // Write it before the plane's inventory is removed: the record carries the inventory.
+    public static void WriteClientRemovePlane(NetBuffer buf, byte[] accountId, string characterId, string planeClass, string planeVariant,
+        int level = StartingPlaneLevel, int xp = 0)
+    {
+        buf.Write(MsgClientRemovePlane);
         WritePlaneRecord(buf, accountId, characterId, planeClass, planeVariant, level, xp);
     }
 

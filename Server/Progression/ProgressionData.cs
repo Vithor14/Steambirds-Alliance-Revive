@@ -213,6 +213,10 @@ public static class ProgressionData
     public static float[] HealthTiers { get; private set; } = FallbackHealthTiers;
     public static float RealTimePlaneXpProportion { get; private set; } = 0.65f;
     public static int XpLimitForMaxLevel { get; private set; } = 40000;
+    // Retiring a plane pays its not-yet-counted pilot XP also as currency: XP / PilotXpPer1Currency of PilotXpCurrencyId, only from the threshold.
+    public static int PilotXpPer1Currency { get; private set; }
+    public static int PilotXpCurrencyAwardThreshold { get; private set; } = 10;
+    public static string PilotXpCurrencyId { get; private set; } = "scrap";
     public static int BaseSkillLoadoutSlots { get; private set; } = 1;
     public static float DefaultDamageThreshold { get; private set; } = 0.005f;
     public static float NearbyPlayersRadius { get; private set; } = 15f;
@@ -256,6 +260,9 @@ public static class ProgressionData
         if (pilot != null) PilotLevels = pilot;
         RealTimePlaneXpProportion = global["realTimePlaneXPProportion"].AsFloat(0.65f);
         XpLimitForMaxLevel = global["xpLimitForMaxLevel"].AsInt(XpLimitForMaxLevel);
+        PilotXpPer1Currency = global["pilotXpPer1Currency"].AsInt(PilotXpPer1Currency);
+        PilotXpCurrencyAwardThreshold = global["pilotXpCurrencyAwardThreshold"].AsInt(PilotXpCurrencyAwardThreshold);
+        PilotXpCurrencyId = global["pilotXpCurrencyId"].AsString(PilotXpCurrencyId);
         BaseSkillLoadoutSlots = Math.Max(1, global["baseSkillLoadoutSlots"].AsInt(1));
         DefaultDamageThreshold = global["defaultDamageThreshold"].AsFloat(DefaultDamageThreshold);
         NearbyPlayersRadius = global["reliableStats_nearbyPlayerCountRadius"].AsFloat(15f);
