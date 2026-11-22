@@ -44,6 +44,7 @@ public static partial class Game
     private const ushort MsgUnitAction = 26781;
     private const ushort MsgSlashCommand = 29486;
     private const ushort MsgLocale = 30011;
+    private const ushort MsgReportCloudHeal = 27910;     // ServerReportCloudHeal (Game.CloudEffects.cs)
     private const ushort MsgReportDamageBoost = 13949;   // ServerReportDamageBoost (Skills\DamageBoost.cs)
     private const ushort MsgReportUnitDamage = 38890;
     private const ushort MsgSpawnUnitsBatch = 45862;
@@ -134,6 +135,8 @@ public static partial class Game
         public string? Class;
         public double LastDataSent = -10;
         public int DataSent;
+
+        public double LastClientHeal = -10;
 
         public int PlaneShortId;
         public bool PlaneAlive;
@@ -231,6 +234,7 @@ public static partial class Game
             int times = Tally(j, id);
 
             SendDueDeaths(now, log);
+            TickCloudEffects(server, role, now, log);
             CloseSequences(j, now, log);
             Summarize(j, now, log);
 
@@ -282,9 +286,13 @@ public static partial class Game
                     return true;
 
                 case MsgSpawnGreenTeamAlly:
-                    log("SKILL", j.Role + " ally request (ServerSpawnGreenTeamAlly): " +
-                        CopperReader.Describe(msg, info.Args) + " -> logged; the server does not create ally units yet");
+                    HandleSpawnAlly(j, msg, now, log);
                     return true;
+
+                case MsgReportCloudHeal:
+                    // The client healed itself with a cloud: the server does not heal again (Game.CloudEffects.cs).
+                    j.LastClientHeal = now;
+                    break;
 
                 case MsgEnterStore:
                     HandleStore(server, j, msg, log);

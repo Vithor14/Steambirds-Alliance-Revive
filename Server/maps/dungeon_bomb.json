@@ -4,8 +4,8 @@
   "id": "dungeon_bomb",
   "name": "Bomb Factory",
   "terrain": "DungeonBomb",
-  "note": "The Empire's ammunition factory (T2, later T3). Assembly lines with stored bombs that explode in a chain, a bomb depot, barracks, the blimp hangar, Overseer Charles and The Bomb Maker. Since the 2019 patch the factory drew random rooms every run; here it is a fixed version with the typical rooms.",
-  "source": "Build 190828.2045: units, names, barks, signs, quests and territory come from the configBinary; the Dungeons/dungeon_* file of that build is empty, so the room format and the enemy positions were recreated.",
+  "note": "Fabrica de municao do Imperio (T2, depois T3). Linhas de montagem com bombas guardadas que explodem em cadeia, deposito de bombas, quartel, hangar dos dirigiveis, Overseer Charles e The Bomb Maker. Desde o patch de 2019 a fabrica sorteava salas a cada partida; aqui ficou uma versao fixa com as salas tipicas.",
+  "source": "Build 190828.2045: unidades, nomes, falas, placas, quests e territorio vem do configBinary; o arquivo Dungeons/dungeon_* dessa build e vazio, entao o formato das salas e a posicao dos inimigos foram recriados.",
   "key": "key_bomb",
   "portalItem": "dungeon_bomb",
   "exit": {"point": "portal", "when": "death:bombboss"},
@@ -18,7 +18,7 @@
     "drawing": {
       "siStart": -28,
       "sjStart": -84,
-      "legend": ". free floor, # wall, - no floor. First line = last sj row (the far end).",
+      "legend": ". chao livre, # muro, - sem chao. Primeira linha = ultima fileira sj (o fundo).",
       "lines": [
         "--------------------####################--------------------",
         "--------------------####################--------------------",
@@ -83,11 +83,11 @@
         "----------------####....................####----------------",
         "----------------####....................####----------------",
         "----------------####....................####----------------",
-        "----------------####....####............####----------------",
-        "------------############----#...################------------",
-        "------------############----#...################------------",
-        "------------############----#...################------------",
-        "------------############----#...################------------",
+        "----------------####....................####----------------",
+        "------------################....################------------",
+        "------------################....################------------",
+        "------------################....################------------",
+        "------------################....################------------",
         "############################....################------------",
         "############################....################------------",
         "##################........................######------------",
@@ -199,53 +199,64 @@
   "decor": [],
   "buildings": [],
   "spawn": {"u": 6.0, "v": -233.3, "rot": 315},
-  "points": {"boss": {"u": 6.0, "v": 193.9, "rot": 135}, "portal": {"u": 6.0, "v": 169.6, "rot": 0, "note": "exit carrier (appears when the boss dies)"}},
+  "points": {
+    "boss": {"u": 6.0, "v": 193.9, "rot": 135},
+    "portal": {"u": 6.0, "v": 169.6, "rot": 0, "note": "porta-avioes de saida (aparece quando o chefe morre)"}
+  },
   "groups": {},
   "areas": {
-    "entrance": {"minU": -12.6, "maxU": 24.6, "minV": -240.6, "maxV": -209.4},
-    "assembly_line": {"minU": -24.6, "maxU": 36.6, "minV": -186.6, "maxV": -137.4},
-    "depot": {"minU": -6.6, "maxU": 42.6, "minV": -120.6, "maxV": -77.4},
-    "barracks": {"minU": -30.6, "maxU": 30.6, "minV": -60.6, "maxV": -17.4},
+    "entrada": {"minU": -12.6, "maxU": 24.6, "minV": -240.6, "maxV": -209.4},
+    "linha_de_montagem": {"minU": -24.6, "maxU": 36.6, "minV": -186.6, "maxV": -137.4},
+    "deposito": {"minU": -6.6, "maxU": 42.6, "minV": -120.6, "maxV": -77.4},
+    "quartel": {"minU": -30.6, "maxU": 30.6, "minV": -60.6, "maxV": -17.4},
     "hangar": {"minU": -30.6, "maxU": 42.6, "minV": 5.4, "maxV": 54.6},
-    "overseer_room": {"minU": -24.6, "maxU": 36.6, "minV": 71.4, "maxV": 120.6},
-    "boss_room": {"minU": -30.6, "maxU": 42.6, "minV": 143.4, "maxV": 216.6},
-    "vault": {"minU": -12.6, "maxU": 24.6, "minV": 227.4, "maxV": 252.6},
-    "depot_treasure": {"minU": 53.4, "maxU": 84.6, "minV": -114.6, "maxV": -83.4},
-    "hangar_treasure": {"minU": -72.6, "maxU": -41.4, "minV": 14.4, "maxV": 45.6}
+    "sala_do_capataz": {"minU": -24.6, "maxU": 36.6, "minV": 71.4, "maxV": 120.6},
+    "sala_do_chefe": {"minU": -30.6, "maxU": 42.6, "minV": 143.4, "maxV": 216.6},
+    "cofre": {"minU": -12.6, "maxU": 24.6, "minV": 227.4, "maxV": 252.6},
+    "tesouro_deposito": {"minU": 53.4, "maxU": 84.6, "minV": -114.6, "maxV": -83.4},
+    "tesouro_hangar": {"minU": -72.6, "maxU": -41.4, "minV": 14.4, "maxV": 45.6}
   },
   "lines": {
-    "entrance": -240.0,
-    "assembly_line": -186.0,
-    "depot": -120.0,
-    "barracks": -60.0,
+    "entrada": -240.0,
+    "linha_de_montagem": -186.0,
+    "deposito": -120.0,
+    "quartel": -60.0,
     "hangar": 6.0,
-    "overseer_room": 72.0,
-    "boss_room": 144.0,
-    "vault": 228.0,
-    "depot_treasure": -114.0,
-    "hangar_treasure": 15.0
+    "sala_do_capataz": 72.0,
+    "sala_do_chefe": 144.0,
+    "cofre": 228.0,
+    "tesouro_deposito": -114.0,
+    "tesouro_hangar": 15.0
   },
   "values": {"tier": 2},
   "checkpoints": [
-    {"name": "entrance", "activeAtV": -240.0, "u": 6.0, "v": -236.6, "rot": 315},
-    {"name": "assembly_line", "activeAtV": -186.0, "u": 6.0, "v": -181.2, "rot": 315},
-    {"name": "depot", "activeAtV": -120.0, "u": 18.0, "v": -115.6, "rot": 315},
-    {"name": "barracks", "activeAtV": -60.0, "u": 0.0, "v": -55.6, "rot": 315},
+    {"name": "entrada", "activeAtV": -240.0, "u": 6.0, "v": -236.6, "rot": 315},
+    {"name": "linha_de_montagem", "activeAtV": -186.0, "u": 6.0, "v": -181.2, "rot": 315},
+    {"name": "deposito", "activeAtV": -120.0, "u": 18.0, "v": -115.6, "rot": 315},
+    {"name": "quartel", "activeAtV": -60.0, "u": 0.0, "v": -55.6, "rot": 315},
     {"name": "hangar", "activeAtV": 6.0, "u": 6.0, "v": 10.8, "rot": 315},
-    {"name": "overseer_room", "activeAtV": 72.0, "u": 6.0, "v": 76.8, "rot": 315},
-    {"name": "boss_room", "activeAtV": 144.0, "u": 6.0, "v": 150.8, "rot": 315}
+    {"name": "sala_do_capataz", "activeAtV": 72.0, "u": 6.0, "v": 76.8, "rot": 315},
+    {"name": "sala_do_chefe", "activeAtV": 144.0, "u": 6.0, "v": 150.8, "rot": 315}
   ],
   "gates": [
-    {"name": "barracks barricade", "type": "bombdungeondestroyablewall", "sj": -23, "siFrom": 1, "siTo": 4, "damageable": true, "room": "barracks"},
     {
-      "name": "overseer gate",
+      "name": "barricada do quartel",
+      "type": "bombdungeondestroyablewall",
+      "sj": -23,
+      "siFrom": 1,
+      "siTo": 4,
+      "damageable": true,
+      "room": "quartel"
+    },
+    {
+      "name": "portao do capataz",
       "type": "bombdungeondestroyablewallstrong",
       "sj": 21,
       "siFrom": 0,
       "siTo": 3,
-      "damageable": true,
+      "damageable": false,
       "opensWhen": "cleared:hangar",
-      "room": "overseer_room"
+      "room": "sala_do_capataz"
     },
     {
       "name": "boss gate",
@@ -253,39 +264,39 @@
       "sj": 44,
       "siFrom": 0,
       "siTo": 3,
-      "damageable": true,
-      "opensWhen": "cleared:overseer_room",
-      "room": "boss_room"
+      "damageable": false,
+      "opensWhen": "cleared:sala_do_capataz",
+      "room": "sala_do_chefe"
     },
     {
-      "name": "vault gate",
+      "name": "portao do cofre",
       "type": "bombdungeondestroyablewallstrong",
       "sj": 74,
       "siFrom": 0,
       "siTo": 3,
-      "damageable": true,
+      "damageable": false,
       "opensWhen": "death:bombboss",
-      "room": "vault"
+      "room": "cofre"
     }
   ],
   "sideGates": [
     {
-      "name": "depot treasure wall",
+      "name": "parede do tesouro do deposito",
       "type": "bombdungeondestroyablewall",
       "si": 16,
       "sjFrom": -35,
       "sjTo": -32,
       "damageable": true,
-      "room": "depot_treasure"
+      "room": "tesouro_deposito"
     },
     {
-      "name": "hangar treasure wall",
+      "name": "parede do tesouro do hangar",
       "type": "bombdungeondestroyablewallstrong",
       "si": -12,
       "sjFrom": 8,
       "sjTo": 11,
       "damageable": true,
-      "room": "hangar_treasure"
+      "room": "tesouro_hangar"
     }
   ],
   "signs": [
@@ -301,7 +312,7 @@
       "aggroRadius": 45,
       "firstShotDelay": 1.5,
       "periodicSummon": {"type": "homingbomb", "seconds": 7, "count": 1, "max": 3},
-      "note": "Overseer Charles: no guns; here he drops a homing bomb every 7 s (reconstrucao)."
+      "note": "Overseer Charles: sem armas; aqui solta uma bomba teleguiada a cada 7 s (reconstrucao)."
     },
     "bombboss": {
       "name": "The Bomb Maker",
@@ -314,17 +325,23 @@
       "barks": {"onWake": "bombboss", "onDeath": "bombbossDEATH"},
       "phases": [
         {"belowHealth": 0.66, "summon": "bombbossexploder", "summonCount": 3},
-        {"belowHealth": 0.33, "summon": "bombbossexploderBIG", "summonCount": 1, "behavior": "charge", "speedMultiplier": 1.2}
+        {
+          "belowHealth": 0.33,
+          "summon": "bombbossexploderBIG",
+          "summonCount": 1,
+          "behavior": "charge",
+          "speedMultiplier": 1.2
+        }
       ],
       "periodicSummon": {"type": "bombbossexploder", "seconds": 5, "count": 2, "max": 6},
-      "note": "The Bomb Maker has no guns (0 gunMounts): the attack is the rain of robot mines (bombbossexploder). The fire rate is a reconstruction."
+      "note": "The Bomb Maker nao tem armas (0 gunMounts): o ataque e a chuva de minas-robo (bombbossexploder). A cadencia e uma reconstrucao."
     },
     "bombbarrel": {
       "name": "Stored Bomb",
       "template": "bombbarrel",
       "behavior": "idle",
       "onDeath": "bombbarrelboom",
-      "note": "Visible barrel. When destroyed it releases the ring of bullets (bombbarrelboom)."
+      "note": "Barril visivel. Ao ser destruido solta o anel de balas (bombbarrelboom)."
     },
     "bombbarrelboom": {
       "name": "Stored Bomb",
@@ -335,7 +352,7 @@
       "shotRange": 999,
       "excludeFromRoomClear": true,
       "durationSeconds": 1.5,
-      "note": "The original's invisible shooter: it only exists for a moment after the barrel blows up, fires the ring and disappears. It is not placed loose in the rooms."
+      "note": "Atirador invisivel do original: so existe por um instante depois que o barril explode, dispara o anel e some. Nao e colocado solto nas salas."
     },
     "homingbomb": {
       "name": "Loose Bomb",
@@ -344,7 +361,7 @@
       "preferredDistance": 6,
       "aggroRadius": 30,
       "onDeath": "bombbarrelboom",
-      "note": "Homing bomb: no gun in the client. Dives at the player and explodes on contact (bullet ring of bombbarrelboom)."
+      "note": "Bomba teleguiada: sem arma no cliente. Mergulha no jogador e explode ao tocar (anel de balas do bombbarrelboom)."
     },
     "bomberjet": {
       "name": "bomberjet",
@@ -353,7 +370,7 @@
       "preferredDistance": 6,
       "aggroRadius": 30,
       "onDeath": "bombbarrelboom",
-      "note": "Bomber jet: no gun in the client. Dives at the player and explodes on contact."
+      "note": "Jato bombardeiro: sem arma no cliente. Mergulha no jogador e explode ao tocar."
     },
     "homingbomblayer": {
       "name": "Bomb Carrier",
@@ -362,7 +379,7 @@
       "preferredDistance": 7,
       "aggroRadius": 28,
       "periodicSummon": {"type": "homingbomb", "seconds": 6, "count": 1, "max": 2, "countsForRoomClear": false},
-      "note": "No gun in the client: drops a Loose Bomb every 6 s (reconstruction)."
+      "note": "Sem arma no cliente: solta uma Loose Bomb a cada 6 s (reconstrucao)."
     },
     "homingbomblayercenter": {
       "name": "Bomb Carrier",
@@ -371,7 +388,7 @@
       "preferredDistance": 7,
       "aggroRadius": 28,
       "periodicSummon": {"type": "homingbomb", "seconds": 6, "count": 1, "max": 2, "countsForRoomClear": false},
-      "note": "No gun in the client: drops a Loose Bomb every 6 s (reconstruction)."
+      "note": "Sem arma no cliente: solta uma Loose Bomb a cada 6 s (reconstrucao)."
     },
     "flakblimp": {
       "name": "Munitions Engineer",
@@ -380,7 +397,7 @@
       "preferredDistance": 7,
       "aggroRadius": 28,
       "periodicSummon": {"type": "flakblimpexploder", "seconds": 9, "count": 1, "max": 2, "countsForRoomClear": false},
-      "note": "No gun in the client: drops a robot mine every 9 s (reconstruction)."
+      "note": "Sem arma no cliente: solta uma mina-robo a cada 9 s (reconstrucao)."
     },
     "flakblimpbig": {
       "name": "Big Red",
@@ -389,16 +406,42 @@
       "preferredDistance": 7,
       "aggroRadius": 28,
       "periodicSummon": {"type": "flakblimpexploderstrong", "seconds": 9, "count": 1, "max": 2, "countsForRoomClear": false},
-      "note": "No gun in the client: drops a strong robot mine every 9 s (reconstruction)."
+      "note": "Sem arma no cliente: solta uma mina-robo forte a cada 9 s (reconstrucao)."
     },
-    "bombdungeontreasureBIG_reward": {"name": "Big Treasure", "template": "bombdungeontreasureBIG_reward", "behavior": "idle", "opensAfterHitSeconds": 1.5},
-    "bombdungeontreasureBIG_dud": {"name": "Treasure", "template": "bombdungeontreasureBIG_dud", "behavior": "idle", "opensAfterHitSeconds": 1.5},
+    "bombdungeontreasureBIG_reward": {
+      "name": "Big Treasure",
+      "template": "bombdungeontreasureBIG_reward",
+      "behavior": "idle",
+      "opensAfterHitSeconds": 1.5
+    },
+    "bombdungeontreasureBIG_dud": {
+      "name": "Treasure",
+      "template": "bombdungeontreasureBIG_dud",
+      "behavior": "idle",
+      "opensAfterHitSeconds": 1.5
+    },
     "altar": {"name": "Guard Barracks", "template": "altar", "behavior": "idle"},
     "bombbossDEATH": {"name": "The Bomb Maker", "template": "bombbossDEATH", "behavior": "idle", "invulnerable": true},
-    "bombbossexploder": {"name": "The Bomb Maker", "template": "bombbossexploder", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
-    "bombbossexploderBIG": {"name": "The Bomb Maker", "template": "bombbossexploderBIG", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
+    "bombbossexploder": {
+      "name": "The Bomb Maker",
+      "template": "bombbossexploder",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
+    "bombbossexploderBIG": {
+      "name": "The Bomb Maker",
+      "template": "bombbossexploderBIG",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
     "bombdungeondestroyablewall": {"name": "bombdungeondestroyablewall", "template": "bombdungeondestroyablewall", "behavior": "idle"},
-    "bombdungeondestroyablewallstrong": {"name": "bombdungeondestroyablewallstrong", "template": "bombdungeondestroyablewallstrong", "behavior": "idle"},
+    "bombdungeondestroyablewallstrong": {
+      "name": "bombdungeondestroyablewallstrong",
+      "template": "bombdungeondestroyablewallstrong",
+      "behavior": "idle"
+    },
     "bombdungeontreasure": {"name": "Treasure", "template": "bombdungeontreasure", "behavior": "idle", "opensAfterHitSeconds": 1.5},
     "bombdungeontreasureBIG": {
       "name": "Big Treasure",
@@ -406,27 +449,52 @@
       "behavior": "idle",
       "health": 1000,
       "dpsChest": {"seconds": 25, "reward": "bombdungeontreasureBIG_reward", "fail": "bombdungeontreasureBIG_dud"},
-      "note": "DPS chest: starts counting at the first hit; breaking it in 25 s swaps it for bombdungeontreasureBIG_reward, senao bombdungeontreasureBIG_dud. Health and time are a reconstruction (change 'health' and 'dpsChest.seconds' freely)."
+      "note": "Bau de DPS: comeca a contar no primeiro tiro; quebrar em 25 s troca por bombdungeontreasureBIG_reward, senao bombdungeontreasureBIG_dud. Vida e tempo sao reconstrucao (ajuste 'vida' e 'bauDeDps.segundos' a vontade)."
     },
     "bomberjetexploder": {"name": "bomberjetexploder", "template": "bomberjetexploder", "behavior": "turret", "aggroRadius": 30},
-    "bombfactoryworker": {"name": "Factory Worker", "template": "bombfactoryworker", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
+    "bombfactoryworker": {
+      "name": "Factory Worker",
+      "template": "bombfactoryworker",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
     "bombguard": {"name": "Ammunitions Guard", "template": "bombguard", "behavior": "turret", "aggroRadius": 30},
     "bombturret": {"name": "Factory Turret", "template": "bombturret", "behavior": "turret", "aggroRadius": 30},
-    "flakblimpexploder": {"name": "Munitions Engineer", "template": "flakblimpexploder", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
-    "flakblimpexploderstrong": {"name": "Munitions Engineer", "template": "flakblimpexploderstrong", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28}
+    "flakblimpexploder": {
+      "name": "Munitions Engineer",
+      "template": "flakblimpexploder",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
+    "flakblimpexploderstrong": {
+      "name": "Munitions Engineer",
+      "template": "flakblimpexploderstrong",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    }
   },
   "encounters": [
     {
-      "room": "assembly_line",
-      "area": "assembly_line",
+      "room": "linha_de_montagem",
+      "area": "linha_de_montagem",
       "wakes": "onEnter",
-      "line": "assembly_line",
+      "line": "linha_de_montagem",
       "enemies": [
         {
           "type": "bombfactoryworker",
-          "pos": [{"u": -4.5, "v": -154.1, "rot": 135}, {"u": 7.4, "v": -170.4, "rot": 135}, {"u": -0.9, "v": -148.9, "rot": 135}]
+          "pos": [
+            {"u": -4.5, "v": -154.1, "rot": 135},
+            {"u": 7.4, "v": -170.4, "rot": 135},
+            {"u": -0.9, "v": -148.9, "rot": 135}
+          ]
         },
-        {"type": "bombturret", "pos": [{"u": -21.1, "v": -168.8, "rot": 45}, {"u": -21.1, "v": -148.3, "rot": 45}]},
+        {
+          "type": "bombturret",
+          "pos": [{"u": -21.1, "v": -168.8, "rot": 45}, {"u": -21.1, "v": -148.3, "rot": 45}]
+        },
         {
           "type": "bombbarrel",
           "pos": [
@@ -438,32 +506,56 @@
             {"u": 26.2, "v": -155.2, "rot": 135}
           ]
         },
-        {"type": "bombbarrel", "pos": [{"u": -5.5, "v": -146.0, "rot": 135}, {"u": 17.5, "v": -146.0, "rot": 135}]}
+        {
+          "type": "bombbarrel",
+          "pos": [{"u": -5.5, "v": -146.0, "rot": 135}, {"u": 17.5, "v": -146.0, "rot": 135}]
+        }
       ]
     },
     {
-      "room": "depot",
-      "area": "depot",
+      "room": "deposito",
+      "area": "deposito",
       "wakes": "onEnter",
-      "line": "depot",
+      "line": "deposito",
       "enemies": [
-        {"type": "homingbomblayer", "pos": [{"u": 0.7, "v": -89.1, "rot": 135}, {"u": 35.3, "v": -89.1, "rot": 135}]},
+        {
+          "type": "homingbomblayer",
+          "pos": [{"u": 0.7, "v": -89.1, "rot": 135}, {"u": 35.3, "v": -89.1, "rot": 135}]
+        },
         {
           "type": "homingbomb",
-          "pos": [{"u": 24.2, "v": -100.5, "rot": 135}, {"u": 2.2, "v": -94.0, "rot": 135}, {"u": 7.9, "v": -91.8, "rot": 135}, {"u": 26.9, "v": -100.3, "rot": 135}]
+          "pos": [
+            {"u": 24.2, "v": -100.5, "rot": 135},
+            {"u": 2.2, "v": -94.0, "rot": 135},
+            {"u": 7.9, "v": -91.8, "rot": 135},
+            {"u": 26.9, "v": -100.3, "rot": 135}
+          ]
         },
-        {"type": "bombturret", "pos": [{"u": 39.4, "v": -106.9, "rot": 225}, {"u": 39.4, "v": -91.1, "rot": 225}]}
+        {
+          "type": "bombturret",
+          "pos": [{"u": 39.4, "v": -106.9, "rot": 225}, {"u": 39.4, "v": -91.1, "rot": 225}]
+        }
       ]
     },
     {
-      "room": "barracks",
-      "area": "barracks",
+      "room": "quartel",
+      "area": "quartel",
       "wakes": "onEnter",
-      "line": "barracks",
+      "line": "quartel",
       "enemies": [
         {"type": "altar", "pos": [{"u": -20.2, "v": -20.4, "rot": 135}, {"u": 20.2, "v": -20.4, "rot": 135}]},
-        {"type": "bombguard", "pos": [{"u": -21.9, "v": -35.0, "rot": 135}, {"u": 0.0, "v": -35.0, "rot": 135}, {"u": 21.9, "v": -35.0, "rot": 135}]},
-        {"type": "flakblimpexploder", "pos": [{"u": -17.3, "v": -43.0, "rot": 135}, {"u": 17.3, "v": -43.0, "rot": 135}]}
+        {
+          "type": "bombguard",
+          "pos": [
+            {"u": -21.9, "v": -35.0, "rot": 135},
+            {"u": 0.0, "v": -35.0, "rot": 135},
+            {"u": 21.9, "v": -35.0, "rot": 135}
+          ]
+        },
+        {
+          "type": "flakblimpexploder",
+          "pos": [{"u": -17.3, "v": -43.0, "rot": 135}, {"u": 17.3, "v": -43.0, "rot": 135}]
+        }
       ]
     },
     {
@@ -472,70 +564,88 @@
       "wakes": "onEnter",
       "line": "hangar",
       "enemies": [
-        {"type": "flakblimp", "pos": [{"u": -20.4, "v": 41.4, "rot": 135}, {"u": 6.0, "v": 41.4, "rot": 135}, {"u": 32.4, "v": 41.4, "rot": 135}]},
-        {"type": "flakblimpexploderstrong", "pos": [{"u": -7.9, "v": 30.0, "rot": 135}, {"u": 19.9, "v": 30.0, "rot": 135}]},
-        {"type": "bomberjet", "pos": [{"u": -18.4, "v": 48.2, "rot": 135}, {"u": 30.4, "v": 48.2, "rot": 135}]},
-        {"type": "bomberjetexploder", "pos": [{"u": -26.7, "v": 30.0, "rot": 45}, {"u": 38.7, "v": 30.0, "rot": 225}]}
+        {
+          "type": "flakblimp",
+          "pos": [
+            {"u": -20.4, "v": 41.4, "rot": 135},
+            {"u": 6.0, "v": 41.4, "rot": 135},
+            {"u": 32.4, "v": 41.4, "rot": 135}
+          ]
+        },
+        {
+          "type": "flakblimpexploderstrong",
+          "pos": [{"u": -7.9, "v": 30.0, "rot": 135}, {"u": 19.9, "v": 30.0, "rot": 135}]
+        },
+        {
+          "type": "bomberjet",
+          "pos": [{"u": -18.4, "v": 48.2, "rot": 135}, {"u": 30.4, "v": 48.2, "rot": 135}]
+        },
+        {
+          "type": "bomberjetexploder",
+          "pos": [{"u": -26.7, "v": 30.0, "rot": 45}, {"u": 38.7, "v": 30.0, "rot": 225}]
+        }
       ]
     },
     {
-      "room": "overseer_room",
-      "area": "overseer_room",
+      "room": "sala_do_capataz",
+      "area": "sala_do_capataz",
       "wakes": "onEnter",
-      "line": "overseer_room",
+      "line": "sala_do_capataz",
       "enemies": [
         {
           "type": "fatblimp",
           "pos": [{"u": 6.0, "v": 102.8, "rot": 135}],
-          "note": "Overseer Charles (miniboss). No guns in the game: the attack came from the bombs and the helpers."
+          "note": "Overseer Charles (minichefe). Sem armas no jogo: o ataque vinha das bombas e dos ajudantes."
         },
-        {"type": "flakblimpbig", "pos": [{"u": -11.3, "v": 107.4, "rot": 135}, {"u": 23.3, "v": 107.4, "rot": 135}]},
+        {
+          "type": "flakblimpbig",
+          "pos": [{"u": -11.3, "v": 107.4, "rot": 135}, {"u": 23.3, "v": 107.4, "rot": 135}]
+        },
         {"type": "homingbomblayercenter", "pos": [{"u": 6.0, "v": 91.4, "rot": 135}]}
       ],
       "miniboss": true
     },
     {
-      "room": "boss_room",
-      "area": "boss_room",
+      "room": "sala_do_chefe",
+      "area": "sala_do_chefe",
       "wakes": "onEnter",
-      "line": "boss_room",
+      "line": "sala_do_chefe",
       "enemies": [
         {"type": "bombboss", "pos": [{"u": 6.0, "v": 193.9, "rot": 135}]},
         {
           "type": "bombbarrel",
-          "pos": [{"u": -18.4, "v": 155.6, "rot": 135}, {"u": 30.4, "v": 155.6, "rot": 135}, {"u": -18.4, "v": 204.4, "rot": 135}, {"u": 30.4, "v": 204.4, "rot": 135}]
+          "pos": [
+            {"u": -18.4, "v": 155.6, "rot": 135},
+            {"u": 30.4, "v": 155.6, "rot": 135},
+            {"u": -18.4, "v": 204.4, "rot": 135},
+            {"u": 30.4, "v": 204.4, "rot": 135}
+          ]
         }
       ],
       "boss": true,
       "closesOnEnter": true
     },
     {
-      "room": "vault",
-      "area": "vault",
+      "room": "cofre",
+      "area": "cofre",
       "wakes": "script",
-      "line": "vault",
-      "enemies": [
-        {"type": "bombdungeontreasureBIG", "pos": [{"u": 6.0, "v": 242.2, "rot": 135}]}
-      ],
-      "note": "Big Treasure (DPS chest): breaking the chest in time swaps it for bombdungeontreasureBIG_reward; otherwise the _dud stays."
+      "line": "cofre",
+      "enemies": [{"type": "bombdungeontreasureBIG", "pos": [{"u": 6.0, "v": 242.2, "rot": 135}]}],
+      "note": "Big Treasure (bau de DPS): quebrar o bau a tempo troca por bombdungeontreasureBIG_reward; senao fica o _dud."
     },
     {
-      "room": "depot_treasure",
-      "area": "depot_treasure",
+      "room": "tesouro_deposito",
+      "area": "tesouro_deposito",
       "wakes": "onEnter",
-      "line": "depot_treasure",
-      "enemies": [
-        {"type": "bombdungeontreasure", "pos": [{"u": 69.0, "v": -96.2, "rot": 135}]}
-      ]
+      "line": "tesouro_deposito",
+      "enemies": [{"type": "bombdungeontreasure", "pos": [{"u": 69.0, "v": -96.2, "rot": 135}]}]
     },
     {
-      "room": "hangar_treasure",
-      "area": "hangar_treasure",
+      "room": "tesouro_hangar",
+      "area": "tesouro_hangar",
       "wakes": "onEnter",
-      "line": "hangar_treasure",
-      "enemies": [
-        {"type": "bombdungeontreasure", "pos": [{"u": -57.0, "v": 32.8, "rot": 135}]}
-      ]
+      "line": "tesouro_hangar",
+      "enemies": [{"type": "bombdungeontreasure", "pos": [{"u": -57.0, "v": 32.8, "rot": 135}]}]
     }
   ]
 }

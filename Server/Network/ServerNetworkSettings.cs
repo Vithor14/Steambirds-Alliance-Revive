@@ -200,7 +200,7 @@ public static class ServerNetworkSettingsFile
         }
     }
 
-    // Default file. Comments in English and Portuguese (the reader skips them).
+    // Default file (the reader skips the comments).
     private const string DefaultFileText =
 @"// Network settings of the server. Ports and allowOtherPlayers only change when the server restarts.
 {

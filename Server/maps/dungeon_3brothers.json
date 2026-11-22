@@ -4,8 +4,8 @@
   "id": "dungeon_3brothers",
   "name": "The Three Brothers",
   "terrain": "Dungeon3Brothers",
-  "note": "Meowza's elite guard, between the Throne and the Sanctum. A corridor with turrets (hallwayturretS), then the arena: Golden Kai, Golden Jinn and Golden Rei, one at a time (barks 3brothers_intro1-3 and death1-3), with Duelist Protectors. At the end, the portal to the Inner Sanctum (3brothers_portalmaker) and the chest 3brothers_reward.",
-  "source": "Build 190828.2045: units, names, barks, signs, quests and territory come from the configBinary; the Dungeons/dungeon_* file of that build is empty, so the room format and the enemy positions were recreated.",
+  "note": "Guarda de elite de Meowza, entre o Trono e o Santuario. Corredor com torretas (hallwayturretS), depois a arena: Golden Kai, Golden Jinn e Golden Rei, um de cada vez (falas 3brothers_intro1-3 e death1-3), com Duelist Protectors. No fim, o portal para o Inner Sanctum (3brothers_portalmaker) e o bau 3brothers_reward.",
+  "source": "Build 190828.2045: unidades, nomes, falas, placas, quests e territorio vem do configBinary; o arquivo Dungeons/dungeon_* dessa build e vazio, entao o formato das salas e a posicao dos inimigos foram recriados.",
   "exit": {"point": "portal", "when": "death:thunderboss3B"},
   "nextDungeon": {"map": "dungeon_finalboss2", "point": "portal", "when": "death:thunderboss3B"},
   "territory": 73,
@@ -17,7 +17,7 @@
     "drawing": {
       "siStart": -20,
       "sjStart": -44,
-      "legend": ". free floor, # wall, - no floor. First line = last sj row (the far end).",
+      "legend": ". chao livre, # muro, - sem chao. Primeira linha = ultima fileira sj (o fundo).",
       "lines": [
         "############################################",
         "############################################",
@@ -116,24 +116,40 @@
   "spawn": {"u": 6.0, "v": -112.1, "rot": 315},
   "points": {
     "boss": {"u": 6.0, "v": 86.0, "rot": 135},
-    "portal": {"u": 6.0, "v": 53.3, "rot": 0, "note": "portal to the Inner Sanctum (dungeon_finalboss2)"}
+    "portal": {"u": 6.0, "v": 53.3, "rot": 0, "note": "portal para o Inner Sanctum (dungeon_finalboss2)"}
   },
   "groups": {},
   "areas": {
-    "entrance": {"minU": -15.6, "maxU": 27.6, "minV": -120.6, "maxV": -83.4},
-    "sacred_hall": {"minU": -12.6, "maxU": 24.6, "minV": -72.6, "maxV": 6.6},
-    "brothers_arena": {"minU": -42.6, "maxU": 54.6, "minV": 23.4, "maxV": 120.6}
+    "entrada": {"minU": -15.6, "maxU": 27.6, "minV": -120.6, "maxV": -83.4},
+    "corredor_sagrado": {"minU": -12.6, "maxU": 24.6, "minV": -72.6, "maxV": 6.6},
+    "arena_dos_irmaos": {"minU": -42.6, "maxU": 54.6, "minV": 23.4, "maxV": 120.6}
   },
-  "lines": {"entrance": -120.0, "sacred_hall": -72.0, "brothers_arena": 24.0},
+  "lines": {"entrada": -120.0, "corredor_sagrado": -72.0, "arena_dos_irmaos": 24.0},
   "values": {"tier": 10},
   "checkpoints": [
-    {"name": "entrance", "activeAtV": -120.0, "u": 6.0, "v": -116.1, "rot": 315},
-    {"name": "sacred_hall", "activeAtV": -72.0, "u": 6.0, "v": -64.8, "rot": 315},
-    {"name": "brothers_arena", "activeAtV": 24.0, "u": 6.0, "v": 32.7, "rot": 315}
+    {"name": "entrada", "activeAtV": -120.0, "u": 6.0, "v": -116.1, "rot": 315},
+    {"name": "corredor_sagrado", "activeAtV": -72.0, "u": 6.0, "v": -64.8, "rot": 315},
+    {"name": "arena_dos_irmaos", "activeAtV": 24.0, "u": 6.0, "v": 32.7, "rot": 315}
   ],
   "gates": [
-    {"name": "sacred gate", "type": "3brothers_gate", "sj": -26, "siFrom": 0, "siTo": 3, "damageable": true, "room": "sacred_hall"},
-    {"name": "arena wall", "type": "3brothersdungeondestroyablewall", "sj": 5, "siFrom": 0, "siTo": 3, "damageable": true, "room": "brothers_arena"}
+    {
+      "name": "portao sagrado",
+      "type": "3brothers_gate",
+      "sj": -26,
+      "siFrom": 0,
+      "siTo": 3,
+      "damageable": true,
+      "room": "corredor_sagrado"
+    },
+    {
+      "name": "parede da arena",
+      "type": "3brothersdungeondestroyablewall",
+      "sj": 5,
+      "siFrom": 0,
+      "siTo": 3,
+      "damageable": true,
+      "room": "arena_dos_irmaos"
+    }
   ],
   "sideGates": [],
   "signs": [],
@@ -173,7 +189,11 @@
     "3brosportalally": {"name": "3brosportalally", "template": "3brosportalally", "behavior": "idle", "invulnerable": true},
     "3brothers_gate": {"name": "3brothers_gate", "template": "3brothers_gate", "behavior": "idle", "invulnerable": true},
     "3brothers_reward": {"name": "Treasure", "template": "3brothers_reward", "behavior": "idle", "opensAfterHitSeconds": 1.5},
-    "3brothersdungeondestroyablewall": {"name": "3brothersdungeondestroyablewall", "template": "3brothersdungeondestroyablewall", "behavior": "idle"},
+    "3brothersdungeondestroyablewall": {
+      "name": "3brothersdungeondestroyablewall",
+      "template": "3brothersdungeondestroyablewall",
+      "behavior": "idle"
+    },
     "duelist_3Bclone": {"name": "Duelist Protector", "template": "duelist_3Bclone", "behavior": "turret", "aggroRadius": 30},
     "hallwayturretS": {"name": "hallwayturretS", "template": "hallwayturretS", "behavior": "turret", "aggroRadius": 30},
     "kaiju3BDEATH": {"name": "Golden Kai", "template": "kaiju3BDEATH", "behavior": "idle", "invulnerable": true},
@@ -182,10 +202,10 @@
   },
   "encounters": [
     {
-      "room": "sacred_hall",
-      "area": "sacred_hall",
+      "room": "corredor_sagrado",
+      "area": "corredor_sagrado",
       "wakes": "onEnter",
-      "line": "sacred_hall",
+      "line": "corredor_sagrado",
       "enemies": [
         {
           "type": "hallwayturretS",
@@ -202,10 +222,10 @@
       "controllers": ["hallwayturretcontroller"]
     },
     {
-      "room": "brothers_arena",
-      "area": "brothers_arena",
+      "room": "arena_dos_irmaos",
+      "area": "arena_dos_irmaos",
       "wakes": "onEnter",
-      "line": "brothers_arena",
+      "line": "arena_dos_irmaos",
       "boss": true,
       "closesOnEnter": true,
       "controllers": ["3brothersmaster"],
@@ -214,49 +234,26 @@
           "name": "Golden Kai",
           "delayBeforeSeconds": 4,
           "groups": [
-            {
-              "type": "kaiju3B",
-              "pos": [
-                {"u": 6.0, "v": 90.7, "rot": 135}
-              ]
-            },
+            {"type": "kaiju3B", "pos": [{"u": 6.0, "v": 90.7, "rot": 135}]},
             {
               "type": "duelist_3Bclone",
-              "pos": [
-                {"u": -22.1, "v": 100.1, "rot": 135},
-                {"u": 34.1, "v": 100.1, "rot": 135}
-              ]
+              "pos": [{"u": -22.1, "v": 100.1, "rot": 135}, {"u": 34.1, "v": 100.1, "rot": 135}]
             }
           ]
         },
         {
           "name": "Golden Jinn",
           "delayBeforeSeconds": 4,
-          "groups": [
-            {
-              "type": "raijin3B",
-              "pos": [
-                {"u": 6.0, "v": 90.7, "rot": 135}
-              ]
-            }
-          ]
+          "groups": [{"type": "raijin3B", "pos": [{"u": 6.0, "v": 90.7, "rot": 135}]}]
         },
         {
           "name": "Golden Rei",
           "delayBeforeSeconds": 4,
           "groups": [
-            {
-              "type": "thunderboss3B",
-              "pos": [
-                {"u": 6.0, "v": 90.7, "rot": 135}
-              ]
-            },
+            {"type": "thunderboss3B", "pos": [{"u": 6.0, "v": 90.7, "rot": 135}]},
             {
               "type": "duelist_3Bclone",
-              "pos": [
-                {"u": -22.1, "v": 81.4, "rot": 135},
-                {"u": 34.1, "v": 81.4, "rot": 135}
-              ]
+              "pos": [{"u": -22.1, "v": 81.4, "rot": 135}, {"u": 34.1, "v": 81.4, "rot": 135}]
             }
           ]
         }
@@ -264,9 +261,7 @@
       "enemies": [
         {
           "type": "3brothers_reward",
-          "pos": [
-            {"u": 6.0, "v": 67.3, "rot": 135}
-          ],
+          "pos": [{"u": 6.0, "v": 67.3, "rot": 135}],
           "wakes": "death:thunderboss3B"
         }
       ]

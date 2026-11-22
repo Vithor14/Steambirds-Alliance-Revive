@@ -4,8 +4,8 @@
   "id": "dungeon_sneezy",
   "name": "Iron Lair",
   "terrain": "DungeonSneezy",
-  "note": "Mini-dungeon (T10) opened by the world's Mysterious Black Box. Spawn room (added in a 2019 patch) and SN-Z's arena, which launches beacons and calls the Robo Squadrons I-III. The client has no territory of its own for it; it uses industrialboss (67).",
-  "source": "Build 190828.2045: units, names, barks, signs, quests and territory come from the configBinary; the Dungeons/dungeon_* file of that build is empty, so the room format and the enemy positions were recreated.",
+  "note": "Mini-dungeon (T10) aberta pela Mysterious Black Box do mundo. Sala de nascimento (adicionada num patch de 2019) e a arena do SN-Z, que lanca beacons e chama os Robo Squadrons I-III. O cliente nao tem territorio proprio para ela; usa industrialboss (67).",
+  "source": "Build 190828.2045: unidades, nomes, falas, placas, quests e territorio vem do configBinary; o arquivo Dungeons/dungeon_* dessa build e vazio, entao o formato das salas e a posicao dos inimigos foram recriados.",
   "key": "key_sneezy",
   "portalItem": "dungeon_sneezy",
   "exit": {"point": "portal", "when": "death:sneezy"},
@@ -18,7 +18,7 @@
     "drawing": {
       "siStart": -20,
       "sjStart": -28,
-      "legend": ". free floor, # wall, - no floor. First line = last sj row (the far end).",
+      "legend": ". chao livre, # muro, - sem chao. Primeira linha = ultima fileira sj (o fundo).",
       "lines": [
         "############################################",
         "############################################",
@@ -89,21 +89,29 @@
   "spawn": {"u": 6.0, "v": -64.1, "rot": 315},
   "points": {
     "boss": {"u": 6.0, "v": 41.8, "rot": 135},
-    "portal": {"u": 6.0, "v": 19.9, "rot": 0, "note": "exit carrier (appears when the boss dies)"}
+    "portal": {"u": 6.0, "v": 19.9, "rot": 0, "note": "porta-avioes de saida (aparece quando o chefe morre)"}
   },
   "groups": {},
   "areas": {
-    "entrance": {"minU": -15.6, "maxU": 27.6, "minV": -72.6, "maxV": -35.4},
-    "snz_arena": {"minU": -39.6, "maxU": 51.6, "minV": -12.6, "maxV": 78.6}
+    "entrada": {"minU": -15.6, "maxU": 27.6, "minV": -72.6, "maxV": -35.4},
+    "arena_do_snz": {"minU": -39.6, "maxU": 51.6, "minV": -12.6, "maxV": 78.6}
   },
-  "lines": {"entrance": -72.0, "snz_arena": -12.0},
+  "lines": {"entrada": -72.0, "arena_do_snz": -12.0},
   "values": {"tier": 10},
   "checkpoints": [
-    {"name": "entrance", "activeAtV": -72.0, "u": 6.0, "v": -68.1, "rot": 315},
-    {"name": "snz_arena", "activeAtV": -12.0, "u": 6.0, "v": -3.8, "rot": 315}
+    {"name": "entrada", "activeAtV": -72.0, "u": 6.0, "v": -68.1, "rot": 315},
+    {"name": "arena_do_snz", "activeAtV": -12.0, "u": 6.0, "v": -3.8, "rot": 315}
   ],
   "gates": [
-    {"name": "arena gate", "type": "spacedungeondestroyablewall", "sj": -8, "siFrom": 0, "siTo": 3, "damageable": true, "room": "snz_arena"}
+    {
+      "name": "portao da arena",
+      "type": "spacedungeondestroyablewall",
+      "sj": -8,
+      "siFrom": 0,
+      "siTo": 3,
+      "damageable": true,
+      "room": "arena_do_snz"
+    }
   ],
   "sideGates": [],
   "signs": [],
@@ -118,7 +126,14 @@
       "onDeath": "sneezyDEATH",
       "barks": {"onDeath": "sneezyDEATH"},
       "phases": [
-        {"belowHealth": 0.9, "shieldSeconds": 10, "visualEffect": "tankShield", "summon": "sneezyforce1", "summonCount": 2, "message": "Robo Squadron I"},
+        {
+          "belowHealth": 0.9,
+          "shieldSeconds": 10,
+          "visualEffect": "tankShield",
+          "summon": "sneezyforce1",
+          "summonCount": 2,
+          "message": "Robo Squadron I"
+        },
         {
           "belowHealth": 0.7,
           "shieldSeconds": 10,
@@ -155,10 +170,16 @@
         }
       ],
       "guns": [0, 1, 2, 4, 5],
-      "note": "Guns by gunMounts index of SN-Z: 0-2 machine guns, 4-5 mainphase1, 7-12 mainphase2, 14 mainphase3 (missile), 16-18 mainphase4, 19-21 finalattack. 3/6/13/15 are the 'duds'."
+      "note": "Armas por indice dos gunMounts do SN-Z: 0-2 metralhadoras, 4-5 mainphase1, 7-12 mainphase2, 14 mainphase3 (missil), 16-18 mainphase4, 19-21 finalattack. 3/6/13/15 sao os 'dud'."
     },
     "sneezyDEATH": {"name": "SN-Z", "template": "sneezyDEATH", "behavior": "idle", "invulnerable": true},
-    "sneezybomb": {"name": "SN-Z Beacon", "template": "sneezybomb", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
+    "sneezybomb": {
+      "name": "SN-Z Beacon",
+      "template": "sneezybomb",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
     "sneezyforce1": {"name": "Robo Squadron I", "template": "sneezyforce1", "behavior": "turret", "aggroRadius": 30},
     "sneezyforce2": {"name": "Robo Squadron II", "template": "sneezyforce2", "behavior": "turret", "aggroRadius": 30},
     "sneezyforce3": {"name": "Robo Squadron III", "template": "sneezyforce3", "behavior": "turret", "aggroRadius": 30},
@@ -166,18 +187,11 @@
   },
   "encounters": [
     {
-      "room": "snz_arena",
-      "area": "snz_arena",
+      "room": "arena_do_snz",
+      "area": "arena_do_snz",
       "wakes": "onEnter",
-      "line": "snz_arena",
-      "enemies": [
-        {
-          "type": "sneezy",
-          "pos": [
-            {"u": 6.0, "v": 41.8, "rot": 135}
-          ]
-        }
-      ],
+      "line": "arena_do_snz",
+      "enemies": [{"type": "sneezy", "pos": [{"u": 6.0, "v": 41.8, "rot": 135}]}],
       "boss": true,
       "closesOnEnter": true,
       "controllers": ["sneezymaster"]

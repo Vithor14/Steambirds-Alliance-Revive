@@ -69,7 +69,6 @@ internal sealed class MapDocument
     {
         JsonNode? node = JsonNode.Parse(text, null, JsoncFile.ParseOptions);
         if (node is not JsonObject root) throw new FormatException(L.T("The file is not a JSON object."));
-        LegacyNames.Translate(root);   // maps made with the old Portuguese field names open too
         string format = Json.Str(root, "format");
         if (!string.Equals(format, FormatName, StringComparison.OrdinalIgnoreCase))
             throw new FormatException(L.F("This is not a map file: \"format\" should be \"{0}\".", FormatName));
@@ -87,7 +86,7 @@ internal sealed class MapDocument
         return document;
     }
 
-    // The text of the file: the floor goes back into "chao.desenho" first.
+    // The text of the file: the floor goes back into "floor.drawing" first.
     public string Serialize()
     {
         Floor.Save(FloorJson);

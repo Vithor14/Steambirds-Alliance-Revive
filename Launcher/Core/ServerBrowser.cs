@@ -7,7 +7,7 @@ using System.Text.Json;
 namespace SteambirdsLauncher.Core;
 
 // A game server found by the search or by "Connect by IP" (fields of GET /revive/info of the server,
-// Server\Program.cs InfoDoServidor).
+// Server\Program.cs, the /revive/info handler).
 public sealed class FoundServer
 {
     public string Name { get; set; } = "";

@@ -19,7 +19,7 @@ using System.Globalization;
 //   career_rewards / death                 only shown in the log for now (formats still unknown)
 //   Texts/<locale>/planeclasses            class names for the death screen
 //
-// If the configBinary cannot be read, the tables of build 190828 (the old configBinary in VersoesAntigas)
+// If the configBinary cannot be read, the tables of build 190828 (the old configBinary in OldVersions)
 // are used, so XP still works; skill changes are then trusted to the client.
 public static class ProgressionData
 {
@@ -175,7 +175,7 @@ public static class ProgressionData
 
     // ------------------------------------------------------------------ data
 
-    // Build 190828 (VersoesAntigas\386011-1702765646885248947): used only without a readable configBinary.
+    // Build 190828 (OldVersions\386011-1702765646885248947): used only without a readable configBinary.
     private static readonly int[] FallbackPlaneXp =
     {
         50, 200, 350, 700, 1200, 1900, 2700, 4000, 5500, 7500, 10000, 13000, 17000, 20000, 25000, 30000, 36000, 45000, 54000

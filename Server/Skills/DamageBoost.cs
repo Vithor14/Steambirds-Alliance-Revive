@@ -43,6 +43,8 @@ public static class DamageBoost
         public double Until;
         public float Factor;
         public float BuffTime;
+        // Aura attached to its owner (assault "damageAura"): the zone moves with the owner's plane.
+        public long FollowPeer;
     }
 
     private sealed class PlayerBoost
@@ -66,7 +68,7 @@ public static class DamageBoost
         ConfigNode cloud = ConfigBinary.Get("clouds")[cloudName];
         if (cloud.IsMissing) return false;
         string prefab = cloud["cloudPrefab"].AsString("");
-        if (prefab != "damageCloud" && prefab != "damageBlast") return false;
+        if (prefab != "damageCloud" && prefab != "damageBlast" && prefab != "damageAura") return false;
         factor = cloud["effect"].AsFloat(1f);
         buffTime = cloud["bufftime"].AsFloat(0f);
         return factor > 1f && buffTime > 0f;
@@ -75,7 +77,7 @@ public static class DamageBoost
     // Called when Game creates a cloud/blast. The owner is inside it right away.
     public static void CloudCreated(NetServer server, NetConnection ownerConnection, long ownerPeer, string role,
         int ownerShortId, string cloudName, float x, float y, float radius, float lifetime, double now,
-        Action<string, string> log)
+        Action<string, string> log, bool followOwner = false)
     {
         if (!TryGetCloud(cloudName, out float factor, out float buffTime)) return;
 
@@ -90,7 +92,8 @@ public static class DamageBoost
                 Radius = Math.Max(0.5f, radius),
                 Until = now + Math.Max(0.1f, lifetime),
                 Factor = factor,
-                BuffTime = buffTime
+                BuffTime = buffTime,
+                FollowPeer = followOwner ? ownerPeer : 0
             });
             Grant(ownerPeer, factor, buffTime, now);
         }
@@ -123,6 +126,11 @@ public static class DamageBoost
                 foreach (Zone z in zones)
                 {
                     if (z.Role != role) continue;
+                    if (z.FollowPeer != 0 && Game.GetPlane(z.FollowPeer, out float ax, out float ay, out _, out _))
+                    {
+                        z.X = ax;
+                        z.Y = ay;
+                    }
                     float dx = x - z.X;
                     float dy = y - z.Y;
                     float r = z.Radius + ZoneMargin;

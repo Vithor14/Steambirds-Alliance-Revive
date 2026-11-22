@@ -5,8 +5,7 @@ using SteambirdsLauncher.Editor;
 
 namespace SteambirdsLauncher.Core;
 
-// Read-only view of a account.json (Server\Accounts.cs): one per player in server\accounts\<key>\, plus the
-// old single account server\account.json while it waits for the host's first login. AccountStore edits them.
+// Read-only view of an account.json (Server\Accounts.cs): one per player in server\accounts\<key>\. AccountStore edits them.
 public static class AccountFile
 {
     public const string FileName = "account.json";
@@ -56,7 +55,7 @@ public static class AccountFile
     {
         if (!File.Exists(path)) return null;
         JsonNode? node = JsonNode.Parse(TextFiles.ReadShared(path), null, JsoncFile.ParseOptions);
-        Account account = (node == null ? null : LegacyNames.Translate(node).Deserialize<Account>(Options)) ?? new Account();
+        Account account = node?.Deserialize<Account>(Options) ?? new Account();
         account.Planes ??= new List<Plane>();
         account.FinishedDungeons ??= new List<string>();
         account.Name ??= "";

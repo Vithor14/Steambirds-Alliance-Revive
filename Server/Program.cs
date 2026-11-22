@@ -27,9 +27,6 @@ const long HostIdDungeon = 3;          // RegisteredHost.id of the dungeon serve
 var _lock = new object();
 var clock = Stopwatch.StartNew();
 
-// Files and folders with old Portuguese names (mapas, dados, contas, progression.json...) get their new names first.
-LegacyFiles.Migrate(Directory.GetCurrentDirectory(), Log);
-
 // Network settings (network.json, Network\): server name, who can join and the ports of this run.
 ServerNetworkSettingsFile.Start(Log);
 NetworkPorts ports = ServerNetworkSettingsFile.Ports;
@@ -306,7 +303,7 @@ PlayerSession BindSession(NetConnection connection, string ticket, string user, 
     var (key, steamId, _) = SteamTicket.AccountKey(null, null, remote?.ToString());
     bool fromThisPc = PlayerSessions.IsThisPc(remote);
     string name = PlayerNamePath.Clean(user);
-    Accounts.Account account = Accounts.GetOrCreate(key, name, steamId, fromThisPc, out string note);
+    Accounts.Account account = Accounts.GetOrCreate(key, name, steamId, out string note);
     if (name.Length == 0) name = account.Name;
     PrepareAccount(account);
     IPAddress address = remote == null ? IPAddress.Loopback : PlayerSessions.LocalAddressToward(remote);
@@ -885,13 +882,13 @@ object Join(HttpContext ctx, string body, string? launcherName)
     bool fromThisPc = PlayerSessions.IsThisPc(client);
     string name = PlayerNamePath.Clean(launcherName ?? bodyUser);
 
-    Accounts.Account account = Accounts.GetOrCreate(key, name, steamId, fromThisPc, out string note);
+    Accounts.Account account = Accounts.GetOrCreate(key, name, steamId, out string note);
     if (name.Length == 0)
     {
         // No name in the launcher (game opened from outside): the name saved in the account, or "Pilot" + the end of the Steam ID.
         name = account.SavedName.Length > 0 ? account.SavedName
             : "Pilot " + (steamId != null && steamId.Length >= 4 ? steamId.Substring(steamId.Length - 4) : key.Substring(Math.Max(0, key.Length - 4)));
-        Accounts.GetOrCreate(key, name, steamId, false, out _);
+        Accounts.GetOrCreate(key, name, steamId, out _);
     }
     PrepareAccount(account);
 

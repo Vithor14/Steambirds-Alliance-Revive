@@ -7,8 +7,6 @@ namespace SteambirdsLauncher.Core;
 
 // The accounts of the server: one folder per player in server\accounts\<key>\ (key = steam_<SteamID64>), with
 // account.json (pilot, planes, finished dungeons), inventory.json (items, currencies, ingredients) and acceptances.json.
-// server\account.json (+ inventory.json, acceptances.json) is the old single account, until the server gives it to the
-// first player who logs in from the host's PC.
 //
 // Editing and removing: the server keeps the accounts of the players who logged in in memory and writes over the
 // files, so they are only changed while the launcher's server is stopped. Every field the launcher does not edit is
@@ -41,9 +39,6 @@ public sealed class AccountStore
         public string SteamId { get; init; } = "";
         public DateTime? LastSeen { get; init; }
 
-        // server\account.json: the old single account, not assigned to a player yet.
-        public bool IsLegacy { get; init; }
-
         public AccountFile.Account? Data { get; init; }
         public string Error { get; init; } = "";
     }
@@ -69,18 +64,15 @@ public sealed class AccountStore
         this.inventoryBom = inventoryBom;
     }
 
-    // Folder of the account (server\accounts\<key>, or server\ for the old single account).
+    // Folder of the account (server\accounts\<key>).
     public string Folder { get; }
     public string AccountPath => Path.Combine(Folder, AccountFileName);
     public string InventoryPath => Path.Combine(Folder, InventoryFileName);
 
-    // Every account of the server: the old single account first (when it is still there), then the players by the
-    // last time they played.
+    // Every account of the server, by the last time the player played.
     public static List<Summary> List()
     {
         var list = new List<Summary>();
-        string legacy = LauncherPaths.ServerFile(AccountFileName);
-        if (File.Exists(legacy)) list.Add(Read(LauncherPaths.ServerFolder, "", isLegacy: true));
         try
         {
             if (Directory.Exists(AccountsFolder))
@@ -89,7 +81,7 @@ public sealed class AccountStore
                 foreach (string folder in Directory.GetDirectories(AccountsFolder))
                 {
                     if (!File.Exists(Path.Combine(folder, AccountFileName))) continue;
-                    players.Add(Read(folder, Path.GetFileName(folder), isLegacy: false));
+                    players.Add(Read(folder, Path.GetFileName(folder)));
                 }
                 list.AddRange(players.OrderByDescending(p => p.LastSeen ?? DateTime.MinValue).ThenBy(p => p.Name, StringComparer.OrdinalIgnoreCase));
             }
@@ -107,8 +99,6 @@ public sealed class AccountStore
         DateTime latest = DateTime.MinValue;
         try
         {
-            string legacy = LauncherPaths.ServerFile(AccountFileName);
-            if (File.Exists(legacy)) latest = File.GetLastWriteTimeUtc(legacy);
             if (Directory.Exists(AccountsFolder))
             {
                 latest = Max(latest, Directory.GetLastWriteTimeUtc(AccountsFolder));
@@ -127,12 +117,12 @@ public sealed class AccountStore
 
     private static DateTime Max(DateTime a, DateTime b) => a > b ? a : b;
 
-    private static Summary Read(string folder, string key, bool isLegacy)
+    private static Summary Read(string folder, string key)
     {
         try
         {
             AccountFile.Account? data = AccountFile.Load(Path.Combine(folder, AccountFileName));
-            string name = data != null && data.Name.Length > 0 ? data.Name : (isLegacy ? L.T("(old account of the server)") : key);
+            string name = data != null && data.Name.Length > 0 ? data.Name : key;
             return new Summary
             {
                 Key = key.Length > 0 ? key : data?.Key ?? "",
@@ -140,13 +130,12 @@ public sealed class AccountStore
                 Name = name,
                 SteamId = data?.SteamId ?? "",
                 LastSeen = data?.LastAccess,
-                IsLegacy = isLegacy,
                 Data = data
             };
         }
         catch (Exception e)
         {
-            return new Summary { Key = key, Folder = folder, Name = key.Length > 0 ? key : AccountFileName, IsLegacy = isLegacy, Error = e.Message };
+            return new Summary { Key = key, Folder = folder, Name = key.Length > 0 ? key : AccountFileName, Error = e.Message };
         }
     }
 
@@ -280,19 +269,12 @@ public sealed class AccountStore
         return backup;
     }
 
-    // Removes an account: its files go to server\_backup\account-removed-<date>. A player's folder in server\accounts is
-    // removed whole (the player gets a new account at the next login). For the old single account (server\account.json)
-    // only account.json and inventory.json go; acceptances.json stays.
+    // Removes an account: its files go to server\_backup\account-removed-<date>. The player's folder in server\accounts is
+    // removed whole (the player gets a new account at the next login).
     public static string Delete(string folder)
     {
         string backup = Backup(folder, "account-removed");
-        bool isLegacy = Path.GetFullPath(folder).TrimEnd('\\').Equals(Path.GetFullPath(LauncherPaths.ServerFolder).TrimEnd('\\'), StringComparison.OrdinalIgnoreCase);
-        if (isLegacy)
-        {
-            DeleteIfThere(Path.Combine(folder, AccountFileName));
-            DeleteIfThere(Path.Combine(folder, InventoryFileName));
-        }
-        else if (Directory.Exists(folder))
+        if (Directory.Exists(folder))
         {
             // Only a folder of server\accounts is removed whole.
             string parent = Path.GetDirectoryName(Path.GetFullPath(folder).TrimEnd('\\')) ?? "";
@@ -301,11 +283,6 @@ public sealed class AccountStore
             Directory.Delete(folder, recursive: true);
         }
         return backup;
-    }
-
-    private static void DeleteIfThere(string path)
-    {
-        if (File.Exists(path)) File.Delete(path);
     }
 
     private static string Backup(string folder, string kind)
@@ -325,7 +302,6 @@ public sealed class AccountStore
     {
         string text = TextFiles.ReadKeepingBom(path, out bom);
         JsonNode? node = JsonNode.Parse(text, NodeOptions, JsoncFile.ParseOptions);
-        if (node != null) LegacyNames.Translate(node);   // files saved with the old Portuguese names
         return node as JsonObject ?? throw new FormatException(Path.GetFileName(path) + " is not a JSON object");
     }
 

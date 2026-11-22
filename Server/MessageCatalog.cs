@@ -1,5 +1,5 @@
 // Message catalog of the Copper protocol of Steambirds Alliance (build 201219.1413).
-// Generated from the Pack_* methods of decompilado/Assembly-CSharp/GeneratedDispatcher.cs.
+// Generated from the Pack_* methods of decompiled/Assembly-CSharp/GeneratedDispatcher.cs.
 // Do not edit by hand: each line has the ID, the name, the arguments in the order they go on the wire,
 // the return type (RPC only) and whether the client sends this message to the server.
 public static class MessageCatalog

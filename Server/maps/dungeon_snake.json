@@ -4,8 +4,8 @@
   "id": "dungeon_snake",
   "name": "Venom Compound",
   "terrain": "DungeonSnake",
-  "note": "Venom factory / corrupted Egg Temple (T10, poison). Conveyors carrying eggs, poison barriers, Cargo Snakes, Offering Shepherds and Scanner Drones. Miniboss Poison Convoy (head, neck and cars). Boss: starts as a Giant Egg and hatches the Poison God, with engines and body.",
-  "source": "Build 190828.2045: units, names, barks, signs, quests and territory come from the configBinary; the Dungeons/dungeon_* file of that build is empty, so the room format and the enemy positions were recreated.",
+  "note": "Fabrica de veneno / Templo do Ovo corrompido (T10, veneno). Esteiras carregando ovos, barreiras de veneno, Cargo Snakes, Offering Shepherds e Scanner Drones. Minichefe Poison Convoy (cabeca, pescoco e vagoes). Chefe: comeca como Giant Egg e choca o Poison God, com motores e corpo.",
+  "source": "Build 190828.2045: unidades, nomes, falas, placas, quests e territorio vem do configBinary; o arquivo Dungeons/dungeon_* dessa build e vazio, entao o formato das salas e a posicao dos inimigos foram recriados.",
   "key": "key_snake",
   "portalItem": "dungeon_snake",
   "exit": {"point": "portal", "when": "death:dragonsnake01"},
@@ -18,7 +18,7 @@
     "drawing": {
       "siStart": -32,
       "sjStart": -80,
-      "legend": ". free floor, # wall, - no floor. First line = last sj row (the far end).",
+      "legend": ". chao livre, # muro, - sem chao. Primeira linha = ultima fileira sj (o fundo).",
       "lines": [
         "------------############################################--------",
         "------------############################################--------",
@@ -193,33 +193,84 @@
   },
   "groups": {},
   "areas": {
-    "entrance": {"minU": -12.6, "maxU": 24.6, "minV": -228.6, "maxV": -197.4},
-    "conveyors": {"minU": -30.6, "maxU": 42.6, "minV": -174.6, "maxV": -119.4},
-    "barriers": {"minU": -18.6, "maxU": 30.6, "minV": -108.6, "maxV": -53.4},
-    "incubator": {"minU": -27.6, "maxU": 39.6, "minV": -36.6, "maxV": 18.6},
-    "convoy_line": {"minU": -15.6, "maxU": 27.6, "minV": 29.4, "maxV": 120.6},
-    "egg_altar": {"minU": -39.6, "maxU": 51.6, "minV": 143.4, "maxV": 228.6},
-    "cargo_depot": {"minU": 53.4, "maxU": 84.6, "minV": -162.6, "maxV": -131.4},
-    "egg_chamber": {"minU": -75.6, "maxU": -38.4, "minV": -27.6, "maxV": 9.6}
+    "entrada": {"minU": -12.6, "maxU": 24.6, "minV": -228.6, "maxV": -197.4},
+    "esteiras": {"minU": -30.6, "maxU": 42.6, "minV": -174.6, "maxV": -119.4},
+    "barreiras": {"minU": -18.6, "maxU": 30.6, "minV": -108.6, "maxV": -53.4},
+    "incubadora": {"minU": -27.6, "maxU": 39.6, "minV": -36.6, "maxV": 18.6},
+    "linha_do_comboio": {"minU": -15.6, "maxU": 27.6, "minV": 29.4, "maxV": 120.6},
+    "altar_do_ovo": {"minU": -39.6, "maxU": 51.6, "minV": 143.4, "maxV": 228.6},
+    "deposito_de_carga": {"minU": 53.4, "maxU": 84.6, "minV": -162.6, "maxV": -131.4},
+    "camara_de_ovos": {"minU": -75.6, "maxU": -38.4, "minV": -27.6, "maxV": 9.6}
   },
-  "lines": {"entrance": -228.0, "conveyors": -174.0, "barriers": -108.0, "incubator": -36.0, "convoy_line": 30.0, "egg_altar": 144.0, "cargo_depot": -162.0, "egg_chamber": -27.0},
+  "lines": {
+    "entrada": -228.0,
+    "esteiras": -174.0,
+    "barreiras": -108.0,
+    "incubadora": -36.0,
+    "linha_do_comboio": 30.0,
+    "altar_do_ovo": 144.0,
+    "deposito_de_carga": -162.0,
+    "camara_de_ovos": -27.0
+  },
   "values": {"tier": 10},
   "checkpoints": [
-    {"name": "entrance", "activeAtV": -228.0, "u": 6.0, "v": -224.6, "rot": 315},
-    {"name": "conveyors", "activeAtV": -174.0, "u": 6.0, "v": -168.7, "rot": 315},
-    {"name": "barriers", "activeAtV": -108.0, "u": 6.0, "v": -102.7, "rot": 315},
-    {"name": "incubator", "activeAtV": -36.0, "u": 6.0, "v": -30.7, "rot": 315},
-    {"name": "convoy_line", "activeAtV": 30.0, "u": 6.0, "v": 38.2, "rot": 315},
-    {"name": "egg_altar", "activeAtV": 144.0, "u": 6.0, "v": 151.7, "rot": 315}
+    {"name": "entrada", "activeAtV": -228.0, "u": 6.0, "v": -224.6, "rot": 315},
+    {"name": "esteiras", "activeAtV": -174.0, "u": 6.0, "v": -168.7, "rot": 315},
+    {"name": "barreiras", "activeAtV": -108.0, "u": 6.0, "v": -102.7, "rot": 315},
+    {"name": "incubadora", "activeAtV": -36.0, "u": 6.0, "v": -30.7, "rot": 315},
+    {"name": "linha_do_comboio", "activeAtV": 30.0, "u": 6.0, "v": 38.2, "rot": 315},
+    {"name": "altar_do_ovo", "activeAtV": 144.0, "u": 6.0, "v": 151.7, "rot": 315}
   ],
   "gates": [
-    {"name": "barricade", "type": "snakedungeondestroyablewall_barricade", "sj": -38, "siFrom": 0, "siTo": 3, "damageable": true, "room": "barriers"},
-    {"name": "conveyor wall", "type": "belt_start_wall", "sj": 8, "siFrom": 0, "siTo": 3, "damageable": false, "opensWhen": "cleared:incubator", "room": "convoy_line"},
-    {"name": "altar gate", "type": "belt_end_wall", "sj": 44, "siFrom": 0, "siTo": 3, "damageable": false, "opensWhen": "cleared:convoy_line", "room": "egg_altar"}
+    {
+      "name": "barricada",
+      "type": "snakedungeondestroyablewall_barricade",
+      "sj": -38,
+      "siFrom": 0,
+      "siTo": 3,
+      "damageable": true,
+      "room": "barreiras"
+    },
+    {
+      "name": "parede da esteira",
+      "type": "belt_start_wall",
+      "sj": 8,
+      "siFrom": 0,
+      "siTo": 3,
+      "damageable": false,
+      "opensWhen": "cleared:incubadora",
+      "room": "linha_do_comboio"
+    },
+    {
+      "name": "portao do altar",
+      "type": "belt_end_wall",
+      "sj": 44,
+      "siFrom": 0,
+      "siTo": 3,
+      "damageable": false,
+      "opensWhen": "cleared:linha_do_comboio",
+      "room": "altar_do_ovo"
+    }
   ],
   "sideGates": [
-    {"name": "depot wall", "type": "snakedungeondestroyablewall", "si": 16, "sjFrom": -51, "sjTo": -48, "damageable": true, "room": "cargo_depot"},
-    {"name": "chamber wall", "type": "snakedungeondestroyablewallstrong", "si": -11, "sjFrom": -5, "sjTo": -2, "damageable": true, "room": "egg_chamber"}
+    {
+      "name": "parede do deposito",
+      "type": "snakedungeondestroyablewall",
+      "si": 16,
+      "sjFrom": -51,
+      "sjTo": -48,
+      "damageable": true,
+      "room": "deposito_de_carga"
+    },
+    {
+      "name": "parede da camara",
+      "type": "snakedungeondestroyablewallstrong",
+      "si": -11,
+      "sjFrom": -5,
+      "sjTo": -2,
+      "damageable": true,
+      "room": "camara_de_ovos"
+    }
   ],
   "signs": [
     {"key": "snakedungeonsign1", "u": 6.0, "v": -210.2, "radius": 14, "rot": 0},
@@ -251,68 +302,151 @@
     },
     "belt_end_wall": {"name": "belt_end_wall", "template": "belt_end_wall", "behavior": "idle"},
     "belt_start_wall": {"name": "belt_start_wall", "template": "belt_start_wall", "behavior": "idle"},
-    "coilsnake01": {"name": "Poison Convoy", "template": "coilsnake01", "miniboss": true, "behavior": "circle", "aggroRadius": 45, "firstShotDelay": 1.5},
-    "coilsnake01neck": {"name": "coilsnake01neck", "template": "coilsnake01neck", "behavior": "charge", "preferredDistance": 6, "aggroRadius": 30},
-    "coilsnake02": {"name": "Poison Convoy", "template": "coilsnake02", "behavior": "charge", "preferredDistance": 6, "aggroRadius": 30},
-    "coilsnake03": {"name": "Poison Convoy", "template": "coilsnake03", "behavior": "charge", "preferredDistance": 6, "aggroRadius": 30},
+    "coilsnake01": {
+      "name": "Poison Convoy",
+      "template": "coilsnake01",
+      "miniboss": true,
+      "behavior": "circle",
+      "aggroRadius": 45,
+      "firstShotDelay": 1.5
+    },
+    "coilsnake01neck": {
+      "name": "coilsnake01neck",
+      "template": "coilsnake01neck",
+      "behavior": "charge",
+      "preferredDistance": 6,
+      "aggroRadius": 30
+    },
+    "coilsnake02": {
+      "name": "Poison Convoy",
+      "template": "coilsnake02",
+      "behavior": "charge",
+      "preferredDistance": 6,
+      "aggroRadius": 30
+    },
+    "coilsnake03": {
+      "name": "Poison Convoy",
+      "template": "coilsnake03",
+      "behavior": "charge",
+      "preferredDistance": 6,
+      "aggroRadius": 30
+    },
     "conveyorbeltZ_N": {"name": "Conveyor Belt", "template": "conveyorbeltZ_N", "behavior": "idle"},
     "conveyorbelt_egg": {"name": "conveyorbelt_egg", "template": "conveyorbelt_egg", "behavior": "turret", "aggroRadius": 30},
     "conveyorbelt_straight_N_12": {"name": "Conveyor Belt", "template": "conveyorbelt_straight_N_12", "behavior": "idle"},
-    "dragonsnake02": {"name": "Poison God Engine", "template": "dragonsnake02", "behavior": "charge", "preferredDistance": 6, "aggroRadius": 30},
-    "dragonsnake03_big": {"name": "Poison God", "template": "dragonsnake03_big", "behavior": "charge", "preferredDistance": 6, "aggroRadius": 30},
+    "dragonsnake02": {
+      "name": "Poison God Engine",
+      "template": "dragonsnake02",
+      "behavior": "charge",
+      "preferredDistance": 6,
+      "aggroRadius": 30
+    },
+    "dragonsnake03_big": {
+      "name": "Poison God",
+      "template": "dragonsnake03_big",
+      "behavior": "charge",
+      "preferredDistance": 6,
+      "aggroRadius": 30
+    },
     "dragonsnakeDEATH": {"name": "Poison God", "template": "dragonsnakeDEATH", "behavior": "idle", "invulnerable": true},
-    "dragonsnakeminion01": {"name": "Snake Servant", "template": "dragonsnakeminion01", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
-    "dragonsnakeminion02": {"name": "Snake Servant", "template": "dragonsnakeminion02", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
-    "hurtsnake2": {"name": "Factory Security", "template": "hurtsnake2", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
+    "dragonsnakeminion01": {
+      "name": "Snake Servant",
+      "template": "dragonsnakeminion01",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
+    "dragonsnakeminion02": {
+      "name": "Snake Servant",
+      "template": "dragonsnakeminion02",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
+    "hurtsnake2": {
+      "name": "Factory Security",
+      "template": "hurtsnake2",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
     "magnetbeltP_N": {"name": "Poison Belt", "template": "magnetbeltP_N", "behavior": "turret", "aggroRadius": 30},
     "magnetbeltP_S": {"name": "Poison Belt", "template": "magnetbeltP_S", "behavior": "turret", "aggroRadius": 30},
     "poisonventA": {"name": "poisonventA", "template": "poisonventA", "behavior": "turret", "aggroRadius": 30},
     "poisonventC": {"name": "poisonventC", "template": "poisonventC", "behavior": "turret", "aggroRadius": 30},
-    "snake": {"name": "Cargo Snake", "template": "snake", "behavior": "chase", "preferredDistance": 2.0, "aggroRadius": 28},
-    "snakebig": {"name": "Cargo Snake", "template": "snakebig", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
+    "snake": {
+      "name": "Cargo Snake",
+      "template": "snake",
+      "behavior": "chase",
+      "preferredDistance": 2.0,
+      "aggroRadius": 28
+    },
+    "snakebig": {
+      "name": "Cargo Snake",
+      "template": "snakebig",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
     "snakedungeondestroyablewall": {"name": "Wall", "template": "snakedungeondestroyablewall", "behavior": "idle"},
-    "snakedungeondestroyablewall_barricade": {"name": "snakedungeondestroyablewall_barricade", "template": "snakedungeondestroyablewall_barricade", "behavior": "idle"},
+    "snakedungeondestroyablewall_barricade": {
+      "name": "snakedungeondestroyablewall_barricade",
+      "template": "snakedungeondestroyablewall_barricade",
+      "behavior": "idle"
+    },
     "snakedungeondestroyablewallstrong": {"name": "Wall", "template": "snakedungeondestroyablewallstrong", "behavior": "idle"},
     "snakedungeontreasure": {"name": "Treasure", "template": "snakedungeontreasure", "behavior": "idle", "opensAfterHitSeconds": 1.5},
     "snakeegg2": {"name": "Egg", "template": "snakeegg2", "behavior": "idle"},
     "snakeegg3": {"name": "Egg", "template": "snakeegg3", "behavior": "idle"},
-    "snakeleader": {"name": "Cargo Collector", "template": "snakeleader", "behavior": "circle", "preferredDistance": 9, "aggroRadius": 32},
-    "snaketurret": {"name": "Scanner Drone", "template": "snaketurret", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
-    "speedsnake": {"name": "Offering Shepherd", "template": "speedsnake", "behavior": "chase", "preferredDistance": 4.0, "aggroRadius": 28},
-    "speedsnakeleader": {"name": "Offering Shepherd", "template": "speedsnakeleader", "behavior": "circle", "preferredDistance": 9, "aggroRadius": 32},
+    "snakeleader": {
+      "name": "Cargo Collector",
+      "template": "snakeleader",
+      "behavior": "circle",
+      "preferredDistance": 9,
+      "aggroRadius": 32
+    },
+    "snaketurret": {
+      "name": "Scanner Drone",
+      "template": "snaketurret",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
+    "speedsnake": {
+      "name": "Offering Shepherd",
+      "template": "speedsnake",
+      "behavior": "chase",
+      "preferredDistance": 4.0,
+      "aggroRadius": 28
+    },
+    "speedsnakeleader": {
+      "name": "Offering Shepherd",
+      "template": "speedsnakeleader",
+      "behavior": "circle",
+      "preferredDistance": 9,
+      "aggroRadius": 32
+    },
     "wallsnake2": {"name": "Venom Barrier", "template": "wallsnake2", "behavior": "turret", "aggroRadius": 30},
     "wallsnakeleader2": {"name": "Venom Barrier", "template": "wallsnakeleader2", "behavior": "turret", "aggroRadius": 30},
     "wallsnakeleader3": {"name": "Containment Barrier", "template": "wallsnakeleader3", "behavior": "turret", "aggroRadius": 30}
   },
   "encounters": [
     {
-      "room": "conveyors",
-      "area": "conveyors",
+      "room": "esteiras",
+      "area": "esteiras",
       "wakes": "onEnter",
-      "line": "conveyors",
+      "line": "esteiras",
       "enemies": [
         {
           "type": "conveyorbelt_straight_N_12",
-          "pos": [
-            {"u": -11.4, "v": -167.6, "rot": 315},
-            {"u": 23.4, "v": -167.6, "rot": 315}
-          ],
-          "note": "conveyors: carry eggs and turrets upward"
+          "pos": [{"u": -11.4, "v": -167.6, "rot": 315}, {"u": 23.4, "v": -167.6, "rot": 315}],
+          "note": "esteiras: levam ovos e torretas para cima"
         },
         {
           "type": "conveyorbelt_egg",
-          "pos": [
-            {"u": -11.4, "v": -152.2, "rot": 135},
-            {"u": 23.4, "v": -141.8, "rot": 135}
-          ]
+          "pos": [{"u": -11.4, "v": -152.2, "rot": 135}, {"u": 23.4, "v": -141.8, "rot": 135}]
         },
-        {
-          "type": "snakeleader",
-          "pos": [
-            {"u": 6.0, "v": -134.1, "rot": 135}
-          ],
-          "note": "Cargo Collector"
-        },
+        {"type": "snakeleader", "pos": [{"u": 6.0, "v": -134.1, "rot": 135}], "note": "Cargo Collector"},
         {
           "type": "snake",
           "pos": [
@@ -321,41 +455,25 @@
             {"u": 32.4, "v": -144.4, "rot": 135}
           ]
         },
-        {
-          "type": "snaketurret",
-          "pos": [
-            {"u": 6.0, "v": -157.3, "rot": 135}
-          ],
-          "note": "Scanner Drone"
-        }
+        {"type": "snaketurret", "pos": [{"u": 6.0, "v": -157.3, "rot": 135}], "note": "Scanner Drone"}
       ]
     },
     {
-      "room": "cargo_depot",
-      "area": "cargo_depot",
+      "room": "deposito_de_carga",
+      "area": "deposito_de_carga",
       "wakes": "onEnter",
-      "line": "cargo_depot",
-      "enemies": [
-        {
-          "type": "snakedungeontreasure",
-          "pos": [
-            {"u": 69.0, "v": -144.2, "rot": 135}
-          ]
-        }
-      ]
+      "line": "deposito_de_carga",
+      "enemies": [{"type": "snakedungeontreasure", "pos": [{"u": 69.0, "v": -144.2, "rot": 135}]}]
     },
     {
-      "room": "barriers",
-      "area": "barriers",
+      "room": "barreiras",
+      "area": "barreiras",
       "wakes": "onEnter",
-      "line": "barriers",
+      "line": "barreiras",
       "enemies": [
         {
           "type": "wallsnakeleader2",
-          "pos": [
-            {"u": -11.3, "v": -91.3, "rot": 135},
-            {"u": 23.3, "v": -91.3, "rot": 135}
-          ],
+          "pos": [{"u": -11.3, "v": -91.3, "rot": 135}, {"u": 23.3, "v": -91.3, "rot": 135}],
           "note": "Venom Barrier"
         },
         {
@@ -368,10 +486,7 @@
         },
         {
           "type": "wallsnakeleader3",
-          "pos": [
-            {"u": -11.3, "v": -68.1, "rot": 135},
-            {"u": 23.3, "v": -68.1, "rot": 135}
-          ],
+          "pos": [{"u": -11.3, "v": -68.1, "rot": 135}, {"u": 23.3, "v": -68.1, "rot": 135}],
           "note": "Containment Barrier"
         },
         {
@@ -386,18 +501,12 @@
       ]
     },
     {
-      "room": "incubator",
-      "area": "incubator",
+      "room": "incubadora",
+      "area": "incubadora",
       "wakes": "onEnter",
-      "line": "incubator",
+      "line": "incubadora",
       "enemies": [
-        {
-          "type": "speedsnakeleader",
-          "pos": [
-            {"u": 6.0, "v": 6.5, "rot": 135}
-          ],
-          "note": "Offering Shepherd"
-        },
+        {"type": "speedsnakeleader", "pos": [{"u": 6.0, "v": 6.5, "rot": 135}], "note": "Offering Shepherd"},
         {
           "type": "speedsnake",
           "pos": [
@@ -408,30 +517,17 @@
         },
         {
           "type": "snakebig",
-          "pos": [
-            {"u": -13.1, "v": -16.7, "rot": 135},
-            {"u": 25.1, "v": -16.7, "rot": 135}
-          ]
+          "pos": [{"u": -13.1, "v": -16.7, "rot": 135}, {"u": 25.1, "v": -16.7, "rot": 135}]
         },
-        {
-          "type": "poisonventA",
-          "pos": [
-            {"u": -23.9, "v": -9.0, "rot": 45}
-          ]
-        },
-        {
-          "type": "poisonventC",
-          "pos": [
-            {"u": 35.9, "v": -9.0, "rot": 225}
-          ]
-        }
+        {"type": "poisonventA", "pos": [{"u": -23.9, "v": -9.0, "rot": 45}]},
+        {"type": "poisonventC", "pos": [{"u": 35.9, "v": -9.0, "rot": 225}]}
       ]
     },
     {
-      "room": "egg_chamber",
-      "area": "egg_chamber",
+      "room": "camara_de_ovos",
+      "area": "camara_de_ovos",
       "wakes": "onEnter",
-      "line": "egg_chamber",
+      "line": "camara_de_ovos",
       "enemies": [
         {
           "type": "snakeegg2",
@@ -443,82 +539,48 @@
         },
         {
           "type": "snakeegg3",
-          "pos": [
-            {"u": -69.8, "v": -4.0, "rot": 135},
-            {"u": -44.2, "v": -4.0, "rot": 135}
-          ]
+          "pos": [{"u": -69.8, "v": -4.0, "rot": 135}, {"u": -44.2, "v": -4.0, "rot": 135}]
         },
-        {
-          "type": "snakedungeontreasure",
-          "pos": [
-            {"u": -57.0, "v": 4.4, "rot": 135}
-          ]
-        }
+        {"type": "snakedungeontreasure", "pos": [{"u": -57.0, "v": 4.4, "rot": 135}]}
       ]
     },
     {
-      "room": "convoy_line",
-      "area": "convoy_line",
+      "room": "linha_do_comboio",
+      "area": "linha_do_comboio",
       "wakes": "onEnter",
-      "line": "convoy_line",
+      "line": "linha_do_comboio",
       "enemies": [
         {
           "type": "coilsnake01",
-          "pos": [
-            {"u": 6.0, "v": 110.0, "rot": 135}
-          ],
+          "pos": [{"u": 6.0, "v": 110.0, "rot": 135}],
           "miniboss": true,
-          "note": "Poison Convoy (head)"
+          "note": "Poison Convoy (cabeca)"
         },
-        {
-          "type": "coilsnake01neck",
-          "pos": [
-            {"u": 6.0, "v": 103.0, "rot": 135}
-          ]
-        },
-        {
-          "type": "coilsnake02",
-          "pos": [
-            {"u": 6.0, "v": 94.3, "rot": 135},
-            {"u": 6.0, "v": 85.5, "rot": 135}
-          ]
-        },
-        {
-          "type": "coilsnake03",
-          "pos": [
-            {"u": 6.0, "v": 76.8, "rot": 135}
-          ]
-        },
+        {"type": "coilsnake01neck", "pos": [{"u": 6.0, "v": 103.0, "rot": 135}]},
+        {"type": "coilsnake02", "pos": [{"u": 6.0, "v": 94.3, "rot": 135}, {"u": 6.0, "v": 85.5, "rot": 135}]},
+        {"type": "coilsnake03", "pos": [{"u": 6.0, "v": 76.8, "rot": 135}]},
         {
           "type": "magnetbeltP_N",
-          "pos": [
-            {"u": -12.6, "v": 48.7, "rot": 45},
-            {"u": -12.6, "v": 75.0, "rot": 45}
-          ],
+          "pos": [{"u": -12.6, "v": 48.7, "rot": 45}, {"u": -12.6, "v": 75.0, "rot": 45}],
           "note": "Poison Belt"
         },
         {
           "type": "magnetbeltP_S",
-          "pos": [
-            {"u": 24.6, "v": 57.5, "rot": 225},
-            {"u": 24.6, "v": 83.8, "rot": 225}
-          ]
+          "pos": [{"u": 24.6, "v": 57.5, "rot": 225}, {"u": 24.6, "v": 83.8, "rot": 225}]
         }
       ],
       "miniboss": true
     },
     {
-      "room": "egg_altar",
-      "area": "egg_altar",
+      "room": "altar_do_ovo",
+      "area": "altar_do_ovo",
       "wakes": "onEnter",
-      "line": "egg_altar",
+      "line": "altar_do_ovo",
       "enemies": [
         {
           "type": "dragonsnakeegg",
-          "pos": [
-            {"u": 6.0, "v": 198.2, "rot": 135}
-          ],
-          "note": "Giant Egg: when broken the Poison God hatches"
+          "pos": [{"u": 6.0, "v": 198.2, "rot": 135}],
+          "note": "Giant Egg: ao quebrar nasce o Poison God"
         },
         {
           "type": "conveyorbeltZ_N",

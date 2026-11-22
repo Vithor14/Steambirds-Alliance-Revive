@@ -8,10 +8,10 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 
-[BepInPlugin("local.steambirds.quieter", "Steambirds Quieter", "1.21.0")]
+[BepInPlugin("local.steambirds.quieter", "Steambirds Quieter", "1.22.0")]
 public class QuieterPlugin : BaseUnityPlugin
 {
-    private const string Version = "1.21.0";
+    private const string Version = "1.22.0";
 
     private ConfigEntry<bool> hideDebug;
     private ConfigEntry<bool> swallowPlaylistError;
@@ -86,55 +86,53 @@ public class QuieterPlugin : BaseUnityPlugin
 
     private void Awake()
     {
-        hideDebug = Config.Bind("Logs", "EsconderDebugEWarnings", true,
-            "Esconde Debug.Log e Debug.LogWarning do Player.log. Erros e excecoes continuam aparecendo.");
-        swallowPlaylistError = Config.Bind("Logs", "EngolirErroPlaylist", true,
-            "Engole a NullReferenceException do SteambirdsAudioMixer (PlaylistController ausente).");
-        disablePhantasm = Config.Bind("Logs", "DesligarTelemetriaPhantasm", true,
+        hideDebug = Config.Bind("Logs", "HideDebugAndWarnings", true,
+            "Hides Debug.Log and Debug.LogWarning from Player.log. Errors and exceptions still show up.");
+        swallowPlaylistError = Config.Bind("Logs", "SwallowPlaylistError", true,
+            "Swallows the NullReferenceException of SteambirdsAudioMixer (missing PlaylistController).");
+        disablePhantasm = Config.Bind("Logs", "DisablePhantasmTelemetry", true,
             "Stops the Phantasm telemetry from being sent. Avoids the curl errors in the log.");
-        exportPrefabTable = Config.Bind("Diagnostico", "ExportarTabelaDePrefabs", true,
+        exportPrefabTable = Config.Bind("Diagnostics", "ExportPrefabTable", true,
             "Writes BepInEx\\prefab_table.txt with the index of each prefab, when the scene loads.");
-        exportRuntimeValues = Config.Bind("Diagnostico", "ExportarValoresDeRuntime", true,
+        exportRuntimeValues = Config.Bind("Diagnostics", "ExportRuntimeValues", true,
             "Writes BepInEx\\runtime_values.txt with LocalPeer.Id, teamIndex, the plane's templateHash, netIdShort, starting items and class variants.");
-        exportTerrainConfigs = Config.Bind("Diagnostico", "ExportarConfigsDeTerreno", true,
+        exportTerrainConfigs = Config.Bind("Diagnostics", "ExportTerrainConfigs", true,
             "Writes BepInEx\\terrain_config_<name>.txt with the TerrainConfig of each terrain the client enters (Nexus, tutorial...).");
-        exportAsciiMaps = Config.Bind("Diagnostico", "ExportarMapasAscii", true,
+        exportAsciiMaps = Config.Bind("Diagnostics", "ExportAsciiMaps", true,
             "Writes BepInEx\\ascii_maps.txt with each ASCIIMap loaded from the configs: origin, text, grid and legend.");
-        exportFloorAssets = Config.Bind("Diagnostico", "ExportarAssetsDeChao", true,
+        exportFloorAssets = Config.Bind("Diagnostics", "ExportFloorAssets", true,
             "Writes BepInEx\\ground_assets.txt with the ID, name, piece and size of each floor asset of the GroundAssetContainer, when the world loads.");
-        diagnoseSpawn = Config.Bind("Diagnostico", "DiagnosticarSpawn", true,
-            "Registra em BepInEx\\spawn_log.txt as chamadas de EntityHandler.SpawnUnit do plano e o LocalPeer.Id.");
-        diagnoseDispatch = Config.Bind("Diagnostico", "DiagnosticarDispatch", true,
+        diagnoseSpawn = Config.Bind("Diagnostics", "DiagnoseSpawn", true,
+            "Logs in BepInEx\\spawn_log.txt the EntityHandler.SpawnUnit calls of the plane and the LocalPeer.Id.");
+        diagnoseDispatch = Config.Bind("Diagnostics", "DiagnoseDispatch", true,
             "Logs in BepInEx\\dispatch_log.txt the message dispatch, refusals and receive errors.");
-        reduceHarmonyLog = Config.Bind("Logs", "ReduzirLogDoHarmony", true,
+        reduceHarmonyLog = Config.Bind("Logs", "ReduceHarmonyLog", true,
             "Lets HarmonyX log only warnings and errors. Without this, each patch dumps the whole IL of the method into LogOutput.log and Player.log.");
-        exportActions = Config.Bind("Diagnostico", "ExportarAcoes", true,
+        exportActions = Config.Bind("Diagnostics", "ExportActions", true,
             "Writes BepInEx\\actions_config.txt with the skill clouds (name, hash, prefab, duration, radius) and the maneuvers (ActionID and hash). The server reads this file to create the clouds and name the maneuvers.");
-        exportUnits = Config.Bind("Diagnostico", "ExportarUnidades", true,
+        exportUnits = Config.Bind("Diagnostics", "ExportUnits", true,
             "Writes BepInEx\\units_config.txt with each UnitConfig (name, hash, health, speed, turn and guns). The server reads this file to create enemies and bosses.");
-        showFlockHallArt = Config.Bind("Correcoes", "MostrarArteDoFlockHall", true,
+        showFlockHallArt = Config.Bind("Fixes", "ShowFlockHallArt", true,
             "Turns on the renderers of the Flock Hall art (RebelCity_Building_FlockHall), which come off in this client and leave the building invisible in the Rebel City. The curved signs (group Signs, with the text HANGAR) stay off.");
         enableFlockHallArt = showFlockHallArt.Value;
-        exportMapInfo = Config.Bind("Diagnostico", "ExportarInfoDeMapa", true,
+        exportMapInfo = Config.Bind("Diagnostics", "ExportMapInfo", true,
             "Writes BepInEx\\mapinfo_config.txt with the ClientMapInfo of each terrain (client events: tutorial and Nexus hints), serialized with the game's ClientMapInfo.Serializer. The server sends these bytes to the client in ClientSetClientMapInfo.");
-        exportPortraits = Config.Bind("Diagnostico", "ExportarRetratos", true,
+        exportPortraits = Config.Bind("Diagnostics", "ExportPortraits", true,
             "Writes BepInEx\\portraits_config.txt with the pilot portrait pieces (PortraitParts pool: id, slot, species and excluded slot). The server picks the pilot's portrait with them.");
-        fixDeathScreen = Config.Bind("Correcoes", "CorrigirTelaDeMorte", true,
+        fixDeathScreen = Config.Bind("Fixes", "FixDeathScreen", true,
             "From the second death on, the client shows the numbers of the previous death in the death window (DeathWrapupStateMachine does not forget the data). Turns on a patch that forgets the old numbers while waiting for the new ones.");
 
         spawnLogFile = Path.Combine(Paths.BepInExRootPath, "spawn_log.txt");
         dispatchLogFile = Path.Combine(Paths.BepInExRootPath, "dispatch_log.txt");
-        asciiMapsFile = Path.Combine(Paths.BepInExRootPath, "mapas_ascii.txt");
+        asciiMapsFile = Path.Combine(Paths.BepInExRootPath, "ascii_maps.txt");
         floorFile = Path.Combine(Paths.BepInExRootPath, "ground_assets.txt");
-        buildingsFile = Path.Combine(Paths.BepInExRootPath, "predios_log.txt");
+        buildingsFile = Path.Combine(Paths.BepInExRootPath, "buildings_log.txt");
         try { File.WriteAllText(buildingsFile, ""); } catch { }
-        // placas_log.txt was from the floor signs fix (removed in 1.19.0): deletes the old file.
-        try { File.Delete(Path.Combine(Paths.BepInExRootPath, "placas_log.txt")); } catch { }
         try { File.WriteAllText(spawnLogFile, ""); } catch { }
         try { File.WriteAllText(dispatchLogFile, ""); } catch { }
         try { File.WriteAllText(asciiMapsFile, ""); } catch { }
 
-        Logger.LogInfo("Steambirds Quieter " + Version + " iniciado.");
+        Logger.LogInfo("Steambirds Quieter " + Version + " started.");
 
         // 1.21.0: export mode of the Steambirds Game Files tool (STEAMBIRDS_EXPORT): draws the pictures of the map
         // editor and closes the game when the data files are written (GameFilesExport.cs).
@@ -161,7 +159,7 @@ public class QuieterPlugin : BaseUnityPlugin
             if (method != null)
             {
                 harmony.Patch(method, finalizer: new HarmonyMethod(typeof(QuieterPlugin), nameof(SwallowException)));
-                Logger.LogInfo("Erro do PlaylistController silenciado.");
+                Logger.LogInfo("PlaylistController error silenced.");
             }
             else
             {
@@ -176,7 +174,7 @@ public class QuieterPlugin : BaseUnityPlugin
             if (method != null)
             {
                 harmony.Patch(method, prefix: new HarmonyMethod(typeof(QuieterPlugin), nameof(IgnorePhantasmSend)));
-                Logger.LogInfo("Telemetria Phantasm desligada.");
+                Logger.LogInfo("Phantasm telemetry turned off.");
             }
             else
             {
@@ -190,7 +188,7 @@ public class QuieterPlugin : BaseUnityPlugin
             if (spawnMethod != null)
             {
                 harmony.Patch(spawnMethod, prefix: new HarmonyMethod(typeof(QuieterPlugin), nameof(LogSpawnUnit)));
-                Logger.LogInfo("Diagnostico de SpawnUnit ativo.");
+                Logger.LogInfo("SpawnUnit diagnostics on.");
             }
             else
             {
@@ -205,7 +203,7 @@ public class QuieterPlugin : BaseUnityPlugin
             if (dispatchMethod != null)
             {
                 harmony.Patch(dispatchMethod, postfix: new HarmonyMethod(typeof(QuieterPlugin), nameof(LogDispatch)));
-                Logger.LogInfo("Diagnostico de Dispatch ativo.");
+                Logger.LogInfo("Dispatch diagnostics on.");
             }
             else
             {
@@ -229,7 +227,7 @@ public class QuieterPlugin : BaseUnityPlugin
                 harmony.Patch(batchMethod,
                     prefix: new HarmonyMethod(typeof(QuieterPlugin), nameof(LogSpawnBatch)),
                     finalizer: new HarmonyMethod(typeof(QuieterPlugin), nameof(LogBatchFailure)));
-                Logger.LogInfo("Diagnostico de SpawnUnitsBatch ativo.");
+                Logger.LogInfo("SpawnUnitsBatch diagnostics on.");
             }
             else
             {
@@ -241,7 +239,7 @@ public class QuieterPlugin : BaseUnityPlugin
             if (rejectionMethod != null)
             {
                 harmony.Patch(rejectionMethod, prefix: new HarmonyMethod(typeof(QuieterPlugin), nameof(LogRejection)));
-                Logger.LogInfo("Diagnostico de recusas ativo.");
+                Logger.LogInfo("Refusal diagnostics on.");
             }
             else
             {
@@ -257,7 +255,7 @@ public class QuieterPlugin : BaseUnityPlugin
             if (buildingInitMethod != null)
             {
                 harmony.Patch(buildingInitMethod, postfix: new HarmonyMethod(typeof(QuieterPlugin), nameof(LogBuilding)));
-                Logger.LogInfo("Diagnostico de predios ativo.");
+                Logger.LogInfo("Building diagnostics on.");
             }
             else
             {
@@ -275,7 +273,7 @@ public class QuieterPlugin : BaseUnityPlugin
             if (waitMethod != null && deathStatsField != null)
             {
                 harmony.Patch(waitMethod, prefix: new HarmonyMethod(typeof(QuieterPlugin), nameof(ForgetPreviousDeath)));
-                Logger.LogInfo("Correcao da janela de morte ativa.");
+                Logger.LogInfo("Death window fix on.");
             }
             else
             {
@@ -404,7 +402,7 @@ public class QuieterPlugin : BaseUnityPlugin
         }
         catch (Exception e)
         {
-            Logger.LogError("Falha ao exportar tabela de prefabs: " + e);
+            Logger.LogError("Could not export the prefab table: " + e);
         }
     }
 
@@ -447,7 +445,7 @@ public class QuieterPlugin : BaseUnityPlugin
             var path = Path.Combine(Paths.BepInExRootPath, "runtime_values.txt");
             File.WriteAllLines(path, lines);
             valuesWritten = true;
-            Logger.LogInfo("Valores de runtime gravados em " + path);
+            Logger.LogInfo("Runtime values written to " + path);
         }
         catch (Exception e)
         {
@@ -566,14 +564,14 @@ public class QuieterPlugin : BaseUnityPlugin
             var path = Path.Combine(Paths.BepInExRootPath, fileName);
             File.WriteAllLines(path, lines);
             lastTerrainWritten = name;
-            Logger.LogInfo("Configs de terreno gravadas em " + path);
+            Logger.LogInfo("Terrain configs written to " + path);
         }
         catch (Exception e)
         {
             if (!terrainWrittenNotice)
             {
                 terrainWrittenNotice = true;
-                Logger.LogWarning("Falha ao ler configs de terreno: " + e.GetType().Name + " " + e.Message);
+                Logger.LogWarning("Could not read the terrain configs: " + e.GetType().Name + " " + e.Message);
             }
         }
     }
@@ -618,14 +616,14 @@ public class QuieterPlugin : BaseUnityPlugin
             var path = floorFile;
             File.WriteAllLines(path, lines);
             floorWritten = true;
-            Logger.LogInfo("Assets de chao gravados em " + path);
+            Logger.LogInfo("Floor assets written to " + path);
         }
         catch (Exception e)
         {
             if (!floorWrittenNotice)
             {
                 floorWrittenNotice = true;
-                Logger.LogWarning("Falha ao ler assets de chao: " + e.GetType().Name + " " + e.Message);
+                Logger.LogWarning("Could not read the floor assets: " + e.GetType().Name + " " + e.Message);
             }
         }
     }
@@ -652,7 +650,7 @@ public class QuieterPlugin : BaseUnityPlugin
         }
         catch (Exception e)
         {
-            Logger.LogWarning("Nao consegui reduzir o log do HarmonyX: " + e.GetType().Name + " " + e.Message);
+            Logger.LogWarning("Could not reduce the HarmonyX log: " + e.GetType().Name + " " + e.Message);
         }
     }
 
@@ -681,8 +679,8 @@ public class QuieterPlugin : BaseUnityPlugin
             var inv = System.Globalization.CultureInfo.InvariantCulture;
             var lines = new List<string>();
             lines.Add("# Generated by the Steambirds Quieter plugin. Fields separated by TAB; numbers with a decimal point.");
-            lines.Add("# nuvem <nome> <hash> <cloudPrefab> <indiceDoPrefab> <lifetime> <growtime> <initialRadius> <finalRadius> <presaAoDono 0/1> <resolvivel 0/1>");
-            lines.Add("# manobra <actionId> <hash> <name>");
+            lines.Add("# cloud <name> <hash> <cloudPrefab> <prefabIndex> <lifetime> <growtime> <initialRadius> <finalRadius> <attachedToOwner 0/1> <resolvable 0/1>");
+            lines.Add("# maneuver <actionId> <hash> <name>");
 
             // Copy of the keys: the dictionary may gain entries while the items load.
             foreach (var name in new List<string>(clouds.Keys))
@@ -706,7 +704,7 @@ public class QuieterPlugin : BaseUnityPlugin
 
                     lines.Add(string.Join("\t", new string[]
                     {
-                        "nuvem",
+                        "cloud",
                         name,
                         hash.ToString(inv),
                         prefab,
@@ -721,7 +719,7 @@ public class QuieterPlugin : BaseUnityPlugin
                 }
                 catch (Exception e)
                 {
-                    lines.Add("# nuvem " + name + " ignorada: " + e.GetType().Name);
+                    lines.Add("# cloud " + name + " skipped: " + e.GetType().Name);
                 }
             }
 
@@ -737,21 +735,21 @@ public class QuieterPlugin : BaseUnityPlugin
                         continue;
 
                     // Same number the client sends in ServerUnitManeuver.
-                    lines.Add("manobra\t" + action + "\t" + action.GetHashCode().ToString(inv) + "\t" + (maneuver.name ?? ""));
+                    lines.Add("maneuver\t" + action + "\t" + action.GetHashCode().ToString(inv) + "\t" + (maneuver.name ?? ""));
                 }
             }
 
             var path = Path.Combine(Paths.BepInExRootPath, "actions_config.txt");
             File.WriteAllLines(path, lines.ToArray());
             totalActionsWritten = totalClouds + totalManeuvers;
-            Logger.LogInfo("Acoes gravadas em " + path + " (" + totalClouds + " nuvens, " + totalManeuvers + " manobras)");
+            Logger.LogInfo("Actions written to " + path + " (" + totalClouds + " clouds, " + totalManeuvers + " maneuvers)");
         }
         catch (Exception e)
         {
             if (!actionsWrittenNotice)
             {
                 actionsWrittenNotice = true;
-                Logger.LogWarning("Falha ao gravar actions_config.txt: " + e.GetType().Name + " " + e.Message);
+                Logger.LogWarning("Could not write actions_config.txt: " + e.GetType().Name + " " + e.Message);
             }
         }
     }
@@ -799,7 +797,7 @@ public class QuieterPlugin : BaseUnityPlugin
             var lines = new List<string>();
             lines.Add("# Generated by the Steambirds Quieter plugin " + Version + ". Fields separated by TAB; numbers with a decimal point.");
             lines.Add("# unit <name> <hash> <tier> <maxHealth> <baseHealth> <minSpeed> <maxSpeed> <turn> <radius> <capsule 0/1> <spawnDuration> <homeDistance> <wall 0/1> <player 0/1> <boss 0/1> <islandMin> <islandMax> <guns> <art> <marks>");
-            lines.Add("# arma <unidade> <indice> <nome> <fireMode> <mountAngle> <firingArc> <slewRate> <rof> <burst> <cooldown> <dano> <velocidade> <duracao> <alcance> <multiBullets> <offsetX> <offsetY> <grupo> <curva>");
+            lines.Add("# gun <unit> <index> <name> <fireMode> <mountAngle> <firingArc> <slewRate> <rof> <burst> <cooldown> <damage> <speed> <duration> <range> <multiBullets> <offsetX> <offsetY> <group> <curve>");
 
             int written = 0;
             foreach (var uc in units.OrderBy(u => u != null ? (u.templateName ?? "") : ""))
@@ -842,7 +840,7 @@ public class QuieterPlugin : BaseUnityPlugin
 
                     lines.Add(string.Join("\t", new string[]
                     {
-                        "unidade",
+                        "unit",
                         uc.templateName,
                         uc.hash.ToString(inv),
                         uc.tier.ToString(inv),
@@ -882,7 +880,7 @@ public class QuieterPlugin : BaseUnityPlugin
                             gmi = GunMountInfo.Get(null, gmc, sb);
                             lines.Add(string.Join("\t", new string[]
                             {
-                                "arma",
+                                "gun",
                                 uc.templateName,
                                 i.ToString(inv),
                                 gmc.mountName ?? "",
@@ -906,7 +904,7 @@ public class QuieterPlugin : BaseUnityPlugin
                         }
                         catch (Exception e)
                         {
-                            lines.Add("# arma " + uc.templateName + " " + i + " ignorada: " + e.GetType().Name);
+                            lines.Add("# gun " + uc.templateName + " " + i + " skipped: " + e.GetType().Name);
                         }
                         finally
                         {
@@ -917,21 +915,21 @@ public class QuieterPlugin : BaseUnityPlugin
                 }
                 catch (Exception e)
                 {
-                    lines.Add("# unidade " + uc.templateName + " ignorada: " + e.GetType().Name);
+                    lines.Add("# unit " + uc.templateName + " skipped: " + e.GetType().Name);
                 }
             }
 
             var path = Path.Combine(Paths.BepInExRootPath, "units_config.txt");
             File.WriteAllLines(path, lines.ToArray());
             totalUnitsWritten = units.Count;
-            Logger.LogInfo("Unidades gravadas em " + path + " (" + written + " de " + units.Count + ")");
+            Logger.LogInfo("Units written to " + path + " (" + written + " de " + units.Count + ")");
         }
         catch (Exception e)
         {
             if (!unitsWrittenNotice)
             {
                 unitsWrittenNotice = true;
-                Logger.LogWarning("Falha ao gravar units_config.txt: " + e.GetType().Name + " " + e.Message);
+                Logger.LogWarning("Could not write units_config.txt: " + e.GetType().Name + " " + e.Message);
             }
         }
     }
@@ -988,7 +986,7 @@ public class QuieterPlugin : BaseUnityPlugin
                 }
                 catch (Exception e)
                 {
-                    lines.Add("# terreno " + name + " ignorado: " + e.GetType().Name + " " + e.Message);
+                    lines.Add("# terrain " + name + " skipped: " + e.GetType().Name + " " + e.Message);
                 }
             }
 
@@ -998,18 +996,18 @@ public class QuieterPlugin : BaseUnityPlugin
                 var file = sb.conversationsFile;
                 if (file != null && file.conversations != null)
                 {
-                    var doTutorial = file.conversations
+                    var tutorialIds = file.conversations
                         .Where(c => c != null && !string.IsNullOrEmpty(c.id) && c.id.IndexOf("tutorial", StringComparison.OrdinalIgnoreCase) >= 0)
                         .Select(c => c.id)
                         .OrderBy(id => id)
                         .ToArray();
-                    lines.Add("# ---- conversas: " + file.conversations.Length + " in total; with 'tutorial' in the id: " +
-                        (doTutorial.Length == 0 ? "none" : string.Join(", ", doTutorial)));
+                    lines.Add("# ---- conversations: " + file.conversations.Length + " in total; with 'tutorial' in the id: " +
+                        (tutorialIds.Length == 0 ? "none" : string.Join(", ", tutorialIds)));
                 }
             }
             catch (Exception e)
             {
-                lines.Add("# conversas ignoradas: " + e.GetType().Name);
+                lines.Add("# conversations skipped: " + e.GetType().Name);
             }
 
             var path = Path.Combine(Paths.BepInExRootPath, "mapinfo_config.txt");
@@ -1022,7 +1020,7 @@ public class QuieterPlugin : BaseUnityPlugin
             if (!mapInfoWrittenNotice)
             {
                 mapInfoWrittenNotice = true;
-                Logger.LogWarning("Falha ao gravar mapinfo_config.txt: " + e.GetType().Name + " " + e.Message);
+                Logger.LogWarning("Could not write mapinfo_config.txt: " + e.GetType().Name + " " + e.Message);
             }
         }
     }
@@ -1072,7 +1070,7 @@ public class QuieterPlugin : BaseUnityPlugin
 
                 lines.Add(string.Join("\t", new string[]
                 {
-                    "parte",
+                    "part",
                     part.PartId.ToString(),
                     ((int)part.Slot).ToString(),
                     part.Slot.ToString(),
@@ -1086,14 +1084,14 @@ public class QuieterPlugin : BaseUnityPlugin
             var path = Path.Combine(Paths.BepInExRootPath, "portraits_config.txt");
             File.WriteAllLines(path, lines.ToArray());
             totalPortraitsWritten = total;
-            Logger.LogInfo("Retratos gravados em " + path + " (" + written + " pecas de " + total + " prefabs)");
+            Logger.LogInfo("Portraits written to " + path + " (" + written + " parts of " + total + " prefabs)");
         }
         catch (Exception e)
         {
             if (!portraitsWrittenNotice)
             {
                 portraitsWrittenNotice = true;
-                Logger.LogWarning("Falha ao gravar portraits_config.txt: " + e.GetType().Name + " " + e.Message);
+                Logger.LogWarning("Could not write portraits_config.txt: " + e.GetType().Name + " " + e.Message);
             }
         }
     }
@@ -1102,7 +1100,7 @@ public class QuieterPlugin : BaseUnityPlugin
         System.Globalization.CultureInfo inv, bool detail)
     {
         int events = info.clientEvents != null ? info.clientEvents.Count : 0;
-        lines.Add("# ---- terreno " + name + " (role " + terrain.role + "): " + events + " evento(s)" +
+        lines.Add("# ---- terrain " + name + " (role " + terrain.role + "): " + events + " event(s)" +
             ", autoRespawnWithPlaneClassId=" + (info.autoRespawnWithPlaneClassId ?? "") +
             ", isStartingInAnyKeyScreen=" + info.isStartingInAnyKeyScreen +
             ", isTeleportHomeDisabled=" + info.isTeleportHomeDisabled +
@@ -1397,7 +1395,7 @@ public class QuieterPlugin : BaseUnityPlugin
         }
         catch (Exception e)
         {
-            Log(spawnLogFile, "Falha ao registrar SpawnUnit: " + e.GetType().Name + " " + e.Message);
+            Log(spawnLogFile, "Could not log SpawnUnit: " + e.GetType().Name + " " + e.Message);
         }
     }
 
@@ -1421,7 +1419,7 @@ public class QuieterPlugin : BaseUnityPlugin
                     else box.Encapsulate(r.bounds);
                 }
                 description = "arte='" + art.name + "' ativa=" + art.gameObject.activeInHierarchy +
-                    " renderers=" + renderers.Length + " (ligados " + enabled + ")" +
+                    " renderers=" + renderers.Length + " (on " + enabled + ")" +
                     (hasBox ? " caixa centro=" + box.center.ToString("F2") + " tamanho=" + box.size.ToString("F2") : "");
             }
             var line = DateTime.Now.ToString("HH:mm:ss.fff") + " " + __instance.GetType().Name +
@@ -1443,7 +1441,7 @@ public class QuieterPlugin : BaseUnityPlugin
         }
         catch (Exception e)
         {
-            Log(buildingsFile, "Falha ao registrar predio: " + e.GetType().Name + " " + e.Message);
+            Log(buildingsFile, "Could not log building: " + e.GetType().Name + " " + e.Message);
         }
     }
 
@@ -1534,13 +1532,13 @@ public class QuieterPlugin : BaseUnityPlugin
                     flockHallReenables++;
                     if (flockHallReenables <= 5)
                         Log(buildingsFile, DateTime.Now.ToString("HH:mm:ss.fff") +
-                            " Flock Hall: a arte foi desligada de novo; " + changes + " coisa(s) religadas (vez " + flockHallReenables + ")");
+                            " Flock Hall: the art was turned off again; " + changes + " thing(s) turned back on (time " + flockHallReenables + ")");
                 }
             }
         }
         catch (Exception e)
         {
-            Log(buildingsFile, "Falha ao conferir a arte do Flock Hall: " + e.GetType().Name + " " + e.Message);
+            Log(buildingsFile, "Could not check the Flock Hall art: " + e.GetType().Name + " " + e.Message);
             flockHallArts.Clear();
         }
     }
@@ -1551,7 +1549,7 @@ public class QuieterPlugin : BaseUnityPlugin
         try
         {
             var list = __args[0] as System.Collections.ICollection;
-            var text = DateTime.Now.ToString("HH:mm:ss.fff") + " SpawnUnitsBatch entrou: itens=" +
+            var text = DateTime.Now.ToString("HH:mm:ss.fff") + " SpawnUnitsBatch entered: items=" +
                 (list == null ? "null" : list.Count.ToString());
             Log(dispatchLogFile, text);
             Log(spawnLogFile, text);

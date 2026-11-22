@@ -4,8 +4,8 @@
   "id": "dungeon_rescue",
   "name": "The Dig",
   "terrain": "DungeonRescue",
-  "note": "The Dig (T10). Quest 'Defend the Drill': the allied drill (1000 health) digs through 3 tunnels; at each milestone a boss (Deep Leviathan, Stone Worm, Buried Guardian). Repair Drones in the side tunnels heal the drill. If the drill falls, the loot from there on is lost; at the end, the Legendary Supplies. The enemies almost never aim at the drill. The original had dynamic difficulty.",
-  "source": "Build 190828.2045: units, names, barks, signs, quests and territory come from the configBinary; the Dungeons/dungeon_* file of that build is empty, so the room format and the enemy positions were recreated.",
+  "note": "Escavacao (T10). Missao 'Defend the Drill': a broca aliada (1000 de vida) cava por 3 tuneis; em cada marco um chefe (Deep Leviathan, Stone Worm, Buried Guardian). Repair Drones nos tuneis laterais curam a broca. Se a broca cair, perde-se o loot dali em diante; no fim, os Legendary Supplies. Os inimigos quase nunca miram a broca. Tem dificuldade dinamica no original.",
+  "source": "Build 190828.2045: unidades, nomes, falas, placas, quests e territorio vem do configBinary; o arquivo Dungeons/dungeon_* dessa build e vazio, entao o formato das salas e a posicao dos inimigos foram recriados.",
   "key": "key_rescue",
   "portalItem": "dungeon_rescue",
   "quest": "dungeon_rescue_01",
@@ -19,7 +19,7 @@
     "drawing": {
       "siStart": -32,
       "sjStart": -112,
-      "legend": ". free floor, # wall, - no floor. First line = last sj row (the far end).",
+      "legend": ". chao livre, # muro, - sem chao. Primeira linha = ultima fileira sj (o fundo).",
       "lines": [
         "--------------------############################--------------------",
         "--------------------############################--------------------",
@@ -253,65 +253,106 @@
   "buildings": [],
   "spawn": {"u": 6.0, "v": -316.1, "rot": 315},
   "points": {
-    "drill": {"u": 6.0, "v": -302.6, "rot": 315, "note": "ALLY: Tunneling Drill (escortmission) spawns here"},
+    "broca": {"u": 6.0, "v": -302.6, "rot": 315, "note": "ALLY: Tunneling Drill (escortmission) nasce aqui"},
     "marco_1": {"u": 6.0, "v": -141.0, "rot": 135, "note": "escort_milestone1"},
     "marco_2": {"u": 6.0, "v": 39.0, "rot": 135, "note": "escort_milestone2"},
     "boss": {"u": 6.0, "v": 243.9, "rot": 135},
-    "portal": {"u": 6.0, "v": 289.9, "rot": 0, "note": "exit carrier (appears when the boss dies)"},
-    "milestone_3": {"u": 6.0, "v": 217.4, "rot": 135, "note": "escort_milestone3"}
+    "portal": {"u": 6.0, "v": 289.9, "rot": 0, "note": "porta-avioes de saida (aparece quando o chefe morre)"},
+    "marco_3": {"u": 6.0, "v": 217.4, "rot": 135, "note": "escort_milestone3"}
   },
   "groups": {},
   "areas": {
-    "entrance": {"minU": -15.6, "maxU": 27.6, "minV": -324.6, "maxV": -287.4},
-    "tunnel_1": {"minU": -12.6, "maxU": 24.6, "minV": -276.6, "maxV": -185.4},
-    "leviathan_cave": {"minU": -33.6, "maxU": 45.6, "minV": -174.6, "maxV": -107.4},
-    "tunnel_2": {"minU": -0.6, "maxU": 36.6, "minV": -96.6, "maxV": -5.4},
-    "worm_cave": {"minU": -33.6, "maxU": 45.6, "minV": 5.4, "maxV": 72.6},
-    "tunnel_3": {"minU": -24.6, "maxU": 12.6, "minV": 83.4, "maxV": 174.6},
-    "guardian_chamber": {"minU": -36.6, "maxU": 48.6, "minV": 185.4, "maxV": 264.6},
-    "destination": {"minU": -18.6, "maxU": 30.6, "minV": 281.4, "maxV": 318.6},
-    "side_gallery_1": {"minU": -72.6, "maxU": -35.4, "minV": -255.6, "maxV": -224.4},
-    "side_gallery_2": {"minU": 59.4, "maxU": 96.6, "minV": -57.6, "maxV": -26.4},
-    "side_gallery_3": {"minU": -84.6, "maxU": -47.4, "minV": 113.4, "maxV": 144.6}
+    "entrada": {"minU": -15.6, "maxU": 27.6, "minV": -324.6, "maxV": -287.4},
+    "tunel_1": {"minU": -12.6, "maxU": 24.6, "minV": -276.6, "maxV": -185.4},
+    "caverna_do_leviata": {"minU": -33.6, "maxU": 45.6, "minV": -174.6, "maxV": -107.4},
+    "tunel_2": {"minU": -0.6, "maxU": 36.6, "minV": -96.6, "maxV": -5.4},
+    "caverna_do_verme": {"minU": -33.6, "maxU": 45.6, "minV": 5.4, "maxV": 72.6},
+    "tunel_3": {"minU": -24.6, "maxU": 12.6, "minV": 83.4, "maxV": 174.6},
+    "camara_do_guardiao": {"minU": -36.6, "maxU": 48.6, "minV": 185.4, "maxV": 264.6},
+    "destino": {"minU": -18.6, "maxU": 30.6, "minV": 281.4, "maxV": 318.6},
+    "galeria_lateral_1": {"minU": -72.6, "maxU": -35.4, "minV": -255.6, "maxV": -224.4},
+    "galeria_lateral_2": {"minU": 59.4, "maxU": 96.6, "minV": -57.6, "maxV": -26.4},
+    "galeria_lateral_3": {"minU": -84.6, "maxU": -47.4, "minV": 113.4, "maxV": 144.6}
   },
   "lines": {
-    "entrance": -324.0,
-    "tunnel_1": -276.0,
-    "leviathan_cave": -174.0,
-    "tunnel_2": -96.0,
-    "worm_cave": 6.0,
-    "tunnel_3": 84.0,
-    "guardian_chamber": 186.0,
-    "destination": 282.0,
-    "side_gallery_1": -255.0,
-    "side_gallery_2": -57.0,
-    "side_gallery_3": 114.0
+    "entrada": -324.0,
+    "tunel_1": -276.0,
+    "caverna_do_leviata": -174.0,
+    "tunel_2": -96.0,
+    "caverna_do_verme": 6.0,
+    "tunel_3": 84.0,
+    "camara_do_guardiao": 186.0,
+    "destino": 282.0,
+    "galeria_lateral_1": -255.0,
+    "galeria_lateral_2": -57.0,
+    "galeria_lateral_3": 114.0
   },
   "values": {"tier": 10},
   "checkpoints": [
-    {"name": "entrance", "activeAtV": -324.0, "u": 6.0, "v": -320.1, "rot": 315},
-    {"name": "tunnel_1", "activeAtV": -276.0, "u": 6.0, "v": -267.8, "rot": 315},
-    {"name": "leviathan_cave", "activeAtV": -174.0, "u": 6.0, "v": -167.7, "rot": 315},
-    {"name": "tunnel_2", "activeAtV": -96.0, "u": 18.0, "v": -87.8, "rot": 315},
-    {"name": "worm_cave", "activeAtV": 6.0, "u": 6.0, "v": 12.3, "rot": 315},
-    {"name": "tunnel_3", "activeAtV": 84.0, "u": -6.0, "v": 92.2, "rot": 315},
-    {"name": "guardian_chamber", "activeAtV": 186.0, "u": 6.0, "v": 193.2, "rot": 315}
+    {"name": "entrada", "activeAtV": -324.0, "u": 6.0, "v": -320.1, "rot": 315},
+    {"name": "tunel_1", "activeAtV": -276.0, "u": 6.0, "v": -267.8, "rot": 315},
+    {"name": "caverna_do_leviata", "activeAtV": -174.0, "u": 6.0, "v": -167.7, "rot": 315},
+    {"name": "tunel_2", "activeAtV": -96.0, "u": 18.0, "v": -87.8, "rot": 315},
+    {"name": "caverna_do_verme", "activeAtV": 6.0, "u": 6.0, "v": 12.3, "rot": 315},
+    {"name": "tunel_3", "activeAtV": 84.0, "u": -6.0, "v": 92.2, "rot": 315},
+    {"name": "camara_do_guardiao", "activeAtV": 186.0, "u": 6.0, "v": 193.2, "rot": 315}
   ],
   "gates": [
-    {"name": "stone wall 1", "type": "escortdungeondestroyablewall", "sj": -60, "siFrom": 0, "siTo": 3, "damageable": true, "room": "leviathan_cave"},
-    {"name": "stone wall 2", "type": "escortdungeondestroyablewall", "sj": 0, "siFrom": 2, "siTo": 5, "damageable": true, "room": "worm_cave"},
-    {"name": "stone wall 3", "type": "escortdungeondestroyablewall", "sj": 60, "siFrom": -2, "siTo": 1, "damageable": true, "room": "guardian_chamber"},
-    {"name": "old vault door", "type": "escort_wallgate", "sj": 91, "siFrom": 0, "siTo": 3, "damageable": false, "opensWhen": "death:escortevilorb", "room": "destination"}
+    {
+      "name": "parede de pedra 1",
+      "type": "escortdungeondestroyablewall",
+      "sj": -60,
+      "siFrom": 0,
+      "siTo": 3,
+      "damageable": true,
+      "room": "caverna_do_leviata"
+    },
+    {
+      "name": "parede de pedra 2",
+      "type": "escortdungeondestroyablewall",
+      "sj": 0,
+      "siFrom": 2,
+      "siTo": 5,
+      "damageable": true,
+      "room": "caverna_do_verme"
+    },
+    {
+      "name": "parede de pedra 3",
+      "type": "escortdungeondestroyablewall",
+      "sj": 60,
+      "siFrom": -2,
+      "siTo": 1,
+      "damageable": true,
+      "room": "camara_do_guardiao"
+    },
+    {
+      "name": "porta do cofre antigo",
+      "type": "escort_wallgate",
+      "sj": 91,
+      "siFrom": 0,
+      "siTo": 3,
+      "damageable": false,
+      "opensWhen": "death:escortevilorb",
+      "room": "destino"
+    }
   ],
   "sideGates": [
-    {"name": "side laser 1", "type": "escortdungeondestroyablewall", "si": -8, "sjFrom": -82, "sjTo": -79, "damageable": true, "room": "side_gallery_1"}
+    {
+      "name": "laser lateral 1",
+      "type": "escortdungeondestroyablewall",
+      "si": -8,
+      "sjFrom": -82,
+      "sjTo": -79,
+      "damageable": true,
+      "room": "galeria_lateral_1"
+    }
   ],
   "signs": [
     {"key": "rescuedungeonsign1", "u": 6.0, "v": -302.6, "radius": 14, "rot": 0},
     {"key": "rescuedungeonsign2", "u": 6.0, "v": -264.3, "radius": 14, "rot": 0}
   ],
   "routes": {
-    "drill": [
+    "broca": [
       {"u": 6.0, "v": -306.0},
       {"u": 6.0, "v": -266.0},
       {"u": 6.0, "v": -196.0},
@@ -339,8 +380,14 @@
       "route": "drill",
       "onDeath": "escortmissionDEATH",
       "invulnerableToRegularEnemies": true,
-      "barks": {"heal": "escortmission_0", "underAttack": "escortmission_1", "damage": "escortmission_2", "end": "escortmission_4", "onDeath": "escortmissionDEATH"},
-      "note": "The drill only moves when the tunnel ahead is clear and stops at each milestone until the boss falls."
+      "barks": {
+        "heal": "escortmission_0",
+        "underAttack": "escortmission_1",
+        "damage": "escortmission_2",
+        "end": "escortmission_4",
+        "onDeath": "escortmissionDEATH"
+      },
+      "note": "A broca so anda quando o tunel a frente esta limpo e para em cada marco ate o chefe cair."
     },
     "escorthealdrone": {
       "name": "ALLY: Repair Drone",
@@ -361,9 +408,7 @@
       "aggroRadius": 30,
       "miniboss": true,
       "note": "Deep Leviathan",
-      "phases": [
-        {"belowHealth": 0.5, "summon": "escortgoliathmissile", "summonCount": 3}
-      ]
+      "phases": [{"belowHealth": 0.5, "summon": "escortgoliathmissile", "summonCount": 3}]
     },
     "escorttrain1": {
       "name": "Stone Worm",
@@ -373,9 +418,7 @@
       "aggroRadius": 45,
       "firstShotDelay": 1.5,
       "preferredDistance": 4.5,
-      "phases": [
-        {"belowHealth": 0.9, "summon": "escorttrain2", "summonCount": 4, "message": "Stone Worm!"}
-      ]
+      "phases": [{"belowHealth": 0.9, "summon": "escorttrain2", "summonCount": 4, "message": "Stone Worm!"}]
     },
     "escortevilorb": {
       "name": "Buried Guardian",
@@ -395,41 +438,127 @@
     "escort_milestone2": {"name": "escort_milestone2", "template": "escort_milestone2", "behavior": "idle", "invulnerable": true},
     "escort_milestone3": {"name": "escort_milestone3", "template": "escort_milestone3", "behavior": "idle", "invulnerable": true},
     "escort_wallgate": {"name": "Vault Door", "template": "escort_wallgate", "behavior": "idle"},
-    "escortbomb": {"name": "Magnet Bomb", "template": "escortbomb", "behavior": "charge", "preferredDistance": 6, "aggroRadius": 30},
+    "escortbomb": {
+      "name": "Magnet Bomb",
+      "template": "escortbomb",
+      "behavior": "charge",
+      "preferredDistance": 6,
+      "aggroRadius": 30
+    },
     "escortdungeondestroyablewall": {"name": "Stone Wall", "template": "escortdungeondestroyablewall", "behavior": "idle"},
-    "escortdungeontreasure": {"name": "Abandoned Supplies", "template": "escortdungeontreasure", "behavior": "idle", "opensAfterHitSeconds": 1.5},
-    "escortdungeontreasure2": {"name": "Ancient Supplies", "template": "escortdungeontreasure2", "behavior": "idle", "opensAfterHitSeconds": 1.5},
-    "escortdungeontreasure3": {"name": "Legendary Supplies", "template": "escortdungeontreasure3", "behavior": "idle", "opensAfterHitSeconds": 1.5},
+    "escortdungeontreasure": {
+      "name": "Abandoned Supplies",
+      "template": "escortdungeontreasure",
+      "behavior": "idle",
+      "opensAfterHitSeconds": 1.5
+    },
+    "escortdungeontreasure2": {
+      "name": "Ancient Supplies",
+      "template": "escortdungeontreasure2",
+      "behavior": "idle",
+      "opensAfterHitSeconds": 1.5
+    },
+    "escortdungeontreasure3": {
+      "name": "Legendary Supplies",
+      "template": "escortdungeontreasure3",
+      "behavior": "idle",
+      "opensAfterHitSeconds": 1.5
+    },
     "escortevilorbDEATH": {"name": "escortevilorbDEATH", "template": "escortevilorbDEATH", "behavior": "idle", "invulnerable": true},
     "escortexit": {"name": "Exit", "template": "escortexit", "behavior": "idle"},
-    "escortgoliathmissile": {"name": "escortgoliathmissile", "template": "escortgoliathmissile", "behavior": "charge", "preferredDistance": 6, "aggroRadius": 30},
-    "escortgrunt1": {"name": "Rust Borer", "template": "escortgrunt1", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
-    "escortgrunt2": {"name": "Stone Crawler", "template": "escortgrunt2", "behavior": "chase", "preferredDistance": 4.5, "aggroRadius": 28},
-    "escortgrunt2fat": {"name": "Stone Soldier", "template": "escortgrunt2fat", "behavior": "chase", "preferredDistance": 4.5, "aggroRadius": 28},
-    "escortgrunt3": {"name": "Stone Elite", "template": "escortgrunt3", "behavior": "chase", "preferredDistance": 4.4, "aggroRadius": 28},
-    "escortgrunt3_noxp": {"name": "Stone Elite", "template": "escortgrunt3_noxp", "behavior": "chase", "preferredDistance": 4.4, "aggroRadius": 28},
-    "escortmissionDEATH": {"name": "ALLY: Tunneling Drill", "template": "escortmissionDEATH", "behavior": "idle", "invulnerable": true},
+    "escortgoliathmissile": {
+      "name": "escortgoliathmissile",
+      "template": "escortgoliathmissile",
+      "behavior": "charge",
+      "preferredDistance": 6,
+      "aggroRadius": 30
+    },
+    "escortgrunt1": {
+      "name": "Rust Borer",
+      "template": "escortgrunt1",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
+    "escortgrunt2": {
+      "name": "Stone Crawler",
+      "template": "escortgrunt2",
+      "behavior": "chase",
+      "preferredDistance": 4.5,
+      "aggroRadius": 28
+    },
+    "escortgrunt2fat": {
+      "name": "Stone Soldier",
+      "template": "escortgrunt2fat",
+      "behavior": "chase",
+      "preferredDistance": 4.5,
+      "aggroRadius": 28
+    },
+    "escortgrunt3": {
+      "name": "Stone Elite",
+      "template": "escortgrunt3",
+      "behavior": "chase",
+      "preferredDistance": 4.4,
+      "aggroRadius": 28
+    },
+    "escortgrunt3_noxp": {
+      "name": "Stone Elite",
+      "template": "escortgrunt3_noxp",
+      "behavior": "chase",
+      "preferredDistance": 4.4,
+      "aggroRadius": 28
+    },
+    "escortmissionDEATH": {
+      "name": "ALLY: Tunneling Drill",
+      "template": "escortmissionDEATH",
+      "behavior": "idle",
+      "invulnerable": true
+    },
     "escortmission_poop": {"name": "escortmission_poop", "template": "escortmission_poop", "behavior": "idle", "invulnerable": true},
-    "escortspotter1": {"name": "War Relic", "template": "escortspotter1", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
-    "escortspotter2": {"name": "Super Relic", "template": "escortspotter2", "behavior": "chase", "preferredDistance": 7, "aggroRadius": 28},
-    "escorttrain2": {"name": "Stone Worm Segment", "template": "escorttrain2", "behavior": "chase", "preferredDistance": 4.4, "aggroRadius": 28},
-    "escortturret": {"name": "Ancient Turret", "template": "escortturret", "behavior": "charge", "preferredDistance": 6, "aggroRadius": 30},
+    "escortspotter1": {
+      "name": "War Relic",
+      "template": "escortspotter1",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
+    "escortspotter2": {
+      "name": "Super Relic",
+      "template": "escortspotter2",
+      "behavior": "chase",
+      "preferredDistance": 7,
+      "aggroRadius": 28
+    },
+    "escorttrain2": {
+      "name": "Stone Worm Segment",
+      "template": "escorttrain2",
+      "behavior": "chase",
+      "preferredDistance": 4.4,
+      "aggroRadius": 28
+    },
+    "escortturret": {
+      "name": "Ancient Turret",
+      "template": "escortturret",
+      "behavior": "charge",
+      "preferredDistance": 6,
+      "aggroRadius": 30
+    },
     "escortturretmissile": {"name": "Missile", "template": "escortturretmissile", "behavior": "turret", "aggroRadius": 30},
-    "escortturretstrong": {"name": "Large Ancient Turret", "template": "escortturretstrong", "behavior": "charge", "preferredDistance": 6, "aggroRadius": 30}
+    "escortturretstrong": {
+      "name": "Large Ancient Turret",
+      "template": "escortturretstrong",
+      "behavior": "charge",
+      "preferredDistance": 6,
+      "aggroRadius": 30
+    }
   },
   "encounters": [
+    {"room": "entrada", "area": "entrada", "wakes": "onEnter", "line": "entrada", "enemies": []},
     {
-      "room": "entrance",
-      "area": "entrance",
+      "room": "tunel_1",
+      "area": "tunel_1",
       "wakes": "onEnter",
-      "line": "entrance",
-      "enemies": []
-    },
-    {
-      "room": "tunnel_1",
-      "area": "tunnel_1",
-      "wakes": "onEnter",
-      "line": "tunnel_1",
+      "line": "tunel_1",
       "enemies": [
         {
           "type": "escortgrunt1",
@@ -442,61 +571,35 @@
         },
         {
           "type": "escortgrunt2",
-          "pos": [
-            {"u": -6.8, "v": -217.9, "rot": 135},
-            {"u": 18.8, "v": -217.9, "rot": 135}
-          ]
+          "pos": [{"u": -6.8, "v": -217.9, "rot": 135}, {"u": 18.8, "v": -217.9, "rot": 135}]
         },
         {
           "type": "escortturret",
-          "pos": [
-            {"u": -9.8, "v": -204.7, "rot": 45},
-            {"u": 21.8, "v": -204.7, "rot": 225}
-          ]
+          "pos": [{"u": -9.8, "v": -204.7, "rot": 45}, {"u": 21.8, "v": -204.7, "rot": 225}]
         },
-        {
-          "type": "escortbomb",
-          "pos": [
-            {"u": 6.0, "v": -196.0, "rot": 135}
-          ],
-          "note": "Magnet Bomb"
-        },
-        {
-          "type": "escortspotter1",
-          "pos": [
-            {"u": 6.0, "v": -209.1, "rot": 135}
-          ],
-          "note": "War Relic"
-        }
+        {"type": "escortbomb", "pos": [{"u": 6.0, "v": -196.0, "rot": 135}], "note": "Magnet Bomb"},
+        {"type": "escortspotter1", "pos": [{"u": 6.0, "v": -209.1, "rot": 135}], "note": "War Relic"}
       ]
     },
     {
-      "room": "side_gallery_1",
-      "area": "side_gallery_1",
+      "room": "galeria_lateral_1",
+      "area": "galeria_lateral_1",
       "wakes": "onEnter",
-      "line": "side_gallery_1",
+      "line": "galeria_lateral_1",
       "enemies": [
         {
           "type": "escorthealdrone",
-          "pos": [
-            {"u": -66.8, "v": -240.0, "rot": 135},
-            {"u": -41.2, "v": -240.0, "rot": 135}
-          ],
-          "note": "Repair Drones: they go to the drill and heal"
+          "pos": [{"u": -66.8, "v": -240.0, "rot": 135}, {"u": -41.2, "v": -240.0, "rot": 135}],
+          "note": "Repair Drones: vao ate a broca e curam"
         },
-        {
-          "type": "escortdungeontreasure",
-          "pos": [
-            {"u": -54.0, "v": -230.3, "rot": 135}
-          ]
-        }
+        {"type": "escortdungeontreasure", "pos": [{"u": -54.0, "v": -230.3, "rot": 135}]}
       ]
     },
     {
-      "room": "tunnel_2",
-      "area": "tunnel_2",
+      "room": "tunel_2",
+      "area": "tunel_2",
       "wakes": "onEnter",
-      "line": "tunnel_2",
+      "line": "tunel_2",
       "enemies": [
         {
           "type": "escortgrunt1",
@@ -509,68 +612,36 @@
         },
         {
           "type": "escortgrunt2fat",
-          "pos": [
-            {"u": 5.2, "v": -37.9, "rot": 135},
-            {"u": 30.8, "v": -37.9, "rot": 135}
-          ]
+          "pos": [{"u": 5.2, "v": -37.9, "rot": 135}, {"u": 30.8, "v": -37.9, "rot": 135}]
         },
         {
           "type": "escortturret",
-          "pos": [
-            {"u": 2.2, "v": -24.7, "rot": 45},
-            {"u": 33.8, "v": -24.7, "rot": 225}
-          ]
+          "pos": [{"u": 2.2, "v": -24.7, "rot": 45}, {"u": 33.8, "v": -24.7, "rot": 225}]
         },
-        {
-          "type": "escortbomb",
-          "pos": [
-            {"u": 18.0, "v": -16.0, "rot": 135}
-          ],
-          "note": "Magnet Bomb"
-        },
-        {
-          "type": "escortgrunt3",
-          "pos": [
-            {"u": 18.0, "v": -55.4, "rot": 135}
-          ],
-          "note": "Stone Elite"
-        },
-        {
-          "type": "escortspotter1",
-          "pos": [
-            {"u": 18.0, "v": -29.1, "rot": 135}
-          ],
-          "note": "War Relic"
-        }
+        {"type": "escortbomb", "pos": [{"u": 18.0, "v": -16.0, "rot": 135}], "note": "Magnet Bomb"},
+        {"type": "escortgrunt3", "pos": [{"u": 18.0, "v": -55.4, "rot": 135}], "note": "Stone Elite"},
+        {"type": "escortspotter1", "pos": [{"u": 18.0, "v": -29.1, "rot": 135}], "note": "War Relic"}
       ]
     },
     {
-      "room": "side_gallery_2",
-      "area": "side_gallery_2",
+      "room": "galeria_lateral_2",
+      "area": "galeria_lateral_2",
       "wakes": "onEnter",
-      "line": "side_gallery_2",
+      "line": "galeria_lateral_2",
       "enemies": [
         {
           "type": "escorthealdrone",
-          "pos": [
-            {"u": 65.2, "v": -42.0, "rot": 135},
-            {"u": 90.8, "v": -42.0, "rot": 135}
-          ],
-          "note": "Repair Drones: they go to the drill and heal"
+          "pos": [{"u": 65.2, "v": -42.0, "rot": 135}, {"u": 90.8, "v": -42.0, "rot": 135}],
+          "note": "Repair Drones: vao ate a broca e curam"
         },
-        {
-          "type": "escortdungeontreasure",
-          "pos": [
-            {"u": 78.0, "v": -32.3, "rot": 135}
-          ]
-        }
+        {"type": "escortdungeontreasure", "pos": [{"u": 78.0, "v": -32.3, "rot": 135}]}
       ]
     },
     {
-      "room": "tunnel_3",
-      "area": "tunnel_3",
+      "room": "tunel_3",
+      "area": "tunel_3",
       "wakes": "onEnter",
-      "line": "tunnel_3",
+      "line": "tunel_3",
       "enemies": [
         {
           "type": "escortgrunt1",
@@ -583,129 +654,74 @@
         },
         {
           "type": "escortgrunt2fat",
-          "pos": [
-            {"u": -18.8, "v": 142.1, "rot": 135},
-            {"u": 6.8, "v": 142.1, "rot": 135}
-          ]
+          "pos": [{"u": -18.8, "v": 142.1, "rot": 135}, {"u": 6.8, "v": 142.1, "rot": 135}]
         },
         {
           "type": "escortturretstrong",
-          "pos": [
-            {"u": -21.8, "v": 155.3, "rot": 45},
-            {"u": 9.8, "v": 155.3, "rot": 225}
-          ]
+          "pos": [{"u": -21.8, "v": 155.3, "rot": 45}, {"u": 9.8, "v": 155.3, "rot": 225}]
         },
-        {
-          "type": "escortbomb",
-          "pos": [
-            {"u": -6.0, "v": 164.0, "rot": 135}
-          ],
-          "note": "Magnet Bomb"
-        },
-        {
-          "type": "escortgrunt3",
-          "pos": [
-            {"u": -6.0, "v": 124.6, "rot": 135}
-          ],
-          "note": "Stone Elite"
-        },
-        {
-          "type": "escortspotter2",
-          "pos": [
-            {"u": -6.0, "v": 150.9, "rot": 135}
-          ],
-          "note": "Super Relic"
-        }
+        {"type": "escortbomb", "pos": [{"u": -6.0, "v": 164.0, "rot": 135}], "note": "Magnet Bomb"},
+        {"type": "escortgrunt3", "pos": [{"u": -6.0, "v": 124.6, "rot": 135}], "note": "Stone Elite"},
+        {"type": "escortspotter2", "pos": [{"u": -6.0, "v": 150.9, "rot": 135}], "note": "Super Relic"}
       ]
     },
     {
-      "room": "side_gallery_3",
-      "area": "side_gallery_3",
+      "room": "galeria_lateral_3",
+      "area": "galeria_lateral_3",
       "wakes": "onEnter",
-      "line": "side_gallery_3",
+      "line": "galeria_lateral_3",
       "enemies": [
         {
           "type": "escorthealdrone",
-          "pos": [
-            {"u": -78.8, "v": 129.0, "rot": 135},
-            {"u": -53.2, "v": 129.0, "rot": 135}
-          ],
-          "note": "Repair Drones: they go to the drill and heal"
+          "pos": [{"u": -78.8, "v": 129.0, "rot": 135}, {"u": -53.2, "v": 129.0, "rot": 135}],
+          "note": "Repair Drones: vao ate a broca e curam"
         },
-        {
-          "type": "escortdungeontreasure2",
-          "pos": [
-            {"u": -66.0, "v": 138.7, "rot": 135}
-          ]
-        }
+        {"type": "escortdungeontreasure2", "pos": [{"u": -66.0, "v": 138.7, "rot": 135}]}
       ]
     },
     {
-      "room": "leviathan_cave",
-      "area": "leviathan_cave",
+      "room": "caverna_do_leviata",
+      "area": "caverna_do_leviata",
       "wakes": "drill",
-      "line": "leviathan_cave",
+      "line": "caverna_do_leviata",
       "enemies": [
-        {
-          "type": "escortgoliath",
-          "pos": [
-            {"u": 6.0, "v": -121.9, "rot": 135}
-          ],
-          "miniboss": true
-        },
+        {"type": "escortgoliath", "pos": [{"u": 6.0, "v": -121.9, "rot": 135}], "miniboss": true},
         {
           "type": "escort_milestone1",
-          "pos": [
-            {"u": 6.0, "v": -141.0, "rot": 135}
-          ],
-          "note": "mission milestone (invisible)"
+          "pos": [{"u": 6.0, "v": -141.0, "rot": 135}],
+          "note": "marco da missao (invisivel)"
         }
       ],
       "miniboss": true,
       "controllers": ["escortgoliathmasterleft", "escortgoliathmasterright", "escort_milestone1_spawner"]
     },
     {
-      "room": "worm_cave",
-      "area": "worm_cave",
+      "room": "caverna_do_verme",
+      "area": "caverna_do_verme",
       "wakes": "drill",
-      "line": "worm_cave",
+      "line": "caverna_do_verme",
       "enemies": [
-        {
-          "type": "escorttrain1",
-          "pos": [
-            {"u": 6.0, "v": 58.1, "rot": 135}
-          ],
-          "miniboss": true
-        },
+        {"type": "escorttrain1", "pos": [{"u": 6.0, "v": 58.1, "rot": 135}], "miniboss": true},
         {
           "type": "escort_milestone2",
-          "pos": [
-            {"u": 6.0, "v": 39.0, "rot": 135}
-          ],
-          "note": "mission milestone (invisible)"
+          "pos": [{"u": 6.0, "v": 39.0, "rot": 135}],
+          "note": "marco da missao (invisivel)"
         }
       ],
       "miniboss": true,
       "controllers": ["escorttrainmaster", "escort_milestone2_spawner"]
     },
     {
-      "room": "guardian_chamber",
-      "area": "guardian_chamber",
+      "room": "camara_do_guardiao",
+      "area": "camara_do_guardiao",
       "wakes": "drill",
-      "line": "guardian_chamber",
+      "line": "camara_do_guardiao",
       "enemies": [
-        {
-          "type": "escortevilorb",
-          "pos": [
-            {"u": 6.0, "v": 243.9, "rot": 135}
-          ]
-        },
+        {"type": "escortevilorb", "pos": [{"u": 6.0, "v": 243.9, "rot": 135}]},
         {
           "type": "escort_milestone3",
-          "pos": [
-            {"u": 6.0, "v": 217.4, "rot": 135}
-          ],
-          "note": "milestone 3 (invisible)"
+          "pos": [{"u": 6.0, "v": 217.4, "rot": 135}],
+          "note": "marco 3 (invisivel)"
         }
       ],
       "boss": true,
@@ -713,31 +729,22 @@
       "controllers": ["escortevilorbmaster", "escort_milestone3_spawner"]
     },
     {
-      "room": "destination",
-      "area": "destination",
+      "room": "destino",
+      "area": "destino",
       "wakes": "drill",
-      "line": "destination",
+      "line": "destino",
       "enemies": [
         {
           "type": "escortmission_poop",
-          "pos": [
-            {"u": 6.0, "v": 296.6, "rot": 135}
-          ],
-          "note": "drill destination (objective 4)"
+          "pos": [{"u": 6.0, "v": 296.6, "rot": 135}],
+          "note": "destino da broca (objetivo 4)"
         },
         {
           "type": "escortdungeontreasure3",
-          "pos": [
-            {"u": 6.0, "v": 308.4, "rot": 135}
-          ],
-          "note": "Legendary Supplies (objective 5)"
+          "pos": [{"u": 6.0, "v": 308.4, "rot": 135}],
+          "note": "Legendary Supplies (objetivo 5)"
         },
-        {
-          "type": "escortexit",
-          "pos": [
-            {"u": 6.0, "v": 315.1, "rot": 135}
-          ]
-        }
+        {"type": "escortexit", "pos": [{"u": 6.0, "v": 315.1, "rot": 135}]}
       ]
     }
   ]

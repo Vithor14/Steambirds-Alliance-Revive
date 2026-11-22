@@ -13,15 +13,14 @@ the next person and keep the game's files out of the repository.
 
 - **Never commit game files**: assets, DLLs, `configBinary`, decompiled code, `Server\data\`, accounts, logs. The
   `.gitignore` covers the usual ones; check `git status` before committing.
-- **English everywhere in the code**: identifiers, comments, log messages and README/CONTRIBUTING files. Portuguese is
-  fine in the `docs\` design notes and in the launcher's `lang\pt-BR.json`.
+- **English everywhere in the code**: identifiers, file and folder names, comments, log messages and README/CONTRIBUTING
+  files. Portuguese is fine in the `docs\` design notes and in the launcher's `lang\pt-BR.json`.
 - **Data, not code**: maps, enemies, dungeons, loot and settings live in files that the server reads and reloads. Do not
   hardcode content in C# when it can be a file the host or the community can edit.
 - **Stay close to the original game.** Anything rebuilt without original data must be marked as a reconstruction (in the
   file that holds it, or in a comment) and, when it makes sense, be configurable.
-- **Keep the compatibility layer working.** Maps, settings and accounts saved by older versions must still load
-  (`Server\Compat\`). When you rename a field or a file, add the old name to `Server\legacy-names.json` and to the
-  launcher's copy, and check that the old file still opens.
+- **No compatibility layer for old names.** When you rename a field, a file or a folder, rename it everywhere (code,
+  maps, docs, scripts) in the same change. Do not add code that reads the old name.
 - **Split big files.** Do not grow a file past about 60 KB. Use `partial` classes split by topic (see
   `Server\Enemies*.cs`) or a new file per topic.
 
@@ -31,7 +30,7 @@ the next person and keep the game's files out of the repository.
 - Nullable reference types are on. Do not silence warnings with `!` when a real check is possible.
 - Use the existing helpers (`Json`, `TextFiles`, `ConfigBinary`, `Maps`) instead of writing new ones.
 - Comments explain *why* (the game's behavior, the protocol rule, the reconstruction), not what the code does.
-- Log lines start with a tag in capitals in square brackets, like `[ENEMY]`, `[MAP]`, `[LEGACY]`. Keep the tags in English.
+- Log lines start with a tag in capitals in square brackets, like `[ENEMY]`, `[MAP]`, `[ACCOUNT]`. Keep the tags in English.
 
 ## Build and test
 
@@ -55,10 +54,9 @@ files, which hold Steam IDs.
 
 ## Maps and dungeons
 
-- A map is a `.json` file in `Server\maps\`. The format is in `Server\maps\README.md` (and dungeon fields in
-  `Server\maps\README-dungeons.md`).
-- Generated dungeons come from `tools\dungeons-190828`. If you change the generator, regenerate the files and check them
-  with `check_maps.py`. Do not edit generated files by hand unless you say so in the pull request.
+- A map is a `.json` file in `Server\maps\`. The format is in `docs\map-format.md`.
+- Edit maps with the launcher's map editor, or by hand, and open them in the editor to check them (the validator lists
+  errors and warnings). Say in the pull request when a map was changed by hand.
 
 ## Documentation
 

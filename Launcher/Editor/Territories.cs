@@ -2,7 +2,7 @@ namespace SteambirdsLauncher.Editor;
 
 // What the editor knows about the terrain of each dungeon of the game (the "terrain" and "territory" of the map file):
 // the tag of its floor and wall pieces and the floor pieces the generated maps use.
-// Source: the build 190828 maps (tools\dungeons-190828\dungeons_190828.py) and the territory table of the game.
+// Source: the build 190828 maps (the generated dungeons of the project) and the territory table of the game.
 internal sealed class TerritoryInfo
 {
     public TerritoryInfo(string terrain, int territory, string label, string groundTag, string wallTag)

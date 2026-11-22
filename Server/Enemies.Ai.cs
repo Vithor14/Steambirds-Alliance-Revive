@@ -68,6 +68,13 @@ public static partial class Enemies
         List<Enemy>? exploded = null;
         foreach (Enemy enemy in inst.Enemies.Values)
         {
+            // Stunned (EMP): stands still and does not shoot.
+            if (now < enemy.StunUntil)
+            {
+                enemy.Vel = 0f;
+                continue;
+            }
+
             FocusNearest(inst, enemy);
             Think(inst, enemy, dt, now);
             Fire(inst, enemy, now);
@@ -83,6 +90,9 @@ public static partial class Enemies
             foreach (Enemy enemy in exploded)
                 log("ENEMY", inst.Role + " " + Describe(enemy) + " exploded on the player at (" + Num(enemy.X) + ", " + Num(enemy.Y) + ")");
         }
+
+        // Turrets and mines of the players.
+        UpdateAllies(inst, now, log);
 
         if (now - inst.LastSend >= SendInterval)
         {

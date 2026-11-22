@@ -14,16 +14,16 @@ public static class ReportWriter
         string reportPath = LauncherPaths.ReportFile;
         using var writer = new StreamWriter(reportPath, false, new UTF8Encoding(false));
 
-        writer.WriteLine("=== RELATORIO DO ESBOCO STEAMBIRDS ===");
+        writer.WriteLine("=== STEAMBIRDS REPORT ===");
         writer.WriteLine("Gerado em: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"));
         writer.WriteLine("Windows: " + Environment.OSVersion.VersionString);
         writer.WriteLine("Launcher: " + LauncherInfo.Version + " (" + LauncherPaths.BaseFolder + ")");
-        writer.WriteLine("Servidor: " + DescribeFile(LauncherPaths.ServerExe));
+        writer.WriteLine("Server: " + DescribeFile(LauncherPaths.ServerExe));
         writer.WriteLine("Plugin incluido no launcher: " + DescribeFile(LauncherPaths.BundledPlugin) + PluginVersionText(LauncherPaths.BundledPlugin));
         if (GameInstall.HasGame(gameFolder))
         {
             string build = GameInstall.ReadBuildId(gameFolder);
-            writer.WriteLine("Jogo: " + gameFolder + " (build " + (build.Length > 0 ? build : "desconhecida") + ")");
+            writer.WriteLine("Game: " + gameFolder + " (build " + (build.Length > 0 ? build : "unknown") + ")");
             string installedPlugin = GameInstall.InstalledPluginPath(gameFolder!);
             writer.WriteLine("Plugin in the game: " + DescribeFile(installedPlugin) + PluginVersionText(installedPlugin));
         }
@@ -33,7 +33,7 @@ public static class ReportWriter
         }
 
         writer.WriteLine();
-        writer.WriteLine("=== SAIDA DO SERVIDOR ===");
+        writer.WriteLine("=== SERVER OUTPUT ===");
         if (string.IsNullOrEmpty(serverLogPath) || !File.Exists(serverLogPath))
         {
             writer.WriteLine("(the server did not run through the launcher in this session)");
@@ -45,18 +45,15 @@ public static class ReportWriter
         }
 
         writer.WriteLine();
-        writer.WriteLine("=== LOGS DO JOGO ===");
+        writer.WriteLine("=== GAME LOGS ===");
         if (GameInstall.HasGame(gameFolder))
         {
-            Append(writer, "BepInEx\\LogOutput.log (ultimas 4000 linhas)", GameInstall.BepInExLog(gameFolder!), 4000, true);
+            Append(writer, "BepInEx\\LogOutput.log (last 4000 lines)", GameInstall.BepInExLog(gameFolder!), 4000, true);
         }
-        Append(writer, "Player.log do Unity (ultimas 4000 linhas)", GameInstall.PlayerLog, 4000, true);
+        Append(writer, "Unity Player.log (last 4000 lines)", GameInstall.PlayerLog, 4000, true);
 
         // Accounts of the server (planes and finished dungeons): show whether the tutorial was marked as done.
-        // One per player in server\accounts\<key>\account.json; server\account.json is the old single account (waiting
-        // for the host's first login).
-        if (File.Exists(LauncherPaths.ServerFile("account.json")))
-            Append(writer, "server\\account.json (old account)", LauncherPaths.ServerFile("account.json"), 0, false);
+        // One per player in server\accounts\<key>\account.json.
         foreach (AccountStore.Summary account in AccountStore.List().Take(20))
             Append(writer, "server\\accounts\\" + account.Key + "\\account.json (" + account.Name + ")", Path.Combine(account.Folder, AccountStore.AccountFileName), 0, false);
 
@@ -126,7 +123,7 @@ public static class ReportWriter
 
         if (lastLines > 0 && lines.Count > lastLines)
         {
-            writer.WriteLine("(mostrando as ultimas " + lastLines + " de " + lines.Count + " linhas)");
+            writer.WriteLine("(showing the last " + lastLines + " of " + lines.Count + " lines)");
             lines = lines.GetRange(lines.Count - lastLines, lastLines);
         }
 

@@ -145,7 +145,6 @@ public static class DungeonCatalogFile
     {
         string text = TextFiles.ReadKeepingBom(FilePath, out hasBom);
         JsonNode? node = JsonNode.Parse(text, NodeOptions, JsoncFile.ParseOptions);
-        if (node != null) LegacyNames.Translate(node);   // files saved with the old Portuguese names
         return node as JsonObject ?? throw new FormatException(L.F("{0} is not a JSON object", FileName));
     }
 

@@ -12,7 +12,7 @@ using UnityEngine;
 // It only reads values from the game; it changes nothing.
 // When the terrain changes (Nexus, tutorial...), it writes to BepInEx\terrain_dump.txt the numeric fields
 // of WorldLayout, WorldMaker, GroundPlacement and GameClient. It helps to find the real cellSize, worldRadius and tileSize.
-[BepInPlugin("local.steambirds.dumpterreno", "Steambirds Dump Terreno", "1.0.0")]
+[BepInPlugin("local.steambirds.terraindump", "Steambirds Terrain Dump", "1.0.0")]
 public class DumpTerrain : BaseUnityPlugin
 {
     // Game types whose numeric fields matter. GameClient is filtered by name so it does not flood the file.
@@ -30,17 +30,17 @@ public class DumpTerrain : BaseUnityPlugin
 
     private void Awake()
     {
-        file = Path.Combine(Paths.BepInExRootPath, "dump_terreno.txt");
+        file = Path.Combine(Paths.BepInExRootPath, "terrain_dump.txt");
         try
         {
             File.WriteAllText(file,
-                "=== dump de terreno iniciado " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + " ===" + Environment.NewLine);
+                "=== terrain dump started " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " ===" + Environment.NewLine);
         }
         catch
         {
         }
 
-        Logger.LogInfo("Dump de terreno ativo: " + file);
+        Logger.LogInfo("Terrain dump on: " + file);
     }
 
     private void Update()
@@ -70,7 +70,7 @@ public class DumpTerrain : BaseUnityPlugin
         var lines = new List<string>
         {
             "",
-            "=== terreno: " + terrainName + " (" + DateTime.Now.ToString("HH:mm:ss") + ") ==="
+            "=== terrain: " + terrainName + " (" + DateTime.Now.ToString("HH:mm:ss") + ") ==="
         };
 
         var gameClient = GameClient.Instance;
