@@ -33,7 +33,11 @@ public static class DungeonCatalogFile
         public List<Dungeon> Dungeons { get; } = new List<Dungeon>();
         public int MaxPlayers { get; set; } = 10;               // "maxPlayers"
         public double AutoExitSeconds { get; set; } = 180;      // "autoExitSeconds"
-        public bool NexusPortalsOn { get; set; } = true;        // "portaisNoNexus.ligados"
+        public bool NexusPortalsOn { get; set; } = true;        // "nexusPortals.enabled"
+        public string EntryMode { get; set; } = "both";         // "entryMode": both, portals or missionTransport
+        public bool LockBossRooms { get; set; }                 // "lockBossRooms"
+        public double FireRateScale { get; set; } = 1.0;        // "fireRateScale"
+        public double MaxBulletsPerSecond { get; set; } = 10;   // "maxBulletsPerSecond"
     }
 
     private static readonly JsonNodeOptions NodeOptions = new JsonNodeOptions { PropertyNameCaseInsensitive = true };
@@ -52,7 +56,11 @@ public static class DungeonCatalogFile
         var catalog = new Catalog
         {
             MaxPlayers = (int)GetNumber(root, "maxPlayers", 10),
-            AutoExitSeconds = GetNumber(root, "autoExitSeconds", 180)
+            AutoExitSeconds = GetNumber(root, "autoExitSeconds", 180),
+            EntryMode = GetString(root, "entryMode", "both"),
+            LockBossRooms = GetBool(root, "lockBossRooms", false),
+            FireRateScale = GetNumber(root, "fireRateScale", 1.0),
+            MaxBulletsPerSecond = GetNumber(root, "maxBulletsPerSecond", 10)
         };
         if (root["nexusPortals"] is JsonObject portals) catalog.NexusPortalsOn = GetBool(portals, "enabled", true);
 
@@ -85,6 +93,10 @@ public static class DungeonCatalogFile
         JsonObject root = ReadRoot(out bool hasBom);
         root["maxPlayers"] = catalog.MaxPlayers;
         root["autoExitSeconds"] = catalog.AutoExitSeconds;
+        root["entryMode"] = catalog.EntryMode;
+        root["lockBossRooms"] = catalog.LockBossRooms;
+        root["fireRateScale"] = catalog.FireRateScale;
+        root["maxBulletsPerSecond"] = catalog.MaxBulletsPerSecond;
         if (root["nexusPortals"] is JsonObject portals) portals["enabled"] = catalog.NexusPortalsOn;
         else root["nexusPortals"] = new JsonObject { ["enabled"] = catalog.NexusPortalsOn };
 

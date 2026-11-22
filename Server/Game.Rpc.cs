@@ -121,6 +121,14 @@ public static partial class Game
             return;
         }
 
+        // The mission list of the Mission Transport (the mega carrier of the Nexus): dungeons as missions.
+        if (MissionTransport.IsMissionRpc(info.Id))
+        {
+            MissionTransport.HandleRpc(server, msg, info.Id, j.Role, log);
+            j.Rpcs++;
+            return;
+        }
+
         string arguments = CopperReader.Describe(msg, info.Args, out bool complete);
 
         ushort rpcId;

@@ -244,9 +244,21 @@ internal sealed class PointsPage : EditorPage
 
     // ------------------------------------------------------------------ fields
 
+    private static string CoordinateHelp(string key) => key switch
+    {
+        "u" => "Position along the u axis (to the right on the map). A tile is 12 u.",
+        "v" => "Position along the v axis (up on the map, toward the back of the dungeon). A tile is 12 u.",
+        "minU" => "Left edge of the area (u).",
+        "maxU" => "Right edge of the area (u).",
+        "minV" => "Bottom edge of the area (v).",
+        "maxV" => "Top edge of the area (v).",
+        "activeAtV" => "The checkpoint starts to work once a plane has passed this v.",
+        _ => ""
+    };
+
     private static FieldSpec Coordinate(string key, string label)
     {
-        return new FieldSpec(key, label, FieldKind.Number) { Min = -3000, Max = 3000, Increment = 0.5 };
+        return new FieldSpec(key, label, FieldKind.Number) { Min = -3000, Max = 3000, Increment = 0.5, Help = CoordinateHelp(key) };
     }
 
     private static FieldSpec Rotation(string key = "rot", double fallback = 0)
@@ -275,7 +287,7 @@ internal sealed class PointsPage : EditorPage
         yield return Coordinate("u", "u");
         yield return Coordinate("v", "v");
         yield return Rotation("rot", MapCoords.FaceMinusV);
-        yield return new FieldSpec("note", "Note", FieldKind.Text);
+        yield return new FieldSpec("note", "Note", FieldKind.Text) { Help = "Free text for you. The server ignores it." };
     }
 
     private static IEnumerable<FieldSpec> AreaFields()
@@ -288,7 +300,7 @@ internal sealed class PointsPage : EditorPage
 
     private static IEnumerable<FieldSpec> CheckpointFields()
     {
-        yield return new FieldSpec("name", "Checkpoint", FieldKind.Text);
+        yield return new FieldSpec("name", "Checkpoint", FieldKind.Text) { Help = "Name of the checkpoint (the respawn point), only to tell it apart." };
         yield return Coordinate("activeAtV", "Active after v");
         yield return Coordinate("u", "u");
         yield return Coordinate("v", "v");
@@ -306,7 +318,7 @@ internal sealed class PointsPage : EditorPage
 
     private static IEnumerable<FieldSpec> GroundNameFields(string idKey)
     {
-        yield return new FieldSpec(idKey, "Ground asset id", FieldKind.Int) { Min = 0, Max = 99999999 };
+        yield return new FieldSpec(idKey, "Ground asset id", FieldKind.Int) { Min = 0, Max = 99999999, Help = "Id of the floor asset in the game (ground_assets.txt). Picking a name below fills it." };
         yield return new FieldSpec("name", "Ground asset name", FieldKind.EditableChoice)
         {
             Choices = () => EditorAssets.Current.GroundNames.Values.Distinct().OrderBy(n => n, StringComparer.OrdinalIgnoreCase).ToList(),
@@ -337,7 +349,7 @@ internal sealed class PointsPage : EditorPage
             Max = 999,
             Help = "Index in prefab_table.txt: 12 Hangar, 14 Storage, 23 Tavern, 24 Store, 26 Crafter, 27 Pilot School, 28 Flock Hall, 29 Combat Sim, 30 Mega Carrier."
         };
-        yield return new FieldSpec("name", "Name", FieldKind.Text);
+        yield return new FieldSpec("name", "Name", FieldKind.Text) { Help = "Name of the building, only to tell it apart." };
         yield return Coordinate("u", "u");
         yield return Coordinate("v", "v");
         yield return Rotation("rot", MapCoords.FacePlusV);
@@ -347,7 +359,7 @@ internal sealed class PointsPage : EditorPage
     private static IEnumerable<FieldSpec> PieceFields()
     {
         yield return new FieldSpec("p", "Slot p", FieldKind.Int) { Min = -400, Max = 400, Help = "Slot of 6 u." };
-        yield return new FieldSpec("q", "Slot q", FieldKind.Int) { Min = -400, Max = 400 };
+        yield return new FieldSpec("q", "Slot q", FieldKind.Int) { Min = -400, Max = 400, Help = "Slot of 6 u along the v axis (p is along u). A tile has 2 x 2 slots." };
         foreach (FieldSpec field in GroundNameFields("id")) yield return field;
         yield return new FieldSpec("rot", "Rotation (counter-clockwise, relative to the tile)", FieldKind.OptionalNumber)
         {

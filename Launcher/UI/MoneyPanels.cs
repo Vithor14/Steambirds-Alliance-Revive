@@ -3,10 +3,8 @@ using SteambirdsLauncher.Core;
 
 namespace SteambirdsLauncher.UI;
 
-// Money on the Accounts page, two panels:
-//  - StartingMoneyPanel: what every NEW account starts with (items.json "startingCurrencies": gold, iron, recycling scrap...).
-//  - AccountMoneyPanel: the money of an account that already exists (its inventory.json "Currencies"); only while the
-//    server is stopped, because the server keeps the inventories of the players who joined in memory and would write over it.
+// Starting money on the Accounts page: what every NEW account starts with (items.json "startingCurrencies": gold,
+// iron, recycling scrap...). The money of an account that already exists is edited in the account editor window.
 
 // Starting money of new accounts. Saves only its own key of items.json and keeps the comments of the file.
 internal sealed class StartingMoneyPanel : UserControl
@@ -167,135 +165,6 @@ internal sealed class StartingMoneyPanel : UserControl
             watchTimer.Stop();
             watchTimer.Dispose();
         }
-        base.Dispose(disposing);
-    }
-}
-
-// Money of the account selected in the list. Shows what is in inventory.json and saves it back (with a copy in server\_backup).
-internal sealed class AccountMoneyPanel : UserControl
-{
-    private readonly LauncherContext context;
-    private readonly Label title;
-    private readonly Label note;
-    private readonly Label status;
-    private readonly Button saveButton;
-    private readonly Button undoButton;
-    private readonly Panel fieldsHost;
-    private CurrencyFields? fields;
-    private AccountStore.Summary? account;
-    private Dictionary<string, int> baseline = new Dictionary<string, int>(StringComparer.Ordinal);
-    private bool hasInventory;
-
-    public AccountMoneyPanel(LauncherContext context)
-    {
-        this.context = context;
-        title = Ui.Bold(L.T("Money of the selected account"));
-        title.Dock = DockStyle.Top;
-        note = Ui.Wrapping("", 250, gray: true);
-        note.Dock = DockStyle.Top;
-        status = Ui.Note("");
-        saveButton = Ui.Button(L.T("Save money"), (_, _) => Save());
-        undoButton = Ui.Button(L.T("Undo"), (_, _) => Show(account));
-        var buttons = Ui.WrapFlow(saveButton, undoButton, status);
-        buttons.Dock = DockStyle.Bottom;
-        fieldsHost = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
-
-        Controls.Add(fieldsHost);
-        Controls.Add(buttons);
-        Controls.Add(note);
-        Controls.Add(title);
-        Resize += (_, _) => note.MaximumSize = new Size(Math.Max(120, ClientSize.Width - 8), 0);
-
-        context.ServerStateChanged += UpdateButtons;
-        Show(null);
-    }
-
-    private bool Dirty => fields != null && !SameAmounts(fields.GetValue(), baseline);
-
-    // Shows the money of an account (null = nothing selected). Called when the selection changes.
-    public void Show(AccountStore.Summary? chosen)
-    {
-        account = chosen;
-        fieldsHost.Controls.Clear();
-        fields = null;
-        hasInventory = false;
-        baseline = new Dictionary<string, int>(StringComparer.Ordinal);
-        if (chosen == null || chosen.Error.Length > 0)
-        {
-            note.Text = L.T("Select an account in the list.");
-            UpdateButtons();
-            return;
-        }
-
-        try
-        {
-            AccountStore store = AccountStore.Load(chosen.Folder);
-            hasInventory = store.HasInventory;
-            if (hasInventory)
-            {
-                fields = new CurrencyFields(context.GameData.Currencies) { Dock = DockStyle.Top };
-                fields.SetValue(store.Currencies);
-                baseline = fields.GetValue();
-                fields.Changed += () => { UpdateButtons(); Ui.SetStatus(status, Dirty ? L.T("Not saved yet.") : "", TextRole.Warn); };
-                fieldsHost.Controls.Add(fields);
-            }
-        }
-        catch (Exception e)
-        {
-            note.Text = L.F("Could not read the account: {0}", e.Message);
-            UpdateButtons();
-            return;
-        }
-        Ui.SetStatus(status, "", TextRole.Muted);
-        UpdateButtons();
-    }
-
-    private void UpdateButtons()
-    {
-        bool serverRunning = context.Server.IsActive;
-        bool canSave = fields != null && Dirty && !serverRunning;
-        saveButton.Enabled = canSave;
-        undoButton.Enabled = fields != null && Dirty;
-        if (fields != null) fields.Enabled = !serverRunning;
-        if (account == null || account.Error.Length > 0) return;
-        if (!hasInventory) note.Text = L.T("This account has no inventory.json yet: the server creates it the first time the player joins.");
-        else if (serverRunning) note.Text = L.T("The server is running: it keeps the money of the players in memory. Stop it to edit here, or give money in the game chat with /currency gold 5000.");
-        else note.Text = L.F("Edit the money of {0} and press Save money (a copy goes to server\\_backup).", account.Name);
-        Ui.SetRole(note, serverRunning ? TextRole.Warn : TextRole.Muted);
-    }
-
-    private void Save()
-    {
-        if (account == null || fields == null) return;
-        if (context.Server.IsActive)
-        {
-            Ui.ShowError(FindForm(), L.T("Stop the server to edit or remove accounts: the server keeps the accounts of the players who joined in memory while it runs and would write over the changes."));
-            return;
-        }
-        ValidateChildren();
-        try
-        {
-            AccountStore store = AccountStore.Load(account.Folder);
-            store.Currencies = fields.GetValue();
-            string backup = store.Save();
-            context.ServerNotice(L.F("money of {0} saved; previous copy in {1}", account.Name, backup));
-        }
-        catch (Exception e)
-        {
-            Ui.ShowError(FindForm(), L.F("Could not save the account: {0}", e.Message));
-            return;
-        }
-        baseline = fields.GetValue();
-        UpdateButtons();
-        Ui.SetStatus(status, L.F("Saved at {0}.", DateTime.Now.ToString("HH:mm:ss")), TextRole.Good);
-    }
-
-    private static bool SameAmounts(Dictionary<string, int> a, Dictionary<string, int> b) =>
-        a.Count == b.Count && a.All(p => b.TryGetValue(p.Key, out int v) && v == p.Value);
-
-    protected override void Dispose(bool disposing)
-    {
-        if (disposing) context.ServerStateChanged -= UpdateButtons;
         base.Dispose(disposing);
     }
 }

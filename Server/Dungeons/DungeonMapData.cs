@@ -132,6 +132,8 @@ public static class DungeonMapData
         public bool ExcludeFromRoomClear { get; set; }
         public PeriodicSummon? PeriodicSummon { get; set; }
         public DpsChest? DpsChest { get; set; }
+        // Bombs and barrels that set each other off (the Bomb Factory's chain reaction).
+        public ChainReaction? ChainReaction { get; set; }
         public string Route { get; set; } = "";
         public string Target { get; set; } = "";
         public string Note { get; set; } = "";
@@ -148,6 +150,14 @@ public static class DungeonMapData
         public float BelowHealth { get; set; } = 1f;
         // false: the summoned units do not count to clear the room (mines dropped by a blimp, bombs laid by a carrier).
         public bool CountsForRoomClear { get; set; } = true;
+    }
+
+    // When a unit with this field goes off (dies), every other unit WITH this field within "radius" (world units) goes off
+    // "delaySeconds" later, and so on: one bomb sets the whole cluster off.
+    public sealed class ChainReaction
+    {
+        public float Radius { get; set; } = 14f;
+        public float DelaySeconds { get; set; } = 0.25f;
     }
 
     // Big treasure (DPS chest of the low tier dungeons, patch of 2019): break it within "seconds" from the first hit

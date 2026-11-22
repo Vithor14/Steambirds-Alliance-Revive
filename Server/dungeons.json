@@ -9,6 +9,13 @@
   },
   "maxPlayers": 10,
   "autoExitSeconds": 180,
+  "entryMode": "both",
+  "entryModeNote": "How players get into dungeons: 'both' (the carriers outside the city AND the Mission Transport, the mega carrier at the end of the main ramp), 'portals' (only the carriers) or 'missionTransport' (only the mission list of the mega carrier).",
+  "lockBossRooms": false,
+  "lockBossRoomsNote": "true: the doors of a boss room close behind the player until the boss dies (the original behaviour). false: nobody gets locked in.",
+  "fireRateScale": 1.0,
+  "maxBulletsPerSecond": 10,
+  "fireNote": "Dungeon enemies. fireRateScale multiplies every fire rate (0.5 = half). maxBulletsPerSecond is the most bullets one unit may put out (its guns slow down together until it fits; 0 = no limit). The original units used one gun pattern at a time; this server fires all the guns of the template, so without a limit some units are impossible to dodge.",
   "dungeons": [
     {
       "type": "DungeonSneezy",

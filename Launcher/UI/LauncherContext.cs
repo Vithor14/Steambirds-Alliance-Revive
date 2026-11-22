@@ -25,7 +25,11 @@ internal sealed class LauncherContext : IDisposable
         Owner = owner;
         Settings = settings;
 
-        Server.LineReceived += (line, fromStdErr) => ServerConsole.Append(line, fromStdErr ? LineKind.Error : ClassifyServerLine(line));
+        Server.LineReceived += (line, fromStdErr) =>
+        {
+            LineKind kind = fromStdErr ? LineKind.Error : ClassifyServerLine(line);
+            ServerConsole.Append(line, kind, ServerLogLevel.IsInfo(line, kind));
+        };
         Server.StateChanged += () => RunOnUi(() => ServerStateChanged?.Invoke());
         Server.Exited += (requested, code) => RunOnUi(() => OnServerExited(requested, code));
         Game.Exited += code => ClientNotice(code.HasValue ? L.F("the game closed (code {0})", code.Value) : L.T("the game closed"));

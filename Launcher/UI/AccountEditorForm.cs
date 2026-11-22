@@ -28,6 +28,9 @@ internal sealed class AccountEditorForm : Form
     private readonly CurrencyFields currencies;
     private readonly DataGridView ingredientsGrid;
     private readonly int originalRank;
+    private readonly PortraitParts portraitParts = PortraitParts.Load();
+    private readonly Label portraitText;
+    private Dictionary<string, int> portrait;
     private bool updating;
 
     public AccountEditorForm(LauncherContext context, AccountStore store)
@@ -160,9 +163,23 @@ internal sealed class AccountEditorForm : Form
             walletPage.Controls.Add(noInventory);
         }
 
+        // ------------------------------------------------------------ portrait
+        portrait = store.Portrait;
+        portraitText = Ui.Wrapping("", 760, gray: false);
+        var rerollButton = Ui.Button(L.T("Reroll portrait"), (_, _) => RerollPortrait());
+        rerollButton.Enabled = portraitParts.Available;
+        Label portraitHelp = Ui.Wrapping(portraitParts.Available
+            ? L.T("The pilot portrait is a set of pieces (slot, piece name and its id in the game). Reroll picks a new one with the same rules the game used; it is saved with Save. The player sees the new portrait the next time they join.")
+            : L.F("The list of portrait pieces was not found ({0}): run SteambirdsGameFiles.exe to create it. The current portrait is shown, but it cannot be rolled again.", PortraitParts.FilePath), 760, gray: true);
+        var portraitPage = Page(L.T("Portrait"), portraitHelp, Ui.Flow(portraitText));
+        portraitPage.Controls.Add(rerollButton);
+        rerollButton.Dock = DockStyle.Top;
+        portraitPage.Controls.SetChildIndex(rerollButton, 1);   // between the help (top) and the pieces
+        ShowPortrait();
+
         // ------------------------------------------------------------ window
         var tabs = new ThemedTabControl { Dock = DockStyle.Fill };
-        tabs.TabPages.AddRange(new[] { pilotPage, planesPage, unlocksPage, dungeonsPage, walletPage });
+        tabs.TabPages.AddRange(new[] { pilotPage, portraitPage, planesPage, unlocksPage, dungeonsPage, walletPage });
 
         var save = Ui.Button(L.T("Save"), (_, _) => SaveAndClose());
         var cancel = Ui.Button(L.T("Cancel"), (_, _) => Close());
@@ -205,6 +222,21 @@ internal sealed class AccountEditorForm : Form
         page.Controls.Add(content);
         page.Controls.Add(help);
         return page;
+    }
+
+    private void ShowPortrait()
+    {
+        portraitText.Text = portrait.Count == 0
+            ? L.T("This pilot has no portrait yet: the server gives one the first time the player joins.")
+            : portraitParts.Describe(portrait).Replace(", ", "\n");
+    }
+
+    private void RerollPortrait()
+    {
+        Dictionary<string, int>? rolled = portraitParts.Roll(new Random());
+        if (rolled == null) return;
+        portrait = rolled;
+        ShowPortrait();
     }
 
     // Dungeon terrains: the ones of dungeons.json, the walker tutorial and the ones the account already has.
@@ -395,6 +427,7 @@ internal sealed class AccountEditorForm : Form
             store.PlanesLost = (int)planesLost.Value;
             store.HighestPlaneLevel = Math.Max((int)highestPlaneLevel.Value, planes.Count > 0 ? planes.Max(p => p.Level) : 0);
             store.SetPlanes(planes);
+            store.Portrait = portrait;
             store.Unlocks = unlocks.GetValue();
             store.FinishedDungeons = dungeons.CheckedItems.Cast<object>().Select(o => o.ToString() ?? "").Where(s => s.Length > 0).ToList();
             if (store.HasInventory)

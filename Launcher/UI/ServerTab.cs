@@ -41,6 +41,11 @@ internal sealed class ServerTab : UserControl
 
         // ------------------------------------------------------------ console page
         var console = new ConsoleView(context.ServerConsole) { Dock = DockStyle.Fill };
+        console.AddInfoToggle(context.Settings.ShowServerInfoLines, tip, on =>
+        {
+            context.Settings.ShowServerInfoLines = on;
+            context.SaveSettings();
+        });
         var commandBox = new TextBox { Width = 360, PlaceholderText = "/command", Margin = new Padding(3, 4, 3, 3) };
         var sendButton = Ui.Button(L.T("Send"));
         Ui.Disable(commandBox, sendButton);

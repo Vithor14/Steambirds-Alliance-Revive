@@ -31,6 +31,9 @@ internal sealed class MapSettingsPage : EditorPage
         Reload();
     }
 
+    // The entrance (spawn) is edited in this page.
+    public override bool ShowObject(MapObject item) => item.Kind == ObjectKind.Entrance;
+
     public override void Reload()
     {
         bool dungeon = Document.IsDungeon;
@@ -78,7 +81,7 @@ internal sealed class MapSettingsPage : EditorPage
             yield return new FieldSpec("key", "Key item", FieldKind.Text) { Help = "Item that opens the dungeon." };
             yield return new FieldSpec("portalItem", "Portal item", FieldKind.Text) { Help = "Id in Items/Consumables/dungeon." };
             yield return new FieldSpec("quest", "Quest", FieldKind.Text) { Help = "Quest of the dungeon." };
-            yield return new FieldSpec("values.tier", "Tier", FieldKind.Int) { Min = 1, Max = 10, Default = 5, DefaultBool = false };
+            yield return new FieldSpec("values.tier", "Tier", FieldKind.Int) { Min = 1, Max = 10, Default = 5, DefaultBool = false, Help = "Difficulty tier of the dungeon (1 to 10). It sets the level of the loot and of the enemies the dungeon uses." };
             yield return new FieldSpec("values.bossTerritory", "Boss room territory", FieldKind.OptionalNumber)
             {
                 Help = "Only when the boss room used another territory in the original dungeon."
@@ -96,9 +99,9 @@ internal sealed class MapSettingsPage : EditorPage
             };
 
             yield return FieldSpec.Header("Next dungeon (the server does not use it yet)");
-            yield return new FieldSpec("nextDungeon.map", "Map", FieldKind.EditableChoice) { Choices = Context.MapIds };
-            yield return new FieldSpec("nextDungeon.point", "Point", FieldKind.Text);
-            yield return new FieldSpec("nextDungeon.when", "When", FieldKind.Text);
+            yield return new FieldSpec("nextDungeon.map", "Map", FieldKind.EditableChoice) { Choices = Context.MapIds, Help = "Map the players go to after this dungeon. The server does not use it yet." };
+            yield return new FieldSpec("nextDungeon.point", "Point", FieldKind.Text) { Help = "Point of the next map where the players appear. The server does not use it yet." };
+            yield return new FieldSpec("nextDungeon.when", "When", FieldKind.Text) { Help = "Condition that sends the players to the next map. The server does not use it yet." };
         }
 
         yield return FieldSpec.Header("Spawn (nascimento)");
@@ -106,8 +109,8 @@ internal sealed class MapSettingsPage : EditorPage
         {
             Help = "Where the plane appears. In dungeons the last checkpoint is used when the map has any."
         };
-        yield return new FieldSpec("spawn.v", "v", FieldKind.OptionalNumber);
-        yield return new FieldSpec("spawn.rot", "Rotation", FieldKind.OptionalNumber);
+        yield return new FieldSpec("spawn.v", "v", FieldKind.OptionalNumber) { Help = "Where the plane appears (v axis)." };
+        yield return new FieldSpec("spawn.rot", "Rotation", FieldKind.OptionalNumber) { Help = "Direction the plane faces when it appears, in degrees clockwise from +y. 315 faces +v (the back of the dungeon)." };
 
         yield return FieldSpec.Header("Floor");
         yield return new FieldSpec("floor.wallsOnEdges", "Automatic walls on the edges", FieldKind.Bool)

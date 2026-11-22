@@ -28,9 +28,13 @@ internal sealed class MapEditorTab : UserControl
     private readonly ComboBox gateTypeBox;
     private readonly TextBox groupBox;
     private readonly ComboBox snapBox;
+    private readonly Dictionary<string, Control[]> optionControls = new Dictionary<string, Control[]>();
+    private Label? optionsHeading;
+    private readonly Label tabsHint;
 
     private readonly ThemedTabControl pages;
     private readonly List<EditorPage> pageList = new List<EditorPage>();
+    private readonly List<TabPage> allTabs = new List<TabPage>();
     private readonly HashSet<EditorPage> stalePages = new HashSet<EditorPage>();
     private readonly HashSet<string> backedUp = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     private readonly SplitContainer split;
@@ -66,6 +70,7 @@ internal sealed class MapEditorTab : UserControl
         ThemedTabControl.MarkNotImplemented(aiPage,
             L.T("Coming soon: an editor for the AI of the enemies. It will be saved in the optional \"ia\" field of each unit type, which the map editor already keeps."));
         pages.TabPages.Add(aiPage);
+        allTabs.Add(aiPage);
         pages.SelectedIndexChanged += (_, _) => ReloadStalePage();
 
         // ---- left palette
@@ -96,7 +101,11 @@ internal sealed class MapEditorTab : UserControl
         split.Panel1.Controls.Add(canvas);
         palette.Dock = DockStyle.Left;
         split.Panel1.Controls.Add(palette);
+        tabsHint = Ui.Wrapping(L.T("Showing only the tabs of the selected object. Click an empty spot of the map to see all tabs."), 340, gray: true);
+        tabsHint.Dock = DockStyle.Top;
+        tabsHint.Visible = false;
         split.Panel2.Controls.Add(pages);
+        split.Panel2.Controls.Add(tabsHint);
         split.Panel2.Padding = new Padding(2);
 
         Controls.Add(split);
@@ -168,6 +177,7 @@ internal sealed class MapEditorTab : UserControl
         var tab = new TabPage(title) { Padding = new Padding(4) };
         tab.Controls.Add(page);
         pages.TabPages.Add(tab);
+        allTabs.Add(tab);
     }
 
     // ------------------------------------------------------------------ palette
@@ -224,18 +234,33 @@ internal sealed class MapEditorTab : UserControl
         Tool(EditorTool.Sign, "Sign", "A text on the floor, shown when a plane comes near.");
 
         Heading("Options");
-        types = OptionBox(panel, "Enemy type", out Label _);
-        rooms = OptionBox(panel, "Room", out Label _);
-        gateTypes = OptionBox(panel, "Gate type", out Label _);
+        optionsHeading = (Label)panel.Controls[panel.Controls.Count - 1];
 
-        panel.Controls.Add(Ui.Text(L.T("Group name")));
+        types = OptionBox(panel, "Enemy type", "Unit type the Enemy tool places (the types of this map, Units tab).", out Label typeLabel);
+        rooms = OptionBox(panel, "Room", "Room that receives the enemies placed with the Enemy tool (Rooms tab).", out Label roomLabel);
+        gateTypes = OptionBox(panel, "Gate type", "Unit type the gate is made of: the blocks that close the way until the gate opens.", out Label gateLabel);
+        optionControls["type"] = new Control[] { typeLabel, types };
+        optionControls["room"] = new Control[] { roomLabel, rooms };
+        optionControls["gate"] = new Control[] { gateLabel, gateTypes };
+
+        Label groupLabel = Ui.Text(L.T("Group name"));
+        panel.Controls.Add(groupLabel);
         group = new TextBox { Width = 126, Margin = new Padding(3, 0, 3, 3) };
         panel.Controls.Add(group);
+        string groupHelp = L.T("Group of points the Group point tool adds to. A new name creates a new group.");
+        context.ToolTip.SetToolTip(groupLabel, groupHelp);
+        context.ToolTip.SetToolTip(group, groupHelp);
+        optionControls["group"] = new Control[] { groupLabel, group };
 
-        panel.Controls.Add(Ui.Text(L.T("Snap (u)")));
+        Label snapLabel = Ui.Text(L.T("Snap (u)"));
+        panel.Controls.Add(snapLabel);
         snap = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 126, Margin = new Padding(3, 0, 3, 3) };
         snap.Items.AddRange(new object[] { L.T("Off"), "0.25", "0.5", "1", "3" });
         snap.SelectedIndex = 2;
+        string snapHelp = L.T("Placing and moving objects rounds their position to this step, in map units (u). Off = free position. A tile is 12 u.");
+        context.ToolTip.SetToolTip(snapLabel, snapHelp);
+        context.ToolTip.SetToolTip(snap, snapHelp);
+        optionControls["snap"] = new Control[] { snapLabel, snap };
 
         var rectangle = new CheckBox { Text = L.T("Rectangle"), AutoSize = true, Margin = new Padding(3, 6, 3, 0) };
         var wallTile = new CheckBox { Text = L.T("Walls by tile"), AutoSize = true, Margin = new Padding(3, 0, 3, 0) };
@@ -243,9 +268,10 @@ internal sealed class MapEditorTab : UserControl
         context.ToolTip.SetToolTip(wallTile, L.T("Walls tool: one click closes the whole tile edge (4 cells)."));
         rectangle.CheckedChanged += (_, _) => canvas.RectangleMode = rectangle.Checked;
         wallTile.CheckedChanged += (_, _) => canvas.WallTileSized = wallTile.Checked;
-        panel.Controls.Add(snap);
         panel.Controls.Add(rectangle);
         panel.Controls.Add(wallTile);
+        optionControls["rectangle"] = new Control[] { rectangle };
+        optionControls["wallTile"] = new Control[] { wallTile };
 
         // The boxes write into the canvas options.
         ComboBox typeBox = types;
@@ -267,18 +293,44 @@ internal sealed class MapEditorTab : UserControl
         return panel;
     }
 
-    private static ComboBox OptionBox(FlowLayoutPanel panel, string caption, out Label label)
+    private ComboBox OptionBox(FlowLayoutPanel panel, string caption, string help, out Label label)
     {
         label = Ui.Text(L.T(caption));
         panel.Controls.Add(label);
         var box = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 126, Margin = new Padding(3, 0, 3, 3), DropDownWidth = 260 };
         panel.Controls.Add(box);
+        context.ToolTip.SetToolTip(label, L.T(help));
+        context.ToolTip.SetToolTip(box, L.T(help));
         return box;
     }
 
     private void UpdateToolButtons()
     {
         foreach (KeyValuePair<EditorTool, ToolButton> pair in toolButtons) pair.Value.Checked = pair.Key == canvas.Tool;
+        UpdateOptions();
+    }
+
+    // The left side shows only the options the chosen tool uses.
+    private void UpdateOptions()
+    {
+        EditorTool tool = canvas.Tool;
+        bool places = tool is EditorTool.Select or EditorTool.Entrance or EditorTool.Exit or EditorTool.Checkpoint or EditorTool.Point or
+            EditorTool.GroupPoint or EditorTool.Sign or EditorTool.Line or EditorTool.Unit or EditorTool.Route;
+        var visible = new Dictionary<string, bool>
+        {
+            ["type"] = tool == EditorTool.Unit,
+            ["room"] = tool == EditorTool.Unit,
+            ["gate"] = tool == EditorTool.Gate,
+            ["group"] = tool == EditorTool.GroupPoint,
+            ["snap"] = places,
+            ["rectangle"] = tool is EditorTool.Floor or EditorTool.Walls,
+            ["wallTile"] = tool == EditorTool.Walls
+        };
+        foreach (KeyValuePair<string, Control[]> pair in optionControls)
+        {
+            foreach (Control control in pair.Value) control.Visible = visible[pair.Key];
+        }
+        if (optionsHeading != null) optionsHeading.Visible = visible.Values.Any(v => v);
     }
 
     // The lists of the palette follow the map: unit types, rooms and gate types.
@@ -625,24 +677,65 @@ internal sealed class MapEditorTab : UserControl
         }
     }
 
-    // The object picked on the canvas is shown in the page that has its fields.
+    // The object picked on the canvas is shown in the tabs that have its fields, and only those tabs stay visible.
+    // With nothing selected every tab is back.
     private void OnCanvasSelection()
     {
         MapObject? item = canvas.Selected;
-        if (item == null) return;
-        foreach (EditorPage page in pageList)
+        if (item == null)
         {
-            if (!page.ShowObject(item)) continue;
-            foreach (TabPage tab in pages.TabPages)
-            {
-                if (tab.Controls.Contains(page))
-                {
-                    if (pages.SelectedTab != tab) pages.SelectedTab = tab;
-                    break;
-                }
-            }
+            ShowTabs(allTabs, null);
             return;
         }
+
+        TabPage? first = null;
+        var related = new HashSet<TabPage>();
+        foreach (EditorPage page in pageList)
+        {
+            // A page that was not on screen yet has no lists: load it before asking it to show the object.
+            if (stalePages.Remove(page)) page.Reload();
+            if (!page.ShowObject(item)) continue;
+            TabPage? tab = TabOf(page);
+            if (tab == null) continue;
+            related.Add(tab);
+            first ??= tab;
+        }
+        if (related.Count == 0)
+        {
+            ShowTabs(allTabs, null);
+            return;
+        }
+        ShowTabs(allTabs.Where(related.Contains).ToList(), first);
+    }
+
+    private TabPage? TabOf(EditorPage? page)
+    {
+        if (page == null) return null;
+        return allTabs.FirstOrDefault(tab => tab.Controls.Contains(page));
+    }
+
+    // Puts exactly these tabs in the tab control (in their usual order) and selects one.
+    private void ShowTabs(IReadOnlyList<TabPage> wanted, TabPage? select)
+    {
+        bool same = pages.TabPages.Count == wanted.Count && wanted.Select((tab, i) => ReferenceEquals(pages.TabPages[i], tab)).All(x => x);
+        if (!same)
+        {
+            TabPage? keep = pages.SelectedTab;
+            pages.SuspendLayout();
+            try
+            {
+                pages.TabPages.Clear();
+                pages.TabPages.AddRange(wanted.ToArray());
+                if (select == null && keep != null && wanted.Contains(keep)) select = keep;
+            }
+            finally
+            {
+                pages.ResumeLayout(true);
+            }
+        }
+        tabsHint.Visible = wanted.Count < allTabs.Count;
+        if (select != null && !ReferenceEquals(pages.SelectedTab, select)) pages.SelectedTab = select;
+        ReloadVisiblePage();
     }
 
     // The canvas added, removed or moved objects: the lists of the visible page are read again.

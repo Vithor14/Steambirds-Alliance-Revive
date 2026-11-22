@@ -37,6 +37,7 @@ Maintained 100% by the community, with some additions and improvements.
 | `docs/dungeon-server.md` | dungeon server (port 1113): architecture, flow, Iron Lair / Bomb Factory test |
 | `docs/dungeons-190828.md` | the 17 recreated dungeons of build 190828; what is original and what is rebuilt |
 | `docs/dungeon-enemies-and-loot.md` | kamikaze bombs, weapon reach vs orbit distance, dungeon loot tables |
+| `docs/dungeon-tuning.md` | 22/11 fixes: `dungeons.json` host settings, Mission Transport, 4x smaller maps, bullet limit, chain reaction, Nexus collision |
 | `docs/items-and-loot.md` | items, authoritative inventory, loot bags, workshop, bit-alignment fix |
 | `docs/progression.md` | plane and pilot XP, permadeath, skills, career rewards, `progression.json` |
 | `docs/map-format.md` | map JSON format, coordinates, dungeon fields, `Maps.cs` |

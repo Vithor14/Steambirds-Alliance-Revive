@@ -439,6 +439,7 @@ public static partial class Enemies
         if (now < enemy.ActiveAt + Math.Max(0f, enemy.Type.FirstShotDelay)) return;
         bool canAim = enemy.Aggro && inst.HasPlayer && inst.PlayerAlive;
         float fireRateMult = Positive(enemy.Type.FireRateMultiplier) * enemy.PhaseFireRateMult;
+        fireRateMult *= DungeonFireScale(inst, enemy, fireRateMult);
 
         foreach (GunState gun in enemy.Guns)
         {
@@ -487,6 +488,38 @@ public static partial class Enemies
             double reload = Math.Max(0f, m.Reload) / Math.Max(0.05f, fireRateMult);
             gun.ReloadUntil = now + Math.Max(reload, betweenShots);
         }
+    }
+
+    // Dungeons only: the original units picked ONE gun pattern at a time with a state machine that is not in any client
+    // build, while this server fires every gun of the template together (the Slicer has four guns and put out ~70 bullets
+    // per second). Host settings (dungeons.json): "fireRateScale" multiplies every fire rate and "maxBulletsPerSecond" limits
+    // what one unit puts out (the fire rate of all its active guns goes down together until it fits; 0 = no limit).
+    private static float DungeonFireScale(Instance inst, Enemy enemy, float fireRateMult)
+    {
+        if (!string.Equals(inst.Role.Trim('[', ']'), DungeonServer.Role, StringComparison.Ordinal)) return 1f;
+
+        float scale = Positive(DungeonCatalog.FireRateScale);
+        float cap = DungeonCatalog.MaxBulletsPerSecond;
+        if (cap <= 0f) return scale;
+
+        float perSecond = 0f;
+        foreach (GunState gun in enemy.Guns)
+        {
+            GameGun m = gun.Model;
+            if (m.Damage <= 0f) continue;
+            if (enemy.ActiveGuns.Count > 0 && !enemy.ActiveGuns.Contains(m.Index)) continue;
+            float rate = (m.FireRate > 0.05f ? m.FireRate : 2f) * fireRateMult * scale;
+            float bullets = rate * Math.Max(1, m.Multi);
+            if (m.Burst > 1 && m.Burst < 1000 && m.Reload > 0f)
+            {
+                // A charge of "burst" shots and then the reload: the average over the whole cycle.
+                float charge = m.Burst / Math.Max(0.05f, rate);
+                float reload = m.Reload / Math.Max(0.05f, fireRateMult * scale);
+                bullets *= charge / (charge + reload);
+            }
+            perSecond += bullets;
+        }
+        return perSecond > cap ? scale * cap / perSecond : scale;
     }
 
     // Angle of the gun (relative to the unit's front) for this shot. False = the player is outside the arc.

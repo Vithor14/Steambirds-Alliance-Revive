@@ -162,6 +162,43 @@ internal sealed partial class MapCanvas
         g.DrawImage(picture.Image, target, source.X, source.Y, source.Width, source.Height, GraphicsUnit.Pixel);
     }
 
+    // A piece of "floor.pieces": the picture and its rotation in degrees, counter-clockwise relative to the tile
+    // (null = the game picks a spin by itself, so the piece is drawn without one).
+    private readonly record struct FloorPiece(AssetPicture? Picture, double Rotation);
+
+    private Dictionary<(int P, int Q), FloorPiece> PlacedPieces()
+    {
+        var result = new Dictionary<(int P, int Q), FloorPiece>();
+        JsonArray? list = Json.ArrOrNull(Json.ObjOrNull(Doc.Root, "floor"), "pieces");
+        if (list == null || list.Count == 0) return result;
+        EditorAssets assets = EditorAssets.Current;
+        foreach (JsonObject piece in Json.Objects(list))
+        {
+            string name = Json.Str(piece, "name");
+            if (name.Length == 0) name = assets.GroundName(Json.Int(piece, "id"));
+            result[(Json.Int(piece, "p"), Json.Int(piece, "q"))] = new FloorPiece(
+                name.Length > 0 ? assets.GroundPicture(name) : null,
+                Json.Num(piece, "rot"));
+        }
+        return result;
+    }
+
+    // Like DrawCropped, turned counter-clockwise by "degrees" around the middle of the cell (and kept inside it).
+    private static void DrawCroppedRotated(Graphics g, AssetPicture picture, Rectangle target, double cellSize, double degrees)
+    {
+        if (Math.Abs(degrees) < 0.5)
+        {
+            DrawCropped(g, picture, target, cellSize);
+            return;
+        }
+        GraphicsState state = g.Save();
+        g.SetClip(target, CombineMode.Intersect);
+        g.TranslateTransform(target.X + target.Width / 2f, target.Y + target.Height / 2f);
+        g.RotateTransform((float)-degrees);
+        DrawCropped(g, picture, new Rectangle(-target.Width / 2, -target.Height / 2, target.Width, target.Height), cellSize);
+        g.Restore(state);
+    }
+
     private static int Variant(int a, int b, int k, int l, int count)
     {
         unchecked
@@ -211,34 +248,52 @@ internal sealed partial class MapCanvas
     private void DrawFloor(Graphics g, FloorStyle floorStyle, double u0, double u1, double v0, double v1)
     {
         FloorGrid floor = Doc.Floor;
-        if (floor.TileCount == 0) return;
-        int a0 = Math.Max(MapCoords.TileOf(u0) - 1, -64), a1 = Math.Min(MapCoords.TileOf(u1) + 1, 64);
-        int b0 = Math.Max(MapCoords.TileOf(v0) - 1, -64), b1 = Math.Min(MapCoords.TileOf(v1) + 1, 64);
-
         double slotPx = MapCoords.Slot * scale;
-        bool pictures = UsePictures && slotPx >= 12 && floorStyle.Pieces.Any(x => x != null);
-        using var flat = new SolidBrush(floorStyle.FloorColor);
-        for (int a = a0; a <= a1; a++)
+
+        // Pieces placed one by one ("floor.pieces") are drawn over the tiles, with their rotation. A map can have only
+        // pieces and no drawn floor (the Nexus), so they do not depend on the tiles.
+        Dictionary<(int P, int Q), FloorPiece> placed = UsePictures && slotPx >= 12
+            ? PlacedPieces()
+            : new Dictionary<(int P, int Q), FloorPiece>();
+        if (floor.TileCount == 0 && placed.Count == 0) return;
+
+        if (floor.TileCount > 0)
         {
-            for (int b = b0; b <= b1; b++)
+            int a0 = Math.Max(MapCoords.TileOf(u0) - 1, -64), a1 = Math.Min(MapCoords.TileOf(u1) + 1, 64);
+            int b0 = Math.Max(MapCoords.TileOf(v0) - 1, -64), b1 = Math.Min(MapCoords.TileOf(v1) + 1, 64);
+            bool pictures = UsePictures && slotPx >= 12 && floorStyle.Pieces.Any(x => x != null);
+            using var flat = new SolidBrush(floorStyle.FloorColor);
+            for (int a = a0; a <= a1; a++)
             {
-                if (!floor.HasTile(a, b)) continue;
-                if (!pictures)
+                for (int b = b0; b <= b1; b++)
                 {
-                    g.FillRectangle(flat, CellRect(a * MapCoords.Tile, b * MapCoords.Tile, MapCoords.Tile));
-                    continue;
-                }
-                for (int k = 0; k < 2; k++)
-                {
-                    for (int l = 0; l < 2; l++)
+                    if (!floor.HasTile(a, b)) continue;
+                    if (!pictures)
                     {
-                        Rectangle slot = CellRect(a * MapCoords.Tile + k * MapCoords.Slot, b * MapCoords.Tile + l * MapCoords.Slot, MapCoords.Slot);
-                        AssetPicture? picture = floorStyle.Pieces[Variant(a, b, k, l, floorStyle.Pieces.Length)];
-                        if (picture == null) g.FillRectangle(flat, slot);
-                        else DrawCropped(g, picture, slot, MapCoords.Slot);
+                        g.FillRectangle(flat, CellRect(a * MapCoords.Tile, b * MapCoords.Tile, MapCoords.Tile));
+                        continue;
+                    }
+                    for (int k = 0; k < 2; k++)
+                    {
+                        for (int l = 0; l < 2; l++)
+                        {
+                            Rectangle slot = CellRect(a * MapCoords.Tile + k * MapCoords.Slot, b * MapCoords.Tile + l * MapCoords.Slot, MapCoords.Slot);
+                            AssetPicture? picture = floorStyle.Pieces[Variant(a, b, k, l, floorStyle.Pieces.Length)];
+                            if (picture == null) g.FillRectangle(flat, slot);
+                            else DrawCropped(g, picture, slot, MapCoords.Slot);
+                        }
                     }
                 }
             }
+        }
+
+        var view = new Rectangle(0, 0, Width, Height);
+        foreach (KeyValuePair<(int P, int Q), FloorPiece> pair in placed)
+        {
+            if (pair.Value.Picture == null) continue;
+            Rectangle slot = CellRect(pair.Key.P * MapCoords.Slot, pair.Key.Q * MapCoords.Slot, MapCoords.Slot);
+            if (!slot.IntersectsWith(view)) continue;
+            DrawCroppedRotated(g, pair.Value.Picture, slot, MapCoords.Slot, pair.Value.Rotation);
         }
     }
 
@@ -450,16 +505,23 @@ internal sealed partial class MapCanvas
     private void DrawDecor(Graphics g, Theme.Palette p, MapObject item, float x, float y)
     {
         AssetPicture? picture = UsePictures ? EditorAssets.Current.GroundPicture(item.Name) : null;
+        // Same rotation as the units: degrees clockwise in the world, turned to the canvas.
+        GraphicsState state = g.Save();
+        g.TranslateTransform(x, y);
+        g.RotateTransform((float)MapCoords.CanvasAngle(item.Rotation));
         if (picture != null)
         {
             float half = (float)(picture.Half * scale);
-            g.DrawImage(picture.Image, x - half, y - half, half * 2, half * 2);
+            g.DrawImage(picture.Image, -half, -half, half * 2, half * 2);
         }
         else
         {
             using var pen = new Pen(Color.FromArgb(200, 150, 150, 170), 1.5f);
-            g.DrawRectangle(pen, x - 5, y - 5, 10, 10);
+            g.DrawRectangle(pen, -5, -5, 10, 10);
+            // A tick on the "front" so the rotation of a plain square can be seen.
+            g.DrawLine(pen, 0, 0, 0, -9);
         }
+        g.Restore(state);
         if (scale >= 2.5) DrawLabel(g, p, item.Name, x + 6, y - 6, Color.FromArgb(170, 170, 190));
     }
 

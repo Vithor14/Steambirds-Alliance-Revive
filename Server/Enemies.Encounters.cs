@@ -183,6 +183,8 @@ public static partial class Enemies
             Type = type,
             Model = model,
             FromWave = fromWave,
+            // Wave units come for the player at once (the Arena's waves spawn far from the player and used to wander).
+            Aggro = fromWave,
             Boss = type.Boss,
             X = x,
             Y = y,

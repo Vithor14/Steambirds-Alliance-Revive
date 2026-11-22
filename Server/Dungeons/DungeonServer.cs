@@ -72,6 +72,7 @@ public static partial class DungeonServer
         public bool Closed;
         public int Wave = -1;            // last wave that came in
         public double WaveAt = -1;       // when the next wave comes (-1 = none scheduled)
+        public double HintAt = -1;       // when to tell the player which units are still holding the room
 
         public string Group => "room:" + Name;     // enemies that must die to clear the room
         public string Extra => "extra:" + Name;    // chests, walls, invulnerable things, wrecks
@@ -109,6 +110,7 @@ public static partial class DungeonServer
         public bool PhaseBarked;
         public bool Gone;
         public bool Removed;            // taken away by the dungeon itself (not a death)
+        public bool ChainQueued;        // already set to go off by a chain reaction
     }
 
     private sealed class PendingAction
@@ -142,6 +144,7 @@ public static partial class DungeonServer
         public readonly List<(RoomState Room, DungeonMapData.PlacedUnits Units)> Deferred = new List<(RoomState, DungeonMapData.PlacedUnits)>();
         public readonly List<PendingAction> Pending = new List<PendingAction>();
         public readonly List<(int Id, float X, float Y)> Objects = new List<(int Id, float X, float Y)>();
+        public readonly HashSet<string> SkippedControllers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         public bool Started;
         public bool Finished;

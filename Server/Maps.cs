@@ -50,6 +50,19 @@ public static class Maps
         public List<CheckpointFile>? Checkpoints { get; set; }
         public List<GateFile>? Gates { get; set; }
         public List<SignFile>? Signs { get; set; }
+        // Solid places that were only scenery (the Rebel City props): each rectangle closes the wall sub-cells (3 u) whose
+        // center is inside it, so planes cannot fly through. Written as walls on the tiles of the floor message.
+        public List<CollisionFile>? Collisions { get; set; }
+    }
+
+    public sealed class CollisionFile
+    {
+        public string Name { get; set; } = "";
+        public float MinU { get; set; }
+        public float MaxU { get; set; }
+        public float MinV { get; set; }
+        public float MaxV { get; set; }
+        public string Note { get; set; } = "";
     }
 
     public sealed class FloorFile
@@ -191,6 +204,30 @@ public static class Maps
         public readonly List<Gate> Gates = new List<Gate>();
         public readonly List<Sign> Signs = new List<Sign>();
 
+        // Wall sub-cells closed by the "collisions" of the file, by tile (walls[i, j] as in Ground.FloorPlan.TileWalls).
+        public readonly Dictionary<(int A, int B), bool[,]> CollisionWalls = new Dictionary<(int A, int B), bool[,]>();
+
+        public void AddCollision(float minU, float maxU, float minV, float maxV)
+        {
+            const float Sub = Ground.CellSize / Ground.WallsPerCell;   // 3 u
+            int si0 = (int)MathF.Ceiling(minU / Sub - 0.5f), si1 = (int)MathF.Floor(maxU / Sub - 0.5f);
+            int sj0 = (int)MathF.Ceiling(minV / Sub - 0.5f), sj1 = (int)MathF.Floor(maxV / Sub - 0.5f);
+            for (int si = si0; si <= si1; si++)
+            {
+                for (int sj = sj0; sj <= sj1; sj++)
+                {
+                    Ground.FloorPlan.Split(si, out int a, out int i);
+                    Ground.FloorPlan.Split(sj, out int b, out int j);
+                    if (!CollisionWalls.TryGetValue((a, b), out bool[,]? walls))
+                    {
+                        walls = new bool[Ground.WallsPerCell, Ground.WallsPerCell];
+                        CollisionWalls[(a, b)] = walls;
+                    }
+                    walls[i, j] = true;
+                }
+            }
+        }
+
         // ---------------------------------------------------------- lookups by name (scripts)
 
         public Point GetPoint(string name)
@@ -303,6 +340,7 @@ public static class Maps
             }
             var others = new HashSet<(int A, int B)>(piecesByTile.Keys);
             others.UnionWith(decorByTile.Keys);
+            others.UnionWith(CollisionWalls.Keys);
             foreach ((int A, int B) t in others.OrderBy(x => x.B).ThenBy(x => x.A))
             {
                 if (already.Add(t)) tiles.Add(t);
@@ -398,6 +436,18 @@ public static class Maps
                 totalDecor += howMany;
 
                 bool[,]? walls = drawnFloor ? plan!.TileWalls(a, b) : null;
+                if (CollisionWalls.TryGetValue((a, b), out bool[,]? solid))
+                {
+                    // Solid props: their cells are closed on top of the drawing's walls (if any).
+                    if (walls == null) walls = (bool[,])solid.Clone();
+                    else
+                    {
+                        for (int i = 0; i < Ground.WallsPerCell; i++)
+                        {
+                            for (int j = 0; j < Ground.WallsPerCell; j++) walls[i, j] |= solid[i, j];
+                        }
+                    }
+                }
                 bool hasWalls = walls != null && HasAny(walls);
                 m.Write(hasWalls);
                 if (hasWalls)
@@ -582,6 +632,12 @@ public static class Maps
 
         foreach (SignFile p in file.Signs ?? new List<SignFile>())
             map.Signs.Add(new Sign(p.Key, new Point(p.U, p.V, p.Rot), p.Radius, p.Rot));
+
+        foreach (CollisionFile p in file.Collisions ?? new List<CollisionFile>())
+        {
+            if (p.MaxU < p.MinU || p.MaxV < p.MinV) throw new InvalidDataException("collision '" + p.Name + "': max smaller than min");
+            map.AddCollision(p.MinU, p.MaxU, p.MinV, p.MaxV);
+        }
 
         return map;
     }

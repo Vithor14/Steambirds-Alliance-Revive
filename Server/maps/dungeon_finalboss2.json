@@ -6,103 +6,127 @@
   "terrain": "DungeonFinalBoss2",
   "note": "Santuario de Meowza (Godleader Meowza, fase 2; musica music_meowza_intro_loop / main_loop). Meowza fica parada no centro (10000 de vida) com a Defense Grid N/S/L/O e invoca as almas dos generais mortos (falas meowza2_01..11): frost (Frozen Horror), firering (Phoenix), orochi (Poison God), lasereyegrid (Cyclopus), lightningspiral, infinity, claw, nukes e os Meowzaghasts.",
   "source": "Build 190828.2045: unidades, nomes, falas, placas, quests e territorio vem do configBinary; o arquivo Dungeons/dungeon_* dessa build e vazio, entao o formato das salas e a posicao dos inimigos foram recriados.",
-  "exit": {"point": "portal", "when": "death:meowza2"},
+  "exit": {
+    "point": "portal",
+    "when": "death:meowza2"
+  },
   "territory": 73,
   "floor": {
     "wallsOnEdges": true,
     "voidMargin": 4,
     "voidTerritory": 74,
-    "drawingPieces": [58053, 28202, 63887, 10700, 46385, 16534, 52219, 64568, 34717, 22369, 58054, 28203],
+    "drawingPieces": [
+      58053,
+      28202,
+      63887,
+      10700,
+      46385,
+      16534,
+      52219,
+      64568,
+      34717,
+      22369,
+      58054,
+      28203
+    ],
     "drawing": {
-      "siStart": -20,
-      "sjStart": -32,
+      "siStart": -8,
+      "sjStart": -16,
       "legend": ". chao livre, # muro, - sem chao. Primeira linha = ultima fileira sj (o fundo).",
       "lines": [
-        "############################################",
-        "############################################",
-        "############################################",
-        "############################################",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####....................................####",
-        "####################....####################",
-        "####################....####################",
-        "####################....####################",
-        "####################....####################",
-        "--------############....############--------",
-        "--------############....############--------",
-        "--------############....############--------",
-        "--------############....############--------",
-        "--------#######..............#######--------",
-        "--------#######..............#######--------",
-        "--------#######..............#######--------",
-        "--------#######..............#######--------",
-        "--------#######..............#######--------",
-        "--------#######..............#######--------",
-        "--------#######..............#######--------",
-        "--------#######..............#######--------",
-        "--------#######..............#######--------",
-        "--------#######..............#######--------",
-        "--------#######..............#######--------",
-        "--------#######..............#######--------",
-        "--------############################--------",
-        "--------############################--------",
-        "--------############################--------",
-        "--------############################--------"
+        "######################--",
+        "######################--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##########..##########--",
+        "##########..##########--",
+        "----######..######------",
+        "----######..######------",
+        "----###........###------",
+        "----###........###------",
+        "----###........###------",
+        "----###........###------",
+        "----###........###------",
+        "----###........###------",
+        "----##############------",
+        "----##############------"
       ]
     },
     "pieces": []
   },
   "decor": [],
   "buildings": [],
-  "spawn": {"u": 6.0, "v": -76.1, "rot": 315},
+  "spawn": {
+    "u": 9.0,
+    "v": -38.05,
+    "rot": 315
+  },
   "points": {
-    "boss": {"u": 6.0, "v": 35.3, "rot": 135},
-    "portal": {"u": 6.0, "v": 3.6, "rot": 0, "note": "porta-avioes de saida (aparece quando o chefe morre)"}
+    "boss": {
+      "u": 9.0,
+      "v": 17.65,
+      "rot": 135
+    },
+    "portal": {
+      "u": 9.0,
+      "v": 1.8,
+      "rot": 0,
+      "note": "porta-avioes de saida (aparece quando o chefe morre)"
+    }
   },
   "groups": {},
   "areas": {
-    "entrada": {"minU": -15.6, "maxU": 27.6, "minV": -84.6, "maxV": -47.4},
-    "santuario": {"minU": -48.6, "maxU": 60.6, "minV": -24.6, "maxV": 84.6}
+    "entrada": {
+      "minU": -1.8,
+      "maxU": 19.8,
+      "minV": -42.3,
+      "maxV": -23.7
+    },
+    "santuario": {
+      "minU": -18.3,
+      "maxU": 36.3,
+      "minV": -12.3,
+      "maxV": 42.3
+    }
   },
-  "lines": {"entrada": -84.0, "santuario": -24.0},
-  "values": {"tier": 10},
+  "lines": {
+    "entrada": -42.0,
+    "santuario": -12.0
+  },
+  "values": {
+    "tier": 10
+  },
   "checkpoints": [
-    {"name": "entrada", "activeAtV": -84.0, "u": 6.0, "v": -80.1, "rot": 315},
-    {"name": "santuario", "activeAtV": -24.0, "u": 6.0, "v": -14.4, "rot": 315}
+    {
+      "name": "entrada",
+      "activeAtV": -42.0,
+      "u": 9.0,
+      "v": -40.05,
+      "rot": 315
+    },
+    {
+      "name": "santuario",
+      "activeAtV": -12.0,
+      "u": 9.0,
+      "v": -7.2,
+      "rot": 315
+    }
   ],
   "gates": [],
   "sideGates": [],
@@ -124,19 +148,66 @@
         "silence": "meowza2_silence_short"
       },
       "phases": [
-        {"belowHealth": 0.9, "summon": "meowza2_frost_1", "summonCount": 2},
-        {"belowHealth": 0.8, "summon": "meowza2_firering", "summonCount": 1},
-        {"belowHealth": 0.7, "summon": "meowza2_orochi_2", "summonCount": 2},
-        {"belowHealth": 0.6, "summon": "meowza2_lasereye", "summonCount": 4},
-        {"belowHealth": 0.5, "summon": "meowza2_lightningspiral", "summonCount": 2},
-        {"belowHealth": 0.4, "summon": "meowza2_claw_2", "summonCount": 2},
-        {"belowHealth": 0.3, "summon": "meowza2_infinity_2", "summonCount": 1},
-        {"belowHealth": 0.2, "summon": "meowza2_hunter", "summonCount": 3, "message": "Meowzaghasts!"},
-        {"belowHealth": 0.1, "summon": "meowza2_nuke", "summonCount": 1}
+        {
+          "belowHealth": 0.9,
+          "summon": "meowza2_frost_1",
+          "summonCount": 2
+        },
+        {
+          "belowHealth": 0.8,
+          "summon": "meowza2_firering",
+          "summonCount": 1
+        },
+        {
+          "belowHealth": 0.7,
+          "summon": "meowza2_orochi_2",
+          "summonCount": 2
+        },
+        {
+          "belowHealth": 0.6,
+          "summon": "meowza2_lasereye",
+          "summonCount": 4
+        },
+        {
+          "belowHealth": 0.5,
+          "summon": "meowza2_lightningspiral",
+          "summonCount": 2
+        },
+        {
+          "belowHealth": 0.4,
+          "summon": "meowza2_claw_2",
+          "summonCount": 2
+        },
+        {
+          "belowHealth": 0.3,
+          "summon": "meowza2_infinity_2",
+          "summonCount": 1
+        },
+        {
+          "belowHealth": 0.2,
+          "summon": "meowza2_hunter",
+          "summonCount": 3,
+          "message": "Meowzaghasts!"
+        },
+        {
+          "belowHealth": 0.1,
+          "summon": "meowza2_nuke",
+          "summonCount": 1
+        }
       ]
     },
-    "9star2": {"name": "9star2", "template": "9star2", "behavior": "turret", "aggroRadius": 30},
-    "meowza2DEATH": {"name": "meowza2DEATH", "template": "meowza2DEATH", "behavior": "idle", "invulnerable": true},
+    "9star2": {
+      "name": "9star2",
+      "template": "9star2",
+      "behavior": "turret",
+      "aggroRadius": 30
+    },
+    "meowza2DEATH": {
+      "name": "meowza2DEATH",
+      "template": "meowza2DEATH",
+      "behavior": "idle",
+      "invulnerable": true
+    },
     "meowza2_claw_2": {
       "name": "Godleader Meowza",
       "template": "meowza2_claw_2",
@@ -166,7 +237,12 @@
       "preferredDistance": 6,
       "aggroRadius": 30
     },
-    "meowza2_infinity_2": {"name": "Godleader Meowza", "template": "meowza2_infinity_2", "behavior": "turret", "aggroRadius": 30},
+    "meowza2_infinity_2": {
+      "name": "Godleader Meowza",
+      "template": "meowza2_infinity_2",
+      "behavior": "turret",
+      "aggroRadius": 30
+    },
     "meowza2_lasereye": {
       "name": "Godleader Meowza",
       "template": "meowza2_lasereye",
@@ -188,7 +264,12 @@
       "aggroRadius": 28,
       "invulnerable": true
     },
-    "meowza2_orochi_2": {"name": "Godleader Meowza", "template": "meowza2_orochi_2", "behavior": "turret", "aggroRadius": 30},
+    "meowza2_orochi_2": {
+      "name": "Godleader Meowza",
+      "template": "meowza2_orochi_2",
+      "behavior": "turret",
+      "aggroRadius": 30
+    },
     "meowza2_turret_E": {
       "name": "Godleader Defense Grid",
       "template": "meowza2_turret_E",
@@ -221,34 +302,83 @@
       "wakes": "onEnter",
       "line": "santuario",
       "enemies": [
-        {"type": "meowza2", "pos": [{"u": 6.0, "v": 35.3, "rot": 135}]},
+        {
+          "type": "meowza2",
+          "pos": [
+            {
+              "u": 9.0,
+              "v": 17.65,
+              "rot": 135
+            }
+          ]
+        },
         {
           "type": "meowza2_turret_N",
-          "pos": [{"u": 6.0, "v": 77.5, "rot": 135}],
+          "pos": [
+            {
+              "u": 9.0,
+              "v": 38.75,
+              "rot": 135
+            }
+          ],
           "note": "Godleader Defense Grid"
         },
         {
           "type": "meowza2_turret_S",
-          "pos": [{"u": 6.0, "v": -16.5, "rot": 135}],
+          "pos": [
+            {
+              "u": 9.0,
+              "v": -8.25,
+              "rot": 135
+            }
+          ],
           "note": "Godleader Defense Grid"
         },
         {
           "type": "meowza2_turret_E",
-          "pos": [{"u": -40.5, "v": 30.0, "rot": 135}],
+          "pos": [
+            {
+              "u": -14.25,
+              "v": 15.0,
+              "rot": 135
+            }
+          ],
           "note": "Godleader Defense Grid"
         },
         {
           "type": "meowza2_turret_W",
-          "pos": [{"u": 52.5, "v": 30.0, "rot": 135}],
+          "pos": [
+            {
+              "u": 32.25,
+              "v": 15.0,
+              "rot": 135
+            }
+          ],
           "note": "Godleader Defense Grid"
         },
         {
           "type": "9star2",
           "pos": [
-            {"u": 28.4, "v": 57.7, "rot": 180},
-            {"u": -16.4, "v": 57.7, "rot": 90},
-            {"u": -16.4, "v": 12.9, "rot": 0},
-            {"u": 28.4, "v": 12.9, "rot": 270}
+            {
+              "u": 20.2,
+              "v": 28.85,
+              "rot": 180
+            },
+            {
+              "u": -2.2,
+              "v": 28.85,
+              "rot": 90
+            },
+            {
+              "u": -2.2,
+              "v": 6.45,
+              "rot": 0
+            },
+            {
+              "u": 20.2,
+              "v": 6.45,
+              "rot": 270
+            }
           ]
         }
       ],
@@ -266,5 +396,6 @@
         "9star1"
       ]
     }
-  ]
+  ],
+  "scaled": 0.5
 }

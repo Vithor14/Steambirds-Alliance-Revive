@@ -163,6 +163,42 @@ public static partial class Enemies
         }
     }
 
+    // The unit hunts the player from now on, however far away it is (waves and summons: they must not wander off until the
+    // player comes within the type's aggro radius).
+    public static void ForceAggro(NetConnection connection, int shortId)
+    {
+        lock (Game.Lock)
+        {
+            if (!instances.TryGetValue(connection.RemoteUniqueIdentifier, out Instance? inst)) return;
+            if (!inst.Enemies.TryGetValue(shortId, out Enemy? enemy)) return;
+            if (!enemy.Asleep) enemy.Aggro = true;
+        }
+    }
+
+    // True if the type is only a "controller" of the original server: invisible art and no armed gun. The client draws
+    // nothing for it but still shows a health bar and lets it count as an enemy, so the dungeon server does not create it.
+    public static bool IsControllerOnly(string key)
+    {
+        lock (Game.Lock)
+        {
+            EnemyType? type = GetEnemyType(key);
+            if (type == null) return false;
+            GameUnit? model = Resolver(type, out _);
+            if (model == null) return false;
+            return model.Art.StartsWith("!EnemyInvisible", StringComparison.OrdinalIgnoreCase) && !model.Armed;
+        }
+    }
+
+    // Names of the living units of a group (the dungeon tells the player what is still holding a room).
+    public static List<string> AliveNamesInGroup(NetConnection connection, string group)
+    {
+        lock (Game.Lock)
+        {
+            if (!instances.TryGetValue(connection.RemoteUniqueIdentifier, out Instance? inst)) return new List<string>();
+            return inst.Enemies.Values.Where(e => e.Group == group).Select(e => e.Type.Name).ToList();
+        }
+    }
+
     // True if the unit is still waiting (pre-placed and not woken up yet).
     public static bool IsAsleep(NetConnection connection, int shortId)
     {

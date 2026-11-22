@@ -138,13 +138,13 @@ internal sealed class RoomsPage : EditorPage
             Help = "aoEntrar = when the player enters the area. death:<unit type> = when that unit dies."
         };
         yield return new FieldSpec("boss", "Boss room", FieldKind.Bool) { Help = "The dungeon ends when every boss room is cleared (when the exit has no condition)." };
-        yield return new FieldSpec("miniboss", "Mini-boss room", FieldKind.Bool);
+        yield return new FieldSpec("miniboss", "Mini-boss room", FieldKind.Bool) { Help = "Marks the room as a mini-boss room (the dungeon shows it as an optional fight)." };
         yield return new FieldSpec("closesOnEnter", "Closes its gates when entered", FieldKind.Bool)
         {
             Help = "The gates that lead to this room close behind the player and open when the room is cleared."
         };
-        yield return new FieldSpec("altarRoom", "Altar room (not used yet)", FieldKind.Bool);
-        yield return new FieldSpec("note", "Note", FieldKind.MultiText);
+        yield return new FieldSpec("altarRoom", "Altar room (not used yet)", FieldKind.Bool) { Help = "Reserved for altar rooms of the original dungeons. The server does not use it yet." };
+        yield return new FieldSpec("note", "Note", FieldKind.MultiText) { Help = "Free text for you. The server ignores it." };
     }
 
     // Fields of a group of enemies (the same for a room and for a wave).
@@ -166,14 +166,14 @@ internal sealed class RoomsPage : EditorPage
             Choices = () => EditorContext.WakeModes,
             Help = "Empty = at the start. death:<unit type> = the unit is born when that type dies."
         };
-        yield return new FieldSpec("route", "Route", FieldKind.EditableChoice) { Choices = Context.RouteNames };
-        yield return new FieldSpec("miniboss", "Mini-boss", FieldKind.Bool);
-        yield return new FieldSpec("note", "Note", FieldKind.Text);
+        yield return new FieldSpec("route", "Route", FieldKind.EditableChoice) { Choices = Context.RouteNames, Help = "Route (Points tab) the units of this group follow." };
+        yield return new FieldSpec("miniboss", "Mini-boss", FieldKind.Bool) { Help = "The units of this group are mini-bosses." };
+        yield return new FieldSpec("note", "Note", FieldKind.Text) { Help = "Free text for you. The server ignores it." };
     }
 
     private static IEnumerable<FieldSpec> WaveFields()
     {
-        yield return new FieldSpec("name", "Wave", FieldKind.Text);
+        yield return new FieldSpec("name", "Wave", FieldKind.Text) { Help = "Name of the wave, only to tell it apart in the list." };
         yield return new FieldSpec("delayBeforeSeconds", "Seconds before", FieldKind.OptionalNumber)
         {
             Help = "The first wave comes this long after the player enters. The others come when the one before is dead."

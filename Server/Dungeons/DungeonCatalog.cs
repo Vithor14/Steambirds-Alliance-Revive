@@ -24,8 +24,22 @@ public static class DungeonCatalog
         public NexusPortals NexusPortals { get; set; } = new NexusPortals();
         public int MaxPlayers { get; set; } = 10;
         public float AutoExitSeconds { get; set; } = 180f;
+        // How players get into the dungeons: "both" (the carriers outside the city AND the Mission Transport at the end of
+        // the main ramp), "portals" (only the carriers) or "missionTransport" (only the Mission Transport mission list).
+        public string EntryMode { get; set; } = "both";
+        // true: the doors of a boss room close behind the player until the room is clear (the original game did this;
+        // here it trapped players, so it is off by default).
+        public bool LockBossRooms { get; set; }
+        // Dungeon enemies: multiplier on every fire rate, and the most bullets per second one unit may put out
+        // (0 = no limit). The original units used one gun pattern at a time; the server fires all the guns of the template.
+        public float FireRateScale { get; set; } = 1f;
+        public float MaxBulletsPerSecond { get; set; } = 10f;
         public List<Entry> Dungeons { get; set; } = new List<Entry>();
     }
+
+    public const string EntryBoth = "both";
+    public const string EntryPortals = "portals";
+    public const string EntryMissionTransport = "missionTransport";
 
     public sealed class NexusPortals
     {
@@ -157,6 +171,8 @@ public static class DungeonCatalog
                     if (string.IsNullOrWhiteSpace(d.Map)) d.Map = DefaultMapFor(d.Type);
                     if (d.HealthMultiplier <= 0f) d.HealthMultiplier = 1f;
                 }
+                read.EntryMode = NormalizeEntryMode(read.EntryMode);
+                if (read.FireRateScale <= 0f) read.FireRateScale = 1f;
                 read.NexusPortals ??= new NexusPortals();
                 read.NexusPortals.Start ??= new UV();
                 read.NexusPortals.Step ??= new UV();
@@ -181,6 +197,23 @@ public static class DungeonCatalog
 
     public static int MaxPlayers => Math.Max(1, Reload().MaxPlayers);
     public static float AutoExitSeconds => Reload().AutoExitSeconds;
+    public static string EntryMode => Reload().EntryMode;
+    public static bool LockBossRooms => Reload().LockBossRooms;
+    public static float FireRateScale => Reload().FireRateScale;
+    public static float MaxBulletsPerSecond => Reload().MaxBulletsPerSecond;
+
+    // The carriers outside the city are offered.
+    public static bool PortalsEnabled => Reload().EntryMode != EntryMissionTransport;
+    // The Mission Transport (the mega carrier at the end of the main ramp) lists the dungeons.
+    public static bool MissionTransportEnabled => Reload().EntryMode != EntryPortals;
+
+    public static string NormalizeEntryMode(string? text)
+    {
+        string t = (text ?? "").Trim().Replace(" ", "").Replace("_", "").Replace("-", "").ToLowerInvariant();
+        if (t == "portals" || t == "portal" || t == "carriers") return EntryPortals;
+        if (t == "missiontransport" || t == "mission" || t == "missions" || t == "transport") return EntryMissionTransport;
+        return EntryBoth;
+    }
 
     // Entry by terrain ("DungeonBomb"), map id ("dungeon_bomb"), name or a piece of them ("bomb").
     public static Entry? Find(string? text)
@@ -212,6 +245,11 @@ public static class DungeonCatalog
     {
         CatalogFile cat = Reload();
         if (!cat.NexusPortals.Enabled) return 0;
+        if (cat.EntryMode == EntryMissionTransport)
+        {
+            log("DUNGEON", "[nexus] entryMode is 'missionTransport': no dungeon carriers outside the city (the mega carrier lists them)");
+            return 0;
+        }
         DateTime clock = DateTime.Now;
         int sent = 0;
         int index = 0;
@@ -238,6 +276,11 @@ public static class DungeonCatalog
     public static Entry? NexusPortal(int shortId, out string reason)
     {
         reason = "";
+        if (!PortalsEnabled)
+        {
+            reason = "entryMode is missionTransport";
+            return null;
+        }
         string? type;
         lock (padlock)
         {

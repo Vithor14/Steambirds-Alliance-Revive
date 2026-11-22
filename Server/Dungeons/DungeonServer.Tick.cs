@@ -58,7 +58,8 @@ public static partial class DungeonServer
                 WakeRoom(s, room, now, log);
             }
 
-            if (room.Awake && !room.Cleared && !room.Closed && room.Encounter.ClosesOnEnter && room.Area.Contains(pa, pb, CloseBehindMargin))
+            if (room.Awake && !room.Cleared && !room.Closed && room.Encounter.ClosesOnEnter && DungeonCatalog.LockBossRooms &&
+                room.Area.Contains(pa, pb, CloseBehindMargin))
                 CloseBehind(s, room, now, log);
         }
     }
@@ -192,7 +193,24 @@ public static partial class DungeonServer
         foreach (RoomState room in s.Rooms)
         {
             if (!room.Awake || room.Cleared || !room.WavesDone) continue;
-            if (Enemies.CountAlive(s.Connection, room.Group) > 0) continue;
+            int alive = Enemies.CountAlive(s.Connection, room.Group);
+            if (alive > 0)
+            {
+                // Few units left and nothing happens: say which ones (a gate that "does not open" is usually a small unit
+                // somewhere in the room).
+                if (alive <= 3)
+                {
+                    if (room.HintAt < 0) room.HintAt = now + 30.0;
+                    else if (now >= room.HintAt)
+                    {
+                        room.HintAt = now + 30.0;
+                        List<string> names = Enemies.AliveNamesInGroup(s.Connection, room.Group);
+                        Chat(s, "Still alive in the room: " + string.Join(", ", names.GroupBy(n => n).Select(g => g.Key + (g.Count() > 1 ? " x" + g.Count() : ""))) + ".");
+                    }
+                }
+                else room.HintAt = -1;
+                continue;
+            }
             room.Cleared = true;
             log("DUNGEON", "[dungeon] room '" + room.Name + "' cleared");
             if (room.Encounter.Miniboss) Chat(s, "Miniboss defeated!");

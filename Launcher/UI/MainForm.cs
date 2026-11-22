@@ -44,6 +44,13 @@ internal sealed class MainForm : Form
         }
 
         context = new LauncherContext(this, settings);
+
+        // No game in the game folder: ask how to get it before the main window opens.
+        if (!GameInstall.HasGame(settings.GameFolder))
+        {
+            using var setup = new GameSetupForm(context);
+            setup.ShowDialog();
+        }
         context.LoadGameDataNow();
         context.OpenSettingsTab = () =>
         {
