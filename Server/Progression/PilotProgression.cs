@@ -738,12 +738,14 @@ public static class PilotProgression
         return Accounts.Read(d => new List<string>(d.Pilot.Unlocks));
     }
 
-    // Skill loadouts the pilot has (progression.json, or the game's base value).
+    // Skill loadouts the pilot has: the host's base value (progression.json, or the game's base value) plus the ones
+    // the account bought in the store (Stores\StoreAccounts).
     public static int SkillLoadoutSlots()
     {
         int slots = ProgressionSettingsFile.Current.SkillLoadoutSlots;
         if (slots <= 0) slots = ProgressionData.BaseSkillLoadoutSlots;
-        return Math.Clamp(slots, 1, 10);
+        slots = Math.Clamp(slots, 1, StoreRules.MaxSkillLoadouts) + StoreAccounts.Count(StoreAccounts.SkillLoadoutSlot);
+        return Math.Clamp(slots, 1, StoreRules.MaxSkillLoadouts);
     }
 
     // Text for the /pilot command.

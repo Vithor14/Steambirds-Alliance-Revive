@@ -49,6 +49,9 @@ PilotProgression.Start(Log);
 // Writes catalog\item_catalog.md when the game version changes. The inventories belong to each account.
 InventoryHandler.Start(Log);
 
+// Stores (Stores folder): the game's store config (configBinary), stores.json and what each account bought (accounts\<key>\store.json).
+StoreHandler.Start(Log);
+
 // Flight model of each class (planeName of the configBinary): walker and paladin fly in 8 directions and aim with the mouse,
 // olfaithful always flies forward... (Planes\PlayerPlaneTemplates.cs).
 PlayerPlaneTemplates.Load(Log);

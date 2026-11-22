@@ -98,6 +98,22 @@ public static class ItemActions
         return effects;
     }
 
+    // Items whose every action runs only on the client ("deco": dyes and trails repaint the plane). The server has nothing to
+    // deliver for them; to "use" one it sends ClientConsumedItemOnPickup, which makes the client perform the actions.
+    public static bool IsClientSideUse(ItemDef def)
+    {
+        bool any = false;
+        foreach (ConfigNode action in def.Actions)
+        {
+            foreach (KeyValuePair<string, ConfigNode> pair in action.Pairs)
+            {
+                if (!string.Equals(pair.Key, "deco", StringComparison.OrdinalIgnoreCase)) return false;
+                any = true;
+            }
+        }
+        return any;
+    }
+
     // Amount of an ingredient pickup (the template's action), 1 when the config does not say.
     public static int IngredientAmount(ItemDef def)
     {

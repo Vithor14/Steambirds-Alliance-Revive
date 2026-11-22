@@ -8,7 +8,8 @@ using Lidgren.Network;
 // connected player (plane, position, buttons, shots, skills) and answers what the client keeps waiting for.
 //
 // What has a real answer:
-//  - ServerEnterStore        -> ClientReceiveStoreContent (empty list of shelves, but not null);
+//  - ServerEnterStore        -> ClientReceiveStoreContent with the shelves (Stores\StoreHandler); the purchase RPCs
+//                               (ServerPurchaseInStore and the currency packages) also go to Stores\StoreHandler;
 //  - ServerRequestGiverQuests and ServerEnterQuestGiver -> ClientReceiveGiverQuests (no quest). The Pilot's
 //    Pub and the Workshop only open the window (and release the docked plane) when this answer arrives;
 //  - all RPCs                -> answer 52428 with the rpcId, so the client screen does not keep waiting

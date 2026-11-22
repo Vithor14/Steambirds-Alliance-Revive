@@ -1,0 +1,34 @@
+// Stores of the server (the General Store, the Hangar, the Storage and the Pilot School loadouts). Save the file and the
+// server reloads it by itself. What each store sells comes from the game's own store config; the keys below only
+// change it. Gold used to be bought with real money on Steam: those packages do not exist here. Give gold with
+// /currency gold 5000 in the chat, "startingCurrencies" in items.json or the account editor of the launcher.
+{
+  // false = the stores open, but every purchase is refused.
+  "purchasesEnabled": true,
+
+  // How the price is charged. "currency" = the account pays with its own gold and iron (like the original, without the
+  // Steam packages). "free" = every product costs 0 and the game shows "100% off".
+  "priceMode": "currency",
+
+  // Percent taken off every price, from 0 to 100 (the game shows it as "x% off"). A product can have its own value in
+  // "products" below.
+  "discountPercent": 0,
+
+  // The game marks a few trails and emotes as pre-release. true = they are sold too.
+  "showPreRelease": false,
+
+  // Rules per store. Keys: store_general, store_hangar, store_storage, store_skill_loadouts. Each store has "enabled"
+  // and "sections" (the section id, for example general_account, general_keys, general_sales) with "enabled",
+  // "include" and "exclude": lists of product ids or "tag:<tag>". "include" adds products to what the game's rule
+  // already puts in the section. general_sales is the sale shelf: it is empty until you add products to its "include"
+  // (combine with a "discount" in "products").
+  // Example: { "store_general": { "sections": { "general_keys": { "enabled": false },
+  //   "general_sales": { "include": [ "store_key_eye" ] } } } }
+  "stores": {},
+
+  // Rules per product (id as in the game's store config, for example hangar_slot, store_skill_loadout_slot,
+  // store_key_eye). "enabled": false hides it everywhere. "discount": percent off (0-100). "stock": units the whole
+  // server can sell (0 = no limit). "maxPerAccount": times each account can buy it (0 = the game's own limit).
+  // Example: { "hangar_slot": { "discount": 50, "maxPerAccount": 5 }, "store_bundle_starter": { "stock": 20 } }
+  "products": {}
+}

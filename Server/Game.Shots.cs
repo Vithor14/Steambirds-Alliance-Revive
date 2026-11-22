@@ -143,6 +143,7 @@ public static partial class Game
 
         if (ProgressionHandler.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
         if (InventoryHandler.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
+        if (StoreHandler.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
         // Dungeons (/dungeons, /dungeon X; inside a dungeon /room, /boss, /leave, /restart) before the tutorial,
         // which also uses /leave and /restart: DungeonServer.Command only takes those inside a dungeon.
         if (DungeonServer.Command(server, msg.SenderConnection, role, pieces, now, log)) return;

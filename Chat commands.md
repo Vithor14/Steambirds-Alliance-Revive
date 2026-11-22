@@ -129,6 +129,19 @@ Funcionam em qualquer servidor.
 | `/tipos` | Lista os tipos do `inimigos.json` e o template de cada um |
 | `/catalogo [filtro]` | Procura unidades armadas do jogo (até 15 por vez) |
 
+### Lojas
+
+Servidor de lojas (`Server\Stores`), ainda não testado no jogo. Também respondem a `/loja` e `/shop`. Para testar compras, dê ouro com `/currency gold 20000`.
+
+| Comando | O que faz |
+| --- | --- |
+| `/store` | Lista os comandos de loja |
+| `/store info` | Mostra se as compras estão ligadas, o modo de preço, as vagas (hangar, loadouts, armazém, cargo; base e compradas) e suas moedas |
+| `/store list [loja]` | Lista as prateleiras de uma loja (`store_general` por padrão; também `store_hangar`, `store_storage`, `store_skill_loadouts`) |
+| `/store buy PRODUTO [PREÇO]` | Compra um produto da primeira prateleira que o tem (PREÇO: `normal` = ouro, ou `iron`) |
+| `/store reset` | Esquece as compras da conta (as vagas voltam à base; itens e moedas ficam) |
+| `/store restock` | Reabastece o estoque do servidor (`stock` do `stores.json`) |
+
 ## Observações
 
 No código do cliente também aparecem textos como `/pilot_levelup/`, `/boss/` e `/countdown/`. Não são comandos para digitar: são modelos de mensagem que o servidor manda e o cliente transforma em texto na tela.

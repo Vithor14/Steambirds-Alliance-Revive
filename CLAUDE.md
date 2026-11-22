@@ -43,6 +43,7 @@ Maintained 100% by the community, with some additions and improvements.
 | `docs/nexus-rebel-city.md` | Rebel City (Nexus) rebuild, buildings, docking, client uploads |
 | `docs/tutorial-esboco.md` | walker tutorial (Training Grounds), ClientMapInfo, exit portal |
 | `docs/inimigos-esboco.md` | enemy AI protocol, scripted enemies, chat commands |
+| `docs/stores.md` | stores: shelves, `ClientReceiveStoreContent` bytes, purchase, slots, `stores.json` (English) |
 
 ## Repository layout
 

@@ -7,21 +7,12 @@ public static partial class Game
     // ------------------------------------------------------------------ store
 
     // ServerEnterStore(string storeId) -> ClientReceiveStoreContent(string storeId, List<StoreShelve> shelves).
-    // The list goes empty, but NOT null (count 1 = zero items): the client does a foreach on it,
-    // and a null list (count 0) would give a NullReferenceException in StoreManager.UpdateStoreContent.
+    // The shelves are built in Stores\ (StoreHandler); the purchase (ServerPurchaseInStore) is answered there too.
     private static void HandleStore(NetServer server, Player j, NetIncomingMessage msg, Action<string, string> log)
     {
         string store = msg.ReadString() ?? "";
         j.Stores++;
-
-        NetOutgoingMessage response = server.CreateMessage();
-        response.Write(MsgStoreContent);
-        response.Write(store);
-        response.WriteVariableUInt32(1u);
-        server.SendMessage(response, msg.SenderConnection, NetDeliveryMethod.ReliableOrdered, 0);
-
-        log("STORE", j.Role + " store '" + store + "' opened -> ClientReceiveStoreContent sent (" +
-            response.LengthBytes + " bytes, no shelf: the store contents are not implemented yet)");
+        StoreHandler.OpenStore(server, msg.SenderConnection, j.Role, store);
     }
 
     // ------------------------------------------------------------------ pub and workshop (quest givers)
@@ -122,6 +113,14 @@ public static partial class Game
     private static void ReplyRpc(NetServer server, NetIncomingMessage msg, MessageCatalog.Message info,
         Player j, Action<string, string> log)
     {
+        // Store purchases and the Steam currency packages: Stores\StoreHandler answers them.
+        if (StoreHandler.IsStoreRpc(info.Id))
+        {
+            StoreHandler.HandleRpc(server, msg, info.Id, j.Role);
+            j.Rpcs++;
+            return;
+        }
+
         string arguments = CopperReader.Describe(msg, info.Args, out bool complete);
 
         ushort rpcId;
@@ -177,11 +176,9 @@ public static partial class Game
         }
         else
         {
-            // The store shows in the chat the text of the key returned in the failure.
-            string failure = (info.Id == 54296 || info.Id == 54298) ? "purchase_error_unknown" : "not_implemented";
             r.Write(false);
-            r.Write(failure);
-            response = "failure '" + failure + "'";
+            r.Write("not_implemented");
+            response = "failure 'not_implemented'";
         }
 
         server.SendMessage(r, msg.SenderConnection, NetDeliveryMethod.ReliableOrdered, 0);

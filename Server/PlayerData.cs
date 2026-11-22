@@ -38,8 +38,10 @@ public static class PlayerData
     // Level of a newly created plane. The client starts the PlaneRecord at 1 (PlaneRecord._level = 1).
     public const int StartingPlaneLevel = 1;
 
-    // numHangarSlots of the PlayerData: how many planes the account can have (progression.json: hangarSlots).
-    public static int HangarSlots => Math.Clamp(ProgressionSettingsFile.Current.HangarSlots, 1, 20);
+    // numHangarSlots of the PlayerData: how many planes the account can have = the host's base value
+    // (progression.json: hangarSlots) plus the hangar slots the account bought in the store (Stores\StoreAccounts).
+    public static int HangarSlots =>
+        Math.Clamp(ProgressionSettingsFile.Current.HangarSlots, 1, StoreRules.MaxHangarSlots) + StoreAccounts.Count(StoreAccounts.HangarSlot);
 
     // netIdShort of each class and variant, copied from the runtime_values.txt of this build.
     // The client identifies class and variant by these numbers inside the unit options.
@@ -354,11 +356,13 @@ public static class PlayerData
         buf.Write(0);                          // prevQuests
         buf.Write("");                         // activeQuestId
         WriteLegalNoticeAcceptances(buf, acceptances); // legalNoticeAcceptances
-        buf.Write(0);                          // accumulatedItems
-        buf.WriteVariableInt32(ItemSettingsFile.Current.ExtraStorageSlots); // numAdditionalStorageSlots (items.json)
-        buf.WriteVariableInt32(ItemSettingsFile.Current.ExtraCargoSlots);   // numAdditionalInventorySlots (items.json)
-        buf.WriteVariableInt32(HangarSlots); // numHangarSlots (progression.json: hangarSlots)
-        buf.WriteVariableInt32(PilotProgression.SkillLoadoutSlots()); // numSkillLoadoutSlots (progression.json: skillLoadoutSlots)
+        // accumulatedItems: what the account bought in the stores (hangar_slot, storage_slot...). The client counts them to
+        // price the next slot, so they must be the same ones the server counts (Stores\StoreAccounts).
+        ProgressionMessages.WriteStringIntDictionary(buf, StoreAccounts.AccountItems());
+        buf.WriteVariableInt32(ItemSettingsFile.Current.ExtraStorageSlots + StoreAccounts.Count(StoreAccounts.StorageSlot)); // numAdditionalStorageSlots (items.json + store)
+        buf.WriteVariableInt32(ItemSettingsFile.Current.ExtraCargoSlots + StoreAccounts.Count(StoreAccounts.InventorySlot)); // numAdditionalInventorySlots (items.json + store)
+        buf.WriteVariableInt32(HangarSlots); // numHangarSlots (progression.json: hangarSlots + store)
+        buf.WriteVariableInt32(PilotProgression.SkillLoadoutSlots()); // numSkillLoadoutSlots (progression.json: skillLoadoutSlots + store)
         buf.WriteVariableInt32(0);             // planeXpAdditionalPercentage (0: no "until" after it)
 
         buf.WriteVariableInt32(planes.Count);  // planes

@@ -15,6 +15,7 @@ Unofficial community project: https://github.com/Vithor14/Steambirds-Alliance-Re
 | `plugin\QuieterPlugin.dll` | the Steambirds Quieter plugin, installed in the game by `SteambirdsGameFiles.exe` |
 | `network.json` | server name, who can join, maximum players, chat commands, ports |
 | `progression.json`, `items.json`, `enemies.json`, `dungeons.json` | XP, items and loot, enemies and difficulty, dungeons |
+| `stores.json` | what the stores sell, how prices are charged (gold / iron / free), discounts, stock and limits |
 | `maps\` | Nexus, tutorial and dungeon maps (format in `maps\README.md`) |
 | `loot_tables\` | loot tables |
 

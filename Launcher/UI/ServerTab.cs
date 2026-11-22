@@ -61,6 +61,8 @@ internal sealed class ServerTab : UserControl
             new SettingsSection(L.T("Items and loot"), "items.json",
                 SettingsSection.AllExcept("startingCurrencies", "startingIngredients", "startingStorageItems", "dungeonDifficulty"))));
 
+        var storesPage = Page(L.T("Store"), new StorePage(context));
+
         var difficultyPage = Page(L.T("Enemies and difficulty"), new SettingsPage(tip,
             L.T("Enemy health and loot difficulty. The enemies of each dungeon also have their own health multiplier, in the Maps and dungeons tab. The enemy types and encounters of the tutorial and the Nexus are in enemies.json (Settings tab, Files)."),
             new SettingsSection(L.T("Enemies"), "enemies.json", SettingsSection.Only("globalHealthMultiplier", "chatWarnings")),
@@ -75,7 +77,7 @@ internal sealed class ServerTab : UserControl
             L.T("Coming soon: world map with the position of each player. The open world (islands) does not exist in the server yet."));
 
         var pages = new ThemedTabControl { Dock = DockStyle.Fill };
-        pages.TabPages.AddRange(new[] { consolePage, progressionPage, itemsPage, difficultyPage, accountsPage, mapsPage, networkPage, worldPage });
+        pages.TabPages.AddRange(new[] { consolePage, progressionPage, itemsPage, storesPage, difficultyPage, accountsPage, mapsPage, networkPage, worldPage });
 
         Controls.Add(pages);
         Controls.Add(top);

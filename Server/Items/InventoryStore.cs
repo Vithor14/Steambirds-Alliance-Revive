@@ -211,8 +211,11 @@ public static class InventoryStore
 
     // ------------------------------------------------------------------ helpers (call inside Read/Change)
 
-    public static int CargoCapacity => ItemCatalog.BaseCargoSlots + ItemSettingsFile.Current.ExtraCargoSlots;
-    public static int StorageCapacity => ItemCatalog.BaseStorageSlots + ItemSettingsFile.Current.ExtraStorageSlots;
+    // The base value of the game, the host's extra slots (items.json) and the slots the account bought (Stores\StoreAccounts).
+    public static int CargoCapacity =>
+        ItemCatalog.BaseCargoSlots + ItemSettingsFile.Current.ExtraCargoSlots + StoreAccounts.Count(StoreAccounts.InventorySlot);
+    public static int StorageCapacity =>
+        ItemCatalog.BaseStorageSlots + ItemSettingsFile.Current.ExtraStorageSlots + StoreAccounts.Count(StoreAccounts.StorageSlot);
 
     // The storage or a plane of the account. Null when the characterId is unknown.
     public static InvAccess? Resolve(InventorySaveData d, string? characterId)

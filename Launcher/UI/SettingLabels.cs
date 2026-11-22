@@ -76,6 +76,21 @@ internal static class SettingLabels
         ["exportItemCatalog"] = new SettingInfo("Export the item catalog",
             "Writes catalog\\item_catalog.md and .json when the server starts and the game version changed."),
 
+        // ---------------------------------------------------------------- stores.json
+        ["purchasesEnabled"] = new SettingInfo("Purchases enabled",
+            "Off: the stores open, but every purchase is refused."),
+        ["priceMode"] = new SettingInfo("How prices are charged",
+            "currency = the account pays with its own gold and iron (like the original, without the Steam packages; give gold with /currency gold N, items.json startingCurrencies or the Accounts tab). free = every product costs 0 and the game shows \"100% off\".",
+            new[] { "currency", "free" }),
+        ["discountPercent"] = new SettingInfo("Discount on every price (%)",
+            "Percent taken off every price, from 0 to 100. The game shows it as \"x% off\". A product can have its own value in the product rules."),
+        ["showPreRelease"] = new SettingInfo("Sell pre-release products",
+            "The game marks a few trails and emotes as pre-release and does not show them. On = they are sold too."),
+        ["stores"] = new SettingInfo("Rules per store",
+            "Keys: store_general, store_hangar, store_storage, store_skill_loadouts. Each store has \"enabled\" and \"sections\" (section id, for example general_account, general_keys, general_sales) with \"enabled\", \"include\" and \"exclude\": lists of product ids or \"tag:<tag>\". \"include\" adds products to what the game's rule puts in the section. general_sales is the sale shelf: empty until you add products to its \"include\". Example: { \"store_general\": { \"sections\": { \"general_keys\": { \"enabled\": false } } } }"),
+        ["products"] = new SettingInfo("Rules per product",
+            "By product id (for example hangar_slot, store_skill_loadout_slot, store_key_eye). \"enabled\": false hides it everywhere. \"discount\": percent off (0-100). \"stock\": units the whole server can sell (0 = no limit). \"maxPerAccount\": times each account can buy it (0 = the game's own limit). Example: { \"hangar_slot\": { \"discount\": 50, \"maxPerAccount\": 5 } }"),
+
         // ---------------------------------------------------------------- network.json
         ["serverName"] = new SettingInfo("Server name", "Name shown in the server lists of the launchers."),
         ["allowOtherPlayers"] = new SettingInfo("Players of other PCs can join",
