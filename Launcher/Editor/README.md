@@ -25,7 +25,7 @@ The tab reads `editor-assets\` next to the launcher: `ground\<id>.png` (floor pi
 
 ## The enemy AI of a unit type
 
-A unit type may name an AI with `"ai": "<id>"`: the id (file name) of a file of `serverirains`, made in the launcher's **Enemy AI** tab (format: `serveri\README.md`). The AI is **not stored in the map**: it is its own file, so the same AI serves many maps and can be shared. *Units → Enemy AI* has the field (with the list of AIs) and *Edit AI...* (also *Tools → Enemy AI editor...*), which opens the Enemy AI tab on that AI. Empty = the plain *Behavior* of the *Combat* tab.
+A unit type may name an AI with `"ai": "<id>"`: the id (file name) of a file of `server\ai\brains`, made in the launcher's **Enemy AI** tab (format: `server\ai\README.md`). The AI is **not stored in the map**: it is its own file, so the same AI serves many maps and can be shared. *Units → Enemy AI* has the field (with the list of AIs) and *Edit AI...* (also *Tools → Enemy AI editor...*), which opens the Enemy AI tab on that AI. Empty = the plain *Behavior* of the *Combat* tab.
 
 - The editor keeps the `ai` field when it opens and saves a map, undo/redo and renames included. An old `"ai"` that is not text is ignored by the server.
 - *Check map* warns when a unit type names an AI that is not in the `ai` folder (the server then uses the type's normal behavior).

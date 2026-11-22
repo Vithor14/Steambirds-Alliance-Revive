@@ -3,12 +3,14 @@
 # (server output + game logs) in C:\Steambirds\server-report.txt
 #
 # Before starting, it checks for duplicated .cs files (e.g. PlaneSpawn-1.cs), which make the build fail
-# with CS0101/CS0111.
+# with CS0101/CS0111. It looks in every folder of the server, in the plugin and in Shared\EnemyAi (the enemy AI core
+# that the server compiles together with its own code).
 # In the report, the IL dumped by HarmonyX and the Unity asset warnings are summarized,
 # and each game log gets a list of its most frequent errors.
 
 $serverFolder      = "C:\Steambirds\Server"
 $pluginFolder      = "C:\Steambirds\QuieterPlugin"
+$sharedFolder      = "C:\Steambirds\Shared"
 $duplicatesFolder  = "C:\Steambirds\_duplicates"
 $bepInExFolder     = "C:\Program Files (x86)\Steam\steamapps\content\app_386010\depot_386011\BepInEx"
 $playerLog         = "C:\Users\Vithor Castelo\AppData\LocalLow\SpryFox\Steambirds Alliance\Player.log"
@@ -81,8 +83,19 @@ function ResolveDuplicates($folder) {
     }
 }
 
-ResolveDuplicates $serverFolder
-ResolveDuplicates $pluginFolder
+# The server code is split into folders (Items, Dungeons, Stores...) and Shared\EnemyAi has its own subfolder:
+# every folder of a project is checked, not only its root.
+function ResolveDuplicatesInProject($project) {
+    if (-not (Test-Path -LiteralPath $project)) { return }
+    $folders = @(Get-Item -LiteralPath $project)
+    $folders += @(Get-ChildItem -LiteralPath $project -Directory -Recurse -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -notmatch '\\(bin|obj|\.vs)(\\|$)' })
+    foreach ($folder in $folders) { ResolveDuplicates $folder.FullName }
+}
+
+ResolveDuplicatesInProject $serverFolder
+ResolveDuplicatesInProject $sharedFolder
+ResolveDuplicatesInProject $pluginFolder
 
 $reportWriter = New-Object System.IO.StreamWriter($reportFile, $false, (New-Object System.Text.UTF8Encoding($false)))
 $reportWriter.AutoFlush = $true
