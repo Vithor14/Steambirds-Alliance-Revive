@@ -644,6 +644,10 @@ public static class ItemCatalog
     // InventoryItem.canBeDegraded: armor, engine, main gun and secondary.
     public static bool CanBeDegraded(ItemDef def) => def.IsEquippable;
 
+    // Tier 0 items (the starter gear) are never sent to the storage by the server on its own (plane lost or retired):
+    // they are not worth a storage slot, so they are discarded. Items the catalog does not know are kept.
+    public static bool IsTierZero(StoredItem item) => Get(item.DefId)?.Tier == 0;
+
     // InventoryItem.DegradeCondition: the condition goes down by the global table (the first key the condition is
     // above) or by defaultItemConditionDegradation. A supercharged item (condition 1) loses its extra stats and
     // becomes pristine (0) with the default step.

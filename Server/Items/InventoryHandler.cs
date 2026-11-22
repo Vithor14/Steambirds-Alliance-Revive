@@ -111,10 +111,12 @@ public static partial class InventoryHandler
             var notes = new List<string>();
 
             // DeathLootConfig.salvageRandomEquipment: random equipped items go to the storage, worn out.
+            // Tier 0 items are never salvaged (they are not candidates, so they do not use up a salvage).
             var equipped = plane.Inv.Equipped.Concat(plane.Inv.Alternative).Select(p => p.Value).ToList();
+            var candidates = equipped.Where(i => !ItemCatalog.IsTierZero(i)).ToList();
             var salvaged = new List<StoredItem>();
-            int toSalvage = settings.KeepEquippedOnDeath ? equipped.Count : Math.Min(settings.DeathSalvageRandomEquipment, equipped.Count);
-            foreach (StoredItem item in equipped.OrderBy(_ => Random.Shared.Next()).Take(toSalvage))
+            int toSalvage = settings.KeepEquippedOnDeath ? candidates.Count : Math.Min(settings.DeathSalvageRandomEquipment, candidates.Count);
+            foreach (StoredItem item in candidates.OrderBy(_ => Random.Shared.Next()).Take(toSalvage))
             {
                 if (!settings.KeepEquippedOnDeath && settings.DegradeSalvagedItems)
                 {
@@ -140,7 +142,12 @@ public static partial class InventoryHandler
             }
             else if (!settings.SharedCargoForAllPlanes)
             {
-                salvaged.AddRange(cargo);
+                // Own cargo kept with the plane goes to the storage, except tier 0 items (discarded).
+                foreach (StoredItem item in cargo)
+                {
+                    if (ItemCatalog.IsTierZero(item)) lostCargo++;
+                    else salvaged.Add(item);
+                }
                 for (int i = 0; i < plane.Cargo.Count; i++) plane.Cargo[i] = null;
             }
 

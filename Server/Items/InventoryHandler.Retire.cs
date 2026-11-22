@@ -23,10 +23,16 @@ public static partial class InventoryHandler
                 for (int i = 0; i < plane.Cargo.Count; i++) plane.Cargo[i] = null;
             }
 
-            int toStorage = 0, toCargo = 0, lost = 0;
+            int toStorage = 0, toCargo = 0, lost = 0, discarded = 0;
             InvAccess? cargoOwner = remainingPlanes.Count > 0 ? InventoryStore.Resolve(d, remainingPlanes[0]) : null;
             foreach (StoredItem item in items)
             {
+                // Tier 0 items (starter gear) are never sent to the storage on their own: they are discarded with the plane.
+                if (ItemCatalog.IsTierZero(item))
+                {
+                    discarded++;
+                    continue;
+                }
                 InvPos free = InventoryStore.FirstFreeCargo(storage);
                 if (free.Valid)
                 {
@@ -47,7 +53,8 @@ public static partial class InventoryHandler
             }
 
             d.Planes.Remove(characterId);
-            return toStorage + " item(s) to storage" + (toCargo > 0 ? ", " + toCargo + " to the cargo" : "") + (lost > 0 ? ", " + lost + " did not fit and were lost" : "");
+            return toStorage + " item(s) to storage" + (toCargo > 0 ? ", " + toCargo + " to the cargo" : "") +
+                   (discarded > 0 ? ", " + discarded + " tier 0 item(s) discarded" : "") + (lost > 0 ? ", " + lost + " did not fit and were lost" : "");
         });
 
         log("INVENTORY", "[" + role + "] plane retired " + characterId + ": " + summary);

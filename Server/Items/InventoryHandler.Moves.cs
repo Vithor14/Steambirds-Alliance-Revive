@@ -73,16 +73,16 @@ public static partial class InventoryHandler
         InventoryStore.Change(d => InventoryStore.EnsurePlane(d, plane.CharacterId, plane.Class));
     }
 
-    // ------------------------------------------------------------------ remove (drop and trash = recycle)
+    // ------------------------------------------------------------------ remove (drop = bag in the world, trash = recycle)
 
     private static void Remove(NetServer server, NetConnection connection, string tag, ushort rpc, string characterId, InvPos pos,
         byte destination, double now)
     {
         EnsureKnownPlane(characterId);
-        // This client's "Drop" entry of the inventory menu sends Trash (InventoryDisplay -> TrashItemInCargoSlot), and only a drag to the
-        // in-world zone sends Drop. So Trash puts the item in the world too, unless the host turned trashDropsInWorld off (then it recycles).
-        bool trash = destination == DestinationTrash;
-        bool toWorld = !trash || ItemSettingsFile.Current.TrashDropsInWorld;
+        // The recycle entry of the inventory menu ("context_menu_inventory_drop") sends Trash (InventoryDisplay -> TrashItemInCargoSlot) and
+        // then prints the mulch outcome ("notify_mulch_outcome"): Trash is the recycling. The item is destroyed and pays its mulch value
+        // (when mulchOnTrash is on). Only a drag to the in-world zone sends Drop, and that one puts the item in a loot bag.
+        bool toWorld = destination != DestinationTrash;
         bool mulch = !toWorld && ItemSettingsFile.Current.MulchOnTrash;
         string? why = null;
         StoredItem? removed = null;
@@ -132,7 +132,7 @@ public static partial class InventoryHandler
         }
         else
         {
-            log("INVENTORY", tag + " " + removed + " went to the trash" + (mulch ? ": +" + value + " " + ItemCatalog.MulchCurrency : "") + " of " + pos);
+            log("INVENTORY", tag + " " + removed + " recycled (destroyed)" + (mulch ? ": +" + value + " " + ItemCatalog.MulchCurrency : "") + " of " + pos);
         }
     }
 
