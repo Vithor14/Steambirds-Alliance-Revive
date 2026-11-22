@@ -1,114 +1,66 @@
 # Steambirds Alliance Revive
 
-Community revival of **Steambirds Alliance**, a Steam flight-combat game whose original servers were shut down in 2021.
-The project rebuilds the server that the game client expects, as close as possible to the original, and adds a launcher
-(to host and to join servers, with accounts saved on the host's PC) and a map editor (to build dungeons and maps the
-server reads).
+Community revival of **Steambirds Alliance**, the Steam flight-combat game whose official servers were shut down in 2021.
 
-This is an **unofficial community project**. The game itself is not included: you need your own copy from Steam, and
-the game's files, decompiled code and extracted assets are never stored in this repository.
+The project rebuilds the server the game client expects, as close as possible to the original, and adds a **launcher**
+(join or host a server, manage accounts and settings) and a **map editor** for dungeons. It is an unofficial,
+community-made project. The game itself is **not** included: you need your own copy from Steam.
 
-- **Status and roadmap:** [CHECKLIST.md](CHECKLIST.md) (done, partial and missing, per area; the source of truth).
-- **How to help:** [CONTRIBUTING.md](CONTRIBUTING.md).
-- **Design notes** (written in Portuguese, English file names): [docs/](docs/).
+## What it does
 
-## Quick Download (Releases)
+- **Server**: login, one account per player (saved on the host's PC), planes and hangar, XP and permadeath, skills,
+  items, loot, workshop, stores, Rebel City (the Nexus), the walker tutorial and 17 recreated dungeons.
+- **Multiplayer**: host for LAN or a VPN (Radmin, Hamachi) or over the internet; players share the Nexus and dungeons.
+- **Launcher**: downloads the game through Steam, lists servers, hosts a server, and edits accounts, stores,
+  difficulty and dungeons without touching any file.
+- **Map editor**: builds dungeon, Nexus and tutorial maps from the game's own assets, as files the server reads.
+- **Enemy AI editor**: builds enemy behavior as data files and tests them in a simulator.
 
-If you just want to play or host without compiling from source, you can download the latest prebuilt launcher package directly from the [GitHub Releases page](https://github.com/Vithor14/Steambirds-Alliance-Revive/releases/). 
+Not done yet: the open world, quests and missions, flocks, Combat Sim and most dungeon-specific scripts.
+See [CHECKLIST.md](CHECKLIST.md) for the full status.
 
-1. Download the latest release `.zip` asset.
-2. Extract the archive anywhere on your computer.
-3. Run `SteambirdsLauncher.exe`.
+## Play or host
 
-## What works today
+1. Download the latest `.zip` from [Releases](https://github.com/Vithor14/Steambirds-Alliance-Revive/releases/) and
+   extract it anywhere.
+2. Run `SteambirdsLauncher.exe`. The first time it helps you download the game with Steam
+   (`download_depot 386010 386011 58813776496064724`, client build 201219.1413).
+3. **Client** tab: pick a server (*This PC*, one found on the network, or *Connect by IP*) and click **PLAY**.
+   **Server** tab: start your own server and share the addresses shown in *Network and multiplayer*.
 
-- Login and one account per player, with the pilot, planes, items and finished dungeons saved on the host's PC.
-- Planes, classes and the hangar, XP for planes and pilots (real-time share, permadeath), skills and loadouts.
-- Items, inventory, loot bags and the Workshop (reforging and supercharging) read from the game's own data.
-- Rebel City (the Nexus) rebuilt from the Open Beta, the walker tutorial (Training Grounds), and 17 recreated dungeons
-  (only two of them are switched on by default: Iron Lair and Bomb Factory).
-- The launcher: download the game through Steam, server list (LAN, Radmin VPN, Hamachi, typed IP), hosting, accounts
-  and the network settings.
-- The map editor for dungeons, Nexus and tutorial maps.
+Requirements: Windows 10 or 11, Steam with Steambirds Alliance in your library. No .NET install needed.
 
-Not yet: multiplayer between players in the same world, stores that sell, quests and missions, Combat Sim, and most
-dungeon scripts. The checklist has the full list.
+The game's own files are never shared here. `SteambirdsGameFiles.exe` takes the data the server needs from your own
+copy of the game.
 
-## Requirements
+## Build from source
 
-**To play or host (using the prebuilt release or launcher package):**
+Needs the .NET 8 SDK and PowerShell.
 
-- Windows 10 or 11.
-- Steam, with a copy of Steambirds Alliance in the account's library (the launcher downloads it with the depot command).
-- Nothing else: the launcher package is self-contained and does not need .NET installed.
+```powershell
+git clone https://github.com/Vithor14/Steambirds-Alliance-Revive.git C:\Steambirds
+cd C:\Steambirds
+.\"Build launcher.ps1"
+```
 
-**To build from source:**
+This publishes the server, plugin and launcher into `Launcher\dist`. `.\"Build server release.ps1"` builds the
+standalone server zip. Chat commands are in [Chat commands.md](Chat%20commands.md).
 
-- .NET 8 SDK.
-- Python 3 (optional, only for the dungeon generator and the editor image builder; `pip install pillow` for the previews).
-- PowerShell 5.1 or newer (it comes with Windows).
-
-## Installation (building from source)
-
-1. Clone the repository into `C:\Steambirds` (the scripts assume this folder; change `$raiz` in the scripts if you use another one):
-
-   ```powershell
-   git clone https://github.com/Vithor14/Steambirds-Alliance-Revive.git C:\Steambirds
-   ```
-
-2. Build the launcher package (server, plugin and launcher) into `Launcher\dist`:
-
-   ```powershell
-   cd C:\Steambirds
-   .\"Build launcher.ps1"
-   ```
-
-   Then open `Launcher\dist\SteambirdsLauncher.exe`. In the **Client** tab, *Download the game with Steam* installs the game.
-
-3. Data taken from the game. The server needs the game's configuration (`configBinary`, read straight from the installed
-   game) and a few text files exported from the game by the plugin. The easy way is `Launcher\dist\SteambirdsGameFiles.exe`
-   (built by `Build launcher.ps1`): it installs BepInEx and the plugin, opens the game once and copies
-   `units_config.txt`, `actions_config.txt`, `mapinfo_config.txt` and `portraits_config.txt` to `dist\server\data`, and
-   the map editor pictures to `dist\editor-assets`. By hand:
-
-   ```powershell
-   .\"Build plugin.ps1"      # copies the plugin into the game's BepInEx\plugins
-   ```
-
-   Start the game once with the plugin installed. It writes those files into the game's `BepInEx` folder. Copy them to
-   `Server\data` (that folder is not in git: it holds the game's data). The server also works without them, with fewer
-   features.
-
-4. Server release for GitHub: `.\"Build server release.ps1"` builds `Release\SteambirdsServer-<version>-win-x64.zip`
-   (server, `SteambirdsGameFiles.exe`, plugin, settings and maps, with no game files) to attach to a GitHub release.
-
-## Running
-
-- **Launcher (recommended):** open `SteambirdsLauncher.exe` (from the downloaded release zip or `Launcher\dist\`). Use the **Server** tab to host, the **Client**
-  tab to join (*This PC* or any server in the list), and **Play**.
-- **Server alone (for development):** `.\"Run server.ps1"` runs the server in a console; Ctrl+C writes
-  `server-report.txt` with the server output and the game logs. It is interactive (it asks some questions).
-- **Game against a local server:** `.\"Run game.ps1"` (Steam must be open).
-- **Chat commands** for the game are listed in [Chat commands.md](Chat%20commands.md). Type `/help` in the game.
-
-Ports used by the server (changed in `Server\network.json`): HTTP login 6443 (TCP), Nexus 1111, tutorial 1112 and
-dungeons 1113 (UDP), server search 6444 (UDP).
-
-## Repository layout
+## Repository
 
 | Path | What it is |
 |---|---|
-| `Server\` | The game server (.NET 8): HTTP login API and UDP game servers for the Nexus, the tutorial and the dungeons. |
-| `Server\maps\` | Map files (`nexus.json`, `tutorial_walker.json`, `dungeon_*.json`); format in [docs/map-format.md](docs/map-format.md). |
-| `Server\*.json` | Settings: progression, items, enemies, dungeons, network. |
-| `Server\loot_tables\` | Loot tables (one file each). |
-| `Launcher\` | The launcher (WinForms): client, server hosting, settings and the map editor. |
-| `QuieterPlugin\` | BepInEx plugin for the game client: data exports, map editor pictures (export mode) and client-side fixes. |
-| `GameFiles\` | `SteambirdsGameFiles.exe`: takes the game's own files from the player's copy of the game (see its README). |
-| `Packaging\server\` | README and `Start server.cmd` that go into the server release zip. |
-| `tools\` | Python tools: dungeon generator, editor image builder. |
-| `docs\` | Design notes (Portuguese). |
-| `CHECKLIST.md` | Status of every area and the suggested order of work. |
+| `Server\` | The game server (.NET 8): HTTP login and UDP game servers; maps, loot tables and settings as data files |
+| `Launcher\` | WinForms launcher with the map editor and Enemy AI tabs |
+| `Shared\EnemyAi\` | Enemy AI core, shared by the server and the launcher |
+| `QuieterPlugin\` | BepInEx plugin for the game client (data exports and client-side fixes) |
+| `GameFiles\` | `SteambirdsGameFiles.exe`: gets the needed files from your own game copy |
+| `docs\` | Design notes (Portuguese) |
+
+## Contributing
+
+Maps, dungeons, enemy AI and loot are data files, so the community can make and share them without touching code.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) first; [CHECKLIST.md](CHECKLIST.md) lists what is missing.
 
 ## License
 
