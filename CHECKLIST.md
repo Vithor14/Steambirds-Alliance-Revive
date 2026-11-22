@@ -16,7 +16,7 @@
 | 1 | Base: conexão, login e conta | 12 | 3 | 3 |
 | 2 | Avião, classes e hangar | 6 | 5 | 4 |
 | 3 | Piloto, permadeath e progressão | 0 | 13 | 0 |
-| 4 | Combate e inimigos | 7 | 3 | 4 |
+| 4 | Combate e inimigos | 7 | 4 | 4 |
 | 5 | Itens, inventário e loot | 2 | 11 | 3 |
 | 6 | Rebel City (Nexus) e prédios | 3 | 4 | 6 |
 | 7 | Mundo aberto (ilhas) | 0 | 0 | 9 |
@@ -30,7 +30,7 @@
 | 15 | Launcher base — aba Client (objetivo intermediário) | 2 | 6 | 1 |
 | 16 | Launcher — aba Server | 0 | 8 | 3 |
 | 17 | Launcher standalone (objetivo final) | 0 | 5 | 0 |
-| 18 | Editor de mapas | 2 | 4 | 4 |
+| 18 | Editor de mapas | 2 | 5 | 3 |
 | | **Total** | **49** | **78** | **68** |
 
 Os apêndices (classes, terrenos e chefes) e as observações abaixo ficam fora da conta.
@@ -149,6 +149,7 @@ Código em `Server\Progression` e doc em `docs/progression.md`. Tudo abaixo aind
 - [x] Comandos de teste no chat (`/inimigo`, `/spawn`, `/chefe`, `/onda`, `/catalogo`…)
 - [ ] 🟡 Inimigos atravessam muros (só ficam presos à área da sala)
 - [ ] Rotação visual das torretas (`FIELDMASK_GUNS`)
+- [ ] 🟡 IA em arquivos (22/11, compilada; o simulador e o fluxo de edição foram testados com um programa de teste que abre a aba real, falta usar no jogo): `Serveriehaviors\*.json` e `Serverirains\*.json` (máquina de estados: cada estado age como um comportamento e tem transições com condições), lidos pelo servidor (`Enemies.Brains.cs`) e relidos ao mudar; o tipo de unidade usa `"ai": "<id>"` (também em `phases`). Vem com 6 IAs e 10 comportamentos de exemplo e tipos `ai_*` no `enemies.json` (`/enemy ai_chaser`, `/brains`). Formato em `Serveri\README.md`, código em `docs/enemy-ai.md`. Falta testar no jogo
 - [ ] Comportamento original de cada inimigo: hoje são comportamentos genéricos para 856 unidades armadas; a IA de cada chefe precisa ser recriada a partir de vídeos (Apêndice C)
 - [ ] 🟡 Aliados: `ServerSpawnGreenTeamAlly` `23584` chega e só é registrado
 - [ ] 🟡 Efeitos de status: `ServerReportPlayerEffect` e `ServerShowInstantEffect` chegam e só são registrados; faltam `ClientCloudEffect` `32571`, `ServerReportCloudEffect` `27911`, `ClientInstantEffect` `58535`
@@ -199,7 +200,7 @@ Código em `Server\Items` (v9, ainda não testada no jogo). Tabelas de loot em `
   - [ ] 13. Sair e entrar de novo (e trocar Nexus, tutorial, dungeon): vagas e preços seguem iguais (vêm do `accumulatedItems` do welcome)
   - [ ] 14. `stores.json`: `priceMode` `free`, `discountPercent`, `stock`, `maxPerAccount`, `general_sales` com `include`; salvar com o servidor rodando e reabrir a loja. Também pela aba Stores do launcher (compilar com `Build launcher.ps1`)
   - [ ] 14b. Launcher, aba Server > **Store** (compilar com `Build launcher.ps1`): Geral (compras, modo de preço, desconto), Preços e produtos (tabela dos 294 produtos com preço, desconto, estoque, limite e o preço "agora"; edição em lote dos produtos filtrados), Prateleiras (lojas e seções, incluir/excluir com seletor de produtos). Salvar e ver o jogo reagir sem reiniciar o servidor; os comentários do `stores.json` ficam
-  - [ ] 14c. Launcher, aba Server > **Accounts**: "Starting money of new accounts" (ouro, ferro...) grava `startingCurrencies` do `items.json`; conta nova recebe o valor. "Money of the selected account" altera o dinheiro de uma conta que já existe (servidor parado; cópia em `server\_backup`)
+  - [ ] 14c. Launcher, aba Server > **Accounts**: "Starting money of new accounts" (ouro, ferro...) grava `startingCurrencies` do `items.json`; conta nova recebe o valor. o dinheiro de uma conta que já existe é editado na janela "Edit account..." (aba Currencies and ingredients; servidor parado; cópia em `server\_backup`); o painel "Money of the selected account" foi removido (22/11)
   - [ ] 15. Dois jogadores: cada conta guarda as próprias compras em `accounts\<chave>\store.json`; o estoque (`stock`) é do servidor todo
 - [ ] 🟡 Pilot's Pub e Oficina: abrem com lista de quests vazia (ver seção 9)
 - [ ] Hangar: troca de avião (seção 2)
@@ -218,7 +219,7 @@ Código em `Server\Items` (v9, ainda não testada no jogo). Tabelas de loot em `
 - [ ] Chefes de setpiece, chefes de evento e setpieces que aparecem (IslandConfig, EventBossesConfig, PopupSetpieceConfig)
 - [ ] Quests de ilha (`ClientReceiveIslandQuestNotification` `54199`)
 - [ ] Porta-aviões de dungeon que aparecem no mundo (`ClientReceivePortalUpdate` `35053`, `ServerSendMeThroughPortal`)
-- [ ] Teleporte para casa/local (`ServerNotifyCompleteTeleport` `12006`), nascimento com zona segura
+- [ ] Teleporte para casa/local (`ServerNotifyCompleteTeleport` `12006`), nascimento com zona segura. O tempo do "Voltar para Rebel City" do menu é do cliente (`teleportNexusDelay`): o plugin (1.23.0) sobe para no mínimo 3 s (`NexusTeleportDelaySeconds` no BepInEx cfg)
 - [ ] Eventos agendados (UGUIUpcomingEventsList)
 
 ## 8. Dungeons e tutoriais
@@ -238,6 +239,18 @@ Doc das dungeons recriadas: `docs/dungeons-190828.md`. Servidor de dungeon: `doc
 - [ ] 🟡 Loot das dungeons: tabelas `loot_tables\dungeon_*.json` (baús, Big Treasure, minichefes; muros/barris/bombas/minas sem loot). Falta conferir no jogo
 - [ ] 🟡 Inimigos sem arma no cliente (bombas teleguiadas, jatos bombardeiros): `comportamento: "kamikaze"` explode em anel ao encostar; carregadores/dirigíveis largam bombas (`contaNaSala: false`); minas-robô e outros que orbitavam além do alcance da arma agora se aproximam. Falta conferir no jogo (Bomb Factory) e as demais dungeons
 - [ ] Conferir as outras unidades invisíveis armadas das dungeons ainda fechadas (lista em `docs/dungeons-190828.md`)
+- [ ] 🟡 **Correções do teste de 22/11 (compiladas, falta testar no jogo; detalhes em `docs/dungeon-tuning.md`):**
+  - Todas as 17 dungeons ficaram 4× menores (metade da largura e da altura), por `tools\scale_dungeon_maps.py`; os mapas ganharam `"scaled": 0.5`. Posições, salas, portões, pontos de controle e placas foram junto; conferido por script (tudo ligado, nada fora do chão)
+  - Sala do chefe não tranca mais o jogador: `lockBossRooms` (padrão `false`) no `dungeons.json`
+  - Tiros muito rápidos (Iron Lair, Slicer, Zombie...): a unidade soltava todas as armas do modelo ao mesmo tempo. Agora há `maxBulletsPerSecond` (padrão 10) e `fireRateScale` no `dungeons.json` (também na tela "Maps and dungeons" do launcher); Slicer ficou com 2 das 4 armas e o SN-Z com `fireRateMultiplier` 0,7
+  - Bomb Factory: reação em cadeia (`chainReaction` nos barris e bombas: uma explode e as vizinhas, num raio de 13 u, explodem em seguida)
+  - Laser Playground: `trapbutton` (controlador invisível) não é mais criado (regra geral: unidade invisível sem arma não nasce); Bullet Belt com alcance de tiro maior. A arte minúscula do Bullet Belt e o fato de as balas dele viajarem só ~3 u são do cliente e não dá para mudar daqui
+  - The Arena: inimigos de onda e invocados vão atrás do jogador desde o nascimento (antes só dentro de 28 u); Malicious Acolyte mira à frente (`aimLead` 1); Commodus com alcance de tiro 45 e agro 120
+  - Home for Special Children: Electric Belt (1 de vida, sem raio, não dá para acertar) virou perigo invulnerável que não conta para limpar a sala; Edmund No. 6 com metade da cadência
+  - Sala que "não abre o portão": o servidor avisa no chat quais inimigos ainda seguram a sala quando sobram até 3
+  - Falta resolver: nomes ausentes de Slicer e Bouncer no jogo (o texto existe na tabela do cliente; causa não achada no servidor, precisa de um teste com o log do jogo) e os discos pequenos sem nome do Laser Playground
+- [ ] 🟡 Mission Transport (22/11, compilado, falta testar): o porta-aviões gigante no fim da rampa lista as dungeons abertas como missões (`ServerListMissions` `12000`, `ServerMissionJoin` `12001`, `Dungeons\MissionTransport.cs`); escolher uma leva à dungeon. `entryMode` no `dungeons.json` (`both` padrão, `portals`, `missionTransport`), na tela "Maps and dungeons". O cliente esconde missões de tier muito acima do avião quando há missões do nível dele (regra do jogo)
+- [ ] 🟡 Colisão no Nexus (22/11, compilado, falta testar): seção `collisions` do mapa (retângulos em u/v viram sub-células de muro de 3 u no `ClientReceiveTerrainTiles`); o `nexus.json` tem os fundos da cidade, morros, torres, bunker e adereços entre os prédios. Os prédios continuam sem colisão para dar para atracar. Risco: a arte do muro vem do território do Nexus (se não tiver arte aparece só o erro "No walls found" no log do jogo)
 - [ ] 🟡 ClientMapInfo dos terrenos de dungeon: o servidor junta as placas do mapa ao ClientMapInfo do cliente (ou monta um novo quando o cliente não tem). Falta conferir no jogo
 - [ ] Mecânicas especiais: escolta da broca (The Dig), chave e altar de Horus (The Vaults), salas de altar com maldições (Temple of Bast), emboscada (Super Secret Base), esteiras (Venom Compound), trilhos das enfermeiras (Home for Special Children), respiros de calor (`trapmaster`)
 - [ ] Outros terrenos de tutorial: `DungeonTutorial` (olfaithful), `DungeonTutorial2`, `DungeonTutorialWalker2`
@@ -329,7 +342,9 @@ Doc das dungeons recriadas: `docs/dungeons-190828.md`. Servidor de dungeon: `doc
 - [ ] 🟡 Aba de contas: estado inicial de contas novas editável (patente; desbloqueios em checklist com as classes do jogo; um campo por moeda do jogo; ingredientes e itens no armazém)
 - [ ] 🟡 Ver, editar e apagar contas: lista com uma linha por jogador (nome, Steam ID, último jogo, patente, aviões...) e os aviões da selecionada (0.3.0); janela de edição (piloto e patente, aviões com variante/nível/XP, desbloqueios, dungeons terminadas, moedas e ingredientes) e remover a conta, com cópia em `server\_backup`. Só com o servidor do launcher parado. Falta testar
 - [ ] 🟡 Aba Store do launcher (22/11): configura tudo do `stores.json` por tela (compras, modo de preço grátis/moeda, desconto geral, desconto/estoque/limite por produto com os preços do jogo, lojas e seções, incluir/excluir). Os preços só podem baixar (o cliente desenha o preço): o desconto de 0 a 100% é o ajuste. Falta testar
-- [ ] 🟡 Dinheiro nas contas (22/11): na aba Accounts, dinheiro inicial das contas novas (`startingCurrencies`) e dinheiro de uma conta que já existe (`inventory.json`, só com o servidor parado). Falta testar
+- [ ] 🟡 Dinheiro nas contas (22/11): na aba Accounts, dinheiro inicial das contas novas (`startingCurrencies`) e dinheiro de uma conta que já existe, que fica só na janela "Edit account..." (`inventory.json`, só com o servidor parado; o painel do canto da lista foi removido por ser redundante). Falta testar
+- [ ] 🟡 Retrato por conta (22/11, compilado, falta testar): coluna Portrait na lista de contas, aba Portrait na janela de edição e botão "Reroll portrait" (sorteia com as regras do jogo a partir de `server\data\portraits_config.txt`; só com o servidor parado, cópia em `server\_backup`). O launcher mostra as peças por nome e id, não o desenho: as peças são prefabs da Unity, e desenhá-las exigiria o plugin exportar as imagens (a fazer)
+- [ ] 🟡 Console do servidor por nível (22/11, compilado, falta testar): o que os jogadores fazem (`[SKILL]`, `[SHOT]`, `[MSG]`, `[XP]`, `[SPAWN]`... em `Core\ServerLogLevel.cs`) é "info" e fica escondido; o padrão mostra avisos, erros e eventos do servidor (quem conecta e sai, dungeons, portais, mortes). Caixa "Show player actions (info)" liga tudo; o `logs\server-<data>.log` e o `server-report.txt` continuam completos
 - [ ] Escolher o arquivo de mapa do Nexus e do tutorial (no launcher, acinzentado: o servidor usa `nexus` e `tutorial_walker` fixos)
 - [ ] 🟡 Escolher o arquivo de mapa de cada dungeon: tela "Mapas e dungeons" do launcher (grava no `dungeons.json`). Falta testar
 - [ ] Ver cada mapa na tela do servidor (no launcher, acinzentado)
@@ -340,6 +355,8 @@ Doc das dungeons recriadas: `docs/dungeons-190828.md`. Servidor de dungeon: `doc
 
 - [ ] 🟡 Detectar a Steam e o login: o launcher acha a pasta da Steam pelo registro, avisa se ela está fechada e mostra a conta logada (`ActiveProcess\ActiveUser` e `loginusers.vdf`: nome e Steam ID)
 - [ ] 🟡 Abrir o console da Steam com o comando pronto (0.3.0): botão "Baixar o jogo pela Steam" copia `download_depot 386010 386011 58813776496064724` e abre `steam://open/console`; o jogador cola e aperta Enter (a Steam não deixa mandar o comando de fora). Falta testar
+- [ ] 🟡 Janela de primeira execução (22/11, compilada e aberta no PC, falta o fluxo completo): se o `Steambirds.exe` não está na pasta do jogo, o launcher abre antes da janela principal uma janela com "Download the game with Steam" (o mesmo fluxo da aba Client) ou "Choose the folder where the game is", avisando que a build certa é a 201219.1413 do console da Steam e que a última versão do jogo tem todo o conteúdo removido; "Continue without the game" abre o launcher assim mesmo. `UI\GameSetupForm.cs`
+- [x] Aba Client explica o plugin Quieter (o que corrige e o que se perde sem ele) em texto fixo e em dica (22/11)
 - [ ] 🟡 Detectar quando o download termina (0.3.0): linhas `Depot download complete` / `failed` do `logs\console_log.txt` da Steam e o tamanho da pasta `depot_386011`; no fim ela vira a pasta do jogo. Falta testar
 - [ ] 🟡 Colocar os arquivos necessários para o jogo logar via Steam: o launcher cria o `steam_appid.txt` (386010) na pasta do jogo (0.3.0), mostra a build e instala o plugin no `BepInEx\plugins`. O BepInEx não vem com o launcher, mas o `SteambirdsGameFiles.exe` (20/11) baixa o BepInEx 5.4.23.5 oficial do GitHub (64 ou 32 bits pelo `Steambirds.exe`) e instala junto com o plugin. Falta testar e chamar pelo launcher
 - [ ] 🟡 Executar o jogo (botão "Jogar" do launcher)
@@ -350,13 +367,14 @@ Doc das dungeons recriadas: `docs/dungeons-190828.md`. Servidor de dungeon: `doc
 - [x] Servidor relê o mapa ao mudar, valida os nomes que o roteiro usa e mantém a última versão boa se o arquivo tiver erro
 - [ ] 🟡 Editor visual com os assets do jogo (aba Map editor do launcher, `Launcher\Editor`): chão, muros, entrada, saída, pontos de controle, portões, salas com inimigos e ondas, tipos de unidade, pontos, áreas, linhas, rotas, placas, enfeites e prédios, com desfazer/refazer e tema claro/escuro. Prévias em geometria e cor dos vértices (sem as texturas do jogo); a arte de várias unidades ainda cai em letra. Escrito em 16/11 **sem compilar**: falta compilar e testar
 - [ ] 🟡 Imagens do editor tiradas do próprio jogo (20/11, sem compilar): no modo de exportação (`STEAMBIRDS_EXPORT`, aberto pelo `SteambirdsGameFiles.exe`) o plugin desenha de cima cada peça do `GroundAssetContainer` e cada arte de unidade (`UnitConfig.art`, pool `Planes`) com as malhas, materiais e luz do jogo, grava `ground\*.png`, `units\*.png` e `thumbs.json` (mesmo formato do editor) e fecha o jogo. Substitui o `tools\editor` (que dependia do AssetRipper). Falta testar se as texturas, o tamanho (`half`) e a orientação batem com o jogo
+- [ ] 🟡 Editor (22/11, testado com um programa de teste que abre as telas reais e confere abas, opções, rotação e desenho; falta usar com o mouse): decoração e prédios giram pelo `rot`, as peças de `floor.pieces` passam a ser desenhadas com a rotação do arquivo (anti-horária, relativa ao tile) e os inimigos já giravam; abas da direita mostram só as do objeto selecionado e se selecionam sozinhas (clicar num ponto vazio traz todas); opções da esquerda só as da ferramenta ativa; dicas em todas as opções e campos. A rotação da decoração (`rot` + 45° no canvas, como as unidades) não foi conferida contra o jogo
 - [ ] 🟡 Exportar arquivos que o servidor usa: salvar confere o mapa (entrada, saída, chão, referências) e grava em `server\maps`; com erros só salva como rascunho (`"rascunho": true`). Falta testar
 - [ ] 🟡 Dungeons: o editor abre uma cópia de cada uma das 17 da 190828 (também geradas por script em `ferramentas\dungeons-190828`, com prévia em imagem). Falta testar
 - [ ] Mapa global (mundo aberto)
 - [ ] 🟡 Inimigos e encontros por mapa: o servidor de dungeon lê `tipos` e `encontros` de cada mapa (os tipos entram com o prefixo do mapa); no Nexus e no tutorial ainda vale o `enemies.json`
 - [ ] Roteiros de dungeon em arquivo (hoje o roteiro do tutorial está em código)
 - [ ] Coleção de versões de dungeons da comunidade para o host escolher
-- [ ] Editor de IA dos inimigos: a aba e o botão existem acinzentados; cada tipo de unidade já guarda um objeto opcional `"ia"` que o editor preserva e o servidor ignora (`Launcher\Editor\EnemyAiHook.cs`)
+- [ ] 🟡 Editor de IA e comportamentos dos inimigos (22/11): aba **Enemy AI** do launcher (`Launcher\EnemyAi`) com lista de arquivos, editor de estados, transições e condições, comportamentos reutilizáveis, validação, novo/duplicar/renomear/apagar (vai para `_backup`), importar e exportar (um arquivo com a IA e os comportamentos que ela usa) e **simulador** (arte, velocidade, giro e armas de qualquer unidade, jogador que segue cliques, gira ou fica parado, multiplicadores do tipo, perda de vida). O simulador roda o mesmo código do servidor (`Shared\EnemyAi`). Ligado ao editor de mapas (campo `ai` em Units > Enemy AI). Falta: usar com o mouse no launcher real, desfazer/refazer, invocar e escudo dentro da IA, muros e salas no simulador
 
 ---
 

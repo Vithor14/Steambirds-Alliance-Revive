@@ -1,0 +1,14 @@
+{
+  "format": 1,
+  "id": "turret_fire",
+  "name": "Turret (firing)",
+  "author": "Steambirds Revive",
+  "description": "Stands still, looks at the player and shoots.",
+  "move": {
+    "mode": "hold",
+    "face": true
+  },
+  "fire": {
+    "enabled": true
+  }
+}

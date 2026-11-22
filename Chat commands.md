@@ -153,6 +153,7 @@ Work on any server.
 | `/encounter [name]` | Lists the encounters or starts one |
 | `/types` | Lists the types of `enemies.json` and the template of each |
 | `/catalog [filter]` | Searches the game's armed units (up to 15 at a time) |
+| `/brains` | Lists the AI files the server loaded (`serveri`) and the state of the enemies that use one. Types that use an AI: `/enemy ai_chaser`, `ai_bomber`, `ai_charger`, `ai_skirmisher`, `ai_sentry`, `ai_berserker` |
 
 ### Stores
 

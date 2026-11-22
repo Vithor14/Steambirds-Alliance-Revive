@@ -14,7 +14,6 @@ internal sealed class AccountsPage : UserControl
 {
     private readonly LauncherContext context;
     private readonly SettingsPage newAccounts;
-    private readonly AccountMoneyPanel accountMoney;
     private readonly ListView summary;
     private readonly ListView planes;
     private readonly Label accountStatus;
@@ -22,6 +21,8 @@ internal sealed class AccountsPage : UserControl
     private readonly Button editButton;
     private readonly Button removeButton;
     private readonly Button folderButton;
+    private readonly Button rerollButton;
+    private readonly PortraitParts portraitParts = PortraitParts.Load();
     private readonly System.Windows.Forms.Timer watchTimer;
     private List<AccountStore.Summary> accounts = new List<AccountStore.Summary>();
     private DateTime loadedStamp = DateTime.MinValue;
@@ -44,7 +45,7 @@ internal sealed class AccountsPage : UserControl
         };
 
         summary = Ui.Grid((L.T("Player"), 170), (L.T("Steam ID"), 140), (L.T("Last played"), 120), (L.T("Pilot rank"), 80),
-            (L.T("Planes"), 60), (L.T("Kills"), 60), (L.T("Bosses"), 60), (L.T("Planes lost"), 90), (L.T("Unlocks"), 70),
+            (L.T("Planes"), 60), (L.T("Portrait"), 150), (L.T("Kills"), 60), (L.T("Bosses"), 60), (L.T("Planes lost"), 90), (L.T("Unlocks"), 70),
             (L.T("Finished dungeons"), 300));
         summary.Dock = DockStyle.Top;
         summary.Height = 130;
@@ -52,10 +53,10 @@ internal sealed class AccountsPage : UserControl
         summary.DoubleClick += (_, _) => EditAccount();
         planes = Ui.Grid((L.T("Plane"), 160), (L.T("Variant"), 100), (L.T("Level"), 60), (L.T("XP"), 80), (L.T("Plane id"), 230));
 
-        accountMoney = new AccountMoneyPanel(context) { Dock = DockStyle.Right, Width = 300, Padding = new Padding(8, 0, 0, 0) };
         accountStatus = Ui.Note("");
         editButton = Ui.Button(L.T("Edit account..."), (_, _) => EditAccount());
         removeButton = Ui.Button(L.T("Remove account"), (_, _) => RemoveAccount());
+        rerollButton = Ui.Button(L.T("Reroll portrait"), (_, _) => RerollPortrait());
         folderButton = Ui.Button(L.T("Accounts folder"), (_, _) =>
         {
             Directory.CreateDirectory(AccountStore.AccountsFolder);
@@ -64,7 +65,7 @@ internal sealed class AccountsPage : UserControl
 
         var buttons = Ui.WrapFlow(
             Ui.Button(L.T("Refresh"), (_, _) => LoadAccounts(force: true)),
-            editButton, removeButton, folderButton,
+            editButton, rerollButton, removeButton, folderButton,
             accountStatus);
         buttons.Dock = DockStyle.Top;
 
@@ -78,7 +79,6 @@ internal sealed class AccountsPage : UserControl
         var accountsPanel = new Panel { Dock = DockStyle.Fill };
         accountsPanel.Resize += (_, _) => serverNote.MaximumSize = new Size(Math.Max(200, accountsPanel.ClientSize.Width - 10), 0);
         accountsPanel.Controls.Add(planes);
-        accountsPanel.Controls.Add(accountMoney);
         accountsPanel.Controls.Add(planesTitle);
         accountsPanel.Controls.Add(summary);
         accountsPanel.Controls.Add(serverNote);
@@ -172,6 +172,7 @@ internal sealed class AccountsPage : UserControl
         bool selected = Selected != null;
         editButton.Enabled = selected && !serverRunning && Selected!.Error.Length == 0;
         removeButton.Enabled = selected && !serverRunning;
+        rerollButton.Enabled = selected && !serverRunning && Selected!.Error.Length == 0 && portraitParts.Available;
         if (serverRunning)
         {
             serverNote.Text = L.T("Stop the server to edit or remove accounts: the server keeps the accounts of the players who joined in memory while it runs and would write over the changes.");
@@ -215,6 +216,7 @@ internal sealed class AccountsPage : UserControl
                     account.LastSeen.HasValue ? account.LastSeen.Value.ToString("dd/MM/yyyy HH:mm") : "—",
                     pilot != null ? Number(pilot.Level) : "—",
                     data != null ? data.Planes.Count.ToString(CultureInfo.InvariantCulture) : "—",
+                    pilot != null ? portraitParts.Describe(pilot.Portrait) : "—",
                     pilot != null ? Number(pilot.Kills) : "—",
                     pilot != null ? Number(pilot.BossKills) : "—",
                     pilot != null ? Number(pilot.PlanesLost) : "—",
@@ -262,7 +264,6 @@ internal sealed class AccountsPage : UserControl
         {
             planes.EndUpdate();
             UpdateButtons();
-            accountMoney.Show(Selected);
         }
     }
 
@@ -292,6 +293,27 @@ internal sealed class AccountsPage : UserControl
 
         using var editor = new AccountEditorForm(context, store);
         if (editor.ShowDialog(FindForm()) == DialogResult.OK) LoadAccounts(force: true);
+    }
+
+    // New random portrait for the selected account, saved at once (copy in server\_backup).
+    private void RerollPortrait()
+    {
+        AccountStore.Summary? chosen = Selected;
+        if (chosen == null || !ServerStoppedOrWarn()) return;
+        try
+        {
+            AccountStore store = AccountStore.Load(chosen.Folder);
+            Dictionary<string, int>? rolled = portraitParts.Roll(new Random());
+            if (rolled == null) return;
+            store.Portrait = rolled;
+            string backup = store.Save();
+            context.ServerNotice(L.F("new portrait for {0}: {1}; previous copy in {2}", chosen.Name, portraitParts.Describe(rolled), backup));
+        }
+        catch (Exception e)
+        {
+            Ui.ShowError(FindForm(), L.F("Could not save the account: {0}", e.Message));
+        }
+        LoadAccounts(force: true);
     }
 
     private void RemoveAccount()

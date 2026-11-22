@@ -1,0 +1,41 @@
+{
+  "format": 1,
+  "id": "charger",
+  "name": "Charger",
+  "author": "Steambirds Revive",
+  "description": "Dives at the player; when it gets close it keeps going straight for a moment (a pass), then turns around and dives again (the built-in \"charge\").",
+  "initial": "dive",
+  "states": [
+    {
+      "id": "dive",
+      "behavior": "dive",
+      "transitions": [
+        {
+          "to": "pass",
+          "when": [
+            {
+              "type": "playerWithin",
+              "value": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pass",
+      "behavior": "pass_through",
+      "transitions": [
+        {
+          "to": "dive",
+          "when": [
+            {
+              "type": "timeInState",
+              "value": 1.4,
+              "max": 2.2
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

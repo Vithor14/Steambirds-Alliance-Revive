@@ -1,0 +1,16 @@
+{
+  "format": 1,
+  "id": "patrol_home",
+  "name": "Patrol near home",
+  "author": "Steambirds Revive",
+  "description": "Wanders between random points near where the unit was born. Does not shoot.",
+  "move": {
+    "mode": "wander",
+    "distance": 10,
+    "interval": 5,
+    "speed": 0.45
+  },
+  "fire": {
+    "enabled": false
+  }
+}

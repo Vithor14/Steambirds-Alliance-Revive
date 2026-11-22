@@ -13,7 +13,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>SteambirdsLauncher</AssemblyName>
     <RootNamespace>SteambirdsLauncher</RootNamespace>
-    <Version>0.3.0</Version>
+    <Version>0.4.0</Version>
     <Product>Steambirds Alliance Revive Launcher</Product>
     <Company>Steambirds Alliance Revive community</Company>
     <Description>Launcher for the community revival of Steambirds Alliance</Description>
@@ -21,5 +21,10 @@
     <!-- Build output of the script lives next to the sources: keep it out of the compilation. -->
     <DefaultItemExcludes>$(DefaultItemExcludes);build\**;dist\**</DefaultItemExcludes>
   </PropertyGroup>
+
+  <!-- Enemy AI core, shared with the server: the AI tab simulator runs the same code the server runs. -->
+  <ItemGroup>
+    <Compile Include="..\Shared\EnemyAi\*.cs" LinkBase="Shared\EnemyAi" />
+  </ItemGroup>
 
 </Project>

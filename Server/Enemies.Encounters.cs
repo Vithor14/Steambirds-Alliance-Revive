@@ -183,6 +183,8 @@ public static partial class Enemies
             Type = type,
             Model = model,
             FromWave = fromWave,
+            // Wave units come for the player at once (the Arena's waves spawn far from the player and used to wander).
+            Aggro = fromWave,
             Boss = type.Boss,
             X = x,
             Y = y,
@@ -199,8 +201,10 @@ public static partial class Enemies
             Invulnerable = type.Invulnerable
         };
 
+        enemy.Ai = AttachBrain(key, type.Ai, log);
+
         // Spawns facing the player.
-        enemy.Rot = inst.HasPlayer ? Heading(x, y, inst.PlayerX, inst.PlayerY) : (float)(rng.NextDouble() * 360.0 - 180.0);
+        enemy.Rot =inst.HasPlayer ? Heading(x, y, inst.PlayerX, inst.PlayerY) : (float)(rng.NextDouble() * 360.0 - 180.0);
 
         float health = type.Health > 0f ? type.Health : model.MaxHp;
         if (health <= 0f) health = 100f;
@@ -282,6 +286,7 @@ public static partial class Enemies
             enemy.PhasesApplied++;
 
             if (!string.IsNullOrWhiteSpace(phase.Behavior)) enemy.Behavior = NormalizeBehavior(phase.Behavior);
+            if (!string.IsNullOrWhiteSpace(phase.Ai)) enemy.Ai = AttachBrain(enemy.TypeKey, phase.Ai, log) ?? enemy.Ai;
             if (phase.SpeedMultiplier > 0f) enemy.PhaseSpeedMult = phase.SpeedMultiplier;
             if (phase.FireRateMultiplier > 0f) enemy.PhaseFireRateMult = phase.FireRateMultiplier;
             if (phase.Guns != null && phase.Guns.Count > 0) enemy.ActiveGuns = new List<int>(phase.Guns);

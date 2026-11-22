@@ -38,6 +38,7 @@ public static class AccountFile
         public double PlanesLost { get; set; }
         public double HighestPlaneLevel { get; set; }
         public List<string> Unlocks { get; set; } = new List<string>();
+        public Dictionary<string, int> Portrait { get; set; } = new Dictionary<string, int>();
     }
 
     private static readonly JsonSerializerOptions Options = new JsonSerializerOptions
@@ -59,7 +60,11 @@ public static class AccountFile
         account.Name ??= "";
         account.SteamId ??= "";
         account.Key ??= "";
-        if (account.Pilot != null) account.Pilot.Unlocks ??= new List<string>();
+        if (account.Pilot != null)
+        {
+            account.Pilot.Unlocks ??= new List<string>();
+            account.Pilot.Portrait ??= new Dictionary<string, int>();
+        }
         return account;
     }
 }

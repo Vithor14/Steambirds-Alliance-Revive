@@ -62,6 +62,9 @@ internal sealed class ClientTab : UserControl
         Ui.AddRow(gameTable, Ui.Text(L.T("Game language:")), languageStatus);
         Ui.AddRow(gameTable, Ui.Text(L.T("Steam:")), Ui.Flow(steamStatus, openSteamButton));
         Ui.AddRow(gameTable, Ui.Text(L.T("Quieter plugin:")), Ui.Flow(pluginStatus, installPluginButton));
+        Label pluginHelp = Ui.Wrapping(L.T("What it does: a small mod (BepInEx) that runs inside your game. It fixes client bugs (the Flock Hall building invisible in Rebel City, and the death window showing the numbers of the previous death from the second death on), hides the noise of the game logs and turns off the telemetry errors. Without it: the game still opens and you can play, but with those bugs and with a Player.log full of noise. A PC that only joins other people's servers loses nothing else. The server does not need it: its data tables ship in server\\data."), 560, gray: true);
+        Ui.AddRow(gameTable, null, pluginHelp);
+        tip.SetToolTip(pluginStatus, L.T("The Quieter plugin fixes bugs of the game client and hides log noise. Without it the game works, with those bugs."));
         Ui.AddRow(gameTable, Ui.Text(L.T("Install:")), downloadButton);
 
         // ------------------------------------------------------------ player

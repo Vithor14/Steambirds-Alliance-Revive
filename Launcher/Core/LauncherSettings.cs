@@ -44,6 +44,10 @@ public sealed class LauncherSettings
     // Hides the HarmonyX IL dumps and the "referenced script is missing" warnings in the client console.
     public bool HideClientLogNoise { get; set; } = true;
 
+    // Server console: also show the info lines (what the players do: skills, shots, messages...). Off = warnings,
+    // errors and the events of the server (connections, dungeons...). The log file always has every line.
+    public bool ShowServerInfoLines { get; set; }
+
     // Writes logs\server-report.txt every time the server stops (like Run server.ps1 did on Ctrl+C).
     public bool ReportOnServerStop { get; set; } = true;
 

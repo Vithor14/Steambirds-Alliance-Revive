@@ -1,5 +1,6 @@
 using SteambirdsLauncher.Core;
 using SteambirdsLauncher.Editor;
+using SteambirdsLauncher.EnemyAi;
 
 namespace SteambirdsLauncher.UI;
 
@@ -21,6 +22,11 @@ internal sealed class MainForm : Form
     // The map editor keeps its map (and the undo history) when the launcher builds the tabs again (new language).
     private MapEditorTab? editorTab;
     private MapSession? editorSession;
+
+    // The Enemy AI tab keeps its files (and what is not saved yet) in the same way.
+    private readonly AiStore aiStore = new AiStore(LauncherPaths.AiFolder);
+    private AiTab? aiTab;
+    private bool aiStoreLoaded;
 
     public MainForm()
     {
@@ -44,6 +50,13 @@ internal sealed class MainForm : Form
         }
 
         context = new LauncherContext(this, settings);
+
+        // No game in the game folder: ask how to get it before the main window opens.
+        if (!GameInstall.HasGame(settings.GameFolder))
+        {
+            using var setup = new GameSetupForm(context);
+            setup.ShowDialog();
+        }
         context.LoadGameDataNow();
         context.OpenSettingsTab = () =>
         {
@@ -102,12 +115,16 @@ internal sealed class MainForm : Form
             var settingsPage = new TabPage(L.T("Settings")) { Padding = new Padding(4) };
             settingsPage.Controls.Add(new SettingsTab(context, OnLanguageChanged) { Dock = DockStyle.Fill });
 
+            // The AI tab goes first: the map editor asks it for the list of AIs.
+            var aiPage = new TabPage(L.T("Enemy AI")) { Padding = new Padding(2) };
+            aiPage.Controls.Add(BuildAiTab());
+
             var editorPage = new TabPage(L.T("Map editor")) { Padding = new Padding(2) };
             editorPage.Controls.Add(BuildEditor());
 
             var newTabs = new ThemedTabControl { Dock = DockStyle.Fill, Padding = new Point(18, 5) };
-            newTabs.TabPages.AddRange(new[] { clientPage, serverPage, settingsPage, editorPage });
-            if (selected >= 0 && selected < 4) newTabs.SelectedIndex = selected;
+            newTabs.TabPages.AddRange(new[] { clientPage, serverPage, settingsPage, editorPage, aiPage });
+            if (selected >= 0 && selected < 5) newTabs.SelectedIndex = selected;
 
             Controls.Add(newTabs);
             newTabs.BringToFront();
@@ -126,6 +143,44 @@ internal sealed class MainForm : Form
         folderStatus.Text = L.F("Launcher folder: {0}", LauncherPaths.BaseFolder);
         serverStatus.Text = "";
         gameStatus.Text = "";
+    }
+
+    // The Enemy AI tab. Like the map editor, a failure here only shows in its own tab.
+    private Control BuildAiTab()
+    {
+        try
+        {
+            if (!aiStoreLoaded)
+            {
+                aiStore.Reload();
+                aiStoreLoaded = true;
+            }
+            aiTab = new AiTab(context, aiStore) { Dock = DockStyle.Fill };
+            EnemyAiEditors.Current = new AiEditorBridge(aiStore, OpenAi);
+            context.OpenAiTab = OpenAi;
+            return aiTab;
+        }
+        catch (Exception error)
+        {
+            aiTab = null;
+            EnemyAiEditors.Current = null;
+            CrashLog.Report(error, showDialog: false);
+            return new Label
+            {
+                Dock = DockStyle.Fill,
+                Padding = new Padding(16),
+                Tag = TextRole.Bad,
+                Text = L.F("The Enemy AI tab could not open:\n\n{0}\n\nThe details were saved in {1}.", error.Message, LauncherPaths.ErrorLogFile)
+            };
+        }
+    }
+
+    // Selects the Enemy AI tab (on one AI when its id is given).
+    private void OpenAi(string? id)
+    {
+        if (tabs == null || tabs.TabCount < 5) return;
+        tabs.SelectedIndex = 4;
+        if (!string.IsNullOrWhiteSpace(id)) aiTab?.OpenBrain(id);
     }
 
     // The map editor is the newest part of the launcher. If it fails to open, the error goes to
@@ -206,6 +261,13 @@ internal sealed class MainForm : Form
     {
         // Maps of the editor that were not saved.
         if (editorTab != null && !editorTab.ConfirmDiscard())
+        {
+            e.Cancel = true;
+            return;
+        }
+
+        // AI files that were not saved.
+        if (aiTab != null && !aiTab.ConfirmDiscard())
         {
             e.Cancel = true;
             return;

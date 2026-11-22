@@ -1,0 +1,18 @@
+{
+  "format": 1,
+  "id": "bomb_run",
+  "name": "Bomb run",
+  "author": "Steambirds Revive",
+  "description": "Flies at the player at 60% of the top speed (it can be outrun and shot down) and blows up on contact. Does not shoot.",
+  "move": {
+    "mode": "approach",
+    "lead": 0.25,
+    "speed": 0.6
+  },
+  "fire": {
+    "enabled": false
+  },
+  "contact": {
+    "explodeRadius": 1.4
+  }
+}

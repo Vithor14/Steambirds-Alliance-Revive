@@ -9,138 +9,171 @@
   "key": "key_finalboss",
   "portalItem": "dungeon_finalboss",
   "quest": "dungeon_finalboss_01",
-  "exit": {"point": "portal", "when": "death:meowza"},
-  "nextDungeon": {"map": "dungeon_3brothers", "point": "portal_3brothers", "when": "death:meowza"},
+  "exit": {
+    "point": "portal",
+    "when": "death:meowza"
+  },
+  "nextDungeon": {
+    "map": "dungeon_3brothers",
+    "point": "portal_3brothers",
+    "when": "death:meowza"
+  },
   "territory": 35,
   "floor": {
     "wallsOnEdges": true,
     "voidMargin": 4,
     "voidTerritory": 74,
-    "drawingPieces": [42135, 42134, 42133, 42132, 42131, 42130, 42129, 42128, 42127, 6451, 6450, 6449],
+    "drawingPieces": [
+      42135,
+      42134,
+      42133,
+      42132,
+      42131,
+      42130,
+      42129,
+      42128,
+      42127,
+      6451,
+      6450,
+      6449
+    ],
     "drawing": {
-      "siStart": -20,
-      "sjStart": -44,
+      "siStart": -8,
+      "sjStart": -20,
       "legend": ". chao livre, # muro, - sem chao. Primeira linha = ultima fileira sj (o fundo).",
       "lines": [
-        "############################################",
-        "############################################",
-        "############################################",
-        "############################################",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "#####..................................#####",
-        "####################....####################",
-        "####################....####################",
-        "####################....####################",
-        "####################....####################",
-        "####################....####################",
-        "####################....####################",
-        "----################....################----",
-        "----################....################----",
-        "----######........................######----",
-        "----######........................######----",
-        "----######........................######----",
-        "----######........................######----",
-        "----######........................######----",
-        "----######........................######----",
-        "----######........................######----",
-        "----######........................######----",
-        "----######........................######----",
-        "----######........................######----",
-        "----######........................######----",
-        "----######........................######----",
-        "----######........................######----",
-        "----######........................######----",
-        "----######........................######----",
-        "----######........................######----",
-        "----######........................######----",
-        "----######........................######----",
-        "----######........................######----",
-        "----######........................######----",
-        "----################....################----",
-        "----################....################----",
-        "----################....################----",
-        "----################....################----",
-        "----################....################----",
-        "----################....################----",
-        "--------#######..............#######--------",
-        "--------#######..............#######--------",
-        "--------#######..............#######--------",
-        "--------#######..............#######--------",
-        "--------#######..............#######--------",
-        "--------#######..............#######--------",
-        "--------#######..............#######--------",
-        "--------#######..............#######--------",
-        "--------#######..............#######--------",
-        "--------#######..............#######--------",
-        "--------#######..............#######--------",
-        "--------#######..............#######--------",
-        "--------############################--------",
-        "--------############################--------",
-        "--------############################--------",
-        "--------############################--------"
+        "######################--",
+        "######################--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##..................##--",
+        "##########..##########--",
+        "##########..##########--",
+        "##########..##########--",
+        "--########..########----",
+        "--###............###----",
+        "--###............###----",
+        "--###............###----",
+        "--###............###----",
+        "--###............###----",
+        "--###............###----",
+        "--###............###----",
+        "--###............###----",
+        "--###............###----",
+        "--###............###----",
+        "--########..########----",
+        "--########..########----",
+        "--########..########----",
+        "----###........###------",
+        "----###........###------",
+        "----###........###------",
+        "----###........###------",
+        "----###........###------",
+        "----###........###------",
+        "----##############------",
+        "----##############------"
       ]
     },
     "pieces": []
   },
   "decor": [],
   "buildings": [],
-  "spawn": {"u": 6.0, "v": -112.1, "rot": 315},
+  "spawn": {
+    "u": 9.0,
+    "v": -50.05,
+    "rot": 315
+  },
   "points": {
-    "boss": {"u": 6.0, "v": 88.9, "rot": 135},
-    "portal": {"u": 6.0, "v": 49.1, "rot": 0, "note": "porta-avioes de saida (aparece quando o chefe morre)"},
-    "portal_3brothers": {"u": -13.9, "v": 49.1, "rot": 0, "note": "meowzaDeath3BrothersPortal -> dungeon_3brothers"}
+    "boss": {
+      "u": 9.0,
+      "v": 50.45,
+      "rot": 135
+    },
+    "portal": {
+      "u": 9.0,
+      "v": 30.55,
+      "rot": 0,
+      "note": "porta-avioes de saida (aparece quando o chefe morre)"
+    },
+    "portal_3brothers": {
+      "u": -0.95,
+      "v": 30.55,
+      "rot": 0,
+      "note": "meowzaDeath3BrothersPortal -> dungeon_3brothers"
+    }
   },
   "groups": {},
   "areas": {
-    "entrada": {"minU": -15.6, "maxU": 27.6, "minV": -120.6, "maxV": -83.4},
-    "galeria_dos_fieis": {"minU": -30.6, "maxU": 42.6, "minV": -66.6, "maxV": -5.4},
-    "salao_do_trono": {"minU": -45.6, "maxU": 57.6, "minV": 17.4, "maxV": 120.6}
+    "entrada": {
+      "minU": -1.8,
+      "maxU": 19.8,
+      "minV": -54.3,
+      "maxV": -35.7
+    },
+    "galeria_dos_fieis": {
+      "minU": -9.3,
+      "maxU": 27.3,
+      "minV": -27.3,
+      "maxV": 3.3
+    },
+    "salao_do_trono": {
+      "minU": -16.8,
+      "maxU": 34.8,
+      "minV": 14.7,
+      "maxV": 66.3
+    }
   },
-  "lines": {"entrada": -120.0, "galeria_dos_fieis": -66.0, "salao_do_trono": 18.0},
-  "values": {"tier": 10},
+  "lines": {
+    "entrada": -54.0,
+    "galeria_dos_fieis": -27.0,
+    "salao_do_trono": 15.0
+  },
+  "values": {
+    "tier": 10
+  },
   "checkpoints": [
-    {"name": "entrada", "activeAtV": -120.0, "u": 6.0, "v": -116.1, "rot": 315},
-    {"name": "galeria_dos_fieis", "activeAtV": -66.0, "u": 6.0, "v": -60.2, "rot": 315},
-    {"name": "salao_do_trono", "activeAtV": 18.0, "u": 6.0, "v": 27.2, "rot": 315}
+    {
+      "name": "entrada",
+      "activeAtV": -54.0,
+      "u": 9.0,
+      "v": -52.05,
+      "rot": 315
+    },
+    {
+      "name": "galeria_dos_fieis",
+      "activeAtV": -27.0,
+      "u": 9.0,
+      "v": -24.1,
+      "rot": 315
+    },
+    {
+      "name": "salao_do_trono",
+      "activeAtV": 15.0,
+      "u": 9.0,
+      "v": 19.6,
+      "rot": 315
+    }
   ],
   "gates": [
     {
       "name": "portao de laser",
       "type": "meowzalasergateWE",
-      "sj": -25,
-      "siFrom": 0,
+      "sj": -11,
+      "siFrom": 2,
       "siTo": 3,
       "damageable": false,
       "opensWhen": "quest:dungeon_finalboss_01",
@@ -149,8 +182,8 @@
     {
       "name": "porta do trono",
       "type": "meowzadungeondestroyablewall",
-      "sj": 2,
-      "siFrom": 0,
+      "sj": 3,
+      "siFrom": 2,
       "siTo": 3,
       "damageable": false,
       "opensWhen": "cleared:galeria_dos_fieis",
@@ -166,7 +199,11 @@
       "behavior": "turret",
       "aggroRadius": 30,
       "invulnerable": true,
-      "barks": {"onWake": "meowzablocker", "countdown": "meowzablocker_countdown_", "incinerate": "meowzablocker2"}
+      "barks": {
+        "onWake": "meowzablocker",
+        "countdown": "meowzablocker_countdown_",
+        "incinerate": "meowzablocker2"
+      }
     },
     "meowza_playerkicker": {
       "name": "Banishee",
@@ -175,7 +212,9 @@
       "preferredDistance": 7,
       "aggroRadius": 28,
       "invulnerable": true,
-      "barks": {"onWake": "meowza_playerkicker"},
+      "barks": {
+        "onWake": "meowza_playerkicker"
+      },
       "note": "conversa meowza1_warning_belowL30 para pilotos abaixo da patente 30"
     },
     "meowza": {
@@ -197,12 +236,40 @@
         "onDeath": "BOS1_meowzaDEATH"
       },
       "phases": [
-        {"belowHealth": 0.85, "summon": "meowzaB1m", "summonCount": 4, "bark": "BOS1_meowzaB0"},
-        {"belowHealth": 0.7, "summon": "meowzaB2m", "summonCount": 3},
-        {"belowHealth": 0.55, "summon": "meowzaC1m1", "summonCount": 4, "bark": "BOS1_meowzaC0"},
-        {"belowHealth": 0.4, "summon": "meowzaC2m", "summonCount": 3},
-        {"belowHealth": 0.25, "summon": "meowzanuke1m1", "summonCount": 1, "bark": "BOS1_meowzanuke"},
-        {"belowHealth": 0.12, "summon": "meowzaD2m", "summonCount": 4, "bark": "BOS1_meowzaD0"}
+        {
+          "belowHealth": 0.85,
+          "summon": "meowzaB1m",
+          "summonCount": 4,
+          "bark": "BOS1_meowzaB0"
+        },
+        {
+          "belowHealth": 0.7,
+          "summon": "meowzaB2m",
+          "summonCount": 3
+        },
+        {
+          "belowHealth": 0.55,
+          "summon": "meowzaC1m1",
+          "summonCount": 4,
+          "bark": "BOS1_meowzaC0"
+        },
+        {
+          "belowHealth": 0.4,
+          "summon": "meowzaC2m",
+          "summonCount": 3
+        },
+        {
+          "belowHealth": 0.25,
+          "summon": "meowzanuke1m1",
+          "summonCount": 1,
+          "bark": "BOS1_meowzanuke"
+        },
+        {
+          "belowHealth": 0.12,
+          "summon": "meowzaD2m",
+          "summonCount": 4,
+          "bark": "BOS1_meowzaD0"
+        }
       ]
     },
     "meowzaB1m": {
@@ -233,9 +300,23 @@
       "preferredDistance": 3.0,
       "aggroRadius": 30
     },
-    "meowzaD2m": {"name": "Godleader Meowza", "template": "meowzaD2m", "behavior": "turret", "aggroRadius": 30},
-    "meowzaDEATH": {"name": "Godleader Meowza", "template": "meowzaDEATH", "behavior": "idle", "invulnerable": true},
-    "meowzadungeondestroyablewall": {"name": "meowzadungeondestroyablewall", "template": "meowzadungeondestroyablewall", "behavior": "idle"},
+    "meowzaD2m": {
+      "name": "Godleader Meowza",
+      "template": "meowzaD2m",
+      "behavior": "turret",
+      "aggroRadius": 30
+    },
+    "meowzaDEATH": {
+      "name": "Godleader Meowza",
+      "template": "meowzaDEATH",
+      "behavior": "idle",
+      "invulnerable": true
+    },
+    "meowzadungeondestroyablewall": {
+      "name": "meowzadungeondestroyablewall",
+      "template": "meowzadungeondestroyablewall",
+      "behavior": "idle"
+    },
     "meowzahealthnode": {
       "name": "Spirit Vessel of Meowza",
       "template": "meowzahealthnode",
@@ -250,11 +331,36 @@
       "preferredDistance": 2.0,
       "aggroRadius": 30
     },
-    "meowzalaserA": {"name": "Godleader Meowza", "template": "meowzalaserA", "behavior": "turret", "aggroRadius": 30},
-    "meowzalaserB": {"name": "Godleader Meowza", "template": "meowzalaserB", "behavior": "turret", "aggroRadius": 30},
-    "meowzalaserC": {"name": "Godleader Meowza", "template": "meowzalaserC", "behavior": "turret", "aggroRadius": 30},
-    "meowzalaserD": {"name": "Godleader Meowza", "template": "meowzalaserD", "behavior": "turret", "aggroRadius": 30},
-    "meowzalasergateWE": {"name": "meowzalasergateWE", "template": "meowzalasergateWE", "behavior": "turret", "aggroRadius": 30},
+    "meowzalaserA": {
+      "name": "Godleader Meowza",
+      "template": "meowzalaserA",
+      "behavior": "turret",
+      "aggroRadius": 30
+    },
+    "meowzalaserB": {
+      "name": "Godleader Meowza",
+      "template": "meowzalaserB",
+      "behavior": "turret",
+      "aggroRadius": 30
+    },
+    "meowzalaserC": {
+      "name": "Godleader Meowza",
+      "template": "meowzalaserC",
+      "behavior": "turret",
+      "aggroRadius": 30
+    },
+    "meowzalaserD": {
+      "name": "Godleader Meowza",
+      "template": "meowzalaserD",
+      "behavior": "turret",
+      "aggroRadius": 30
+    },
+    "meowzalasergateWE": {
+      "name": "meowzalasergateWE",
+      "template": "meowzalasergateWE",
+      "behavior": "turret",
+      "aggroRadius": 30
+    },
     "meowzanuke1m1": {
       "name": "Godleader Meowza",
       "template": "meowzanuke1m1",
@@ -287,12 +393,24 @@
       "enemies": [
         {
           "type": "meowzablocker",
-          "pos": [{"u": 6.0, "v": -86.9, "rot": 135}],
+          "pos": [
+            {
+              "u": 9.0,
+              "v": -37.45,
+              "rot": 135
+            }
+          ],
           "note": "The Viceroy: contagem de incineracao da area de entrada"
         },
         {
           "type": "meowza_playerkicker",
-          "pos": [{"u": 6.0, "v": -102.0, "rot": 135}],
+          "pos": [
+            {
+              "u": 9.0,
+              "v": -45.0,
+              "rot": 135
+            }
+          ],
           "note": "Banishee: tira da dungeon pilotos fracos"
         }
       ]
@@ -306,34 +424,82 @@
         {
           "type": "meowzaturtle",
           "pos": [
-            {"u": -20.4, "v": -24.5, "rot": 135},
-            {"u": 6.0, "v": -24.5, "rot": 135},
-            {"u": 32.4, "v": -24.5, "rot": 135}
+            {
+              "u": -4.2,
+              "v": -6.25,
+              "rot": 135
+            },
+            {
+              "u": 9.0,
+              "v": -6.25,
+              "rot": 135
+            },
+            {
+              "u": 22.2,
+              "v": -6.25,
+              "rot": 135
+            }
           ],
           "note": "Acolytes of Meowza"
         },
         {
           "type": "meowzastardog",
           "pos": [
-            {"u": -20.4, "v": -38.9, "rot": 135},
-            {"u": -2.8, "v": -38.9, "rot": 135},
-            {"u": 14.8, "v": -38.9, "rot": 135},
-            {"u": 32.4, "v": -38.9, "rot": 135}
+            {
+              "u": -4.2,
+              "v": -13.45,
+              "rot": 135
+            },
+            {
+              "u": 4.6,
+              "v": -13.45,
+              "rot": 135
+            },
+            {
+              "u": 13.4,
+              "v": -13.45,
+              "rot": 135
+            },
+            {
+              "u": 22.2,
+              "v": -13.45,
+              "rot": 135
+            }
           ],
           "note": "Hounds of Meowza"
         },
         {
           "type": "meowzahurtsnake",
           "pos": [
-            {"u": 20.4, "v": -15.2, "rot": 135},
-            {"u": 30.8, "v": -46.4, "rot": 135},
-            {"u": 22.9, "v": -28.6, "rot": 135},
-            {"u": 3.4, "v": -32.8, "rot": 135}
+            {
+              "u": 16.2,
+              "v": -1.6,
+              "rot": 135
+            },
+            {
+              "u": 21.4,
+              "v": -17.2,
+              "rot": 135
+            },
+            {
+              "u": 17.45,
+              "v": -8.3,
+              "rot": 135
+            },
+            {
+              "u": 7.7,
+              "v": -10.4,
+              "rot": 135
+            }
           ],
           "note": "Supplicants"
         }
       ],
-      "controllers": ["meowzastardogspawner1", "meowzastardogspawner2", "meowzahurtsnakespawner"]
+      "controllers": [
+        "meowzastardogspawner1",
+        "meowzastardogspawner2",
+        "meowzahurtsnakespawner"
+      ]
     },
     {
       "room": "salao_do_trono",
@@ -341,21 +507,82 @@
       "wakes": "onEnter",
       "line": "salao_do_trono",
       "enemies": [
-        {"type": "meowza", "pos": [{"u": 6.0, "v": 88.9, "rot": 135}]},
+        {
+          "type": "meowza",
+          "pos": [
+            {
+              "u": 9.0,
+              "v": 50.45,
+              "rot": 135
+            }
+          ]
+        },
         {
           "type": "meowzahealthnode",
           "pos": [
-            {"u": -31.8, "v": 31.2, "rot": 135},
-            {"u": 43.8, "v": 31.2, "rot": 135},
-            {"u": -31.8, "v": 106.8, "rot": 135},
-            {"u": 43.8, "v": 106.8, "rot": 135}
+            {
+              "u": -9.9,
+              "v": 21.6,
+              "rot": 135
+            },
+            {
+              "u": 27.9,
+              "v": 21.6,
+              "rot": 135
+            },
+            {
+              "u": -9.9,
+              "v": 59.4,
+              "rot": 135
+            },
+            {
+              "u": 27.9,
+              "v": 59.4,
+              "rot": 135
+            }
           ],
           "note": "Spirit Vessels of Meowza"
         },
-        {"type": "meowzalaserA", "pos": [{"u": 6.0, "v": 115.8, "rot": 135}]},
-        {"type": "meowzalaserB", "pos": [{"u": -40.8, "v": 69.0, "rot": 135}]},
-        {"type": "meowzalaserC", "pos": [{"u": 52.8, "v": 69.0, "rot": 135}]},
-        {"type": "meowzalaserD", "pos": [{"u": 6.0, "v": 64.0, "rot": 135}]}
+        {
+          "type": "meowzalaserA",
+          "pos": [
+            {
+              "u": 9.0,
+              "v": 63.9,
+              "rot": 135
+            }
+          ]
+        },
+        {
+          "type": "meowzalaserB",
+          "pos": [
+            {
+              "u": -14.4,
+              "v": 40.5,
+              "rot": 135
+            }
+          ]
+        },
+        {
+          "type": "meowzalaserC",
+          "pos": [
+            {
+              "u": 32.4,
+              "v": 40.5,
+              "rot": 135
+            }
+          ]
+        },
+        {
+          "type": "meowzalaserD",
+          "pos": [
+            {
+              "u": 9.0,
+              "v": 38.0,
+              "rot": 135
+            }
+          ]
+        }
       ],
       "boss": true,
       "closesOnEnter": true,
@@ -371,5 +598,6 @@
         "meowzafinallaserminion"
       ]
     }
-  ]
+  ],
+  "scaled": 0.5
 }

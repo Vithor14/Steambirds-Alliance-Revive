@@ -187,6 +187,18 @@ public sealed class AccountStore
     public int PlanesLost { get => GetInt(Pilot, "PlanesLost", 0); set => Pilot["PlanesLost"] = value; }
     public int HighestPlaneLevel { get => GetInt(Pilot, "HighestPlaneLevel", 0); set => Pilot["HighestPlaneLevel"] = value; }
 
+    // Pilot portrait: slot name (Base, Beak, Deco, Clothes, Eye, Hat, Mask, Pattern) -> part id.
+    public Dictionary<string, int> Portrait
+    {
+        get => GetIntMap(Pilot, "Portrait");
+        set
+        {
+            var map = new JsonObject();
+            foreach (KeyValuePair<string, int> pair in value.Where(p => p.Value > 0)) map[pair.Key] = pair.Value;
+            Pilot["Portrait"] = map;
+        }
+    }
+
     public List<string> Unlocks
     {
         get => GetStringList(Pilot, "Unlocks");

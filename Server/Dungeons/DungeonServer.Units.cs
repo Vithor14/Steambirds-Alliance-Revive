@@ -24,6 +24,15 @@ public static partial class DungeonServer
         if (t == null) return 0;
         DungeonMapData.UnitExtras extras = s.Data.ExtrasOf(type);
 
+        // Invisible unit with no gun = a controller of the original server (trap button, timers...). The client would show
+        // an enemy health bar over nothing and the room could never be cleared if it cannot be shot, so it is not created.
+        if (Enemies.IsControllerOnly(s.Data.Key(type)))
+        {
+            if (s.SkippedControllers.Add(type))
+                log("DUNGEON", "[dungeon] '" + type + "' is an invisible controller without guns: not created");
+            return 0;
+        }
+
         bool counts = !neverCounts && !extras.ExcludeFromRoomClear &&
             (forceRoomGroup || (t.Team == 2 && !t.Invulnerable && t.OpensAfterHitSeconds <= 0f && extras.DpsChest == null &&
             !string.Equals(t.Behavior, "idle", StringComparison.OrdinalIgnoreCase)));
@@ -33,6 +42,7 @@ public static partial class DungeonServer
             null, now, log);
         if (id == 0) return 0;
         if (waiting) Enemies.SetAsleep(s.Connection, id, true, 0f);
+        else if (counts) Enemies.ForceAggro(s.Connection, id);   // waves and summons hunt the player at once
 
         s.Units[id] = new Tracked
         {
@@ -139,6 +149,7 @@ public static partial class DungeonServer
         Enemies.EnemyType? type = Enemies.GetEnemyType(data.Key(t.Type));
         s.DeadTypes.Add(t.Type);
         if (type != null && type.Team == 2 && !type.Invulnerable) s.Kills++;
+        if (extras.ChainReaction != null) TriggerChainReaction(s, t, extras.ChainReaction, now, log);
 
         // DPS chest broken in time: the reward appears.
         if (extras.DpsChest != null)
@@ -210,6 +221,32 @@ public static partial class DungeonServer
             }
             log("DUNGEON", "[dungeon] " + (extras.Miniboss ? "miniboss " : "boss ") + t.Type + " defeated in room '" + t.Room.Name + "'" + (taken > 0 ? " (" + taken + " summoned unit(s) exploded)" : ""));
         }
+    }
+
+    // Chain reaction (the Bomb Factory's barrels and bombs): when one unit with "chainReaction" goes off, every other unit
+    // with "chainReaction" within its radius goes off a moment later; their own blasts set off the next ones, so a whole
+    // cluster of bombs fills the room with fire if the player shoots the wrong one.
+    private static void TriggerChainReaction(Session s, Tracked source, DungeonMapData.ChainReaction rule, double now,
+        Action<string, string> log)
+    {
+        int set = 0;
+        foreach (Tracked u in s.Units.Values.ToList())
+        {
+            if (u == source || u.Gone || u.Removed || u.ChainQueued) continue;
+            if (s.Data!.ExtrasOf(u.Type).ChainReaction == null) continue;
+            float dx = u.X - source.X;
+            float dy = u.Y - source.Y;
+            if (dx * dx + dy * dy > rule.Radius * rule.Radius) continue;
+            u.ChainQueued = true;
+            int id = u.Id;
+            set++;
+            Schedule(s, now + Math.Max(0.05f, rule.DelaySeconds), "chain reaction", time =>
+            {
+                if (s.Units.TryGetValue(id, out Tracked? target) && !target.Gone) Enemies.RemoveUnit(s.Connection, id, true, time);
+            });
+        }
+        if (set > 0)
+            log("DUNGEON", "[dungeon] chain reaction: " + source.Type + " set off " + set + " unit(s) within " + Maps.Num(rule.Radius) + " u");
     }
 
     // ================================================================== end of the dungeon

@@ -16,6 +16,9 @@ Referência técnica do sistema de inimigos, conferida no código decompilado (b
 - **Comandos**: comandos de chat desconhecidos do cliente chegam como `SlashCommand` (29486, List<string>).
 - Convenção de ângulo: 0 = +Y, 90 = +X; direção = (sin r, cos r). `maxTurnRate` em graus/s.
 
+## IA em arquivos (22/11)
+As IAs e os comportamentos também podem vir de arquivos (`Serveri\`), feitos e simulados na aba IA dos inimigos do launcher; um tipo usa `"ai": "<id>"`. Detalhes em `docs/enemy-ai.md`.
+
 ## Arquivos
 - `BepInEx\unidades_config.txt` — gravado pelo plugin Quieter 1.14.0+ (hash do Mono não dá para calcular no .NET 8).
 - `Server\enemies.json` — tipos, chefes com fases, encontros/ondas. Relido ao mudar. Tipos sem entrada no json podem vir do código (`RegistrarTipoPadrao`, usado pelo TutorialEsboco).

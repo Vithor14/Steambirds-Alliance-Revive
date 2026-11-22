@@ -161,7 +161,7 @@ internal static class Theme
                     button.UseVisualStyleBackColor = true;
                 }
                 return;
-            case TextBoxBase or NumericUpDown or ListBox:
+            case TextBoxBase or NumericUpDown or ListBox or TreeView:
                 control.BackColor = p.Input;
                 control.ForeColor = fore;
                 return;

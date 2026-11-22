@@ -37,12 +37,14 @@ Maintained 100% by the community, with some additions and improvements.
 | `docs/dungeon-server.md` | dungeon server (port 1113): architecture, flow, Iron Lair / Bomb Factory test |
 | `docs/dungeons-190828.md` | the 17 recreated dungeons of build 190828; what is original and what is rebuilt |
 | `docs/dungeon-enemies-and-loot.md` | kamikaze bombs, weapon reach vs orbit distance, dungeon loot tables |
+| `docs/dungeon-tuning.md` | 22/11 fixes: `dungeons.json` host settings, Mission Transport, 4x smaller maps, bullet limit, chain reaction, Nexus collision |
 | `docs/items-and-loot.md` | items, authoritative inventory, loot bags, workshop, bit-alignment fix |
 | `docs/progression.md` | plane and pilot XP, permadeath, skills, career rewards, `progression.json` |
 | `docs/map-format.md` | map JSON format, coordinates, dungeon fields, `Maps.cs` |
 | `docs/nexus-rebel-city.md` | Rebel City (Nexus) rebuild, buildings, docking, client uploads |
 | `docs/tutorial.md` | walker tutorial (Training Grounds), ClientMapInfo, exit portal |
 | `docs/enemies.md` | enemy AI protocol, scripted enemies, chat commands |
+| `docs/enemy-ai.md` | Enemy AI editor: AI/behavior files (`Serveri`), shared core `Shared\EnemyAi`, launcher tab and simulator (English) |
 | `docs/stores.md` | stores: shelves, `ClientReceiveStoreContent` bytes, purchase, slots, `stores.json` (English) |
 
 ## Repository layout
@@ -57,8 +59,10 @@ Maintained 100% by the community, with some additions and improvements.
   - Maps: `maps\*.json` (format: `docs/map-format.md`). Loot: `loot_tables\`.
   - Game data exported by the plugin (gitignored, copied from the game): `data\`. Item catalog written by the server: `catalog\`.
   - Accounts: `accounts\<key>\` (gitignored). Chat messages of the client: `Game.cs`; message IDs: `MessageCatalog.cs`.
-- `Launcher\` — WinForms .NET 8 launcher: `Core\`, `UI\`, `Editor\` (map editor tab), `lang\`.
+- `Launcher\` — WinForms .NET 8 launcher: `Core\`, `UI\`, `Editor\` (map editor tab), `EnemyAi\` (Enemy AI tab and simulator), `lang\`.
   Docs: `Launcher\README.md`, `Launcher\Editor\README.md`.
+- `Shared\EnemyAi\` — enemy AI core (file formats, runtime, flight, gun aim, simulator), compiled into **both** `Server` and `Launcher`
+  (`<Compile Include="..\Shared\EnemyAi\*.cs">`). The AI files themselves live in `Serveri\` (format: `Serveri\README.md`).
 - `QuieterPlugin\` — BepInEx plugin for the game client (net46): diagnostics, data exports, client-side fixes, and the
   export mode (`GameFilesExport.cs`, env `STEAMBIRDS_EXPORT`) that draws the map editor pictures and closes the game.
 - `GameFiles\` — `SteambirdsGameFiles.exe` (.NET 8 console): takes configBinary, the plugin's data files and the editor

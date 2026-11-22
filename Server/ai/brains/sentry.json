@@ -1,0 +1,49 @@
+{
+  "format": 1,
+  "id": "sentry",
+  "name": "Sentry",
+  "author": "Steambirds Revive",
+  "description": "A turret that only shoots when the player is within 40 units (and stops when they go beyond 48).",
+  "initial": "watch",
+  "states": [
+    {
+      "id": "watch",
+      "behavior": "turret_idle",
+      "transitions": [
+        {
+          "to": "shoot",
+          "when": [
+            {
+              "type": "playerWithin",
+              "value": 40
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "shoot",
+      "behavior": "turret_fire",
+      "transitions": [
+        {
+          "to": "watch",
+          "when": [
+            {
+              "type": "playerBeyond",
+              "value": 48
+            }
+          ]
+        },
+        {
+          "to": "watch",
+          "when": [
+            {
+              "type": "hasTarget",
+              "not": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

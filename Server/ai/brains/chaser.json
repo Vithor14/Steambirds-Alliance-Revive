@@ -1,0 +1,40 @@
+{
+  "format": 1,
+  "id": "chaser",
+  "name": "Chaser",
+  "author": "Steambirds Revive",
+  "description": "Patrols near home. When a player comes within 60 units it goes after them and circles them. Gives up when the player is gone.",
+  "initial": "patrol",
+  "states": [
+    {
+      "id": "patrol",
+      "behavior": "patrol_home",
+      "transitions": [
+        {
+          "to": "chase",
+          "when": [
+            {
+              "type": "playerWithin",
+              "value": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chase",
+      "behavior": "orbit_close",
+      "transitions": [
+        {
+          "to": "patrol",
+          "when": [
+            {
+              "type": "hasTarget",
+              "not": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "format": 1,
+  "id": "retreat",
+  "name": "Retreat",
+  "author": "Steambirds Revive",
+  "description": "Runs away from the player while still shooting (slowly).",
+  "move": {
+    "mode": "flee",
+    "speed": 1.0
+  },
+  "fire": {
+    "enabled": true,
+    "rateMult": 0.7
+  }
+}

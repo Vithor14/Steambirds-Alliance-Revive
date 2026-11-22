@@ -11,4 +11,9 @@
     <PackageReference Include="Lidgren.Network" Version="1.0.2" />
   </ItemGroup>
 
+  <!-- Enemy AI core, shared with the launcher (the AI tab simulator runs the same code). -->
+  <ItemGroup>
+    <Compile Include="..\Shared\EnemyAi\*.cs" LinkBase="Shared\EnemyAi" />
+  </ItemGroup>
+
 </Project>

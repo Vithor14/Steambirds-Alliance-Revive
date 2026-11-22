@@ -14,6 +14,10 @@ internal sealed class MapsPage : UserControl
     private readonly NumericUpDown maxPlayers;
     private readonly NumericUpDown autoExit;
     private readonly CheckBox portalsOn;
+    private readonly ComboBox entryMode;
+    private readonly CheckBox lockBossRooms;
+    private readonly NumericUpDown fireRateScale;
+    private readonly NumericUpDown maxBullets;
     private readonly Button saveButton;
     private readonly Button undoButton;
     private readonly Label statusLabel;
@@ -21,6 +25,14 @@ internal sealed class MapsPage : UserControl
     private DateTime loadedStamp = DateTime.MinValue;
     private bool loading;
     private bool dirty;
+
+    // dungeons.json "entryMode" and the text shown for each value.
+    private static readonly (string Value, string Label)[] EntryModes =
+    {
+        ("both", L.T("Both: carriers outside the city and the Mission Transport")),
+        ("portals", L.T("Only the carriers outside the city")),
+        ("missionTransport", L.T("Only the Mission Transport (mega carrier mission list)"))
+    };
 
     public MapsPage(ToolTip tip)
     {
@@ -64,6 +76,29 @@ internal sealed class MapsPage : UserControl
             Ui.Text(L.T("Automatic exit after the boss (seconds):")), autoExit,
             portalsOn);
         generalRow.Dock = DockStyle.Top;
+
+        // How players enter dungeons, boss room locks and how hard the enemies shoot (dungeons.json).
+        entryMode = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 330, Margin = new Padding(3, 4, 12, 3) };
+        foreach ((string value, string label) in EntryModes) entryMode.Items.Add(label);
+        entryMode.SelectedIndex = 0;
+        lockBossRooms = new CheckBox { Text = L.T("Lock the doors of a boss room behind the player"), AutoSize = true, Margin = new Padding(3, 6, 12, 3) };
+        fireRateScale = new NumericUpDown { Minimum = 0.1m, Maximum = 5m, DecimalPlaces = 2, Increment = 0.1m, Value = 1m, Width = 70, Margin = new Padding(3, 4, 12, 3) };
+        maxBullets = new NumericUpDown { Minimum = 0, Maximum = 200, Width = 70, Value = 10, Margin = new Padding(3, 4, 3, 3) };
+        entryMode.SelectedIndexChanged += (_, _) => MarkDirty();
+        lockBossRooms.CheckedChanged += (_, _) => MarkDirty();
+        fireRateScale.ValueChanged += (_, _) => MarkDirty();
+        maxBullets.ValueChanged += (_, _) => MarkDirty();
+        tip.SetToolTip(entryMode, L.T("both: the carriers outside the city and the Mission Transport (the mega carrier at the end of the main ramp, which lists the dungeons as missions). portals: only the carriers. missionTransport: only the mission list."));
+        tip.SetToolTip(maxBullets, L.T("The most bullets per second one dungeon enemy may put out (its guns slow down together until it fits). 0 = no limit. Lower = easier to dodge."));
+        tip.SetToolTip(fireRateScale, L.T("Multiplies the fire rate of every dungeon enemy (0.5 = half as fast)."));
+        var entryRow = Ui.WrapFlow(
+            Ui.Text(L.T("How players enter dungeons:")), entryMode,
+            lockBossRooms);
+        entryRow.Dock = DockStyle.Top;
+        var fireRow = Ui.WrapFlow(
+            Ui.Text(L.T("Enemy fire rate ×:")), fireRateScale,
+            Ui.Text(L.T("Max bullets per second per enemy (0 = no limit):")), maxBullets);
+        fireRow.Dock = DockStyle.Top;
 
         var help = Ui.Wrapping(L.T("Active: the dungeon shows in the Nexus and accepts players. Map file: any .json of the server\\maps folder (the community can make other versions of each dungeon). Health ×: multiplies the health of the dungeon's enemies. Opens at: date and time of this PC as yyyy-mm-dd hh:mm (empty = already open). The server reads dungeons.json again by itself; changes apply to the next entries."), 1000, gray: true);
         help.Dock = DockStyle.Top;
@@ -115,6 +150,8 @@ internal sealed class MapsPage : UserControl
         dungeonsPanel.Resize += (_, _) => help.MaximumSize = new Size(Math.Max(200, dungeonsPanel.ClientSize.Width - 10), 0);
         dungeonsPanel.Controls.Add(grid);
         dungeonsPanel.Controls.Add(help);
+        dungeonsPanel.Controls.Add(fireRow);
+        dungeonsPanel.Controls.Add(entryRow);
         dungeonsPanel.Controls.Add(generalRow);
         dungeonsPanel.Controls.Add(toolbar);
 
@@ -163,6 +200,11 @@ internal sealed class MapsPage : UserControl
             maxPlayers.Value = Math.Clamp(catalog.MaxPlayers, (int)maxPlayers.Minimum, (int)maxPlayers.Maximum);
             autoExit.Value = (decimal)Math.Clamp(catalog.AutoExitSeconds, (double)autoExit.Minimum, (double)autoExit.Maximum);
             portalsOn.Checked = catalog.NexusPortalsOn;
+            int modeIndex = Array.FindIndex(EntryModes, m => string.Equals(m.Value, catalog.EntryMode, StringComparison.OrdinalIgnoreCase));
+            entryMode.SelectedIndex = modeIndex >= 0 ? modeIndex : 0;
+            lockBossRooms.Checked = catalog.LockBossRooms;
+            fireRateScale.Value = (decimal)Math.Clamp(catalog.FireRateScale, (double)fireRateScale.Minimum, (double)fireRateScale.Maximum);
+            maxBullets.Value = (decimal)Math.Clamp(catalog.MaxBulletsPerSecond, (double)maxBullets.Minimum, (double)maxBullets.Maximum);
 
             foreach (DungeonCatalogFile.Dungeon dungeon in catalog.Dungeons)
             {
@@ -220,7 +262,11 @@ internal sealed class MapsPage : UserControl
         {
             MaxPlayers = (int)maxPlayers.Value,
             AutoExitSeconds = (double)autoExit.Value,
-            NexusPortalsOn = portalsOn.Checked
+            NexusPortalsOn = portalsOn.Checked,
+            EntryMode = EntryModes[Math.Max(0, entryMode.SelectedIndex)].Value,
+            LockBossRooms = lockBossRooms.Checked,
+            FireRateScale = (double)fireRateScale.Value,
+            MaxBulletsPerSecond = (double)maxBullets.Value
         };
         var errors = new List<string>();
         foreach (DataGridViewRow row in grid.Rows)

@@ -74,7 +74,7 @@ internal sealed class GatesPage : EditorPage
 
     private IEnumerable<FieldSpec> CommonFields()
     {
-        yield return new FieldSpec("name", "Gate", FieldKind.Text);
+        yield return new FieldSpec("name", "Gate", FieldKind.Text) { Help = "Name of the gate. Other parts of the map (rooms, conditions) point to it by this name." };
         yield return new FieldSpec("type", "Unit type of the boxes", FieldKind.EditableChoice)
         {
             Choices = Context.TypeNames,
@@ -100,15 +100,15 @@ internal sealed class GatesPage : EditorPage
     {
         yield return FieldSpec.Header("Row (runs along u)");
         yield return new FieldSpec("sj", "Row (sj)", FieldKind.Int) { Min = -1000, Max = 1000, Help = "Sub-cell row: 3 u each (4 per tile)." };
-        yield return new FieldSpec("siFrom", "From column (si)", FieldKind.Int) { Min = -1000, Max = 1000 };
-        yield return new FieldSpec("siTo", "To column (si)", FieldKind.Int) { Min = -1000, Max = 1000 };
+        yield return new FieldSpec("siFrom", "From column (si)", FieldKind.Int) { Min = -1000, Max = 1000, Help = "First sub-cell column of the gate (3 u each)." };
+        yield return new FieldSpec("siTo", "To column (si)", FieldKind.Int) { Min = -1000, Max = 1000, Help = "Last sub-cell column of the gate." };
     }
 
     private static IEnumerable<FieldSpec> ColumnFields()
     {
         yield return FieldSpec.Header("Column (runs along v)");
         yield return new FieldSpec("si", "Column (si)", FieldKind.Int) { Min = -1000, Max = 1000, Help = "Sub-cell column: 3 u each (4 per tile)." };
-        yield return new FieldSpec("sjFrom", "From row (sj)", FieldKind.Int) { Min = -1000, Max = 1000 };
-        yield return new FieldSpec("sjTo", "To row (sj)", FieldKind.Int) { Min = -1000, Max = 1000 };
+        yield return new FieldSpec("sjFrom", "From row (sj)", FieldKind.Int) { Min = -1000, Max = 1000, Help = "First sub-cell row of the gate (3 u each)." };
+        yield return new FieldSpec("sjTo", "To row (sj)", FieldKind.Int) { Min = -1000, Max = 1000, Help = "Last sub-cell row of the gate." };
     }
 }

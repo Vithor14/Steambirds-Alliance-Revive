@@ -27,6 +27,7 @@ internal sealed class ConsoleView : UserControl
     private readonly System.Windows.Forms.Timer flushTimer;
     private readonly System.Windows.Forms.Timer filterTimer;
     private string filter = "";
+    private bool showInfo = true;
     private long shownEnd;
     private long shownGeneration = -1;
     private bool needsRebuild = true;
@@ -97,7 +98,24 @@ internal sealed class ConsoleView : UserControl
         };
     }
 
-    private bool Matches(ConsoleBuffer.Line line) => filter.Length == 0 || line.Text.Contains(filter, StringComparison.OrdinalIgnoreCase);
+    private bool Matches(ConsoleBuffer.Line line) =>
+        (showInfo || !line.Detail) && (filter.Length == 0 || line.Text.Contains(filter, StringComparison.OrdinalIgnoreCase));
+
+    // Adds the "Show player actions (info)" box: info lines (what the players do) are hidden while it is off.
+    public void AddInfoToggle(bool initial, ToolTip tip, Action<bool> changed)
+    {
+        showInfo = initial;
+        var toggle = new CheckBox { Text = L.T("Show player actions (info)"), Checked = initial, AutoSize = true, Margin = new Padding(12, 6, 3, 3) };
+        tip.SetToolTip(toggle, L.T("Off: the console shows warnings, errors and the events of the server (players connecting and leaving, dungeons, portals, deaths). On: also every skill, shot and game message of the players. The log file always has everything."));
+        toggle.CheckedChanged += (_, _) =>
+        {
+            showInfo = toggle.Checked;
+            needsRebuild = true;
+            changed(showInfo);
+            Flush();
+        };
+        Toolbar.Controls.Add(toggle);
+    }
 
     private void CopyAll()
     {

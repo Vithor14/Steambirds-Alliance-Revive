@@ -1,0 +1,18 @@
+{
+  "format": 1,
+  "id": "orbit_close",
+  "name": "Orbit close",
+  "author": "Steambirds Revive",
+  "description": "Flies to a circle around the player and keeps going around it, shooting. The same idea as the built-in \"chase\".",
+  "move": {
+    "mode": "orbit",
+    "distance": 12,
+    "deviation": 30,
+    "speed": 0.7,
+    "farSpeed": 1.0,
+    "farFactor": 1.6
+  },
+  "fire": {
+    "enabled": true
+  }
+}

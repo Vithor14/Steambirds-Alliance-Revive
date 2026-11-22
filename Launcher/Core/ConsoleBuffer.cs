@@ -9,14 +9,18 @@ public sealed class ConsoleBuffer
 {
     public readonly struct Line
     {
-        public Line(string text, LineKind kind)
+        public Line(string text, LineKind kind, bool detail = false)
         {
             Text = text;
             Kind = kind;
+            Detail = detail;
         }
 
         public string Text { get; }
         public LineKind Kind { get; }
+
+        // An "info" line (what the players do: skills, shots, messages...). The console hides them unless asked.
+        public bool Detail { get; }
     }
 
     private readonly object gate = new object();
@@ -41,11 +45,11 @@ public sealed class ConsoleBuffer
 
     private long generation;
 
-    public void Append(string text, LineKind kind)
+    public void Append(string text, LineKind kind, bool detail = false)
     {
         lock (gate)
         {
-            lines.Add(new Line(text, kind));
+            lines.Add(new Line(text, kind, detail));
             // Old lines leave in chunks, so the views rebuild once every 1000 lines at most.
             if (lines.Count > MaxLines + 1000)
             {

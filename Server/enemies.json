@@ -10,6 +10,9 @@
   //
   // "behavior": chase, circle, charge, turret, patrol, idle, escort or fixed (kamikaze is used by dungeon maps).
   // A value of 0 in health, shotRange etc. means "use the game's value".
+  // "ai": id of an AI file (airains\<id>.json) made in the launcher's Enemy AI tab. The AI (states, movement, when to shoot)
+  // replaces "behavior", "aggroRadius" and "preferredDistance". Without it, or if the file does not exist, "behavior" is used.
+  // A boss phase may also have an "ai" (it changes the boss's AI when the phase starts).
   // "team": 2 = enemy (default), 1 = player's ally. "invulnerable": ignores damage.
   // "opensAfterHitSeconds": seconds for a chest to open after the first hit. "freeRoam": flies outside the room.
 
@@ -197,7 +200,18 @@
         { "belowHealth": 0.5, "behavior": "charge", "speedMultiplier": 1.3, "message": "The dreadnought sped up!" },
         { "belowHealth": 0.2, "fireRateMultiplier": 1.8, "summon": "hunter", "summonCount": 2, "message": "Last stand!" }
       ]
-    }
+    },
+
+    // ------------------------------------------------------------------ units driven by AI files (airains\*.json)
+    // Made and tried in the launcher's Enemy AI tab. In the game chat: /enemy ai_chaser, /enemy ai_bomber ...
+    // (/brains lists the AI files the server loaded). "ai" replaces "behavior"; everything else (template, health,
+    // multipliers, guns...) still applies.
+    "ai_chaser":     { "name": "AI Chaser",     "template": "auto:weak",   "ai": "chaser" },
+    "ai_bomber":     { "name": "AI Bomber",     "template": "auto:weak",   "ai": "bomber" },
+    "ai_charger":    { "name": "AI Charger",    "template": "auto:medium", "ai": "charger" },
+    "ai_skirmisher": { "name": "AI Skirmisher", "template": "auto:medium", "ai": "skirmisher", "freeAim": true },
+    "ai_sentry":     { "name": "AI Sentry",     "template": "auto:turret", "ai": "sentry", "freeAim": true },
+    "ai_berserker":  { "name": "AI Berserker",  "template": "auto:strong", "ai": "berserker", "freeAim": true }
   },
 
   // Encounters: sequences of waves. In the tutorial none starts by itself (the Tutorial script is in charge);

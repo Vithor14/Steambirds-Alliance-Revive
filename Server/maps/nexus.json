@@ -370,5 +370,24 @@
   "values": {},
   "checkpoints": [],
   "gates": [],
-  "signs": []
+  "signs": [],
+  "collisions": [
+    {"name": "BackWall09", "minU": 0.25, "maxU": 5.05, "minV": 19.5, "maxV": 26.0, "note": "city backdrop / hill (footprint of the art, shrunk 0.5 u)"},
+    {"name": "BackWall08", "minU": -2.2, "maxU": 5.0, "minV": 25.3, "maxV": 35.5, "note": "city backdrop / hill (footprint of the art, shrunk 0.5 u)"},
+    {"name": "BackWall04", "minU": -14.7, "maxU": -3.3, "minV": 19.0, "maxV": 28.0, "note": "city backdrop / hill (footprint of the art, shrunk 0.5 u)"},
+    {"name": "BackWall03", "minU": -25.5, "maxU": -13.5, "minV": 20.0, "maxV": 27.7, "note": "city backdrop / hill (footprint of the art, shrunk 0.5 u)"},
+    {"name": "BackWall01", "minU": -32.0, "maxU": -25.0, "minV": 20.8, "maxV": 30.0, "note": "city backdrop / hill (footprint of the art, shrunk 0.5 u)"},
+    {"name": "BackWall02", "minU": 13.0, "maxU": 20.5, "minV": 19.5, "maxV": 26.7, "note": "city backdrop / hill (footprint of the art, shrunk 0.5 u)"},
+    {"name": "BackWall06", "minU": 12.25, "maxU": 21.25, "minV": 27.5, "maxV": 37.3, "note": "city backdrop / hill (footprint of the art, shrunk 0.5 u)"},
+    {"name": "BackWall07", "minU": 22.0, "maxU": 35.7, "minV": 18.95, "maxV": 31.95, "note": "city backdrop / hill (footprint of the art, shrunk 0.5 u)"},
+    {"name": "BackWall05", "minU": 1.7, "maxU": 12.0, "minV": 31.05, "maxV": 46.05, "note": "city backdrop / hill (footprint of the art, shrunk 0.5 u)"},
+    {"name": "LowerRock01", "minU": -18.0, "maxU": 2.7, "minV": 26.3, "maxV": 46.5, "note": "city backdrop / hill (footprint of the art, shrunk 0.5 u)"},
+    {"name": "LowerRock01", "minU": 0.0, "maxU": 20.7, "minV": 37.3, "maxV": 57.5, "note": "city backdrop / hill (footprint of the art, shrunk 0.5 u)"},
+    {"name": "LowerRock01", "minU": 26.0, "maxU": 46.7, "minV": 17.8, "maxV": 38.0, "note": "city backdrop / hill (footprint of the art, shrunk 0.5 u)"},
+    {"name": "GunTower west south", "minU": -28.5, "maxU": -25.5, "minV": -1.5, "maxV": 1.5, "note": "gun tower at the end of the runway"},
+    {"name": "GunTower west north", "minU": -28.5, "maxU": -25.5, "minV": 16.5, "maxV": 19.5, "note": "gun tower at the end of the runway"},
+    {"name": "Bunker of the Combat Sim", "minU": -12, "maxU": -6, "minV": -6, "maxV": 0, "note": "bunker below the Combat Sim"},
+    {"name": "Tavern and Store prop", "minU": -6, "maxU": 0, "minV": 12, "maxV": 18, "note": "prop between the Pub and the Store"},
+    {"name": "Storage and Crafting prop", "minU": 18, "maxU": 24, "minV": 12, "maxV": 18, "note": "prop between the Storage and the Workshop"}
+  ]
 }
