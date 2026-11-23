@@ -85,6 +85,11 @@ public static partial class Enemies
         public float FirstShotDelay { get; set; } = 1.5f;
         public bool FreeAim { get; set; }
         public bool HomingBullets { get; set; }
+        // Behavior "route": name of a path of the map ("routes" of the dungeon file). The unit flies along it, point after point,
+        // and starts again at the first one (a boss that circles a ring). Filled in by DungeonMapData from "routes".
+        public string Route { get; set; } = "";
+        [JsonIgnore]
+        public List<(float X, float Y)>? RoutePoints { get; set; }
         public List<int> Guns { get; set; } = new List<int>();
         public List<BossPhase> Phases { get; set; } = new List<BossPhase>();
 
@@ -140,6 +145,8 @@ public static partial class Enemies
         // Shield when the phase starts: the unit ignores damage for this many seconds (0 = no shield).
         // Same idea as the "toggle_safety" states of the SN-Z in build 190426 (StartEffect "Shielded" for 10 s).
         public float ShieldSeconds { get; set; }
+        // Turns the homing bullets on or off from this phase on (empty = keeps what the unit has).
+        public bool? HomingBullets { get; set; }
         // Visual effect while the shield lasts (statefulEffects name). Empty with a shield = "tankShield".
         public string VisualEffect { get; set; } = "";
     }
@@ -262,6 +269,9 @@ public static partial class Enemies
         public List<int> ActiveGuns = new List<int>();
         public readonly List<GunState> Guns = new List<GunState>();
         public int PhasesApplied;
+        public bool Homing;
+        // Next point of the route (behavior "route").
+        public int RouteIndex = -1;
 
         public int Team = EnemyTeam;
         public string Group = "";
@@ -399,6 +409,8 @@ public static partial class Enemies
     // Margins of a room's area, in units: the edge wall takes up 3 units (one sub-cell).
     private const float DestMargin = 5f;
     private const float HardMargin = 4f;
+    // A unit on a route moves on to the next point when it gets this close to the current one (world units).
+    private const float RouteArrival = 6f;
 
     private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
     {
@@ -408,7 +420,7 @@ public static partial class Enemies
         NumberHandling = JsonNumberHandling.AllowReadingFromString
     };
 
-    private static readonly string[] Behaviors = { "chase", "circle", "charge", "turret", "patrol", "idle", "escort", "fixed", "kamikaze" };
+    private static readonly string[] Behaviors = { "chase", "circle", "charge", "turret", "patrol", "idle", "escort", "fixed", "kamikaze", "route" };
 
     // ================================================================== global data
 

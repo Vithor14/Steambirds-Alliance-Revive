@@ -26,7 +26,7 @@ The descriptions come from the client's chat code (`ChatManager.cs`) and from th
 
 ### Social
 
-Friends, flocks, whispers and teleport are handled by our server (`Server\Social`, not tested in the game yet; see `docs/social.md`). Secure trade (`/trade`) does not exist yet.
+Friends, flocks, whispers and teleport are handled by our server (`Server\Social`, not tested in the game yet; see `docs/social.md`). Safe trade (`/trade`) is also ours (`Server\Social\SecureTrade*.cs`, `docs/social.md`; built, not played yet).
 
 | Command | What it does |
 | --- | --- |

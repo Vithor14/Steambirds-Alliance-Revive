@@ -45,6 +45,23 @@ internal sealed class ThemedButton : Button
     // Fixed look for the big call-to-action buttons.
     public float TextPoints { get; set; }
 
+    // Small picture drawn at the left of the text (kept in color in every theme). Not owned: the button never disposes it.
+    private Image? icon;
+
+    public Image? Icon
+    {
+        get => icon;
+        set
+        {
+            icon = value;
+            PerformLayout();
+            Invalidate();
+        }
+    }
+
+    private int IconSize => Dpi.Px(this, 16);
+    private int IconGap => Dpi.Px(this, 7);
+
     private Font TextFont
     {
         get
@@ -67,7 +84,8 @@ internal sealed class ThemedButton : Button
         Size text = TextRenderer.MeasureText(Text, TextFont, new Size(int.MaxValue, int.MaxValue),
             TextFormatFlags.SingleLine | TextFormatFlags.NoPadding | (UseMnemonic ? 0 : TextFormatFlags.NoPrefix));
         int height = Math.Max(Dpi.Px(this, 30), text.Height + Dpi.Px(this, 14));
-        int width = Math.Max(Text.Length == 0 ? height : Dpi.Px(this, 68), text.Width + Dpi.Px(this, 30));
+        int iconWidth = icon == null ? 0 : IconSize + (Text.Length == 0 ? 0 : IconGap);
+        int width = Math.Max(Text.Length == 0 ? height : Dpi.Px(this, 68), text.Width + iconWidth + Dpi.Px(this, 30));
         return new Size(width + Padding.Horizontal, height + Padding.Vertical);
     }
 
@@ -188,6 +206,30 @@ internal sealed class ThemedButton : Button
         textBounds.Offset(0, pressed && live ? 1 : 0);
         TextFormatFlags flags = TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine |
                                 TextFormatFlags.EndEllipsis | (UseMnemonic ? 0 : TextFormatFlags.NoPrefix);
+        if (icon != null)
+        {
+            // Icon + text are centered together as one group.
+            int size = IconSize;
+            int textWidth = Text.Length == 0 ? 0 : Math.Min(textBounds.Width - size - IconGap,
+                TextRenderer.MeasureText(g, Text, TextFont, new Size(int.MaxValue, int.MaxValue), TextFormatFlags.SingleLine | TextFormatFlags.NoPadding | (UseMnemonic ? 0 : TextFormatFlags.NoPrefix)).Width);
+            int group = size + (textWidth > 0 ? IconGap : 0) + Math.Max(0, textWidth);
+            int left = textBounds.Left + Math.Max(0, (textBounds.Width - group) / 2);
+            var iconBounds = new Rectangle(left, textBounds.Top + (textBounds.Height - size) / 2, size, size);
+            // Aspect ratio of the picture is kept inside the square.
+            float scale = Math.Min((float)size / icon.Width, (float)size / icon.Height);
+            int w = Math.Max(1, (int)Math.Round(icon.Width * scale));
+            int h = Math.Max(1, (int)Math.Round(icon.Height * scale));
+            var target = new Rectangle(iconBounds.Left + (size - w) / 2, iconBounds.Top + (size - h) / 2, w, h);
+            if (live) g.DrawImage(icon, target);
+            else
+            {
+                using var attributes = new System.Drawing.Imaging.ImageAttributes();
+                attributes.SetColorMatrix(new System.Drawing.Imaging.ColorMatrix { Matrix33 = 0.4f });
+                g.DrawImage(icon, target, 0, 0, icon.Width, icon.Height, GraphicsUnit.Pixel, attributes);
+            }
+            textBounds = new Rectangle(left + size + IconGap, textBounds.Top, Math.Max(0, textBounds.Right - (left + size + IconGap)), textBounds.Height);
+            flags = (flags & ~TextFormatFlags.HorizontalCenter) | TextFormatFlags.Left;
+        }
         TextRenderer.DrawText(g, Text, TextFont, textBounds, fore, flags);
 
         if (Focused && ShowFocusCues && live)

@@ -238,7 +238,7 @@ internal sealed class ClientTab : UserControl
         var textBlock = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoSize = true, Anchor = AnchorStyles.Left, Margin = Padding.Empty };
         textBlock.Controls.Add(targetLabel);
         textBlock.Controls.Add(hintLabel);
-        ThemedButton discordButton = Ui.Quiet(L.T("Discord"), (_, _) => Ui.OpenUrl(FindForm(), LauncherInfo.DiscordUrl));
+        ThemedButton discordButton = Ui.DiscordButton(L.T("Discord"), (_, _) => Ui.OpenUrl(FindForm(), LauncherInfo.DiscordUrl), ButtonKind.Quiet);
         discordButton.Anchor = AnchorStyles.Right;
         tip.SetToolTip(discordButton, L.T("Opens the invite to the Steambirds Alliance Revive community on Discord."));
         var bar = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 4, RowCount = 1 };
@@ -616,6 +616,18 @@ internal sealed class ClientTab : UserControl
             return;
         }
 
+        // Without the plugin the client is missing things the server counts on (the Flock Hall building is invisible, for one):
+        // in the 23/11 test a player without it saw no Flock Hall and did not know why.
+        PluginInfo.Status pluginState = PluginInfo.Check(folder).State;
+        if (pluginState is PluginInfo.Status.NotInstalled or PluginInfo.Status.NoBepInEx)
+        {
+            string how = pluginState == PluginInfo.Status.NotInstalled
+                ? L.T("Click \"Install plugin\" on this tab first.")
+                : L.T("Run SteambirdsGameFiles.exe once to install BepInEx and the plugin.");
+            if (!Ui.Confirm(FindForm(), L.F("The Steambirds Quieter plugin is not installed in the game. Without it some things of the revived game do not show up (the Flock Hall building, for example) and some client bugs stay.\n\n{0}\n\nOpen the game anyway?", how)))
+                return;
+        }
+
         launching = true;
         RefreshStatus();
         try
@@ -626,6 +638,8 @@ internal sealed class ClientTab : UserControl
 
             string locale = context.Settings.GameLocale;
             int processId = context.Game.Launch(folder, locale, target);
+            context.PlayingTarget = target;
+            context.Presence.Refresh();
             context.ClientNotice(L.F("game open (process {0}): OZY_URL={1} Steambirds.exe {2}", processId, target.OzyUrl, GameProcess.Arguments(locale, target)));
             string who = target.PlayerName ?? L.T("(name of the account)");
             context.ClientNotice(target.IsThisPc

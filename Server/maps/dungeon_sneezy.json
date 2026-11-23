@@ -4,8 +4,8 @@
   "id": "dungeon_sneezy",
   "name": "Iron Lair",
   "terrain": "DungeonSneezy",
-  "note": "Mini-dungeon (T10) aberta pela Mysterious Black Box do mundo. Sala de nascimento (adicionada num patch de 2019) e a arena do SN-Z, que lanca beacons e chama os Robo Squadrons I-III. O cliente nao tem territorio proprio para ela; usa industrialboss (67).",
-  "source": "Build 190828.2045: unidades, nomes, falas, placas, quests e territorio vem do configBinary; o arquivo Dungeons/dungeon_* dessa build e vazio, entao o formato das salas e a posicao dos inimigos foram recriados.",
+  "note": "Iron Lair: the SN-Z fight arena rebuilt from the original description. A donut: a square ring of open floor around a walled square chamber in the middle (4 openings, one per side) where the players spawn. SN-Z flies around the ring forever (route 'ring'), fires slow homing shots, drops big-blast bombs, and at half health shields itself for a few seconds while it fires volleys at the player. The cell size, route and rooms are in this file: edit them freely.",
+  "source": "Build 190828.2045: units, names, lines, quests and territory come from the configBinary; the arena and the fight pattern were rebuilt (the file Dungeons/dungeon_* of the build is empty).",
   "key": "key_sneezy",
   "portalItem": "dungeon_sneezy",
   "exit": {
@@ -23,42 +23,34 @@
       64648
     ],
     "drawing": {
-      "siStart": -8,
+      "siStart": -12,
       "sjStart": -12,
-      "legend": ". chao livre, # muro, - sem chao. Primeira linha = ultima fileira sj (o fundo).",
+      "legend": ". free floor, # wall, - no floor. First line = last sj row (the back).",
       "lines": [
-        "------------------------",
-        "------------------------",
-        "######################--",
-        "######################--",
-        "######################--",
-        "###................###--",
-        "###................###--",
-        "###................###--",
-        "###................###--",
-        "###................###--",
-        "###................###--",
-        "###................###--",
-        "###................###--",
-        "###................###--",
-        "###................###--",
-        "###................###--",
-        "###................###--",
-        "###................###--",
-        "###................###--",
-        "###................###--",
-        "##########..##########--",
-        "##########..##########--",
-        "----######..######------",
-        "----######..######------",
-        "----###........###------",
-        "----###........###------",
-        "----###........###------",
-        "----###........###------",
-        "----###........###------",
-        "----###........###------",
-        "----##############------",
-        "----##############------"
+        "########################",
+        "#......................#",
+        "#......................#",
+        "#......................#",
+        "#......................#",
+        "#......................#",
+        "#......................#",
+        "#......................#",
+        "#.......##....##.......#",
+        "#.......#......#.......#",
+        "#......................#",
+        "#......................#",
+        "#......................#",
+        "#......................#",
+        "#.......#......#.......#",
+        "#.......##....##.......#",
+        "#......................#",
+        "#......................#",
+        "#......................#",
+        "#......................#",
+        "#......................#",
+        "#......................#",
+        "#......................#",
+        "########################"
       ]
     },
     "pieces": []
@@ -66,72 +58,49 @@
   "decor": [],
   "buildings": [],
   "spawn": {
-    "u": 9.0,
-    "v": -26.05,
+    "u": 0.0,
+    "v": 0.0,
     "rot": 315
   },
   "points": {
     "boss": {
-      "u": 9.0,
-      "v": 26.9,
-      "rot": 135
+      "u": 0.0,
+      "v": 22.5,
+      "rot": 90,
+      "note": "SN-Z starts at the top of the ring"
     },
     "portal": {
-      "u": 9.0,
-      "v": 15.95,
+      "u": 0.0,
+      "v": -7.5,
       "rot": 0,
-      "note": "porta-avioes de saida (aparece quando o chefe morre)"
+      "note": "exit carrier (appears when SN-Z dies), inside the middle chamber"
     }
   },
   "groups": {},
   "areas": {
-    "entrada": {
-      "minU": -1.8,
-      "maxU": 19.8,
-      "minV": -30.3,
-      "maxV": -11.7
-    },
-    "arena_do_snz": {
-      "minU": -13.8,
-      "maxU": 31.8,
-      "minV": -0.3,
-      "maxV": 45.3
+    "arena": {
+      "minU": -34.5,
+      "maxU": 34.5,
+      "minV": -34.5,
+      "maxV": 34.5
     }
   },
   "lines": {
-    "entrada": -30.0,
-    "arena_do_snz": 0.0
+    "arena": -36.0
   },
   "values": {
     "tier": 10
   },
   "checkpoints": [
     {
-      "name": "entrada",
-      "activeAtV": -30.0,
-      "u": 9.0,
-      "v": -28.05,
-      "rot": 315
-    },
-    {
-      "name": "arena_do_snz",
-      "activeAtV": 0.0,
-      "u": 9.0,
-      "v": 4.1,
+      "name": "arena",
+      "activeAtV": -36.0,
+      "u": 0.0,
+      "v": 0.0,
       "rot": 315
     }
   ],
-  "gates": [
-    {
-      "name": "portao da arena",
-      "type": "spacedungeondestroyablewall",
-      "sj": -2,
-      "siFrom": 2,
-      "siTo": 3,
-      "damageable": true,
-      "room": "arena_do_snz"
-    }
-  ],
+  "gates": [],
   "sideGates": [],
   "signs": [],
   "types": {
@@ -139,92 +108,46 @@
       "name": "SN-Z",
       "template": "sneezy",
       "boss": true,
-      "behavior": "circle",
-      "aggroRadius": 60,
+      "behavior": "route",
+      "route": "ring",
+      "speedMultiplier": 1.6,
       "firstShotDelay": 2.0,
+      "fireRateMultiplier": 0.7,
+      "homingBullets": true,
+      "guns": [
+        5
+      ],
+      "shotRange": 60,
       "onDeath": "sneezyDEATH",
       "barks": {
         "onDeath": "sneezyDEATH"
       },
+      "periodicSummon": {
+        "type": "sneezybomb",
+        "seconds": 7,
+        "count": 1,
+        "max": 3,
+        "countsForRoomClear": false
+      },
       "phases": [
         {
-          "belowHealth": 0.9,
-          "shieldSeconds": 10,
-          "visualEffect": "tankShield",
-          "summon": "sneezyforce1",
-          "summonCount": 2,
-          "message": "Robo Squadron I"
-        },
-        {
-          "belowHealth": 0.7,
-          "shieldSeconds": 10,
-          "visualEffect": "tankShield",
-          "guns": [
-            0,
-            1,
-            2,
-            7,
-            8,
-            9,
-            10,
-            11,
-            12
-          ],
-          "summon": "sneezybomb",
-          "summonCount": 3
-        },
-        {
           "belowHealth": 0.5,
-          "shieldSeconds": 10,
+          "shieldSeconds": 8,
           "visualEffect": "tankShield",
           "guns": [
             0,
             1,
             2,
-            14
-          ],
-          "summon": "sneezyforce2",
-          "summonCount": 3,
-          "message": "Robo Squadron II"
-        },
-        {
-          "belowHealth": 0.3,
-          "shieldSeconds": 10,
-          "visualEffect": "tankShield",
-          "guns": [
             16,
             17,
             18
           ],
-          "summon": "sneezyforce3",
-          "summonCount": 3,
-          "message": "Robo Squadron III"
-        },
-        {
-          "belowHealth": 0.1,
-          "shieldSeconds": 10,
-          "visualEffect": "tankShield",
-          "guns": [
-            16,
-            17,
-            18,
-            19,
-            20,
-            21
-          ],
-          "summon": "sneezybomb",
-          "summonCount": 2
+          "homingBullets": false,
+          "fireRateMultiplier": 1.0,
+          "message": "SN-Z is shielded and fires at you!"
         }
       ],
-      "guns": [
-        0,
-        1,
-        2,
-        4,
-        5
-      ],
-      "note": "Armas por indice dos gunMounts do SN-Z: 0-2 metralhadoras, 4-5 mainphase1, 7-12 mainphase2, 14 mainphase3 (missil), 16-18 mainphase4, 19-21 finalattack. 3/6/13/15 sao os 'dud'.",
-      "fireRateMultiplier": 0.7
+      "note": "Circles the ring on the 'ring' route forever. Base: gun 5 (mainphase1_2, slow sprinkler) with homing shots. Bombs every 7 s (max 3). Below 50% health: 8 s shield and the aimed guns 0-2 and 16-18 (limited by maxBulletsPerSecond of dungeons.json). Guns of the SN-Z: 0-2 machine guns, 3/6/13/15 dud, 4-5 mainphase1, 7-12 mainphase2, 14 mainphase3, 16-18 mainphase4, 19-21 finalattack."
     },
     "sneezyDEATH": {
       "name": "SN-Z",
@@ -235,58 +158,148 @@
     "sneezybomb": {
       "name": "SN-Z Beacon",
       "template": "sneezybomb",
-      "behavior": "chase",
-      "preferredDistance": 2.0,
-      "aggroRadius": 28
+      "behavior": "kamikaze",
+      "speedMultiplier": 2.5,
+      "aggroRadius": 200,
+      "contactRadius": 7,
+      "onDeath": "sneezyblast",
+      "note": "Bomb that flies at the player and goes off when it gets within 7 u (or is shot): the blast is 'sneezyblast'."
     },
-    "sneezyforce1": {
-      "name": "Robo Squadron I",
-      "template": "sneezyforce1",
+    "sneezyblast": {
+      "name": "SN-Z Blast",
+      "template": "bombbossexploderBIG",
       "behavior": "turret",
-      "aggroRadius": 30
-    },
-    "sneezyforce2": {
-      "name": "Robo Squadron II",
-      "template": "sneezyforce2",
-      "behavior": "turret",
-      "aggroRadius": 30
-    },
-    "sneezyforce3": {
-      "name": "Robo Squadron III",
-      "template": "sneezyforce3",
-      "behavior": "turret",
-      "aggroRadius": 30
-    },
-    "spacedungeondestroyablewall": {
-      "name": "Wall",
-      "template": "spacedungeondestroyablewall",
-      "behavior": "idle"
+      "invulnerable": true,
+      "aggroRadius": 0,
+      "firstShotDelay": 0.0,
+      "shotRange": 999,
+      "excludeFromRoomClear": true,
+      "durationSeconds": 1.2,
+      "note": "The blast of a beacon: two rings of 16 shots (fast and wide, slow and near) from where the bomb went off. Lives 1.2 s."
     }
   },
   "encounters": [
     {
-      "room": "arena_do_snz",
-      "area": "arena_do_snz",
+      "room": "arena",
+      "area": "arena",
       "wakes": "onEnter",
-      "line": "arena_do_snz",
+      "line": "arena",
       "enemies": [
         {
           "type": "sneezy",
           "pos": [
             {
-              "u": 9.0,
-              "v": 26.9,
-              "rot": 135
+              "u": 0.0,
+              "v": 22.5,
+              "rot": 90
             }
           ]
         }
       ],
       "boss": true,
-      "closesOnEnter": true,
       "controllers": [
         "sneezymaster"
       ]
     }
   ],
-  "scaled": 0.5
+  "routes": {
+    "ring": [
+      {
+        "u": 0.0,
+        "v": 22.5
+      },
+      {
+        "u": 11.4,
+        "v": 22.1
+      },
+      {
+        "u": 15.9,
+        "v": 20.9
+      },
+      {
+        "u": 18.9,
+        "v": 18.9
+      },
+      {
+        "u": 20.9,
+        "v": 15.9
+      },
+      {
+        "u": 22.1,
+        "v": 11.4
+      },
+      {
+        "u": 22.5,
+        "v": 0.0
+      },
+      {
+        "u": 22.1,
+        "v": -11.4
+      },
+      {
+        "u": 20.9,
+        "v": -15.9
+      },
+      {
+        "u": 18.9,
+        "v": -18.9
+      },
+      {
+        "u": 15.9,
+        "v": -20.9
+      },
+      {
+        "u": 11.4,
+        "v": -22.1
+      },
+      {
+        "u": 0.0,
+        "v": -22.5
+      },
+      {
+        "u": -11.4,
+        "v": -22.1
+      },
+      {
+        "u": -15.9,
+        "v": -20.9
+      },
+      {
+        "u": -18.9,
+        "v": -18.9
+      },
+      {
+        "u": -20.9,
+        "v": -15.9
+      },
+      {
+        "u": -22.1,
+        "v": -11.4
+      },
+      {
+        "u": -22.5,
+        "v": -0.0
+      },
+      {
+        "u": -22.1,
+        "v": 11.4
+      },
+      {
+        "u": -20.9,
+        "v": 15.9
+      },
+      {
+        "u": -18.9,
+        "v": 18.9
+      },
+      {
+        "u": -15.9,
+        "v": 20.9
+      },
+      {
+        "u": -11.4,
+        "v": 22.1
+      }
+    ]
+  }
 }

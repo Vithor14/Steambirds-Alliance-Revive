@@ -137,6 +137,10 @@ public static partial class SocialHandler
         Presence.Joined(server, connection, role, account.Id, account.Name);
         AccountDirectory.Seen(account);
         FlockStore.Touch(account.IdText, account.Name);
+        // The client only asks for its friend list when the friend window opens, but the radar marks friends (arrows and
+        // colors) from that same list: after every server switch the list was empty until the player opened the window
+        // (23/11 test: "friend pointer gone in the open world"). It goes out at once, like the original server did.
+        SendFriendData(server, connection, roleName);
         if (!FlockRules.Enabled) return;
         EnsureDefaultFlock(account);
         // The welcome carries the id of the default flock; its name comes now. Without a flock there is nothing to say.

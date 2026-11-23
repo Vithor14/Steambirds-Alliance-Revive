@@ -7,49 +7,6 @@ public static partial class Tutorial
 {
     // ================================================================== helpers
 
-    private static int Create(Session sess, string type, float a, float b, float rotation, string group,
-        Ground.Rect? area, bool? invulnerable, double now, Action<string, string> log)
-    {
-        Ground.ToWorld(a, b, out float x, out float y);
-        return Enemies.CreateFromScript(sess.Server, sess.Connection, Role, type, x, y, rotation, group, area,
-            invulnerable, now, log);
-    }
-
-    // Pre-placed enemy: spawns idle, with no target. radius > 0: wakes up (with the group) when the player gets
-    // within that distance; 0: only by the script or with a hit. Returns 1 if it spawned.
-    private static int CreateWaiting(Session sess, string type, float a, float b, float rotation, string group,
-        Ground.Rect? area, float radius, double now, Action<string, string> log)
-    {
-        int id = Create(sess, type, a, b, rotation, group, area, null, now, log);
-        if (id == 0) return 0;
-        WaitFor(sess, id, radius);
-        return 1;
-    }
-
-    private static void WaitFor(Session sess, int shortId, float radius)
-    {
-        if (shortId != 0) Enemies.SetAsleep(sess.Connection, shortId, true, radius);
-    }
-
-    // Hangar turrets back to silence (the player left the hangar or jumped a step).
-    private static void QuietTowers(Session sess)
-    {
-        foreach (int tower in sess.Towers) WaitFor(sess, tower, 0f);
-    }
-
-    // Line of Drill Sergeant Davis (portrait "sergeant", a bubble over him and a chat line).
-    private static void Say(Session sess, string key)
-    {
-        WorldObjects.SendSpeech(sess.Server, sess.Connection, sess.Instructor, key, 4f, WorldObjects.SpeechDialog,
-            InstructorPortrait, Rng());
-    }
-
-    // Marks a script step as done. True only the first time.
-    private static bool Once(Session sess, string step)
-    {
-        return sess.Finished.Add(step);
-    }
-
     private static float Rng()
     {
         lock (rng) return (float)rng.NextDouble();
@@ -78,27 +35,6 @@ public static partial class Tutorial
     private static string GateGroup(int k)
     {
         return "gate" + k.ToString(Inv);
-    }
-
-    private static string StageName(int stage)
-    {
-        switch (stage)
-        {
-            case 0: return "hangar";
-            case 1: return "anteroom drones";
-            case 2: return "corridor drones";
-            case 3: return "gas drone ring";
-            case 4: return "supply crate";
-            case 5: return "boss gate";
-            case 6: return "Large Training Drone";
-            case 7: return "exit to the Nexus";
-            default: return "?";
-        }
-    }
-
-    private static string Id(int shortId)
-    {
-        return shortId != 0 ? shortId.ToString(Inv) : "NOT created";
     }
 
     private static string Num(float val)
@@ -133,32 +69,14 @@ public static partial class Tutorial
         throw new InvalidOperationException("invalid tutorial map (" + map.FilePath + "): " + error);
     }
 
-    // Checks everything the script asks for by name. Returns the first problem or null.
+    // Checks what the tutorial needs from the map: a floor, the crate walls, a spawn checkpoint and a script. (The names the
+    // script uses are checked by MapScript.Validate when the file is read.) Returns the first problem or null.
     private static string? Validate(Maps.Map map)
     {
-        try
-        {
-            if (map.DrawingTiles.Count == 0) return "the floor drawing is empty";
-            if (map.Gates.Count < 3) return "needs 3 gates (crate wall, gate, boss gate)";
-            if (map.Checkpoints.Count == 0) return "needs at least 1 checkpoint (the first one is where the plane spawns)";
-            foreach (string name in new[] { "instructor", "ring", "crate", "boss", "portal", "dronesGuide", "finalCorridorGuide" })
-                map.GetPoint(name);
-            foreach (string name in new[] { "towers", "drones1", "drones2" }) map.GetGroup(name);
-            foreach (string name in new[] { "hangar", "anteroom", "drones", "ring", "arena" }) map.GetArea(name);
-            foreach (string name in new[] { "instructor", "towers", "bulletsTalk", "hangarExit", "towersQuiet",
-                         "droneCorridor", "finalCorridor" })
-                map.GetLineB(name);
-            foreach (string name in new[] { "ringCount", "ringOpening", "ringRadiusU", "ringRadiusV", "ringMiddleRadius",
-                         "drones1Radius" })
-                map.GetValue(name);
-            foreach (string name in new[] { "anteroom", "ring room", "crate corridor", "final corridor", "arena" })
-                map.GetCheckpoint(name);
-            return null;
-        }
-        catch (InvalidOperationException e)
-        {
-            return e.Message;
-        }
+        if (map.DrawingTiles.Count == 0) return "the floor drawing is empty";
+        if (map.Checkpoints.Count == 0) return "needs at least 1 checkpoint (the first one is where the plane spawns)";
+        if (map.Script == null || (map.Script.Rules?.Count ?? 0) == 0) return "has no \"script\" with rules (the tutorial is all in the script)";
+        return null;
     }
 
     // The ClientMapInfo of the client 201219.1413's DungeonTutorialWalker (mapinfo_config.txt), for when the

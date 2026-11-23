@@ -31,9 +31,20 @@ internal sealed class LauncherContext : IDisposable
             LineKind kind = fromStdErr ? LineKind.Error : ClassifyServerLine(line);
             ServerConsole.Append(line, kind, ServerLogLevel.IsInfo(line, kind));
         };
-        Server.StateChanged += () => RunOnUi(() => ServerStateChanged?.Invoke());
+        Server.StateChanged += () =>
+        {
+            Presence?.Refresh();
+            RunOnUi(() => ServerStateChanged?.Invoke());
+        };
         Server.Exited += (requested, code) => RunOnUi(() => OnServerExited(requested, code));
-        Game.Exited += code => ClientNotice(code.HasValue ? L.F("the game closed (code {0})", code.Value) : L.T("the game closed"));
+        Game.Exited += code =>
+        {
+            PlayingTarget = null;
+            Presence?.Refresh();
+            ClientNotice(code.HasValue ? L.F("the game closed (code {0})", code.Value) : L.T("the game closed"));
+        };
+        Presence = new DiscordPresence(() => Settings.DiscordPresence, DiscordApplicationId, GatherPresenceAsync);
+        Presence.Start();
 
         bepinexTail = new LogTailer("BepInEx", BepInExLogPath(), fromEnd: true);
         unityTail = new LogTailer("Unity", GameInstall.PlayerLog, fromEnd: true);
@@ -74,6 +85,80 @@ internal sealed class LauncherContext : IDisposable
     public LauncherSettings Settings { get; }
     public ServerProcess Server { get; } = new ServerProcess();
     public GameProcess Game { get; } = new GameProcess();
+
+    // Discord Rich Presence (Core\DiscordPresence.cs).
+    public DiscordPresence Presence { get; }  // null only while the constructor runs
+
+    // Where the game opened by the launcher joined (null = no game of the launcher open).
+    public GameTarget? PlayingTarget { get; set; }
+
+    private string DiscordApplicationId() =>
+        Settings.DiscordApplicationId.Trim().Length > 0 ? Settings.DiscordApplicationId.Trim() : LauncherInfo.DiscordApplicationId;
+
+    private DateTime playingSince = DateTime.UtcNow;
+    private DateTime hostingSince = DateTime.UtcNow;
+    private bool wasPlaying;
+    private bool wasHosting;
+    private string cachedPlayerName = "";
+    private DateTime cachedPlayerNameAt = DateTime.MinValue;
+
+    // Background thread (DiscordPresence): reads what the game and the server of this PC are doing.
+    private async Task<PresenceInput?> GatherPresenceAsync(CancellationToken cancel)
+    {
+        bool hosting = Server.State == ServerState.Running;
+        bool playing = Game.IsRunning(Settings.GameFolder);
+        if (!hosting && !playing)
+        {
+            wasHosting = wasPlaying = false;
+            return null;
+        }
+        if (hosting && !wasHosting) hostingSince = DateTime.UtcNow;
+        if (playing && !wasPlaying) playingSince = DateTime.UtcNow;
+        wasHosting = hosting;
+        wasPlaying = playing;
+
+        ServerNetworkFile local = ServerNetworkFile.Read();
+        FoundServer? hosted = null;
+        if (hosting || (playing && (PlayingTarget?.IsThisPc ?? Settings.ServerAddress.Length == 0)))
+        {
+            ServerBrowser.ProbeResult probe = await ServerBrowser.ProbeAsync("localhost", local.HttpPort, 2000, cancel);
+            hosted = probe.Server;
+        }
+
+        FoundServer? played = null;
+        if (playing)
+        {
+            GameTarget? target = PlayingTarget;
+            if (target?.IsThisPc ?? Settings.ServerAddress.Length == 0)
+            {
+                played = hosted;
+            }
+            else
+            {
+                string host = target?.Host ?? "";
+                int port = target?.HttpPort ?? ServerNetworkFile.DefaultHttpPort;
+                if (target == null) ServerBrowser.TryParseAddress(Settings.ServerAddress, out host, out port);
+                if (host.Length > 0) played = (await ServerBrowser.ProbeAsync(host, port, 3000, cancel)).Server;
+            }
+        }
+
+        if (DateTime.UtcNow - cachedPlayerNameAt > TimeSpan.FromMinutes(1))
+        {
+            cachedPlayerName = EffectivePlayerName();
+            cachedPlayerNameAt = DateTime.UtcNow;
+        }
+
+        return new PresenceInput
+        {
+            Playing = playing,
+            PlayedServer = played,
+            PlayerName = PlayingTarget?.PlayerName ?? cachedPlayerName,
+            Hosting = hosting,
+            HostedServer = hosted,
+            HostedName = local.ServerName,
+            Since = playing ? playingSince : hostingSince
+        };
+    }
     public ToolTip ToolTip { get; } = new ToolTip { AutoPopDelay = 20000, InitialDelay = 350, ReshowDelay = 200, ShowAlways = true };
     public ConsoleBuffer ServerConsole { get; } = new ConsoleBuffer(6000);
     public ConsoleBuffer ClientConsole { get; } = new ConsoleBuffer(6000);
@@ -280,7 +365,8 @@ internal sealed class LauncherContext : IDisposable
         if (line.Contains("[UDP]", StringComparison.Ordinal) || line.Contains("[SYNC]", StringComparison.Ordinal) ||
             line.Contains("[HTTP]", StringComparison.Ordinal))
             return LineKind.Muted;
-        if (line.StartsWith("warn:", StringComparison.OrdinalIgnoreCase) || line.Contains("aviso", StringComparison.OrdinalIgnoreCase))
+        if (line.StartsWith("warn:", StringComparison.OrdinalIgnoreCase) || line.Contains("aviso", StringComparison.OrdinalIgnoreCase) ||
+            line.Contains("WARNING:", StringComparison.Ordinal))
             return LineKind.Warning;
         return LineKind.Normal;
     }
@@ -575,6 +661,7 @@ internal sealed class LauncherContext : IDisposable
 
     public void Dispose()
     {
+        Presence.Dispose();
         bepinexTail.Dispose();
         unityTail.Dispose();
         lock (clientLogGate)

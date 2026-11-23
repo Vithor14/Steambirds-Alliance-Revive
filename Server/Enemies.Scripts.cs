@@ -244,6 +244,16 @@ public static partial class Enemies
         }
     }
 
+    // Wakes one unit (the script wakes the hangar turrets one after another).
+    public static void WakeUnit(NetConnection connection, int shortId, double now)
+    {
+        lock (Game.Lock)
+        {
+            if (!instances.TryGetValue(connection.RemoteUniqueIdentifier, out Instance? inst)) return;
+            if (inst.Enemies.TryGetValue(shortId, out Enemy? enemy) && enemy.Asleep) Wake(enemy, now);
+        }
+    }
+
     // True if anyone in the group already woke up (or if the group has no one left waiting).
     public static bool GroupAwake(NetConnection connection, string group)
     {

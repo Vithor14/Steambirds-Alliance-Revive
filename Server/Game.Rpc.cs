@@ -37,6 +37,20 @@ public static partial class Game
             "' -> ClientReceiveGiverQuests sent (no quest: the pub and workshop missions do not exist yet)");
     }
 
+    // ServerRequestQuestRewards(string questId) -> ClientReceiveQuestRewards(string questId, List<QuestRewardData>).
+    // The mission list asks for the rewards of each quest. The server has no quest rewards yet: an empty list is the
+    // answer (the client caches it by quest id and stops asking; without it the rewards line of the quest stays loading).
+    private static void HandleQuestRewards(NetServer server, Player j, NetIncomingMessage msg, Action<string, string> log)
+    {
+        string questId = msg.ReadString() ?? "";
+        NetOutgoingMessage response = server.CreateMessage();
+        response.Write(MsgQuestRewards);
+        response.Write(questId);
+        response.WriteVariableUInt32(0);                     // List<QuestRewardData>: count 0
+        server.SendMessage(response, msg.SenderConnection, NetDeliveryMethod.ReliableOrdered, 0);
+        log("QUEST", j.Role + " asked for the rewards of quest '" + questId + "' -> ClientReceiveQuestRewards sent (no reward: quest rewards do not exist yet)");
+    }
+
     // ------------------------------------------------------------------ player data and friends
 
     // ServerRequestRemotePlayerData(GeneralID accountId).
@@ -56,10 +70,20 @@ public static partial class Game
 
         if (!isSelf)
         {
+            // An empty account id (the client asks about a unit that has no account, such as an NPC): nothing to answer, and no
+            // log line either (it came about once per second per player).
+            if (account.All(b => b == 0)) return;
+
+            // The client asks again on every frame while its copy is older than 30 s and the answer is still on its way, so
+            // several requests arrive before the first answer does (up to ~200 answers per second in the 23/11 test). One
+            // answer per second for each (player, account) is enough: the next one only refreshes the same data.
+            if (!OtherDataDue(msg.SenderConnection.RemoteUniqueIdentifier, text, now)) return;
+
             // Another player online on this server: its name, rank, plane level and equipment.
             if (PlayerRelay.AnswerPlayerData(server, msg.SenderConnection, account, log)) return;
             // Somebody on another server or offline (the friend list and the flock roster ask for them).
             if (SocialHandler.AnswerRemoteData(server, msg.SenderConnection, account, log)) return;
+            ForgetOtherData(msg.SenderConnection.RemoteUniqueIdentifier, text);
             if (times == 1 || times % 100 == 0)
             {
                 log("MSG", j.Role + " ServerRequestRemotePlayerData x" + times + ": accountId=" + text +
@@ -88,6 +112,28 @@ public static partial class Game
                 (j.Class != null ? ", plane " + j.Class : ", no plane") +
                 (AdminAccount ? ", admin" : "") + "; request x" + times + ")");
         }
+    }
+
+    // Last time the data of another account was answered to a connection, so a burst of identical requests gets one answer.
+    private static readonly Dictionary<(long, string), double> otherDataSent = new Dictionary<(long, string), double>();
+    private const double OtherDataMinSeconds = 1.0;
+
+    // True when the data of this account may be answered to this connection now (and records it).
+    private static bool OtherDataDue(long connection, string account, double now)
+    {
+        lock (otherDataSent)
+        {
+            if (otherDataSent.TryGetValue((connection, account), out double last) && now - last < OtherDataMinSeconds) return false;
+            if (otherDataSent.Count > 4000) otherDataSent.Clear();     // old connections never leave: start over now and then
+            otherDataSent[(connection, account)] = now;
+            return true;
+        }
+    }
+
+    // The account was not answered at all: the next request must not be held back.
+    private static void ForgetOtherData(long connection, string account)
+    {
+        lock (otherDataSent) otherDataSent.Remove((connection, account));
     }
 
     // The friend list (ServerRequestFriendData, ServerAddFriend, ServerDeleteFriend) is answered in Social\SocialHandler.Friends.cs.
@@ -181,6 +227,18 @@ public static partial class Game
             r.WriteVariableInt32(0);     // Missions
             r.WriteVariableInt32(0);     // Upcoming
             response = "no mission (missions do not exist on the server yet)";
+        }
+        else if (result == "QuestGoalSourceInfo")
+        {
+            // ServerRequestQuestGoalSourceInfo: where a quest goal can be done (a mission or a crafting recipe). The client asks for
+            // every quest of the mission list. QuestGoalSourceInfo.Empty (HasInfo false) = no hint; the goal still shows.
+            // QuestGoalMissionInfoSerializer: byte sourceType, string sourceConfigId, bool isNow, bool hasNextTime.
+            r.Write(true);
+            r.Write((byte)0);
+            r.Write("");
+            r.Write(false);
+            r.Write(false);
+            response = "no source (QuestGoalSourceInfo.Empty)";
         }
         else
         {

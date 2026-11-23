@@ -135,13 +135,14 @@ public static partial class Program
         return new Dictionary<string, object?>
         {
             ["game"] = "steambirds-revive",
-            ["infoVersion"] = 1,
+            ["infoVersion"] = 2,
             ["name"] = network.ServerName,
             ["build"] = BuildVersion,
             ["protocol"] = ProtocolVersion,
             ["players"] = names.Count,
             ["maxPlayers"] = Math.Max(1, network.MaxPlayers),
             ["playerNames"] = names,
+            ["playerDetails"] = PlayerStatus.Describe(),
             ["httpPort"] = HttpPort,
             ["nexusPort"] = NexusPort,
             ["openToOtherPcs"] = ServerNetworkSettingsFile.OpenToOtherPcs,

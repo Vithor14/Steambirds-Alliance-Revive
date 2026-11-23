@@ -298,10 +298,10 @@ public static partial class DungeonServer
             Schedule(s, now + PortalDelay + auto, "automatic exit", _ => LeaveToNexus(s, "automatic exit (the player did not enter the carrier)", true));
     }
 
-    private static void CreateExitPortal(Session s, double now, Action<string, string> log)
+    private static void CreateExitPortal(Session s, double now, Action<string, string> log, string? pointOverride = null)
     {
         if (s.ExitPortal != 0 || s.Map == null) return;
-        string pointName = s.Data?.File.Exit?.Point ?? "portal";
+        string pointName = pointOverride ?? s.Data?.File.Exit?.Point ?? "portal";
         Maps.Point point;
         if (s.Map.Points.TryGetValue(pointName, out Maps.Point found)) point = found;
         else if (s.Map.Checkpoints.Count > 0) point = s.Map.Checkpoints[^1].Point;

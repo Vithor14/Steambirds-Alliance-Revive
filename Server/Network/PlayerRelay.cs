@@ -424,6 +424,20 @@ public static class PlayerRelay
         }
     }
 
+    // The connection of the player whose plane the OTHER players of the room of "asker" know as relayId (the id the client of
+    // the asker sees). Null when there is none in that room, or it is not connected.
+    public static NetConnection? ConnectionByRelayId(NetConnection asker, int relayId)
+    {
+        if (relayId == 0) return null;
+        lock (Gate)
+        {
+            if (!members.TryGetValue(asker.RemoteUniqueIdentifier, out Member? from)) return null;
+            Member? owner = members.Values.FirstOrDefault(m => m.RelayId == relayId && m.Room == from.Room &&
+                                                               m.Connection.Status == NetConnectionStatus.Connected);
+            return owner?.Connection;
+        }
+    }
+
     // The id under which the OTHER players know the plane of this peer (0 = no plane or unknown).
     public static int RelayIdOf(long peer)
     {

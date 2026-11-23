@@ -59,6 +59,7 @@ public static partial class Program
                                 {
                                     PlayerRelay.Left(connection);
                                     SocialHandler.PlayerLeft(connection);
+                                    SecureTrade.PlayerLeft(connection);
                                     Game.Disconnected(connection, Log);
                                     Enemies.Disconnected(connection, Log);
                                     Tutorial.Disconnected(connection, Log);

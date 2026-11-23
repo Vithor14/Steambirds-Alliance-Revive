@@ -14,5 +14,11 @@ public static class LauncherInfo
     // Invite to the community Discord of the project.
     public const string DiscordUrl = "https://discord.gg/sNwTk7T4mu";
 
+    // Application ID of the project's app in the Discord Developer Portal (Rich Presence). It is public, not a secret.
+    // Create the app at https://discord.com/developers/applications, copy its "Application ID" here and, in the app's
+    // Rich Presence > Art Assets, upload Branding\icon.png with the key "logo". Empty = no Rich Presence (launcher.json
+    // "discordApplicationId" can set it without building again).
+    public const string DiscordApplicationId = "1574506755315204216";
+
     public static string Version => typeof(LauncherInfo).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
 }

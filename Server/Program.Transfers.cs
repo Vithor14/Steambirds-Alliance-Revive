@@ -5,6 +5,33 @@ using Lidgren.Network;
 
 public static partial class Program
 {
+    // The client leaves by itself right after a switch message ("Switching to other server"), but over a bad link its
+    // disconnect packet can get lost (23/11 test, a player on another continent): the old connection then lingered in the room
+    // until the 25 s timeout. If it is still connected a few seconds later, the server closes it.
+    static void DisconnectIfStillHere(NetConnection connection)
+    {
+        Task.Delay(6000).ContinueWith(_ =>
+        {
+            if (connection.Status == NetConnectionStatus.Connected) connection.Disconnect("Switching to other server");
+        });
+    }
+
+    // A player on another PC was sent to another server of this host, but never showed up there: the usual cause is a UDP port that is
+    // not forwarded in the router (23/11 test: the open world port was closed and the player just stayed disconnected, with no
+    // message anywhere). The host gets a warning in the console that names the port. Players on this PC are not checked.
+    static void WatchArrival(string accountId, string playerName, IPEndPoint destination, byte targetRole, string place)
+    {
+        if (IPAddress.IsLoopback(destination.Address)) return;
+        Task.Delay(20000).ContinueWith(_ =>
+        {
+            Presence.Here? here = Presence.Find(accountId);
+            if (here != null && here.Role == targetRole) return;
+            Log("NETWORK", $"WARNING: {playerName} was sent to the {place} server ({destination}) and did not arrive within 20 s. " +
+                $"If the player did not simply quit, UDP port {destination.Port} is probably not forwarded in the router " +
+                "(or the firewall blocks it): forward every UDP port of the Connection page, not only the HTTP one.");
+        });
+    }
+
     // Switches the client to the Nexus. With a live plane ClientSwitchToServerWithPlane goes out: the client stores the
     // characterId and, at the Nexus, requests the spawn of that plane by itself (the same plane of the tutorial).
     static void SendToNexus(NetServer server, NetConnection connection, string reason)
@@ -27,6 +54,8 @@ public static partial class Program
         }
         int bytes = swap.LengthBytes;
         server.SendMessage(swap, connection, NetDeliveryMethod.ReliableOrdered, 0);
+        DisconnectIfStillHere(connection);
+        WatchArrival(Accounts.AccountIdText, PlayerSessions.NameOf(connection), destination, RoleNexus, "Nexus");
         Log("NEXUS", $"{reason} -> {(plane != null ? "ClientSwitchToServerWithPlane" : "ClientSwitchToServer")} to {destination} " +
             $"({PlayerSessions.NameOf(connection)}, {bytes} bytes{(plane != null ? $", plane {plane.Class}/{plane.Variant} {plane.CharacterId}" : ", no plane")})");
     }
@@ -53,6 +82,8 @@ public static partial class Program
         }
         int bytes = swap.LengthBytes;
         server.SendMessage(swap, connection, NetDeliveryMethod.ReliableOrdered, 0);
+        DisconnectIfStillHere(connection);
+        WatchArrival(Accounts.AccountIdText, PlayerSessions.NameOf(connection), destination, RoleDungeon, "dungeon");
         Log("DUNGEON", $"{reason} -> {(plane != null ? "ClientSwitchToServerWithPlane" : "ClientSwitchToServer")} to {destination} " +
             $"({type}, {PlayerSessions.NameOf(connection)}, {bytes} bytes{(plane != null ? $", plane {plane.Class}/{plane.Variant}" : ", no plane")})");
     }
@@ -78,6 +109,8 @@ public static partial class Program
         }
         int bytes = swap.LengthBytes;
         server.SendMessage(swap, connection, NetDeliveryMethod.ReliableOrdered, 0);
+        DisconnectIfStillHere(connection);
+        WatchArrival(Accounts.AccountIdText, PlayerSessions.NameOf(connection), destination, RoleWorld, "open world");
         Log("WORLD", $"{reason} -> {(plane != null ? "ClientSwitchToServerWithPlane" : "ClientSwitchToServer")} to {destination} " +
             $"({PlayerSessions.NameOf(connection)}, {bytes} bytes{(plane != null ? $", plane {plane.Class}/{plane.Variant}" : ", no plane")})");
     }

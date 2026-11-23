@@ -149,7 +149,7 @@ public static partial class Enemies
     // With a target the bullet becomes homing (BulletScript follows the target in a curve): only with "homingBullets".
     private static void SendShot(Instance inst, Enemy enemy, GameGun gun, float gunRotation, double now)
     {
-        bool homing = enemy.Type.HomingBullets && inst.PlayerShortId != 0;
+        bool homing = enemy.Homing && inst.PlayerShortId != 0;
         byte seed = (byte)rng.Next(32);
 
         // The target is a plane. Each client knows its own plane as unit 1000.. and the others by their relay id, so with

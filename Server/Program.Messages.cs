@@ -218,6 +218,7 @@ public static partial class Program
             var swap = server.CreateMessage();
             PlayerData.WriteClientSwitchToServer(swap, destination, HostIdTutorial, "revive-tutorial", BuildVersion);
             server.SendMessage(swap, msg.SenderConnection, NetDeliveryMethod.ReliableOrdered, 0);
+            DisconnectIfStillHere(msg.SenderConnection);
             return;
         }
 

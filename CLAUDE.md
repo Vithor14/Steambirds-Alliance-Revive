@@ -45,6 +45,7 @@ Maintained 100% by the community, with some additions and improvements.
 | `docs/items-and-loot.md` | items, authoritative inventory, loot bags, workshop, bit-alignment fix |
 | `docs/progression.md` | plane and pilot XP, permadeath, skills, career rewards, `progression.json` |
 | `docs/map-format.md` | map JSON format, coordinates, dungeon fields, `Maps.cs` |
+| `docs/map-script.md` | the `script` section of a map: spawns, rules, conditions, actions, `/step` jumps; engine `Server\Scripting\` (English) |
 | `docs/nexus-rebel-city.md` | Rebel City (Nexus) rebuild, buildings, docking, client uploads |
 | `docs/tutorial.md` | walker tutorial (Training Grounds), ClientMapInfo, exit portal |
 | `docs/enemies.md` | enemy AI protocol, scripted enemies, chat commands |
@@ -53,16 +54,18 @@ Maintained 100% by the community, with some additions and improvements.
 | `docs/open-world.md` | open world (`Basic`, port 1114): map generator, regions, enemy spawn sites, carriers, `world.json` (English) |
 | `docs/social.md` | friends, flocks (Flock Hall), whispers, flock chat, teleport and "Join Server", `social.json`, `flocks.json` (English) |
 | `docs/update-notes-0.5.0.md` | release notes of 0.5.0 (English and Portuguese) |
+| `docs/update-notes-0.6.0.md` | release notes of 0.6.0, **in progress**: fed with every change until the release (English and Portuguese) |
+| `docs/radmin-vpn-guide.md` | player-facing guide: install Radmin VPN, join the `Steambirds_Revive` network, host or join a server (English) |
 | `docs/discord-server.md`, `docs/discord-start-here.md` | plan of the community Discord server and the ready-to-paste `#start-here` texts (not code) |
 
 ## Repository layout
 
 - `Server\` — the server (.NET 8: ASP.NET for the HTTP "Ozy" API, Lidgren UDP for "Copper"). Project `SteambirdsServer.csproj`.
   - Folders by topic: `GameData`, `Progression`, `Items`, `Dungeons`, `World` (open world), `Network`, `Planes`, `Skills`,
-    `Social` (friends, flocks, teleport), `Stores`.
+    `Social` (friends, flocks, teleport), `Stores`, `Scripting` (map script engine).
     Top-level files: `Program*.cs` (`Program.cs` startup and `Main`, `Program.Transfers.cs` server switches and plane spawn,
     `Program.Messages.cs` host messages, `Program.Udp.cs` network loop, `Program.Http.cs` login), `Game*.cs` (client messages,
-    split by topic), `Enemies*.cs` (AI, waves, view radius, guns), `Tutorial*.cs` (walker tutorial script), `Maps.cs` (map files),
+    split by topic), `Enemies*.cs` (AI, waves, view radius, guns), `Tutorial*.cs` (walker tutorial session; its script is in the map file), `Maps.cs` (map files), `Scripting\` (map script engine: `MapScript.cs` format + check, `MapScriptRunner*.cs` runner),
     `Accounts.cs`, `PlayerData.cs`, `Ground.cs`, `MapInfo.cs`, `Nexus.cs`, `WorldObjects.cs`, `PlaneSpawn.cs`, `ScreenEffects.cs`,
     `CopperReader.cs`, `MessageCatalog.cs`, `MessageLog.cs`.
   - Host configs (`Server\*.json`, with comments, reread when they change): `progression.json`, `items.json`, `enemies.json`,
@@ -148,6 +151,9 @@ In-game testing is done by the user. When they report a test, read `server-repor
 - Never commit game files (assets, DLLs, `configBinary`, decompiled code); `.gitignore` covers them.
   Commit / push only when the user asks.
 - Write complete changes in place, then tell the user which files changed and what to test in the game.
+- **0.6.0 is in progress:** every change to the game, the server, the launcher or the editors gets a line in
+  `docs/update-notes-0.6.0.md` (English and Portuguese, in the right section), in the same change. At the release the file is closed and
+  the next one (`update-notes-<next>.md`) starts.
 - When a feature, file or command changes, update the docs in the same change: `CHECKLIST.md`, the matching `docs\` note, the
   READMEs and `Chat commands.md`. (A big part of the docs went stale between 16/11 and 23/11 because they were not.)
 

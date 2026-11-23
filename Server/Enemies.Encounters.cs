@@ -199,7 +199,8 @@ public static partial class Enemies
             Team = type.Team == 0 || type.Team == 1 || type.Team == 2 ? type.Team : EnemyTeam,
             Area = inst.DefaultArea,
             FreeRoam = type.FreeRoam,
-            Invulnerable = type.Invulnerable
+            Invulnerable = type.Invulnerable,
+            Homing = type.HomingBullets
         };
 
         enemy.Ai = AttachBrain(key, type.Ai, log);
@@ -288,6 +289,7 @@ public static partial class Enemies
 
             if (!string.IsNullOrWhiteSpace(phase.Behavior)) enemy.Behavior = NormalizeBehavior(phase.Behavior);
             if (!string.IsNullOrWhiteSpace(phase.Ai)) enemy.Ai = AttachBrain(enemy.TypeKey, phase.Ai, log) ?? enemy.Ai;
+            if (phase.HomingBullets.HasValue) enemy.Homing = phase.HomingBullets.Value;
             if (phase.SpeedMultiplier > 0f) enemy.PhaseSpeedMult = phase.SpeedMultiplier;
             if (phase.FireRateMultiplier > 0f) enemy.PhaseFireRateMult = phase.FireRateMultiplier;
             if (phase.Guns != null && phase.Guns.Count > 0) enemy.ActiveGuns = new List<int>(phase.Guns);

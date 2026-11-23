@@ -7,7 +7,8 @@ public static partial class Tutorial
 {
     // ================================================================== commands
 
-    // /step N: opens the way there, marks what was left behind as done and takes the plane.
+    // /step N: the step of the script ("steps" of the map) marks what was left behind as done, removes it, opens the walls on the
+    // way and takes the plane to the step's checkpoint.
     private static void JumpToStage(Session sess, int number, double now, Action<string, string> log)
     {
         if (!sess.Started)
@@ -16,73 +17,18 @@ public static partial class Tutorial
             return;
         }
 
-        // Destination of each step: the map's checkpoint with that name.
-        var steps = new List<string> { "talk_together", "turret", "talk_bullets", "drones1", "towers_quiet" };
-        string destPoint;
-        switch (number)
+        string? checkpointName = sess.Script.Jump(number, now);
+        if (checkpointName == null)
         {
-            case 1:
-                destPoint = "anteroom";
-                break;
-            case 2:
-                destPoint = "ring room";
-                steps.AddRange(new[] { "drone_corridor", "drones2", "talk_cats" });
-                break;
-            case 3:
-                destPoint = "crate corridor";
-                steps.AddRange(new[] { "drone_corridor", "drones2", "talk_cats", "ring", "ring_cleared" });
-                break;
-            case 4:
-                destPoint = "final corridor";
-                steps.AddRange(new[] { "drone_corridor", "drones2", "talk_cats", "ring", "ring_cleared", "crate", "crate_open" });
-                break;
-            default:
-                destPoint = "arena";
-                steps.AddRange(new[] { "drone_corridor", "drones2", "talk_cats", "ring", "ring_cleared", "crate", "crate_open",
-                    "prepare", "boss_awake" });
-                break;
+            Chat(sess, "That step does not exist in the map's script.");
+            return;
         }
-        Maps.Point destination = sess.Map.GetCheckpoint(destPoint).Point;
+
+        Maps.Point destination = sess.Map.GetCheckpoint(checkpointName).Point;
         float destB = destination.B;
-        foreach (string step in steps) sess.Finished.Add(step);
-        sess.WaitingAtEntrance = false;
-        QuietTowers(sess);
-
-        // Whoever was left behind disappears (drones, ring, crate and boss of skipped steps) and the walls on the way fall.
-        if (number >= 2)
-        {
-            Enemies.RemoveGroup(sess.Connection, "drones1", false, now);
-            Enemies.RemoveGroup(sess.Connection, "drones2", false, now);
-            if (!sess.Gates[WallGate].Open) OpenGate(sess, sess.Gates[WallGate], false, now);
-        }
-        if (number >= 3)
-        {
-            Enemies.RemoveGroup(sess.Connection, "ring", false, now);
-            RequestCrate(sess, now, log);
-        }
-        if (number >= 4)
-        {
-            Enemies.RemoveGroup(sess.Connection, "crate", false, now);
-            if (!sess.Gates[MiddleGate].Open) OpenGate(sess, sess.Gates[MiddleGate], false, now);
-        }
-        if (number >= 5)
-        {
-            // Straight to the exit: boss gate open, boss disappears and the portal appears.
-            if (!sess.Gates[BossGate].Open) OpenGate(sess, sess.Gates[BossGate], false, now);
-            Enemies.RemoveGroup(sess.Connection, "boss", false, now);
-            if (!sess.BossDefeated)
-            {
-                sess.BossDefeated = true;
-                sess.Map.GetPoint("boss").World(out sess.BossX, out sess.BossY);
-                OnBossDefeated(sess, now, log);
-            }
-        }
-
         UpdateCheckpoint(sess, destB, now, log);
         destination.World(out float x, out float y);
         WorldObjects.SendTeleport(sess.Server, sess.Connection, x, y, destination.Rotation, 0.2f);
-        Ground.ToWorld(0.25f, destB - 0.3f, out float ix, out float iy);
-        if (sess.Instructor != 0) Enemies.SetDestination(sess.Connection, sess.Instructor, ix, iy, false);
         log("TUTORIAL", "[tutorial] /step " + number + ": plane taken to b = " + Num(destB) + " (" + Num(x) + ", " + Num(y) + ")");
     }
 

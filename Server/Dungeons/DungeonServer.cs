@@ -87,6 +87,8 @@ public static partial class DungeonServer
         public bool Side;
         public readonly List<(float X, float Y, int Id)> Pieces = new List<(float X, float Y, int Id)>();
         public bool Open;
+        // A script unlocked it: the pieces take damage (a gate that is "damageable" in the file starts like that).
+        public bool Unlocked;
         public bool ClosedBehind;
         public string ReopenRoom = "";
 
@@ -135,6 +137,8 @@ public static partial class DungeonServer
         public DungeonMapData.Loaded? Data;
         public Ground.FloorPlan? Plant;
         public string LoadError = "";
+        // The "script" of the map, if it has one (Scripting\MapScriptRunner.cs).
+        public MapScriptRunner? Script;
 
         public readonly List<RoomState> Rooms = new List<RoomState>();
         public readonly Dictionary<string, RoomState> RoomsByName = new Dictionary<string, RoomState>(StringComparer.OrdinalIgnoreCase);
@@ -405,7 +409,8 @@ public static partial class DungeonServer
             type = s.Entry.Type;
         }
         bool added = Accounts.MarkDungeonFinished(type);
-        log("DUNGEON", "[dungeon] " + type + (added ? " marked as finished in the account" : " was already finished in the account"));
+        // Two messages report the same exit (SendMarkDungeonFinished, then ServerSendMeThroughPortal): only the first one says something.
+        if (added) log("DUNGEON", "[dungeon] " + type + " marked as finished in the account");
         return added;
     }
 

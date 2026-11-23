@@ -57,6 +57,8 @@ public static partial class Game
     private const ushort MsgRequestGiverQuests = 54191;  // ServerRequestGiverQuests(string giverId)
     private const ushort MsgGiverQuests = 54192;         // ClientReceiveGiverQuests(string giverId, Dictionary)
     private const ushort MsgEnterQuestGiver = 54195;     // ServerEnterQuestGiver(string giverId)
+    private const ushort MsgRequestQuestRewards = 54197; // ServerRequestQuestRewards(string questId)
+    private const ushort MsgQuestRewards = 54198;        // ClientReceiveQuestRewards(string questId, List<QuestRewardData>)
     private const ushort MsgBulletHit = 61050;
     private const ushort MsgPlayerInput = 61257;
     private const ushort MsgProximityChat = 11732;       // ServerProximityChat(string text, short quickChatId)
@@ -238,6 +240,13 @@ public static partial class Game
             CloseSequences(j, now, log);
             Summarize(j, now, log);
 
+            // Safe trade between two players (Social\SecureTrade*.cs).
+            if (SecureTrade.Handles(id))
+            {
+                SecureTrade.Handle(server, msg, id, role);
+                return true;
+            }
+
             // Friends, flocks, whispers and the way to another player (Social\).
             if (SocialHandler.HandlesMessage(id))
             {
@@ -312,6 +321,10 @@ public static partial class Game
                 case MsgRequestGiverQuests:
                 case MsgEnterQuestGiver:
                     HandleQuestGiver(server, j, msg, id == MsgEnterQuestGiver, log);
+                    return true;
+
+                case MsgRequestQuestRewards:
+                    HandleQuestRewards(server, j, msg, log);
                     return true;
 
                 case MsgLocale:
@@ -443,6 +456,17 @@ public static partial class Game
         {
             if (!players.TryGetValue(connection.RemoteUniqueIdentifier, out var j)) return null;
             return j.PlaneAlive ? j.CharacterId : null;
+        }
+    }
+
+    // The shortId of the live plane of this connection (the id its own client uses), 0 without a plane.
+    public static int GetPlaneShortId(NetConnection? connection)
+    {
+        if (connection == null) return 0;
+        lock (gate)
+        {
+            if (!players.TryGetValue(connection.RemoteUniqueIdentifier, out var j)) return 0;
+            return j.PlaneAlive ? j.PlaneShortId : 0;
         }
     }
 

@@ -21,7 +21,7 @@ Code in `Server\Social\`, host settings in `Server\social.json`, flocks in `Serv
 - **Flocks** use the game's own numbers from its `guilds` config (60 members, 3 flocks per player, 5 mutes auto-ban, join cooldown 86400 s after 5 joins, name 2-12 characters); `social.json` can change them.
 - **Founder token:** like the original, creating a flock takes one `create_flock_token` (or `test_create_flock`) out of the plane's cargo, and the client only shows the create page to a player who carries one. Give it with `/item create_flock_token`, or put it in the starting items. `requireFounderToken: false` stops it being taken.
 - **Roles** (client's `GuildPermissions`): the founder does everything; Officer mutes, kicks, bans and handles invites; Leader also changes settings; Member and Elder only mute. Invite modes: open for all, open for rank 100+, invite only (pending requests wait in "Pending Invites"). A founder who leaves hands the flock to the longest-standing member; the last one out ends it.
-- **Default flock:** shown on the name plate and used by `/f`. The id goes in the welcome message (`PlayerData`) and the name in `ClientUpdatePlayerDataDefaultGuild` `48916`.
+- **Default flock:** shown on the name plate and used by `/f`. The id **and the name** go in the welcome message (`PlayerData`: the client reads the name right after any id that is not `None`), and `ClientUpdatePlayerDataDefaultGuild` `48916` refreshes both later.
 - **Reconstructions** (the original backend is gone): the server-side rules above, the health formula (copied from the client), the suggestion (random among the 3 healthiest flocks with room), error texts (`guild_name_invalid`, `joined_recently`, `limit_reached`, `required_item_missing` are the client's own; others show as "Unknown error: key").
 
 ## Chat commands of the server
@@ -30,7 +30,19 @@ Code in `Server\Social\`, host settings in `Server\social.json`, flocks in `Serv
 
 ## social.json
 
-A flat file: `friendsEnabled`, `maxFriends`, `flocksEnabled`, `requireFounderToken`, `maxMembers`, `maxFlocksPerPlayer`, `rejoinSeconds`, `rejoinAfterJoins`, `autoBanMutes`, `inactiveSeconds` (0 or -1 = the game value), `toPlayersInWorld` turns the client's own teleport off in the open world through its ClientMapInfo, `joinPlayerServers`, `spawnNearTarget`, `arrivalDistance`). Created with the defaults on the first start and read again when it changes (the ClientMapInfo change applies on the next join of the world).
+A flat file: `friendsEnabled`, `maxFriends`, `flocksEnabled`, `requireFounderToken`, `maxMembers`, `maxFlocksPerPlayer`, `rejoinSeconds`, `rejoinAfterJoins`, `autoBanMutes`, `inactiveSeconds` (0 or -1 = the game value), `toPlayersInWorld` turns the client's own teleport off in the open world through its ClientMapInfo, `joinPlayerServers`, `spawnNearTarget`, `arrivalDistance`, `tradeEnabled`, `tradeTaxes`). Created with the defaults on the first start and read again when it changes (the ClientMapInfo change applies on the next join of the world).
+
+## Safe trade (`Server\Social\SecureTrade*.cs`, 23/11, built, not played yet)
+
+Player menu > Trade, or `/trade NAME` (the other player answers `/trade` or `/trade_reject`, or clicks the bubble over the plane). Same room only (Nexus, open world or one dungeon instance): the ids in the messages are the relay ids of `PlayerRelay`.
+
+1. `ServerInitiateSecureTrade` `12500` -> the target gets `ClientRequestSecureTrade` `12502`; `ServerResponseSecureTrade` `12503` accepts or declines (a request is forgotten after the `timeout` of the game's trade config, 60 s).
+2. On accept both clients get `ClientOpenSecureTrade` `12501` (empty offer, version 0).
+3. `ServerSecureTradeOffer` `12505` (items by id, gold, who pays the fee, in which currency): the server takes the items from the account inventory (never from the message), keeps at most `itemTradeSlotLimit` (4), only cargo items that `Manager.IsPossibleToTrade` allows, adds 1 to the version, clears both accepted marks and sends `ClientSecureTradeUpdate` `12504` with the fee recalculated. A request with an old version is ignored and the sender gets the real state.
+4. `ServerSecureTradeAccept` `12506` (version must match). With both accepted `SecureTradeExecute.cs` checks both inventories again (items still there and tradable, gold or iron for the offer and the fee, room in the cargo), changes the two accounts (the first is restored if the second fails) and sends `ClientRemoveInventoryItem`, `ClientInvAdd` and the new currencies, then `ClientSecureTradeResult` `12507`.
+5. Closing the window (`ServerSecureTradeCancel` `12508`), leaving the server or 10 minutes without changes end it; the other player gets the result `false`.
+
+The fee is a **reconstruction** (the original formula is not in the client): `value x marketTaxPercentage100 / 10000` of the "trade" config of the configBinary, value = the `itemTradeValues` of the items (+ the gold offered when the fee is in gold), at least `minTaxPerTransactionInCurrency`, flockmates use the `SameGuild` percentage; it is paid in gold or iron by one side or half each and disappears. `tradeTaxes: false` in `social.json` makes trading free, `tradeEnabled: false` turns it off. The first request of a session logs the numbers read from the config (`[TRADE] rules: ...`).
 
 ## Test
 
@@ -39,7 +51,7 @@ A test client (Lidgren, the client's own serializers copied from the decompiled 
 ## Not done
 
 - Launcher: Server tab > Friends and flocks (`Launcher\UI\SocialPage.cs`) lists the flocks and their members (read only, from `flocks.json`) and edits `social.json`. Built, not opened yet. Flocks are managed by the players in the Flock Hall, not from the launcher.
-- Squads (`13500`–`13505`), secure trade, spectate/follow and the Combat Sim flock message (`11736`) are still missing (see `CHECKLIST.md`, section 10).
+- Squads (`13500`–`13505`), spectate/follow and the Combat Sim flock message (`11736`) are still missing (see `CHECKLIST.md`, section 10).
 - Friends who are only in a dungeon appear as "online" but cannot be joined.
 
 ## Founder token in the store

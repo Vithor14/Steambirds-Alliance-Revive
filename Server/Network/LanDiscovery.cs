@@ -87,6 +87,8 @@ public static class LanDiscovery
                 if (!fromThisPc && (!settings.ShowInServerSearch || !ServerNetworkSettingsFile.OpenToOtherPcs)) continue;
 
                 Dictionary<string, object?> fields = info();
+                // The details of each player (Rich Presence) are left to GET /revive/info: this answer must fit one datagram.
+                fields.Remove("playerDetails");
                 fields["nonce"] = nonce;
                 byte[] answer = Encoding.UTF8.GetBytes(ResponsePrefix + JsonSerializer.Serialize(fields));
                 socket.Send(answer, answer.Length, from);

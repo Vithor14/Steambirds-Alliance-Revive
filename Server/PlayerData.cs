@@ -405,11 +405,18 @@ public static class PlayerData
         buf.WriteVariableInt32(0);             // lastServerIDs
         buf.WriteVariableInt32(0);             // lastSnapshotTime
         buf.Write(0);                          // combatSimAttempts
-        // defaultFlockId: the flock of the name plate and /f (Social\). The name follows in ClientUpdatePlayerDataDefaultGuild.
+        // defaultFlockId: the flock of the name plate and /f (Social\). PlayerDataSerializer.Read reads the flock NAME
+        // right after the id whenever the id is not GeneralID.None, so the name must go here too (without it the client
+        // reads the worldId bytes as the name and the whole welcome fails). ClientUpdatePlayerDataDefaultGuild only refreshes it later.
         byte[]? defaultFlock = null;
+        string defaultFlockName = "";
         Accounts.Account? owner = Accounts.FindById(ToBase64Url(accountId));
-        if (owner != null) SocialHandler.DefaultFlock(owner, out defaultFlock, out _);
-        if (defaultFlock != null) WriteGeneralId(buf, defaultFlock);
+        if (owner != null) SocialHandler.DefaultFlock(owner, out defaultFlock, out defaultFlockName);
+        if (defaultFlock != null)
+        {
+            WriteGeneralId(buf, defaultFlock);
+            buf.Write(defaultFlockName ?? "");   // defaultFlockName
+        }
         else WriteNoneGeneralId(buf);
     }
 

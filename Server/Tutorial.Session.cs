@@ -19,6 +19,7 @@ public static partial class Tutorial
             Map = MapForSession()
         };
         BuildPlan(sess);
+        sess.Script = new MapScriptRunner(new Host(sess));
         sessions[sess.Peer] = sess;
         return sess;
     }

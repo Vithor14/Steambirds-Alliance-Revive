@@ -6,6 +6,21 @@ using System.Text.Json;
 
 namespace SteambirdsLauncher.Core;
 
+// What one player online is doing (the "playerDetails" of GET /revive/info; Server\Network\PlayerStatus.cs).
+public sealed class PlayerDetail
+{
+    public string Name { get; set; } = "";
+
+    // Class id of the plane ("assault", "medic"...), its level and the pilot rank.
+    public string Plane { get; set; } = "";
+    public int PlaneLevel { get; set; }
+    public int PilotLevel { get; set; }
+
+    // "nexus", "tutorial", "world" or "dungeon" ("" = not known) and the name of the place.
+    public string Place { get; set; } = "";
+    public string Where { get; set; } = "";
+}
+
 // A game server found by the search or by "Connect by IP" (fields of GET /revive/info of the server,
 // Server\Program.cs, the /revive/info handler).
 public sealed class FoundServer
@@ -22,6 +37,9 @@ public sealed class FoundServer
     public int Players { get; set; }
     public int MaxPlayers { get; set; }
     public List<string> PlayerNames { get; set; } = new List<string>();
+
+    // Plane, level and place of each player (servers of 0.5.0 and newer; empty on older ones and in the search answers).
+    public List<PlayerDetail> PlayerDetails { get; set; } = new List<PlayerDetail>();
     public string Build { get; set; } = "";
 
     // Network it answered on ("Radmin VPN", "Hamachi", "local network"...; "IP" for Connect by IP).
@@ -79,6 +97,9 @@ public sealed class FoundServer
                 case "acceptsPlayerName":
                     server.AcceptsPlayerName = p.Value.ValueKind == JsonValueKind.True;
                     break;
+                case "playerDetails" when p.Value.ValueKind == JsonValueKind.Array:
+                    server.PlayerDetails = ReadDetails(p.Value);
+                    break;
                 case "playerNames" when p.Value.ValueKind == JsonValueKind.Array:
                     server.PlayerNames = p.Value.EnumerateArray().Where(v => v.ValueKind == JsonValueKind.String)
                         .Select(v => v.GetString() ?? "").Where(n => n.Length > 0).ToList();
@@ -87,6 +108,30 @@ public sealed class FoundServer
         }
         if (server.Name.Length == 0) server.Name = host;
         return server;
+    }
+
+    private static List<PlayerDetail> ReadDetails(JsonElement array)
+    {
+        var list = new List<PlayerDetail>();
+        foreach (JsonElement item in array.EnumerateArray())
+        {
+            if (item.ValueKind != JsonValueKind.Object) continue;
+            var detail = new PlayerDetail();
+            foreach (JsonProperty p in item.EnumerateObject())
+            {
+                switch (p.Name)
+                {
+                    case "name" when p.Value.ValueKind == JsonValueKind.String: detail.Name = p.Value.GetString() ?? ""; break;
+                    case "plane" when p.Value.ValueKind == JsonValueKind.String: detail.Plane = p.Value.GetString() ?? ""; break;
+                    case "place" when p.Value.ValueKind == JsonValueKind.String: detail.Place = p.Value.GetString() ?? ""; break;
+                    case "where" when p.Value.ValueKind == JsonValueKind.String: detail.Where = p.Value.GetString() ?? ""; break;
+                    case "planeLevel" when p.Value.ValueKind == JsonValueKind.Number && p.Value.TryGetInt32(out int pl): detail.PlaneLevel = pl; break;
+                    case "pilotLevel" when p.Value.ValueKind == JsonValueKind.Number && p.Value.TryGetInt32(out int pi): detail.PilotLevel = pi; break;
+                }
+            }
+            list.Add(detail);
+        }
+        return list;
     }
 }
 

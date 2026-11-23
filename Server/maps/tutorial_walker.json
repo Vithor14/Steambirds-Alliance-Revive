@@ -4,7 +4,7 @@
   "id": "tutorial_walker",
   "name": "Training Grounds",
   "terrain": "DungeonTutorialWalker",
-  "note": "Tutorial do walker. Corredor que sobe para a esquerda na tela (+v), salas de 18 u e corredores de 12 u, arena octogonal no fim. O roteiro (falas, etapas, quem acorda quando) fica em TutorialEsboco.cs e usa os pontos, areas, linhas e portoes deste arquivo pelo nome. Linha torres = 0: as Training Turrets do hangar ja comecam atirando quando o aviao nasce (antes 34.8, so ao entrar no hangar); elas ainda ficam quietas ao passar da linha torresQuietas.",
+  "note": "Walker tutorial. A corridor that goes up and to the left on the screen (+v): 18 u rooms and 12 u corridors, an octagonal arena at the end. The map AND the script (who speaks, what wakes up and when, how /step jumps) are in this file: see the \"script\" section at the end (docs/map-script.md). Line 'towers' = 0: the Training Turrets of the hangar already start firing when the plane spawns; they go quiet again past the line 'towersQuiet'.",
   "territory": 63,
   "floor": {
     "wallsOnEdges": true,
@@ -14,7 +14,7 @@
     "drawing": {
       "siStart": -8,
       "sjStart": 0,
-      "legend": ". chao livre, # muro (sub-celula de 3 u num tile com chao), - sem chao. Primeira linha = ultima fileira sj (o fundo); cada caractere e uma sub-celula si a partir de siInicial.",
+      "legend": ". free floor, # wall (3 u sub-cell in a tile with floor), - no floor. First line = last sj row (the back); each character is an si sub-cell from siStart.",
       "lines": [
         "####################",
         "######........######",
@@ -107,13 +107,18 @@
   "decor": [],
   "buildings": [],
   "points": {
-    "instructor": {"u": 6, "v": 35.4, "rot": 135, "note": "Drill Sergeant Davis espera na entrada do hangar"},
-    "ring": {"u": 6, "v": 135, "rot": 0, "note": "centro do anel de drones de gas"},
-    "crate": {"u": 2.4, "v": 160.8, "rot": 0, "note": "caixa de suprimentos"},
-    "boss": {"u": 6, "v": 238.8, "rot": 135, "note": "Large Training Drone, no fundo da arena"},
-    "portal": {"u": 6, "v": 226.8, "rot": 0, "note": "porta-avioes (portal de saida para o Nexus)"},
-    "dronesGuide": {"u": 6, "v": 80.4, "rot": 0, "note": "onde o instrutor vai ao sair do hangar"},
-    "finalCorridorGuide": {"u": 6, "v": 180, "rot": 0, "note": "onde o instrutor vai quando o portao do meio abre"}
+    "instructor": {"u": 6, "v": 35.4, "rot": 135, "note": "Drill Sergeant Davis waits at the hangar entrance"},
+    "ring": {"u": 6, "v": 135, "rot": 0, "note": "center of the ring of gas drones"},
+    "crate": {"u": 2.4, "v": 160.8, "rot": 0, "note": "supply crate"},
+    "boss": {"u": 6, "v": 238.8, "rot": 135, "note": "Large Training Drone, at the far end of the arena"},
+    "portal": {"u": 6, "v": 226.8, "rot": 0, "note": "carrier (exit portal to the Nexus)"},
+    "dronesGuide": {"u": 6, "v": 80.4, "rot": 0, "note": "where the instructor goes when leaving the hangar"},
+    "finalCorridorGuide": {"u": 6, "v": 180, "rot": 0, "note": "where the instructor goes when the middle gate opens"},
+    "wallWarnGuide": {"u": 6, "v": 87, "rot": 0, "note": "in front of the crate wall of the anteroom"},
+    "crateGuide": {"u": 5.4, "v": 155.4, "rot": 0, "note": "beside the supply crate"},
+    "middleGateGuide": {"u": 6, "v": 160.2, "rot": 0, "note": "in front of the middle gate when it unlocks"},
+    "bossGateGuide": {"u": 6, "v": 190.2, "rot": 0, "note": "in front of the boss gate when it unlocks"},
+    "portalGuide": {"u": -1.2, "v": 223.2, "rot": 0, "note": "next to the exit carrier"}
   },
   "groups": {
     "towers": [
@@ -132,7 +137,7 @@
       "maxU": 17.4,
       "minV": 31.2,
       "maxV": 73.8,
-      "note": "areas da IA: um pouco maiores que o chao livre"
+      "note": "AI areas: a little larger than the free floor"
     },
     "anteroom": {"minU": -2.4, "maxU": 14.4, "minV": 73.2, "maxV": 94.8},
     "drones": {"minU": -2.4, "maxU": 14.4, "minV": 94.2, "maxV": 127.8},
@@ -146,15 +151,8 @@
     "hangarExit": 71.4,
     "towersQuiet": 75.6,
     "droneCorridor": 96,
-    "finalCorridor": 175.2
-  },
-  "values": {
-    "ringCount": 14,
-    "ringOpening": 70,
-    "ringRadiusU": 5.04,
-    "ringRadiusV": 6.96,
-    "ringMiddleRadius": 4.5,
-    "drones1Radius": 9
+    "finalCorridor": 175.2,
+    "ringEntry": 133.2
   },
   "checkpoints": [
     {"name": "start room", "activeAtV": 0, "u": 6, "v": 14.52, "rot": 315},
@@ -182,5 +180,705 @@
     {"key": "newtutorialwalkergroundsign8", "u": 6, "v": 152.4, "radius": 14, "rot": 0},
     {"key": "newtutorialwalkergroundsign10", "u": 6, "v": 163.8, "radius": 14, "rot": 0},
     {"key": "newtutorialwalkergroundsign9", "u": 6, "v": 187.2, "radius": 14, "rot": 0}
-  ]
+  ],
+  "script": {
+    "note": "Training Grounds: the whole tutorial. Rules fire once, in file order, when their condition holds. Format: docs/map-script.md.",
+    "speakers": {
+      "instructor": "sergeant",
+      "boss": "bosscat",
+      "wreck": "bosscat"
+    },
+    "stages": [
+      "hangar",
+      "anteroom drones",
+      "corridor drones",
+      "gas drone ring",
+      "supply crate",
+      "boss gate",
+      "Large Training Drone",
+      "exit to the Nexus"
+    ],
+    "completeWhen": "boss_defeated",
+    "spawns": [
+      {
+        "name": "instructor",
+        "type": "tutorial_ally",
+        "id": "instructor",
+        "group": "instructor",
+        "point": "instructor",
+        "note": "Drill Sergeant Davis"
+      },
+      {
+        "name": "towers",
+        "type": "tutorial_cannon",
+        "group": "towers",
+        "points": "towers",
+        "area": "hangar",
+        "asleep": true,
+        "note": "Training Turrets on the left wall of the hangar; the script wakes them one after another"
+      },
+      {
+        "name": "drones1",
+        "type": "tutorial_hunter",
+        "group": "drones1",
+        "points": "drones1",
+        "area": "anteroom",
+        "asleep": true,
+        "wakeRadius": 9
+      },
+      {
+        "name": "drones2",
+        "type": "tutorial_hunter",
+        "group": "drones2",
+        "points": "drones2",
+        "area": "drones",
+        "asleep": true,
+        "note": "wake when the crate wall falls"
+      },
+      {
+        "name": "ring",
+        "type": "tutorial_drone",
+        "group": "ring",
+        "area": "ring",
+        "asleep": true,
+        "ellipse": {
+          "center": "ring",
+          "count": 14,
+          "opening": 70,
+          "radiusU": 5.04,
+          "radiusV": 6.96
+        },
+        "note": "gas drones in an ellipse, open on the side the player comes from"
+      },
+      {
+        "name": "crate",
+        "type": "tutorial_chest",
+        "group": "crate",
+        "point": "crate",
+        "note": "supply crate beside the corridor"
+      },
+      {
+        "name": "boss",
+        "type": "tutorial_boss",
+        "id": "boss",
+        "group": "boss",
+        "point": "boss",
+        "area": "arena",
+        "asleep": true,
+        "when": "manual",
+        "note": "Large Training Drone: appears when the boss gate unlocks"
+      },
+      {
+        "name": "boss_wreck",
+        "type": "tutorial_boss_death",
+        "id": "wreck",
+        "group": "wreck",
+        "point": "boss",
+        "atUnit": "boss",
+        "invulnerable": true,
+        "when": "manual",
+        "note": "wreck with the last line, where the boss fell"
+      }
+    ],
+    "rules": [
+      {
+        "id": "start",
+        "do": [
+          {
+            "chat": "You unlocked Quad"
+          },
+          {
+            "area": "hangar"
+          },
+          {
+            "guide": "instructor",
+            "until": "talk_together"
+          }
+        ]
+      },
+      {
+        "id": "talk_together",
+        "when": {
+          "line": "instructor"
+        },
+        "do": [
+          {
+            "say": "newtutorialally1"
+          }
+        ]
+      },
+      {
+        "id": "turret",
+        "when": {
+          "line": "towers"
+        },
+        "do": [
+          {
+            "wake": "towers",
+            "stagger": 0.35,
+            "unless": "towers_quiet"
+          }
+        ]
+      },
+      {
+        "id": "talk_bullets",
+        "when": {
+          "line": "bulletsTalk"
+        },
+        "do": [
+          {
+            "say": "newtutorialally1_2"
+          }
+        ]
+      },
+      {
+        "id": "drones1",
+        "when": {
+          "line": "hangarExit"
+        },
+        "do": [
+          {
+            "stage": 1
+          },
+          {
+            "area": "anteroom"
+          },
+          {
+            "say": "newtutorialally2_0"
+          },
+          {
+            "say": "newtutorialally2_0_1",
+            "delay": 2.5
+          },
+          {
+            "guide": "dronesGuide",
+            "seconds": 6
+          }
+        ]
+      },
+      {
+        "id": "towers_quiet",
+        "when": {
+          "line": "towersQuiet"
+        },
+        "do": [
+          {
+            "quiet": "towers"
+          }
+        ]
+      },
+      {
+        "id": "drone_corridor",
+        "when": {
+          "line": "droneCorridor"
+        },
+        "do": [
+          {
+            "area": "drones"
+          }
+        ]
+      },
+      {
+        "id": "drones2",
+        "when": {
+          "any": [
+            {
+              "line": "droneCorridor"
+            },
+            {
+              "gateOpen": "crate wall"
+            }
+          ]
+        },
+        "do": [
+          {
+            "stage": 2
+          },
+          {
+            "wake": "drones2"
+          },
+          {
+            "say": "newtutorialally2"
+          },
+          {
+            "say": "newtutorialally2_2",
+            "delay": 4.5
+          }
+        ]
+      },
+      {
+        "id": "talk_cats",
+        "when": {
+          "done": "drones2",
+          "aliveAtMost": {
+            "group": "drones2",
+            "count": 1
+          }
+        },
+        "do": [
+          {
+            "say": "newtutorialally2_3"
+          }
+        ]
+      },
+      {
+        "id": "ring",
+        "when": {
+          "any": [
+            {
+              "line": "ringEntry"
+            },
+            {
+              "within": {
+                "point": "ring",
+                "radius": 4.5
+              }
+            },
+            {
+              "all": [
+                {
+                  "line": "droneCorridor"
+                },
+                {
+                  "awake": "ring"
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "stage": 3
+          },
+          {
+            "area": "ring"
+          },
+          {
+            "wake": "ring"
+          },
+          {
+            "say": "newtutorialwalkerally3"
+          }
+        ]
+      },
+      {
+        "id": "ring_cleared",
+        "when": {
+          "done": "ring",
+          "any": [
+            {
+              "cleared": "ring"
+            },
+            {
+              "done": "ring",
+              "afterSeconds": 55
+            }
+          ]
+        },
+        "do": [
+          {
+            "remove": "ring",
+            "explode": true
+          },
+          {
+            "say": "newtutorialally3_2"
+          }
+        ]
+      },
+      {
+        "id": "crate",
+        "when": {
+          "done": "ring_cleared",
+          "afterSeconds": 2.5
+        },
+        "do": [
+          {
+            "stage": 4
+          },
+          {
+            "say": "newtutorialallyx_1",
+            "if": {
+              "alive": "crate"
+            }
+          },
+          {
+            "guide": "crateGuide",
+            "seconds": 8,
+            "if": {
+              "alive": "crate"
+            }
+          }
+        ]
+      },
+      {
+        "id": "crate_open",
+        "when": {
+          "done": "crate",
+          "any": [
+            {
+              "cleared": "crate"
+            },
+            {
+              "done": "crate",
+              "afterSeconds": 30
+            }
+          ]
+        },
+        "do": [
+          {
+            "remove": "crate",
+            "explode": true
+          },
+          {
+            "say": "newtutorialallyx_2"
+          },
+          {
+            "unlock": "gate"
+          },
+          {
+            "guide": "middleGateGuide",
+            "seconds": 6
+          }
+        ]
+      },
+      {
+        "id": "middle_gate_open",
+        "when": {
+          "gateOpen": "gate"
+        },
+        "do": [
+          {
+            "guide": "finalCorridorGuide",
+            "seconds": 6
+          }
+        ]
+      },
+      {
+        "id": "prepare",
+        "when": {
+          "all": [
+            {
+              "line": "finalCorridor"
+            },
+            {
+              "gateOpen": "gate"
+            }
+          ]
+        },
+        "do": [
+          {
+            "stage": 5
+          },
+          {
+            "say": "newtutorialally4_0"
+          },
+          {
+            "unlock": "boss gate"
+          },
+          {
+            "guide": "bossGateGuide",
+            "seconds": 6
+          },
+          {
+            "spawn": "boss"
+          }
+        ]
+      },
+      {
+        "id": "boss_gate_open",
+        "when": {
+          "gateOpen": "boss gate"
+        },
+        "do": [
+          {
+            "say": "newtutorialally4"
+          }
+        ]
+      },
+      {
+        "id": "boss_awake",
+        "when": {
+          "done": "boss_gate_open",
+          "afterSeconds": 2.5
+        },
+        "do": [
+          {
+            "stage": 6
+          },
+          {
+            "spawn": "boss"
+          },
+          {
+            "area": "arena"
+          },
+          {
+            "wake": "boss"
+          },
+          {
+            "say": "newtutorialenemy1",
+            "by": "boss"
+          }
+        ]
+      },
+      {
+        "id": "boss_defeated",
+        "when": {
+          "any": [
+            {
+              "dead": "boss"
+            },
+            {
+              "all": [
+                {
+                  "done": "boss_awake"
+                },
+                {
+                  "failed": "boss"
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "stage": 7
+          },
+          {
+            "remove": "boss",
+            "explode": true
+          },
+          {
+            "spawn": "boss_wreck"
+          },
+          {
+            "say": "tutorialBossDEATH",
+            "by": "wreck"
+          },
+          {
+            "remove": "wreck",
+            "delay": 6
+          },
+          {
+            "portal": "portal",
+            "autoExitSeconds": 90,
+            "delay": 2
+          },
+          {
+            "guide": "portalGuide",
+            "seconds": 30,
+            "delay": 2
+          },
+          {
+            "say": "newtutorialally5",
+            "delay": 3.5
+          },
+          {
+            "say": "newtutorialally6",
+            "delay": 10
+          }
+        ]
+      },
+      {
+        "id": "warn_wall",
+        "when": {
+          "gateNear": {
+            "gate": "crate wall",
+            "distance": 1.1
+          }
+        },
+        "do": [
+          {
+            "say": "newtutorialwall",
+            "byGate": "crate wall",
+            "mode": "bubble"
+          },
+          {
+            "guide": "wallWarnGuide",
+            "seconds": 6
+          }
+        ]
+      },
+      {
+        "id": "warn_gate",
+        "when": {
+          "gateNear": {
+            "gate": "gate",
+            "distance": 1.1
+          }
+        },
+        "do": [
+          {
+            "say": "newtutorialwall",
+            "byGate": "gate",
+            "mode": "bubble"
+          }
+        ]
+      },
+      {
+        "id": "warn_boss_gate",
+        "when": {
+          "gateNear": {
+            "gate": "boss gate",
+            "distance": 1.1
+          }
+        },
+        "do": [
+          {
+            "say": "newtutorialwall",
+            "byGate": "boss gate",
+            "mode": "bubble"
+          }
+        ]
+      }
+    ],
+    "steps": {
+      "1": {
+        "checkpoint": "anteroom",
+        "done": [
+          "talk_together",
+          "turret",
+          "talk_bullets",
+          "drones1",
+          "towers_quiet",
+          "start"
+        ],
+        "quiet": [
+          "towers"
+        ]
+      },
+      "2": {
+        "checkpoint": "ring room",
+        "done": [
+          "talk_together",
+          "turret",
+          "talk_bullets",
+          "drones1",
+          "towers_quiet",
+          "start",
+          "drone_corridor",
+          "drones2",
+          "talk_cats",
+          "warn_wall"
+        ],
+        "quiet": [
+          "towers"
+        ],
+        "remove": [
+          "drones1",
+          "drones2"
+        ],
+        "open": [
+          "crate wall"
+        ]
+      },
+      "3": {
+        "checkpoint": "crate corridor",
+        "done": [
+          "talk_together",
+          "turret",
+          "talk_bullets",
+          "drones1",
+          "towers_quiet",
+          "start",
+          "drone_corridor",
+          "drones2",
+          "talk_cats",
+          "warn_wall",
+          "ring",
+          "ring_cleared"
+        ],
+        "quiet": [
+          "towers"
+        ],
+        "remove": [
+          "drones1",
+          "drones2",
+          "ring"
+        ],
+        "open": [
+          "crate wall"
+        ],
+        "fire": [
+          "crate"
+        ]
+      },
+      "4": {
+        "checkpoint": "final corridor",
+        "done": [
+          "talk_together",
+          "turret",
+          "talk_bullets",
+          "drones1",
+          "towers_quiet",
+          "start",
+          "drone_corridor",
+          "drones2",
+          "talk_cats",
+          "warn_wall",
+          "ring",
+          "ring_cleared",
+          "crate",
+          "crate_open",
+          "middle_gate_open",
+          "warn_gate"
+        ],
+        "quiet": [
+          "towers"
+        ],
+        "remove": [
+          "drones1",
+          "drones2",
+          "ring",
+          "crate"
+        ],
+        "open": [
+          "crate wall",
+          "gate"
+        ]
+      },
+      "5": {
+        "checkpoint": "arena",
+        "done": [
+          "talk_together",
+          "turret",
+          "talk_bullets",
+          "drones1",
+          "towers_quiet",
+          "start",
+          "drone_corridor",
+          "drones2",
+          "talk_cats",
+          "warn_wall",
+          "ring",
+          "ring_cleared",
+          "crate",
+          "crate_open",
+          "middle_gate_open",
+          "warn_gate",
+          "prepare",
+          "boss_gate_open",
+          "boss_awake",
+          "warn_boss_gate"
+        ],
+        "quiet": [
+          "towers"
+        ],
+        "remove": [
+          "drones1",
+          "drones2",
+          "ring",
+          "crate",
+          "boss"
+        ],
+        "open": [
+          "crate wall",
+          "gate",
+          "boss gate"
+        ],
+        "fire": [
+          "boss_defeated"
+        ]
+      }
+    }
+  }
 }

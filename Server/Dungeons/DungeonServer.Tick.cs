@@ -30,6 +30,7 @@ public static partial class DungeonServer
         UpdateClears(s, now, log);
         UpdateGates(s, now, log);
         UpdateDeferred(s, now, log);
+        s.Script?.Update(now);
         CheckExit(s, now, log);
     }
 

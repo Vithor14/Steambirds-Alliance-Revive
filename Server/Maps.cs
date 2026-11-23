@@ -50,6 +50,8 @@ public static class Maps
         public List<CheckpointFile>? Checkpoints { get; set; }
         public List<GateFile>? Gates { get; set; }
         public List<SignFile>? Signs { get; set; }
+        // What happens in the map (rules, spawns, jumps): Scripting\MapScript.cs, docs/map-script.md.
+        public MapScript.ScriptDef? Script { get; set; }
         // Solid places that were only scenery (the Rebel City props): each rectangle closes the wall sub-cells (3 u) whose
         // center is inside it, so planes cannot fly through. Written as walls on the tiles of the floor message.
         public List<CollisionFile>? Collisions { get; set; }
@@ -203,6 +205,7 @@ public static class Maps
         public readonly List<Checkpoint> Checkpoints = new List<Checkpoint>();
         public readonly List<Gate> Gates = new List<Gate>();
         public readonly List<Sign> Signs = new List<Sign>();
+        public MapScript.ScriptDef? Script;
 
         // Wall sub-cells closed by the "collisions" of the file, by tile (walls[i, j] as in Ground.FloorPlan.TileWalls).
         public readonly Dictionary<(int A, int B), bool[,]> CollisionWalls = new Dictionary<(int A, int B), bool[,]>();
@@ -630,6 +633,8 @@ public static class Maps
             map.Gates.Add(new Gate(p.Name, p.Type, p.Sj, p.SiFrom, p.SiTo, p.Damageable));
         }
 
+        map.Script = file.Script;
+
         foreach (SignFile p in file.Signs ?? new List<SignFile>())
             map.Signs.Add(new Sign(p.Key, new Point(p.U, p.V, p.Rot), p.Radius, p.Rot));
 
@@ -638,6 +643,9 @@ public static class Maps
             if (p.MaxU < p.MinU || p.MaxV < p.MinV) throw new InvalidDataException("collision '" + p.Name + "': max smaller than min");
             map.AddCollision(p.MinU, p.MaxU, p.MinV, p.MaxV);
         }
+
+        string? scriptError = MapScript.Validate(map);
+        if (scriptError != null) throw new InvalidDataException("script: " + scriptError);
 
         return map;
     }

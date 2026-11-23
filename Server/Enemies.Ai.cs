@@ -261,6 +261,7 @@ public static partial class Enemies
         float velMin = Math.Min(enemy.VelMin * enemy.PhaseSpeedMult, velMax);
         string mode = enemy.Behavior == "escort" ? "escort" : (enemy.Aggro ? enemy.Behavior : "patrol");
         if (enemy.Ai != null) mode = "brain";
+        else if (enemy.Behavior == "route" && enemy.Type.RoutePoints is { Count: > 1 }) mode = "route";
         else if (velMax <= 0.05f) mode = "turret";
         float preferred = Math.Max(2f, enemy.Type.PreferredDistance);
 
@@ -283,6 +284,12 @@ public static partial class Enemies
             case "circle":
                 OrbitPoint(inst, enemy, preferred, 75f, out targetX, out targetY);
                 targetVel = Lerp(velMin, velMax, 0.75f);
+                break;
+
+            case "route":
+                // Follows the path of the map forever (a boss circling a ring), whether or not the player is close.
+                RouteTarget(enemy, out targetX, out targetY);
+                targetVel = velMax;
                 break;
 
             case "kamikaze":
@@ -422,6 +429,31 @@ public static partial class Enemies
         float hard = limit + 4f;
         enemy.X = Math.Clamp(enemy.X, arena.CenterX - hard, arena.CenterX + hard);
         enemy.Y = Math.Clamp(enemy.Y, arena.CenterY - hard, arena.CenterY + hard);
+    }
+
+    // Next point of the unit's route: starts at the nearest one and goes on to the next each time it gets close.
+    private static void RouteTarget(Enemy enemy, out float x, out float y)
+    {
+        List<(float X, float Y)> points = enemy.Type.RoutePoints!;
+        if (enemy.RouteIndex < 0 || enemy.RouteIndex >= points.Count)
+        {
+            float best = float.MaxValue;
+            int pick = 0;
+            for (int i = 0; i < points.Count; i++)
+            {
+                float d = Distance(enemy.X, enemy.Y, points[i].X, points[i].Y);
+                if (d < best)
+                {
+                    best = d;
+                    pick = i;
+                }
+            }
+            enemy.RouteIndex = pick;
+        }
+        for (int guard = 0; guard < points.Count && Distance(enemy.X, enemy.Y, points[enemy.RouteIndex].X, points[enemy.RouteIndex].Y) < RouteArrival; guard++)
+            enemy.RouteIndex = (enemy.RouteIndex + 1) % points.Count;
+        x = points[enemy.RouteIndex].X;
+        y = points[enemy.RouteIndex].Y;
     }
 
     // Point on the circle of radius "radius" around the player, ahead by "deviation" degrees in the orbit direction.

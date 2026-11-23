@@ -41,6 +41,13 @@ public sealed class LauncherSettings
     // "Play" starts the server of this PC first when it is not running (only when the chosen server is this PC).
     public bool StartServerWithGame { get; set; } = true;
 
+    // Discord Rich Presence: shows on your Discord profile the plane, level and place while you play, and the server and how
+    // many pilots are online while you host. Never the IP, the port or the account.
+    public bool DiscordPresence { get; set; } = true;
+
+    // Application ID of the Discord app; empty = LauncherInfo.DiscordApplicationId.
+    public string DiscordApplicationId { get; set; } = "";
+
     // Hides the HarmonyX IL dumps and the "referenced script is missing" warnings in the client console.
     public bool HideClientLogNoise { get; set; } = true;
 
@@ -80,6 +87,7 @@ public sealed class LauncherSettings
             settings.ServerAddress ??= "";
             settings.ServerAddressName ??= "";
             settings.PlayerName ??= "";
+            settings.DiscordApplicationId ??= "";
             if (settings.SearchPort < 1 || settings.SearchPort > 65535) settings.SearchPort = ServerNetworkFile.DefaultSearchPort;
             return settings;
         }

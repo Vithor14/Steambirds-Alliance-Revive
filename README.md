@@ -14,7 +14,8 @@ community-made project. The game itself is **not** included: you need your own c
   items, loot, workshop, stores, Rebel City (the Nexus), the walker tutorial, 17 recreated dungeons, an **open world**
   generated from a seed (regions, enemy spawns, dungeon carriers) and **friends and flocks**.
 - **Multiplayer**: host for LAN or a VPN (Radmin, Hamachi) or over the internet; players share the Nexus, the open world and
-  the dungeons, can whisper, talk in their flock, and teleport to or join a friend.
+  the dungeons, can whisper, talk in their flock, and teleport to or join a friend. New to VPNs? Follow the
+  [Radmin VPN step-by-step guide](docs/radmin-vpn-guide.md).
 - **Launcher**: downloads the game through Steam, lists servers, hosts a server, and edits accounts, stores,
   difficulty, dungeons, the open world and the social settings without touching any file.
 - **Map editor**: builds dungeon, Nexus and tutorial maps from the game's own assets, as files the server reads.

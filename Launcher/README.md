@@ -58,13 +58,23 @@ When the launcher opens and `Steambirds.exe` is not in the game folder, a window
 ## Client tab
 
 - **Download the game with Steam** (*Game* sub-tab, only while the game is missing or is the wrong build): copies `download_depot 386010 386011 58813776496064724`, opens the Steam console (`steam://open/console`) and follows the download (folder size and the `Depot download complete` / `failed` lines of Steam's `logs\console_log.txt`). When it is done, `steamapps\content\app_386010\depot_386011` becomes the game folder and gets `steam_appid.txt` (386010), so the game logs in with Steam outside the library. The Steam account needs the game in its library. The depot has no BepInEx: without it the game runs without the Quieter plugin.
-- **Quieter plugin**: its state (*Installed*, *Update available*, *Not installed*, *BepInEx missing*) and an *Install plugin* / *Update plugin* button. The **?** explains what the plugin is (client bug fixes, quieter logs, no telemetry errors) and what happens without it (the game works, with those bugs and noisy logs; a PC that only joins other servers loses nothing else, because the server ships its own data tables in `server\data`).
+- **Quieter plugin**: its state (*Installed*, *Update available*, *Not installed*, *BepInEx missing*) and an *Install plugin* / *Update plugin* button. The **?** explains what the plugin is (client bug fixes, quieter logs, no telemetry errors) and what happens without it (the game works, with those bugs and noisy logs; a PC that only joins other servers loses nothing else, because the server ships its own data tables in `server\data`). **PLAY** asks for confirmation when the plugin (or BepInEx) is missing, because the Flock Hall building, for one, only shows with the plugin.
 - **Player**: the name the other players see. Empty = the name of the Steam account (read from Steam's `loginusers.vdf`). The **account** on a server is always the Steam account (the Steam ID comes from the login ticket), so changing the name keeps the pilot and the planes. The name goes in the path of `OZY_URL` (`http://<ip>:<port>/n/<name as hex>/ozy`), only for servers that accept it.
 - **Servers**: the first row is **this PC**; below it, the servers found on the local network and on VPNs, and the typed IPs.
   - The search (*Search again*, or every minute with *Search by itself*) sends a UDP packet to port 6444 on every network of the PC: broadcast, the PCs of the ARP table and, on small (home) networks, every address. Radmin VPN and Hamachi are reached by broadcast and the ARP table.
   - *Connect by IP*: type the IP of the server PC (plus `:port` when the login is not 6443). The launcher checks `http://<ip>:<port>/revive/info` and adds the server to the list (typed IPs are saved).
   - Clicking a row chooses the server (bold row); a double click opens the game. *Remove from list* removes a typed IP.
 - **PLAY**: opens the game on the chosen server. **This PC**: `OZY_URL=http://localhost:<port>/ozy` and `-connecttolocal`; with *Start the server of this PC with the game* checked, the server starts first. **Another PC**: `OZY_URL=http://<ip>:<port>/ozy` without `-connecttolocal` — the login answers with the Nexus of that server. While another PC is chosen, *Start the server of this PC with the game* is unchecked and grayed out.
+
+## Discord Rich Presence
+
+The launcher can show on the Discord profile of the player what they are doing (*Settings → General → Discord Rich Presence*, on by default; Discord must be open on the same PC). It talks to the Discord desktop app through its local pipe (`Core\DiscordIpc.cs`), with no SDK or DLL, and updates every 15 seconds only when something changed.
+
+- **Playing** (the game opened by the launcher): the plane class and level, the pilot rank, where the player is (Rebel City, Training Grounds, the open world or the name of the dungeon) and "N of M" players of the server. The launcher asks the server it joined (`/revive/info`, field `playerDetails`) and picks the entry with the player name; without a name it uses the only player of the server.
+- **Hosting** (the server of this PC is running): "Hosting <server name>", how many pilots are online and how many are in dungeons.
+- Never shown: IP address, ports, account, Steam name or ID, or the player name. A button opens the community Discord invite.
+
+Setup (once, by the maintainer): create an application at <https://discord.com/developers/applications>, put its *Application ID* in `LauncherInfo.DiscordApplicationId` (or in `launcher.json` as `"discordApplicationId"`) and, in *Rich Presence → Art Assets*, upload `Branding\icon.png` with the key `logo`. Without the ID the launcher shows "Needs the Discord application ID" in Settings and does nothing.
 
 ## Map editor tab
 
@@ -98,7 +108,7 @@ To use an AI in the game, write `"ai": "<id>"` in a unit type of `enemies.json` 
 
 1. **The host** opens *Server → Network and multiplayer*, checks that other PCs are accepted, clicks *Allow in the Windows Firewall* (once) and starts the server. The addresses to share are on the same page.
 2. **The other players** open the *Client* tab: the server shows up in the list (same network or VPN) or is added with *Connect by IP*. Choose the row and click **PLAY**.
-3. On the internet (no VPN), the host's router must forward the login port (TCP 6443) and the game ports (UDP 1111, 1112, 1113 and 1114) to the host's PC, and the players type the host's public IP.
+3. On the internet (no VPN), the host's router must forward the login port (TCP 6443) and the game ports (UDP 1111, 1112, 1113 and 1114) to the host's PC, and the players type the host's public IP. When a player on another PC is sent to another server of the host and does not arrive within 20 s, the server console shows `WARNING: ... did not arrive` with the UDP port to check.
 
 Every player has their own account on the host's PC (pilot, planes, items, finished dungeons). Players **see each other** in the Nexus, the open world and the dungeons (planes, shots, chat and skills are relayed; players of the same dungeon type share one instance, and each one gets their own XP and loot); the tutorial stays private. The chat says who joins and leaves, and `/players` lists who is online. Friends, flocks and "Join Server" are in `docs\social.md`.
 

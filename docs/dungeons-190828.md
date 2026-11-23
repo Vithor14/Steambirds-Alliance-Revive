@@ -31,7 +31,7 @@ Escrito em 15/11/2026, revisado em 23/11/2026. Os mapas ficam em `Server\maps\du
 | dungeon_thief | The Vaults | 10 | 59 | 10 | altar de Horus, 3 Security Chiefs, chave dourada, emboscadas de dropships |
 | dungeon_space | Super Secret Base | 10 | 58 | 8 | sentinelas, sala de emboscada, esquadrilha Omega, Mammoth-1, Doomsday Mechanism |
 | dungeon_temple | Temple of Bast | 10 | 61 | 8 | 2 salas de altar, Bast Statue, High Priestess Tiffany |
-| dungeon_sneezy | Iron Lair | 10 | 67 | 2 | SN-Z com escudo e armas por fase, Robo Squadrons I–III |
+| dungeon_sneezy | Iron Lair | 10 | 67 | 1 | arena em donut (refeita em 23/11, `docs/dungeon-server.md`): SN-Z girando pelo anel, bombas de explosão grande e fase de escudo com rajadas na metade da vida |
 | dungeon_arena2 | The Elder Arena | 10 | 65 | 3 | 15 ondas, minichefes na 8 e na 15, Dark Sphinx |
 | dungeon_rescue | The Dig | 10 | 45 | 11 | escolta da broca, Deep Leviathan, Stone Worm, Buried Guardian, Legendary Supplies |
 | dungeon_finalboss | Command Center | 10 | 35 | 3 | Viceroy com contagem de incineração, Meowza fase 1, portal para os Three Brothers |

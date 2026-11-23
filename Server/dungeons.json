@@ -25,7 +25,7 @@
       "inNexus": true,
       "healthMultiplier": 1.0,
       "opensAt": "",
-      "note": "Enabled for the first test. SN-Z with a 10 s shield every 20% of health (original AI layer of build 190426)."
+      "note": "Rebuilt 23/11: a donut arena. SN-Z circles the ring forever, fires homing shots, drops big-blast bombs and at half health shields itself for 8 s while it fires volleys at the player."
     },
     {
       "type": "DungeonBomb",

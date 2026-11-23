@@ -44,6 +44,15 @@ public sealed class SocialSettings
     // Seconds without playing before a member shows as inactive in the roster. -1 = the game's value (604800 = 7 days).
     public int InactiveSeconds { get; set; } = -1;
 
+    // ---------------------------------------------------------------- safe trade
+
+    // false: "Trade" in the player menu and /trade answer that trading is off on this server.
+    public bool TradeEnabled { get; set; } = true;
+
+    // true: the trade fee of the game's own "trade" config is charged (gold or iron, a percentage of the value of what is traded;
+    // the original server's formula is not in the client, so this is a reconstruction). false: trading is free.
+    public bool TradeTaxes { get; set; } = true;
+
     // ---------------------------------------------------------------- teleport
 
     // The game's own teleport to a player on the same server (radar, friend list or /tp NAME) in the open world. false: the
@@ -183,6 +192,10 @@ public static class SocialSettingsFile
 
   // Seconds without playing before a member shows as inactive in the roster (-1 = 7 days).
   ""inactiveSeconds"": -1,
+
+  // Safe trade between two players (player menu > Trade, or /trade NAME). tradeTaxes false = no fee.
+  ""tradeEnabled"": true,
+  ""tradeTaxes"": true,
 
   // The game's own teleport to a player on the same server (radar, friend list, /tp NAME) in the open world.
   ""toPlayersInWorld"": true,

@@ -106,8 +106,12 @@ public static partial class Game
         int reason = msg.ReadInt32();
         float x = msg.ReadSingle();
         float y = msg.ReadSingle();
+        // The client of the player's own plane always sends (0, 0) here (the position is not filled in): the last position
+        // the plane reported tells where it really fell.
+        bool lastKnown = x == 0f && y == 0f && shortId == j.PlaneShortId && j.HasPosition;
+        if (lastKnown) { x = j.X; y = j.Y; }
         string text = CopperReader.Name(CopperReader.DeathReasonNames, reason) + " at (" +
-            CopperReader.Num(x) + ", " + CopperReader.Num(y) + ")";
+            CopperReader.Num(x) + ", " + CopperReader.Num(y) + ")" + (lastKnown ? " (last position of the plane)" : "");
         RecordDeath(server, msg.SenderConnection, j, shortId, reason, text, "ServerRequestKill", log);
     }
 

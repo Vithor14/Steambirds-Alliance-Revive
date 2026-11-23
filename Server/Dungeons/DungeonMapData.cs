@@ -283,6 +283,27 @@ public static class DungeonMapData
             data.Extras[pair.Key] = extras ?? new UnitExtras();
         }
 
+        // Types that fly along a path ("route" = a name of "routes"): the points go to the type in world coordinates.
+        foreach (KeyValuePair<string, Enemies.EnemyType> pair in data.Types)
+        {
+            string routeName = pair.Value.Route;
+            if (string.IsNullOrWhiteSpace(routeName)) continue;
+            if (file.Routes == null || !file.Routes.TryGetValue(routeName, out List<RoutePoint>? routePoints) || routePoints == null || routePoints.Count < 2)
+            {
+                // Only a unit that flies by the route needs it ("route" on other types is a note for later scripts).
+                if (string.Equals(pair.Value.Behavior, "route", StringComparison.OrdinalIgnoreCase))
+                    data.Warnings.Add("type '" + pair.Key + "': the route '" + routeName + "' does not exist or has fewer than 2 points");
+                continue;
+            }
+            var world = new List<(float X, float Y)>();
+            foreach (RoutePoint rp in routePoints)
+            {
+                Ground.ToWorld(rp.U / Ground.CellSize, rp.V / Ground.CellSize, out float wx, out float wy);
+                world.Add((wx, wy));
+            }
+            pair.Value.RoutePoints = world;
+        }
+
         // Boss phases call types of the same map: same prefix.
         foreach (Enemies.EnemyType type in data.Types.Values)
         {

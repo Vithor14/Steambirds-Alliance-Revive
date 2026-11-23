@@ -63,11 +63,38 @@ internal sealed class SettingsTab : UserControl
         TableLayoutPanel communityTable = Ui.Table(1);
         communityTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
         Ui.AddRow(communityTable, Ui.Wrapping(L.T("Questions, bugs, maps and servers to join: the Steambirds Alliance Revive community is on Discord."), 420, true));
-        Ui.AddRow(communityTable, Ui.Flow(Ui.Button(L.T("Join the Discord"), (_, _) => Ui.OpenUrl(FindForm(), LauncherInfo.DiscordUrl))));
+        Ui.AddRow(communityTable, Ui.Flow(Ui.DiscordButton(L.T("Join the Discord"), (_, _) => Ui.OpenUrl(FindForm(), LauncherInfo.DiscordUrl))));
+
+        // Discord Rich Presence: plane, level and place while playing; server and players online while hosting.
+        var presenceSwitch = new ThemedCheckBox
+        {
+            Text = L.T("Show what I am doing on my Discord profile"),
+            Checked = settings.DiscordPresence,
+            Switch = true
+        };
+        Label presenceStatus = Ui.Wrapping(context.Presence.Status, 420, true);
+        presenceSwitch.CheckedChanged += (_, _) =>
+        {
+            settings.DiscordPresence = presenceSwitch.Checked;
+            context.SaveSettings();
+            context.Presence.Refresh();
+        };
+        Action updatePresenceStatus = () => context.RunOnUi(() =>
+        {
+            if (!presenceStatus.IsDisposed) presenceStatus.Text = context.Presence.Status;
+        });
+        context.Presence.StatusChanged += updatePresenceStatus;
+        Disposed += (_, _) => context.Presence.StatusChanged -= updatePresenceStatus;
+        TableLayoutPanel presenceTable = Ui.Table(1);
+        presenceTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        Ui.AddRow(presenceTable, Ui.Wrapping(L.T("Playing: your plane, its level, your pilot rank and where you are. Hosting: the name of your server and how many pilots are online. Nothing else: never your IP address, your account or your name."), 420, true));
+        Ui.AddRow(presenceTable, Ui.Flow(presenceSwitch));
+        Ui.AddRow(presenceTable, presenceStatus);
 
         var generalPage = Page(L.T("General"),
             Stack(Columns(Ui.Group(L.T("Appearance"), appearance), Ui.Group(L.T("Language"), languageTable)),
-                  Ui.Group(L.T("Community"), communityTable)));
+                  Ui.Group(L.T("Community"), communityTable),
+                  Ui.Group(L.T("Discord Rich Presence"), presenceTable)));
 
         // ------------------------------------------------------------ game: folder and language
         folderBox = new ThemedTextBox { Text = settings.GameFolder, Dock = DockStyle.Fill, Margin = new Padding(3, 4, 3, 3) };

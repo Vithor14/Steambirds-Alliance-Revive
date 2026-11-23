@@ -5,22 +5,9 @@ using Map = MapInfo;
 
 public static partial class Tutorial
 {
-    // ================================================================== instructor and checkpoints
+    // ================================================================== checkpoints
 
-    private static void Guide(Session sess, float a, float b, double now, double seconds)
-    {
-        Ground.ToWorld(a, b, out sess.GuideX, out sess.GuideY);
-        sess.GuideUntil = now + seconds;
-    }
-
-    // The instructor waits at the hangar entrance, then follows the player and goes ahead when guiding.
-    private static void GuideInstructor(Session sess, double now)
-    {
-        if (sess.Instructor == 0) return;
-        bool destination = sess.WaitingAtEntrance || now < sess.GuideUntil;
-        Enemies.SetDestination(sess.Connection, sess.Instructor, sess.GuideX, sess.GuideY, destination);
-    }
-
+    // The checkpoint is the furthest one the player has gone past (where the plane is born again after a fall).
     private static void UpdateCheckpoint(Session sess, float pb, double now, Action<string, string> log)
     {
         List<Maps.Checkpoint> points = sess.Map.Checkpoints;

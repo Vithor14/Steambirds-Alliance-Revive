@@ -56,19 +56,11 @@ public static partial class Tutorial
     // maps\tutorial_walker.json
     public const string MapId = "tutorial_walker";
 
-    // Order of the gates in the file: 0 = anteroom wall, 1 = middle gate, 2 = boss gate.
-    private const int WallGate = 0;
-    private const int MiddleGate = 1;
-    private const int BossGate = 2;
-
     // Crate walls: rotation 0, aligned with the grid (the model already comes rotated to the grid).
     private const float CrateRotation = 0f;
 
     // Without entering the carrier, the server takes the player to the Nexus by itself after this time.
     private const double AutoExitAt = 90.0;
-
-    private const string InstructorPortrait = "sergeant";
-    private const string BossPortrait = "bosscat";
 
     // Last map that passed the check (Validate). A new file with an error does not take the tutorial down.
     private static Maps.Map? mapValid;
@@ -100,7 +92,6 @@ public static partial class Tutorial
         public int Sj;
         public bool Damageable;
         public bool Open;
-        public bool Warned;
         public readonly List<Piece> Pieces = new List<Piece>();
     }
 
@@ -122,30 +113,15 @@ public static partial class Tutorial
         public readonly List<Gate> Gates = new List<Gate>();
         public readonly List<(int Id, float X, float Y)> Objects = new List<(int Id, float X, float Y)>();
         public readonly List<PendingAction> Pending = new List<PendingAction>();
-        public readonly HashSet<string> Finished = new HashSet<string>();
+        // The script of the map (what happens and when). Null until the plane spawns.
+        public MapScriptRunner Script = null!;
 
         public bool Started;
-        public int Stage;                // only for the log and the commands (StageName)
         public int Checkpoint;
         public double NextTick;
         public double StartAt;
 
-        public int Instructor;
-        public double GuideUntil;
-        public float GuideX;
-        public float GuideY;
-        public bool WaitingAtEntrance;
-
-        public readonly List<int> Towers = new List<int>();
         public bool Left;
-        public double RingAt;
-        public int Crate;
-        public double CrateAt;
-        public int Boss;
-        public bool BossDefeated;
-        public float BossX;
-        public float BossY;
-
         public int Portal;
         public float PortalX;
         public float PortalY;
@@ -232,7 +208,7 @@ public static partial class Tutorial
                 return;
             }
             log("TUTORIAL", "[tutorial] plane respawned at checkpoint '" + sess.Map.Checkpoints[sess.Checkpoint].Name +
-                "' (step " + sess.Stage + ", the progress stays)");
+                "' (step " + sess.Script.Stage + ", the progress stays)");
         }
     }
 
@@ -272,7 +248,7 @@ public static partial class Tutorial
         {
             if (!sessions.TryGetValue(connection.RemoteUniqueIdentifier, out Session? sess)) return;
             sessions.Remove(connection.RemoteUniqueIdentifier);
-            log("TUTORIAL", "[tutorial] session ended at step " + sess.Stage + " (" + StageName(sess.Stage) + ")");
+            log("TUTORIAL", "[tutorial] session ended at step " + sess.Script.Stage + " (" + sess.Script.StageName() + ")");
         }
     }
 
@@ -310,15 +286,15 @@ public static partial class Tutorial
                     WorldObjects.SendChat(server, connection, "/step N: 1 drones, 2 drone ring, 3 crate, 4 boss gate, 5 portal");
                     WorldObjects.SendChat(server, connection, "/portal: creates the portal to the Nexus near you. /restart: tutorial from scratch");
                     WorldObjects.SendChat(server, connection, "/leave: after the boss, goes to the Nexus without entering the carrier");
-                    WorldObjects.SendChat(server, connection, "Now: step " + sess.Stage + " (" + StageName(sess.Stage) + ")");
+                    WorldObjects.SendChat(server, connection, "Now: step " + sess.Script.Stage + " (" + sess.Script.StageName() + ")");
                     break;
 
                 case "/step":
                 {
                     string? arg = pieces.Count > 1 ? pieces[1].Trim() : null;
-                    if (!int.TryParse(arg, NumberStyles.Integer, Inv, out int number) || number < 1 || number > 5)
+                    if (!int.TryParse(arg, NumberStyles.Integer, Inv, out int number) || number < 1 || sess.Map.Script?.Steps == null || !sess.Map.Script.Steps.ContainsKey(number.ToString(Inv)))
                     {
-                        WorldObjects.SendChat(server, connection, "Use /step N (1 to 5).");
+                        WorldObjects.SendChat(server, connection, "Use /step N (1 to " + (sess.Map.Script?.Steps?.Count ?? 0) + ").");
                         break;
                     }
                     JumpToStage(sess, number, now, log);
@@ -338,7 +314,7 @@ public static partial class Tutorial
                         break;
                     }
                     Ground.ToGrid(px, py, out float pa, out float pb);
-                    CreatePortal(sess, pa, pb + 0.6f, now, log);
+                    CreatePortal(sess, pa, pb + 0.6f, now, log, AutoExitAt);
                     WorldObjects.SendChat(server, connection, "Portal to the Nexus created in front of you.");
                     break;
 
@@ -347,7 +323,7 @@ public static partial class Tutorial
                     break;
 
                 case "/leave":
-                    if (!sess.BossDefeated)
+                    if (!sess.Script.Completed)
                     {
                         WorldObjects.SendChat(server, connection, "Finish the tutorial first (or use /step 5).");
                         break;

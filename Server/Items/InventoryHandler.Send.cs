@@ -49,6 +49,11 @@ public static partial class InventoryHandler
         });
         if (added.Count > 0)
             Send(server, connection, m => ProgressionMessages.WriteClientUpdatePlayerDataUnlocks(m, PilotProgression.CurrentUnlocks()));
+
+        // A plane variant does not change by itself: the player picks it in Options > Variant (23/11 test: a paladin variant was
+        // bought and the player waited for the plane to change, so the chat says where to pick it).
+        if (added.Any(u => u.StartsWith("playerclass_", StringComparison.OrdinalIgnoreCase)))
+            Chat(server, connection, "Plane variant unlocked: open the options menu (Esc) > Variant to put it on your plane.");
         return added;
     }
 

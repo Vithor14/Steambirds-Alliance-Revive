@@ -127,6 +127,7 @@ public static partial class Program
         // Social (Social folder): friends, flocks and the way to a friend (social.json, flocks.json, accounts\<key>\social.json).
         // "Join Server" switches between the Nexus and the open world with the same links.
         SocialHandler.Start(Log);
+        SecureTrade.Start(Log);
         SocialHandler.SwitchToNexus = (server, connection, reason) => SendToNexus(server, connection, reason);
         SocialHandler.SwitchToWorld = (server, connection, reason) => SendToWorld(server, connection, reason);
 

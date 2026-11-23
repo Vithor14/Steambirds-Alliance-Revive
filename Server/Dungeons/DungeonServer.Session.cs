@@ -189,6 +189,8 @@ public static partial class DungeonServer
             s.Gates.Add(gate);
         }
 
+        if (s.Map.Script != null) s.Script = new MapScriptRunner(new ScriptHost(s));
+
         log("DUNGEON", "[dungeon] new session: " + entry.Label + " (" + s.Map.FilePath + "): " + s.Rooms.Count + " room(s), " +
             s.Gates.Count + " gate(s), " + s.Map.Checkpoints.Count + " checkpoint(s)");
         return s;
@@ -219,6 +221,7 @@ public static partial class DungeonServer
 
         float tier = 0f;
         if (s.Data?.File.Values != null) s.Data.File.Values.TryGetValue("tier", out tier);
+        s.Script?.Start(now);
         Chat(s, s.Entry.Label + (tier > 0f ? " (tier " + tier.ToString("0", Inv) + ")" : "") + ". Commands: /dungeonhelp");
         log("DUNGEON", "[dungeon] " + s.Entry.Label + " started: " + pieces + " wall piece(s) in " + s.Gates.Count + " gate(s)");
         Tick(s, now, log);

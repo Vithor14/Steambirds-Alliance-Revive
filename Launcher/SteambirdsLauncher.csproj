@@ -28,6 +28,8 @@
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\Branding\icon.png" LogicalName="brand-emblem.png" />
+    <!-- Discord's logo (their brand), only on the buttons that open the community invite. -->
+    <EmbeddedResource Include="..\Branding\discord-logo.png" LogicalName="discord-logo.png" />
   </ItemGroup>
 
   <!-- Enemy AI core, shared with the server: the AI tab simulator runs the same code the server runs. -->

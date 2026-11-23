@@ -10,6 +10,7 @@ accent (head visor, rocket-pod cells, "REVIVE" lettering) that mark this as the 
 | `logo.svg` / `logo.png` | Full logo, 2000 x 1480, transparent background (README, GitHub social preview, launcher header) |
 | `icon.svg` / `icon.png` | Square emblem with a big "R", 1024 x 1024, transparent background (avatar, launcher icon) |
 | `icon.ico` | Windows icon with 16, 24, 32, 48, 64, 128 and 256 px sizes |
+| `discord-logo.png` | Discord's own logo (their brand, not ours), shown only on the launcher buttons that open the community Discord invite |
 
 ## Colors
 

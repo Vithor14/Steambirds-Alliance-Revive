@@ -5,7 +5,7 @@ Atualizado em 23/11/2026 (servidor 0.5.0). Os mapas ficam em `Server\maps`, um `
 | Arquivo | Mapa | Quem usa |
 |---|---|---|
 | `nexus.json` | Rebel City | `Nexus.cs` (chão, enfeites, prédios, colisões, nascimento) |
-| `tutorial_walker.json` | Training Grounds | `Tutorial*.cs` (o roteiro continua no código e pega os lugares pelo nome) |
+| `tutorial_walker.json` | Training Grounds | `Tutorial*.cs` (o roteiro está na seção `script` do arquivo, `docs/map-script.md`) |
 | `dungeon_*.json` (17) | Dungeons da build 190828 recriadas | `Dungeons\DungeonServer*.cs` (porta 1113). Qual arquivo cada dungeon usa: `dungeons.json` (`map`). Ver `docs/dungeons-190828.md`, `docs/dungeon-server.md` |
 
 O terreno `Basic` (mundo aberto) **não** é um arquivo: é gerado por semente (`docs/open-world.md`).
@@ -25,6 +25,7 @@ O terreno `Basic` (mundo aberto) **não** é um arquivo: é gerado por semente (
 - `buildings` [{`prefab`, `name`, `u`, `v`, `rot`, `store`}] (shortIds 70001+ na ordem do arquivo; `store` liga o prédio a uma loja de `stores.json`); `spawn` {`u`, `v`, `rot`}.
 - `collisions` [{`name`, `minU`, `maxU`, `minV`, `maxV`}]: cenário sólido. Toda sub-célula de muro (3 u) cujo centro cai no retângulo é fechada na mensagem do chão (`Map.AddCollision`, `WriteFloor`). Funciona em tiles sem chão desenhado (o Nexus não tem). Os prédios do Nexus ficam fora para dar para atracar.
 - Para roteiros: `points` {nome: ponto}, `groups` {nome: [pontos]}, `areas` {nome: {`minU`, `maxU`, `minV`, `maxV`}}, `lines` {nome: v}, `values` {nome: número}, `checkpoints` [{`name`, `activeAtV`, `u`, `v`, `rot`}], `gates` [{`name`, `type`, `sj`, `siFrom`, `siTo`, `damageable`}], `signs` [{`key`, `u`, `v`, `radius`, `rot`}] (texto de chão que o cliente cria sozinho: um evento por placa no ClientMapInfo).
+- `script` {`spawns`, `rules`, `steps`...}: o roteiro do mapa (quem aparece, quem acorda quando, falas, portões, saída). Formato e motor em `docs/map-script.md`; os nomes que ele usa são conferidos na leitura do arquivo (erro = fica a versão anterior).
 - Campos desconhecidos (`note`, `legend`, `scaled`) são ignorados. O leitor aceita comentários `//` e vírgula sobrando. `"scaled": 0.5` marca os 17 mapas de dungeon já reduzidos por `tools\scale_dungeon_maps.py` (o script se recusa a escalar duas vezes).
 
 ## Campos das dungeons (lidos por `Dungeons\DungeonMapData.cs`; `Maps.cs` ignora)
@@ -32,14 +33,14 @@ O terreno `Basic` (mundo aberto) **não** é um arquivo: é gerado por semente (
 - Metadados: `key` (chave `key_*` da dungeon), `portalItem`, `quest`, `exit` {`point`, `when`} (sem `exit`: fim quando as salas de chefe estão limpas), `nextDungeon` {`map`, `point`, `when`} (**ainda não usado**: Meowza → Three Brothers → Inner Sanctum); `values.tier`, `values.bossTerritory`.
 - `sideGates` [{`name`, `type`, `si`, `sjFrom`, `sjTo`, `damageable`, `opensWhen`, `room`}]: portões dos corredores laterais. Ficam fora de `gates` porque `Maps.cs` só entende fileiras `sj`. Os `gates` ganham `opensWhen` e `room` aqui também.
 - Portões: `damageable` = barricada (leva dano; uma parede quebrada derruba o portão); senão invulnerável e abre por `opensWhen`: `cleared:<room>` (com `+` para juntar), `death:<type>`, `quest:<id>` (por enquanto sempre verdadeira). `room`: para onde o portão leva (fecha atrás do jogador se a sala tem `closesOnEnter` e a opção `lockBossRooms` do `dungeons.json` está ligada para salas de chefe).
-- `routes` {nome: [{`u`, `v`}]}: caminho da broca (The Dig) e trilho das Blood Nurses (ainda não usado).
+- `routes` {nome: [{`u`, `v`}]}: caminhos. Um tipo com `behavior: "route"` e `route: <nome>` voa por ele em ciclo (o SN-Z da Iron Lair gira no anel); a broca (The Dig) e o trilho das Blood Nurses ainda não usam.
 - `types`: inimigos do mapa com os campos do `enemies.json` (entram no `Enemies` como `<mapa>/<tipo>`; lista abaixo) mais os extras da dungeon: `miniboss`, `onDeath`, `sequence`, `barks` (chaves de `Texts/bark` por momento: `onWake`, `phase`, `onDeath`), `durationSeconds`, `excludeFromRoomClear`, `periodicSummon` {`type`, `seconds`, `count`, `max`, `belowHealth`, `countsForRoomClear`}, `dpsChest` {`seconds`, `reward`, `fail`}, `chainReaction` {`radius`, `delaySeconds`}, `route`, `target`, `note`.
 - `encounters` (um por sala): `room`, `area`, `line`, `wakes` (`onEnter` / `death:<type>`; `script` e `drill` ainda acordam como `onEnter`), `boss`, `miniboss`, `closesOnEnter`, `altarRoom`, `note`, `controllers` (unidades invisíveis do servidor original, só referência), `enemies` [{`type`, `pos`: [{`u`, `v`, `rot`}], `wakes`, `route`, `behavior`, `miniboss`, `note`}], `waves` [{`name`, `delayBeforeSeconds`, `message`, `groups`}] (a próxima onda vem quando a anterior morre inteira).
 - Sala limpa = sem inimigos que contam (baús, paredes, destroços, invulneráveis, parados e `excludeFromRoomClear` não contam) e sem ondas pendentes.
 
 ### Campos de um tipo de unidade (`types` de uma dungeon ou `types` do `enemies.json`)
 
-`name`, `template` (UnitConfig do jogo; vários separados por `|`), `behavior` (`chase`, `circle`, `charge`, `turret`, `patrol`, `idle`, `escort`, `fixed`, `kamikaze`), `ai` (id de um arquivo de `Server\ai\brains`; substitui `behavior`, `aggroRadius` e `preferredDistance`; `docs/enemy-ai.md`), `boss`, `health`/`maxHealth`, `healthMultiplier`, `speedMultiplier`, `turnMultiplier`, `fireRateMultiplier`, `damageMultiple`, `preferredDistance`, `aggroRadius`, `contactRadius` (kamikaze), `shotRange`, `aimLead`, `firstShotDelay`, `freeAim`, `homingBullets`, `guns` (índices de `gunMounts`), `team` (2 inimigo, 1 aliado), `invulnerable`, `opensAfterHitSeconds` (baú), `freeRoam`, `visualEffect` (statefulEffects; `tankShield` nos escudos) e `phases` [{`belowHealth`, `behavior`, `ai`, `speedMultiplier`, `fireRateMultiplier`, `guns`, `summon`, `summonCount`, `message`, `bark`, `shieldSeconds`, `visualEffect`}].
+`name`, `template` (UnitConfig do jogo; vários separados por `|`), `behavior` (`chase`, `circle`, `charge`, `turret`, `patrol`, `idle`, `escort`, `fixed`, `kamikaze`, `route`), `ai` (id de um arquivo de `Server\ai\brains`; substitui `behavior`, `aggroRadius` e `preferredDistance`; `docs/enemy-ai.md`), `boss`, `health`/`maxHealth`, `healthMultiplier`, `speedMultiplier`, `turnMultiplier`, `fireRateMultiplier`, `damageMultiple`, `preferredDistance`, `aggroRadius`, `contactRadius` (kamikaze), `shotRange`, `aimLead`, `firstShotDelay`, `freeAim`, `homingBullets`, `route` (com `behavior: "route"`: nome de um caminho de `routes`; a unidade voa por ele em volta, sem parar, e atira se tiver alvo), `guns` (índices de `gunMounts`), `team` (2 inimigo, 1 aliado), `invulnerable`, `opensAfterHitSeconds` (baú), `freeRoam`, `visualEffect` (statefulEffects; `tankShield` nos escudos) e `phases` [{`belowHealth`, `behavior`, `ai`, `speedMultiplier`, `fireRateMultiplier`, `guns`, `summon`, `summonCount`, `message`, `bark`, `shieldSeconds`, `visualEffect`, `homingBullets`}].
 
 Desde a 0.5.0 o editor de mapas não mostra mais `behavior`, `aggroRadius`, `preferredDistance`, `contactRadius`, `shotRange`, `aimLead` e `guns` (isso é do editor de IA); valores que já estão no mapa continuam valendo quando o tipo não tem `ai`.
 
@@ -49,14 +50,7 @@ Desde a 0.5.0 o editor de mapas não mostra mais `behavior`, `aggroRadius`, `pre
 - Desserialização com `System.Text.Json` (sem diferença de maiúsculas); `values` e `lines` só aceitam números.
 - `Map.CreatePlan()` monta o `Ground.FloorPlan` (tiles do desenho; `#` que não é borda vira muro de sub-célula). `Map.WriteFloor(buf, plan, out summary)` escreve o `ClientReceiveTerrainTiles` de qualquer mapa: tiles do desenho, depois tiles de peças e de enfeites, as colisões e por fim o abismo.
 - `Maps.AddSigns(info, map)`: um evento por placa no ClientMapInfo (`repeatEvery_1` + PlayerNearPos → `lore_text_relative_pos`). O servidor de dungeon registra isso para cada terreno do `dungeons.json`.
-- Tutorial: `Tutorial.Helpers.cs` (`Validate`) confere todos os nomes que o roteiro usa; mapa com nome faltando → fica o último válido. Cada sessão guarda o seu mapa; `/restart` pega a versão nova do arquivo. Nomes usados:
-  - `points`: instructor, ring, crate, boss, portal, dronesGuide, finalCorridorGuide
-  - `groups`: towers, drones1, drones2
-  - `areas`: hangar, anteroom, drones, ring, arena
-  - `lines`: instructor, towers, bulletsTalk, hangarExit, towersQuiet, droneCorridor, finalCorridor
-  - `values`: ringCount, ringOpening, ringRadiusU, ringRadiusV, ringMiddleRadius, drones1Radius
-  - `checkpoints`: o primeiro é o nascimento; `/step` usa anteroom, ring room, crate corridor, final corridor, arena
-  - `gates`: 3, na ordem crate wall, gate, boss gate
+- Roteiro (`script`): `MapScript.Validate` (chamado pelo `Maps.Read`) confere todos os nomes que ele usa (pontos, grupos, áreas, linhas, portões, checkpoints, regras); com erro, fica a última versão boa do mapa. Tutorial: `Tutorial.Helpers.cs` (`Validate`) só pede chão, um checkpoint e um `script` com regras. Cada sessão guarda o seu mapa; `/restart` pega a versão nova do arquivo. O tutorial usa os portões pelo `name` (`crate wall`, `gate`, `boss gate`) e os checkpoints `anteroom`, `ring room`, `crate corridor`, `final corridor`, `arena` nos `steps`.
 
 ## Como os mapas são feitos hoje
 
@@ -66,5 +60,5 @@ Desde a 0.5.0 o editor de mapas não mostra mais `behavior`, `aggroRadius`, `pre
 ## Falta
 
 - Mapa global (o mundo aberto vem do gerador, não de arquivo).
-- No Nexus e no tutorial, os encontros continuam no `enemies.json` (por servidor, não por mapa); o roteiro do tutorial segue em código.
+- No Nexus e no tutorial, os tipos de inimigo continuam no `enemies.json` e no código (`Tutorial.Helpers.cs`, `RegisterDefaultTypes`), não no mapa; o roteiro do tutorial já está no arquivo (`docs/map-script.md`).
 - `nextDungeon` e os roteiros especiais de dungeon (broca, chave, altares, emboscadas).

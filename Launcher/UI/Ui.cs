@@ -72,6 +72,33 @@ internal static class Ui
     // Small action with no plate until the mouse is over it.
     public static ThemedButton Quiet(string text, EventHandler? onClick = null) => Button(text, onClick, ButtonKind.Quiet);
 
+    // Button that opens the community Discord, with Discord's logo (Branding\discord-logo.png, compiled into the exe).
+    public static ThemedButton DiscordButton(string text, EventHandler? onClick = null, ButtonKind kind = ButtonKind.Normal)
+    {
+        ThemedButton button = Button(text, onClick, kind);
+        button.Icon = DiscordLogo();
+        return button;
+    }
+
+    private static Image? discordLogo;
+    private static bool discordLogoTried;
+
+    private static Image? DiscordLogo()
+    {
+        if (discordLogoTried) return discordLogo;
+        discordLogoTried = true;
+        try
+        {
+            using Stream? stream = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("discord-logo.png");
+            if (stream != null) discordLogo = new Bitmap(stream);
+        }
+        catch
+        {
+            discordLogo = null;
+        }
+        return discordLogo;
+    }
+
     // Round "?" that opens a longer explanation.
     public static HelpButton Help(string text, string? title = null) => new HelpButton(text, title);
 
