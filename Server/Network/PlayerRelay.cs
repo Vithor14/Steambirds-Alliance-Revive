@@ -200,14 +200,14 @@ public static class PlayerRelay
 
     // The player picked another variant (skin): players who see the plane from now on get the new one. Those who already
     // see it keep the old look until the plane spawns again.
-    public static void VariantChanged(NetConnection? connection, short netVariant)
+    public static void VariantChanged(NetConnection? connection, short netVariant, string variantId)
     {
         if (connection == null) return;
         lock (Gate)
         {
             if (!members.TryGetValue(connection.RemoteUniqueIdentifier, out Member? member)) return;
             member.NetVariant = netVariant;
-            member.Decoration = null;   // a new variant brings its own look
+            member.Decoration = member.ClassId != null ? PlaneDecoration.Default(member.ClassId, variantId) : null;   // a new variant brings its own look
         }
     }
 

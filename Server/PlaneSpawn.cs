@@ -69,7 +69,7 @@ public static class PlaneSpawn
     //  - unitOptions sends LengthBytes + 1. Sending only the size makes the client read one byte less
     //    (it loses the decoration byte and the rest of the message comes out misaligned).
     public static void WritePlaneSpawn(NetBuffer buf, long playerAuthority, float spawnTime, float x, float y, float rotation,
-        NetBuffer? options = null, int shortId = PlayerPlaneShortId, short templateHash = PlayerPlaneTemplateHash)
+        NetBuffer? options = null, int shortId = PlayerPlaneShortId, short templateHash = PlayerPlaneTemplateHash, string? variant = null)
     {
         const int itemCount = 1;
 
@@ -97,11 +97,14 @@ public static class PlaneSpawn
             buf.Write(options);                  // the LengthBytes of the options buffer
         }
 
-        // FieldUpdate: POS (1) + ROT (4) mask. Order: position, then rotation.
-        buf.WriteVariableUInt32(1u | 4u);
+        // FieldUpdate: POS (1) + ROT (4) mask, and the variant (524288) when it is not the default one: the client builds the plane
+        // art from it (Entity.SyncVariant), as the original spawn did. Order: position, rotation, variant (a string).
+        bool withVariant = !string.IsNullOrEmpty(variant) && !string.Equals(variant, "default", StringComparison.Ordinal);
+        buf.WriteVariableUInt32(1u | 4u | (withVariant ? 524288u : 0u));
         WriteScaled(buf, x, 1024f);
         WriteScaled(buf, y, 1024f);
         WriteScaled(buf, rotation, 32f);
+        if (withVariant) buf.Write(variant!);
     }
 
     // The client's ScaledHelper.WriteScaled: variable integer of floor(value * scale).

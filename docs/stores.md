@@ -164,7 +164,7 @@ comment above is the explanation). The server reloads it by itself.
 | `discountPercent` | percent off every price |
 | `showPreRelease` | also sell the products the game marks `preRelease` (some trails and emotes) |
 | `stores` | per store: `enabled`, `sections` -> per section: `enabled`, `include`, `exclude` (product ids or `tag:<tag>`) |
-| `products` | per product: `enabled`, `discount`, `stock`, `maxPerAccount` |
+| `products` | per product: `enabled`, `discount`, `stock`, `maxPerAccount`, `items` (replaces what the product gives; the window keeps the original name, icon and price) |
 
 Notes:
 

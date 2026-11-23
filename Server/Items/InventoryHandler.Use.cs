@@ -59,7 +59,8 @@ public static partial class InventoryHandler
             }
             else
             {
-                delete = true;
+                // Unlimited dyes and the trails stay after being used; every other item without uses is spent.
+                delete = !ItemActions.IsReusable(def);
             }
             if (delete) InventoryStore.Set(a, pos, null);
             else after = current.Clone();

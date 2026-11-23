@@ -119,21 +119,25 @@ public static class ItemActions
         return effects;
     }
 
-    // Items whose every action runs only on the client ("deco": dyes and trails repaint the plane). The server has nothing to
-    // deliver for them; to "use" one it sends ClientConsumedItemOnPickup, which makes the client perform the actions.
+    // Items whose every action runs only on the client ("deco": dyes and trails repaint the plane; "soulbound" only marks the
+    // item, and every dye has it). The server has nothing to deliver for them; to "use" one it sends ClientConsumedItemOnPickup,
+    // which makes the client perform the actions.
     public static bool IsClientSideUse(ItemDef def)
     {
-        bool any = false;
+        bool deco = false;
         foreach (ConfigNode action in def.Actions)
         {
             foreach (KeyValuePair<string, ConfigNode> pair in action.Pairs)
             {
-                if (!string.Equals(pair.Key, "deco", StringComparison.OrdinalIgnoreCase)) return false;
-                any = true;
+                if (string.Equals(pair.Key, "deco", StringComparison.OrdinalIgnoreCase)) deco = true;
+                else if (!string.Equals(pair.Key, "soulbound", StringComparison.OrdinalIgnoreCase)) return false;
             }
         }
-        return any;
+        return deco;
     }
+
+    // Dyes and trails that have no "uses" in the config are permanent ("UNLIMITED USES"): using them never spends the item.
+    public static bool IsReusable(ItemDef def) => def.Uses <= 0 && IsClientSideUse(def);
 
     // Amount of an ingredient pickup (the template's action), 1 when the config does not say.
     public static int IngredientAmount(ItemDef def)

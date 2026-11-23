@@ -30,5 +30,10 @@
   // store_key_eye). "enabled": false hides it everywhere. "discount": percent off (0-100). "stock": units the whole
   // server can sell (0 = no limit). "maxPerAccount": times each account can buy it (0 = the game's own limit).
   // Example: { "hangar_slot": { "discount": 50, "maxPerAccount": 5 }, "store_bundle_starter": { "stock": 20 } }
-  "products": {}
+  // "items" replaces what the product gives (the window keeps the name, icon and price of the original product).
+  // store_key_eye (the key of the Crypt of Cathulhu, a dungeon that is closed here) sells the flock founder token for 750 gold:
+  // the game has no store product for it, and the Flock Hall only offers "Create flock" to a player who carries one.
+  "products": {
+    "store_key_eye": { "items": [ "create_flock_token" ] }
+  }
 }

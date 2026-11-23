@@ -113,7 +113,11 @@ public static partial class Program
         }
 
         var options = server.CreateMessage();
-        PlayerData.WritePlaneOptions(options, netClass, netVariant, Accounts.AccountId, idBytes, record.Decoration);
+        // The unit options carry the look the plane is drawn with: the client makes it from the plane's decoration, or the class colors
+        // plus the variant's own (Decoration.GetPlaneOrDefaultDecoration). Without it a variant skin never shows on the plane.
+        SavedDecoration look = record.Decoration ?? PlaneDecoration.Default(record.Class, record.Variant);
+        PlayerData.WritePlaneOptions(options, netClass, netVariant, Accounts.AccountId, idBytes, look);
+        Log("SPAWN", $"look of {record.Class}/{record.Variant}: {PlaneDecoration.Describe(look)}");
 
         var peerId = connection.RemoteUniqueIdentifier;
         var currentTime = (float)Clock.Elapsed.TotalSeconds;
@@ -147,7 +151,7 @@ public static partial class Program
 
         var response = server.CreateMessage();
         PlaneSpawn.WritePlaneSpawn(response, peerId, currentTime + spawnDelay, spawnX, spawnY, spawnRot, options, shortId,
-            model.Hash);
+            model.Hash, record.Variant);
         int spawnBytes = response.LengthBytes;
         server.SendMessage(response, connection, NetDeliveryMethod.ReliableOrdered, 0);
         Log("SPAWN", $"SpawnUnitsBatch sent ({origin}; {PlayerSessions.NameOf(connection)}; {spawnBytes} bytes, options {options.LengthBytes}B, unit {shortId}, " +
@@ -158,7 +162,7 @@ public static partial class Program
         Game.PlaneCreated(connection, RoleName(role), shortId, spawnX, spawnY, Clock.Elapsed.TotalSeconds, characterId, record.Class);
         // Multiplayer: the plane appears for the other players of the server, and theirs for this one.
         PlayerRelay.PlaneSpawned(connection, characterId, idBytes, record.Class, netClass, netVariant, model.Hash,
-            Accounts.Pilot().Level, spawnX, spawnY, spawnRot, Clock.Elapsed.TotalSeconds, record.Decoration);
+            Accounts.Pilot().Level, spawnX, spawnY, spawnRot, Clock.Elapsed.TotalSeconds, look);
         // Progression: statistics of nearby players (pilot skills) from now on.
         PilotProgression.PlaneSpawned(server, connection, RoleName(role), characterId, Clock.Elapsed.TotalSeconds);
 

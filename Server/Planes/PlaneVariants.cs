@@ -69,7 +69,7 @@ public static class PlaneVariants
             }
 
             ProgressionMessages.Send(server, connection, m => WriteClientUpdatePlaneVariant(m, variant));
-            PlayerRelay.VariantChanged(connection, PlayerData.VariantNetIdShort[variant]);
+            PlayerRelay.VariantChanged(connection, PlayerData.VariantNetIdShort[variant], variant);
             log("PLANE", tag + " " + result.Class + " " + result.Previous + " -> " + variant + " (ClientUpdatePlaneVariant sent)");
         }
     }

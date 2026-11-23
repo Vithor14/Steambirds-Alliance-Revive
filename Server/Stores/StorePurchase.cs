@@ -90,7 +90,7 @@ public static class StorePurchase
         var effects = new List<ItemActionEffect>();
         var notes = new List<string>();
         var applyOnClient = new HashSet<string>(StringComparer.Ordinal);
-        foreach (string defId in product.Items)
+        foreach (string defId in StoreRules.ItemsOf(product))
         {
             ItemDef? def = ItemCatalog.Get(defId);
             if (def == null) return Refuse(StoreRefusal.Unknown, "item '" + defId + "' does not exist in this game version", name);

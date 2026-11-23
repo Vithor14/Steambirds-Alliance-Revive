@@ -41,3 +41,7 @@ A test client (Lidgren, the client's own serializers copied from the decompiled 
 - Launcher: Server tab > Friends and flocks (`Launcher\UI\SocialPage.cs`) lists the flocks and their members (read only, from `flocks.json`) and edits `social.json`. Built, not opened yet. Flocks are managed by the players in the Flock Hall, not from the launcher.
 - Squads (`13500`–`13505`), secure trade, spectate/follow and the Combat Sim flock message (`11736`) are still missing (see `CHECKLIST.md`, section 10).
 - Friends who are only in a dungeon appear as "online" but cannot be joined.
+
+## Founder token in the store
+
+The game has no store product for the flock founder token (no product of its 294 mentions it), and the client cannot show a product it does not know. So `stores.json` > `products` > `store_key_eye` has `"items": ["create_flock_token"]`: the key of the Crypt of Cathulhu (a dungeon that is closed on this server) now sells the token for 750 gold. The window still shows the key's name and icon (the "Mission Plans: Crypt of Cathulhu" product); change the product id in the file to use another one. Tested: the purchase takes 750 gold, puts `create_flock_token` in the cargo and the flock is created with it.

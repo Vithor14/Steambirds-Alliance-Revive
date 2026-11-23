@@ -122,7 +122,7 @@ public sealed class PlaneClassInfo
     public HashSet<string> AllowedItemTags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, string> StartingItems = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase); // slot -> item
     public Dictionary<string, string> VariantUnlocks = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase); // variant -> unlock item
-    public Dictionary<string, ConfigNode> VariantDecorations = new Dictionary<string, ConfigNode>(StringComparer.OrdinalIgnoreCase); // variant -> its decoration (colors, livery, trails)
+    public Dictionary<string, ConfigNode> VariantDecorations = new Dictionary<string, ConfigNode>(StringComparer.OrdinalIgnoreCase); // variant -> its decoration (colors, livery, trails; read from the variant node itself)
 
     // PlayerClassConfig.DoesAllowItemTag: an item without tag fits every class.
     public bool AllowsTag(string tag) => string.IsNullOrEmpty(tag) || AllowedItemTags.Contains(tag);
@@ -385,7 +385,8 @@ public static class ItemCatalog
                 string vid = variant["id"].AsString("");
                 if (vid.Length == 0) continue;
                 info.VariantUnlocks[vid] = variant["unlockItemId"].AsString("");
-                if (variant["decoration"].IsDictionary) info.VariantDecorations[vid] = variant["decoration"];
+                // Colors, livery and trails sit on the variant itself (extraColor1..3, livery, normalTrail...), not in a sub-block.
+                info.VariantDecorations[vid] = variant;
             }
             result[pair.Key] = info;
         }

@@ -20,6 +20,10 @@ public sealed class StoreProductRules
 
     // Times one account can buy this product (0 = the game's own limit, if it has one).
     public int MaxPerAccount { get; set; }
+
+    // Item definitions the product gives instead of the game's own (null = the game's). The window still shows the name, icon and
+    // price of the original product: this is how a product the game never had (a flock founder token) is sold.
+    public List<string>? Items { get; set; }
 }
 
 // What the host wants for one section of a store (key = section id, for example "general_account").

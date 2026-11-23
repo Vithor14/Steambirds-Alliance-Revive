@@ -34,11 +34,18 @@ public static class StoreRules
         }
     }
 
+    // What the product gives: the host's "items" in stores.json, or the game's own list.
+    public static List<string> ItemsOf(StoreProductDef product)
+    {
+        List<string>? custom = StoreSettingsFile.Current.ProductRules(product.Id)?.Items;
+        return custom ?? product.Items;
+    }
+
     // Product whose items go to the inventory: the item definitions must exist in this game version.
     public static bool ItemsExist(StoreProductDef product)
     {
         if (!ItemCatalog.Loaded) return true;
-        return product.Items.All(id => ItemCatalog.Get(id) != null);
+        return ItemsOf(product).All(id => ItemCatalog.Get(id) != null);
     }
 
     // On sale at all: not disabled by the game or the host, not pre-release (unless the host wants it), has a price.
@@ -90,7 +97,7 @@ public static class StoreRules
         }
         if (product.MaxCountItems)
         {
-            foreach (string itemId in product.Items)
+            foreach (string itemId in ItemsOf(product))
                 if (CountItems(itemId) >= max) return StoreRefusal.LimitExceeded;
         }
         return StoreRefusal.None;
