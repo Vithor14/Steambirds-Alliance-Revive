@@ -1,6 +1,6 @@
-# Update notes — 23/11/2026
+# Update notes — 0.5.0 (23/11/2026)
 
-Everything below is in the commit that follows `2a4b976` (not pushed yet). / Tudo abaixo está no commit depois do `2a4b976` (ainda sem push).
+Version 0.5.0. Everything below is not pushed yet: commit `7110c14` (launcher editors) and `2a4b976` (store and items). / Versão 0.5.0. Tudo abaixo ainda está sem push: commit `7110c14` (editores do launcher) e `2a4b976` (loja e itens).
 
 ## English
 
@@ -29,6 +29,16 @@ Everything below is in the commit that follows `2a4b976` (not pushed yet). / Tud
 ### Not verified
 - Compiled and the launcher opens without errors; the pictures in the lists, the Help window and the AI menu were checked by the maintainer in the launcher. Plugin change (gun type column) needs a plugin rebuild.
 
+### Server: store and items
+- **Flock founder token in the store**: the game has no store product for `create_flock_token`, so `stores.json` > `products` > `store_key_eye` now has `"items": ["create_flock_token"]`: the key of the Crypt of Cathulhu (a dungeon that is closed on this server) sells the token for 750 gold. The window keeps the key's name and icon. Tested: the purchase takes the gold, puts the token in the cargo and the flock is created with it.
+- A store product can now give other items (`"items"` in `products`, replaces what the product gives; name, icon and price stay).
+- Dyes and trails without `uses` stay after being used.
+- The variant decoration is read from the variant itself, and the plane spawn and the relay carry the variant.
+- Docs: `stores.md`, `social.md`, `items-and-loot.md`.
+
+### Version
+- Launcher version is now 0.5.0.
+
 ## Português
 
 ### Launcher: editor de mapas
@@ -55,3 +65,13 @@ Everything below is in the commit that follows `2a4b976` (not pushed yet). / Tud
 
 ### Verificação
 - Compilado e o launcher abre sem erros; as imagens nas listas, a janela de Ajuda e o menu da IA foram conferidos pelo mantenedor no launcher. A mudança do plugin (coluna do tipo de tiro) precisa de recompilação do plugin.
+
+### Servidor: loja e itens
+- **Token de fundador de flock na loja**: o jogo não tem produto de loja para o `create_flock_token`, então `stores.json` > `products` > `store_key_eye` agora tem `"items": ["create_flock_token"]`: a chave da Crypt of Cathulhu (dungeon fechada neste servidor) vende o token por 750 de ouro. A janela mantém o nome e o ícone da chave. Testado: a compra tira o ouro, põe o token no cargo e o flock é criado com ele.
+- Um produto da loja agora pode dar outros itens (`"items"` em `products`, troca o que o produto dá; nome, ícone e preço continuam).
+- Tintas e rastros sem `uses` continuam depois de usados.
+- A decoração da variante é lida da própria variante, e o spawn do avião e o relay levam a variante.
+- Docs: `stores.md`, `social.md`, `items-and-loot.md`.
+
+### Versão
+- A versão do launcher agora é 0.5.0.
