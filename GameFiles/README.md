@@ -2,7 +2,8 @@
 
 `SteambirdsGameFiles.exe` takes from the player's **own copy** of Steambirds Alliance the files that cannot be published
 on GitHub (they belong to the game), and puts them where the server and the map editor read them. It ships in the
-launcher release zip (`Build launcher release.ps1`) and in the launcher package (`Build launcher.ps1`).
+launcher release zip (`Build launcher release.ps1`) and in the launcher package (`Build launcher.ps1`). (The server-only
+release was removed on 23/11/2026: the launcher zip is the only package.)
 
 ## What it does
 
@@ -33,7 +34,6 @@ launcher release zip (`Build launcher release.ps1`) and in the launcher package 
 | Package | Server data | Editor pictures | Plugin | Log |
 |---|---|---|---|---|
 | launcher (next to `SteambirdsLauncher.exe`) | `server\data` | `editor-assets` | `plugin\QuieterPlugin.dll` | `logs\game-files.log` |
-| server (next to `SteambirdsServer.exe`) | `data` | `editor-assets` (copy it next to the launcher) | `plugin\QuieterPlugin.dll` | `logs\game-files.log` |
 
 The server output while the tool runs it goes to `logs\game-files-server.log`.
 

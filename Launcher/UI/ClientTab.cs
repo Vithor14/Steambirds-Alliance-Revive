@@ -473,7 +473,7 @@ internal sealed class ClientTab : UserControl
         return string.Join(" · ", parts);
     }
 
-    // First row: the server of this PC (the launcher's, or one started by "Run server.ps1").
+    // First row: the server of this PC (the launcher's, or one started outside it).
     private void UpdateThisPcRow()
     {
         if (servers.Items.Count == 0) return;
@@ -487,7 +487,7 @@ internal sealed class ClientTab : UserControl
         if (context.Server.State == ServerState.Running) status = L.F("running ({0} connection(s))", context.Server.ConnectionCount);
         else if (context.Server.State == ServerState.Starting) status = L.T("starting...");
         else if (context.Server.State == ServerState.Stopping) status = L.T("stopping...");
-        else if (NetworkCheck.AnyServerListening()) status = L.T("running outside the launcher (Run server.ps1?)");
+        else if (NetworkCheck.AnyServerListening()) status = L.T("running outside the launcher");
         else status = context.Settings.StartServerWithGame ? L.T("stopped (starts when you click Play)") : L.T("stopped");
 
         SetCell(row, 0, L.F("This PC: {0}", local.ServerName));

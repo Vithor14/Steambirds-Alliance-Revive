@@ -136,7 +136,7 @@ public static class ServerBrowser
         var sockets = new List<(UdpClient Socket, string Network, List<IPEndPoint> Targets)>();
         try
         {
-            // This PC (a server of the launcher or of "Run server.ps1").
+            // This PC (a server of the launcher or one started outside it).
             sockets.Add((OpenSocket(IPAddress.Loopback), "this PC", new List<IPEndPoint> { new IPEndPoint(IPAddress.Loopback, searchPort) }));
 
             var asked = new HashSet<IPAddress>();

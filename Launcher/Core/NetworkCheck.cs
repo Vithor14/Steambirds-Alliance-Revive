@@ -3,7 +3,7 @@ using System.Net.NetworkInformation;
 
 namespace SteambirdsLauncher.Core;
 
-// Port checks: is a server (this launcher's, or the "Run server.ps1" one) already listening on this PC?
+// Port checks: is a server (this launcher's, or one started outside it) already listening on this PC?
 public static class NetworkCheck
 {
     public static bool IsTcpListening(int port)

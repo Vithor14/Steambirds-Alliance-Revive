@@ -1,6 +1,6 @@
 # Steambirds Alliance chat commands
 
-Nov 15, 2026 · @Vithor Temanski Neves Castelo (command names updated to English on Nov 22, 2026)
+Nov 15, 2026 · @Vithor Temanski Neves Castelo (command names updated to English on Nov 22, 2026; checked against the code on Nov 23, 2026)
 
 The game has two groups of chat commands. The client resolves its own commands by itself, without asking the server. Any other command that starts with `/` goes to the server: the official server's commands were lost, and today our server answers them.
 
@@ -22,11 +22,11 @@ The descriptions come from the client's chat code (`ChatManager.cs`) and from th
 | `/tutorial` | Asks to play the tutorial | Works (goes to the tutorial server) |
 | `/ingredients` | Opens the ingredients panel | Opens, but empty |
 | `/die` | Opens the menu to bring your own plane down (health to 0) | Works |
-| `/retire` | Opens the menu to retire the plane (in the Combat Sim it becomes `/die`) | Does not work yet: the server does not handle retirement |
+| `/retire` | Opens the menu to retire the plane (in the Combat Sim it becomes `/die`) | The server handles retirement since Nov 22 (pays the pilot XP, moves the items to storage); not tested in the game yet |
 
 ### Social
 
-All of them depend on multiplayer, friends or flocks, which our server only partly has.
+Friends, flocks, whispers and teleport are handled by our server (`Server\Social`, not tested in the game yet; see `docs/social.md`). Secure trade (`/trade`) does not exist yet.
 
 | Command | What it does |
 | --- | --- |
@@ -88,7 +88,7 @@ Work on any server. Item ids and loot tables: `catalog\item_catalog.md` and `loo
 | `/loot [unit] [tier]` | Rolls the loot of a kill in front of you |
 | `/inventory` | Shows the plane's inventory as text |
 | `/clear_cargo` | Empties the cargo |
-| `/currency [ID N]` | Shows the currencies, or adds N to one |
+| `/currency [ID N]` (or `/currencies`) | Shows the currencies, or adds N to one |
 | `/ingredient ID N` | Adds N of an ingredient |
 | `/bags` | Counts your loot bags in the world and lists the loot tables |
 | `/clear_bags` | Removes your loot bags |

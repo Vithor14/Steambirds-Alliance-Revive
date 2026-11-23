@@ -3,7 +3,7 @@ using System.Text.Json;
 using Lidgren.Network;
 
 // Maps of the server as files (folder "maps", one .json per map, format "steambirds-map" version 1).
-// The format is described in maps\README.md. Summary:
+// The format is described in docs\map-format.md. Summary:
 //   - u, v coordinates in world units along the axes of the client's grid (u = 12 * a, v = 12 * b,
 //     a and b in tiles as in Ground). In the world: x = (u - v) / sqrt(2), y = (u + v) / sqrt(2).
 //     1 tile = 12 u, 1 floor piece slot = 6 u (p, q), 1 wall sub-cell = 3 u (si, sj).

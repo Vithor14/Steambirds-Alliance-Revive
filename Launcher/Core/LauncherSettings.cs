@@ -48,7 +48,7 @@ public sealed class LauncherSettings
     // errors and the events of the server (connections, dungeons...). The log file always has every line.
     public bool ShowServerInfoLines { get; set; }
 
-    // Writes logs\server-report.txt every time the server stops (like Run server.ps1 did on Ctrl+C).
+    // Writes logs\server-report.txt every time the server stops.
     public bool ReportOnServerStop { get; set; } = true;
 
     public int WindowX { get; set; } = -1;

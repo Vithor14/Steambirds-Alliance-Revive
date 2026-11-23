@@ -36,7 +36,7 @@ Texto copiado fica velho. O Discord linka; quem manda é o repositório.
 | **Dev** | Contribuir com código | Canal técnico, feed do GitHub, `CONTRIBUTING.md` |
 
 O **Testador** e o **Veterano** são os perfis específicos deste projeto. O teste dentro do jogo é manual e há muita
-coisa marcada como "escrita sem compilar / ainda não testada" no checklist. E boa parte do que falta recriar (IA original
+coisa marcada como "compilada, ainda não testada no jogo" no checklist. E boa parte do que falta recriar (IA original
 dos chefes, roteiros das dungeons, taxas de loot) só existe na memória e nos vídeos de quem jogou.
 
 ## 3. Princípios
@@ -298,9 +298,9 @@ projeto, nunca o logo do jogo) e banner a partir de `Branding\logo.png`; montar 
 **Fase 1 — Lançamento fechado (semanas 1 e 2).** Convidar 5 a 10 pessoas por idioma que já conhecem o projeto (quem já
 testou). Rodar a primeira chamada de teste com os dois idiomas juntos. Corrigir os atritos que aparecerem.
 
-**Fase 2 — Público.** Colocar o convite no `README.md` (inglês), em `Launcher\LEIA-ME.md` (português), no `CONTRIBUTING.md`
-(onde conversar), nas notas de release e na descrição do repositório no GitHub. O convite é **um só** e abre no `#start-here`.
-Adicionar um atalho "Community" no launcher (um link só; o rótulo entra nos arquivos de tradução de `Launcher\lang`).
+**Fase 2 — Público.** Colocar o convite no `README.md` (inglês; já está no topo), no `CONTRIBUTING.md`
+(onde conversar; já está), nas notas de release e na descrição do repositório no GitHub. O convite é **um só** e abre no `#start-here`.
+O atalho no launcher já existe (botão "Discord" na aba Client e "Join the Discord" em Settings; a URL fica em `Launcher\Core\LauncherInfo.cs`, os rótulos em `Launcher\lang`). Não existe mais `Launcher\LEIA-ME.md`: o README do launcher é só em inglês.
 Criar os modelos de issue em `.github\ISSUE_TEMPLATE` espelhando o modelo B1 (hoje a pasta `.github` não existe). Divulgar
 nos lugares onde ex-jogadores do Steambirds ainda estão (comunidade do jogo na Steam, fóruns e redes de jogos).
 
@@ -349,7 +349,7 @@ Meça por idioma, para ver cedo se uma zona está parada.
 - [ ] Webhook do GitHub em `#github-feed`
 - [ ] Testar a entrada com uma conta nova, uma vez em cada idioma
 - [ ] Lançamento fechado, depois público (seção 12)
-- [ ] Convite no README, `LEIA-ME.md`, CONTRIBUTING, release notes e GitHub; criar `.github\ISSUE_TEMPLATE`
+- [ ] Convite no README (feito em 22/11), launcher (botão Discord na aba Client e em Settings, feito em 23/11), CONTRIBUTING (feito em 23/11), release notes e descrição do repositório no GitHub; criar `.github\ISSUE_TEMPLATE`
 
 ## 16. Decisões abertas (do Vithor)
 

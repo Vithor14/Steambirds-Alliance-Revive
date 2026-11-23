@@ -13,7 +13,7 @@ Laser Playground, The Arena and Home for Special Children).
 | `maxBulletsPerSecond` | `10` | Most bullets per second one dungeon unit may put out; its active guns slow down together until it fits (`0` = no limit) |
 
 Why the bullet limit: the original units picked ONE gun pattern at a time with a state machine that is in no client build
-(`ia_190426.json` had part of it). The server fires every gun of the template together, so the Slicer (`mazedrawer`, four
+(only the 190426 build had part of it; see `docs/dungeon-server.md`). The server fires every gun of the template together, so the Slicer (`mazedrawer`, four
 guns) put out ~70 bullets per second and SN-Z ~50. `Enemies.Ai.cs` `DungeonFireScale` does the math per unit, per shot.
 
 ## Mission Transport

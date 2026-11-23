@@ -347,7 +347,7 @@ internal sealed class LauncherContext : IDisposable
 
     // ------------------------------------------------------------------ server
 
-    // Is a server answering on this PC (the launcher's or one started by "Run server.ps1")?
+    // Is a server answering on this PC (the launcher's or one started outside it)?
     public bool IsAnyServerUp() => Server.IsActive || NetworkCheck.AnyServerListening();
 
     // Starts the server of this PC, explaining in a dialog what is in the way when it cannot start. UI thread only.
@@ -378,7 +378,7 @@ internal sealed class LauncherContext : IDisposable
             {
                 NetworkCheck.ServerProcessInfo? other = others.FirstOrDefault(o => !o.IsLauncherServer);
                 string who = other != null
-                    ? L.F("Another server of the project is already open ({0}), probably from \"Run server.ps1\".", other.Path.Length > 0 ? other.Path : L.F("process {0}", other.Id))
+                    ? L.F("Another server of the project is already open ({0}), started outside the launcher.", other.Path.Length > 0 ? other.Path : L.F("process {0}", other.Id))
                     : L.F("Another program is using {0}.", busy);
                 Ui.ShowError(Owner, who + "\n\n" + L.T("Close that server to start the launcher's one. While it is open, the Play button of the Client tab uses it."));
                 return false;

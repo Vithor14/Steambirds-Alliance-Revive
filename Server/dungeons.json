@@ -1,5 +1,5 @@
 {
-  "note": "Dungeons this server offers. 'type' = client terrain (name and tier come from the game's Texts/dungeons table); 'map' = file in the maps folder (without .json): change it to use another version of the dungeon. 'enabled' turns it on/off; 'opensAt' (optional, \"yyyy-mm-dd hh:mm\", local time) only opens from that date on; 'inNexus' puts its carrier in the Nexus; 'healthMultiplier' changes the health of all its enemies (difficulty). The file is reloaded when it changes (new connections). Full explanation in maps\\README-dungeons.md.",
+  "note": "Dungeons this server offers. 'type' = client terrain (name and tier come from the game's Texts/dungeons table); 'map' = file in the maps folder (without .json): change it to use another version of the dungeon. 'enabled' turns it on/off; 'opensAt' (optional, \"yyyy-mm-dd hh:mm\", local time) only opens from that date on; 'inNexus' puts its carrier in the Nexus; 'healthMultiplier' changes the health of all its enemies (difficulty). The file is reloaded when it changes (new connections). Explanation of the fields: docs/dungeon-server.md and docs/dungeon-tuning.md.",
   "nexusPortals": {
     "enabled": true,
     "start": {"u": -18, "v": -21},

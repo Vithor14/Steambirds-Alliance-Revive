@@ -26,14 +26,18 @@ Maintained 100% by the community, with some additions and improvements.
 
 ## Where things stand
 
+- Version at the last update (23/11/2026): server and launcher **0.5.0**, plugin Steambirds Quieter **1.22.0**, client build
+  **201219.1413**. Release notes: `docs/update-notes-0.5.0.md` (English and Portuguese).
 - **`CHECKLIST.md` (repo root) is the source of truth**: done / partial / missing per area, and the suggested MVP order.
-  Update it when a feature changes state (keep its Portuguese style).
-- Design notes per area live in `docs/` (Portuguese). They are snapshots up to 16/11/2026: when they disagree with
-  the code or the checklist, trust the code and the checklist. Read only the one you need:
+  Update it when a feature changes state (keep its Portuguese style) and recompute its summary table (a bullet counts as
+  done `- [x]`, partial `- [ ] 🟡` or missing `- [ ]`).
+- Design notes per area live in `docs/`. They are snapshots (most in Portuguese, the newest ones in English), reviewed
+  on 23/11/2026: when they disagree with the code or the checklist, trust the code and the checklist, and fix the note.
+  Read only the one you need:
 
 | File | Topic |
 |---|---|
-| `docs/multiplayer-and-accounts.md` | login flow, one account per player, `network.json`, server search, launcher 0.3.0, next multiplayer step |
+| `docs/multiplayer-and-accounts.md` | login flow, one account per player, `network.json`, server search, launcher 0.3.0, player relay, shared dungeons |
 | `docs/dungeon-server.md` | dungeon server (port 1113): architecture, flow, Iron Lair / Bomb Factory test |
 | `docs/dungeons-190828.md` | the 17 recreated dungeons of build 190828; what is original and what is rebuilt |
 | `docs/dungeon-enemies-and-loot.md` | kamikaze bombs, weapon reach vs orbit distance, dungeon loot tables |
@@ -48,21 +52,28 @@ Maintained 100% by the community, with some additions and improvements.
 | `docs/stores.md` | stores: shelves, `ClientReceiveStoreContent` bytes, purchase, slots, `stores.json` (English) |
 | `docs/open-world.md` | open world (`Basic`, port 1114): map generator, regions, enemy spawn sites, carriers, `world.json` (English) |
 | `docs/social.md` | friends, flocks (Flock Hall), whispers, flock chat, teleport and "Join Server", `social.json`, `flocks.json` (English) |
+| `docs/update-notes-0.5.0.md` | release notes of 0.5.0 (English and Portuguese) |
+| `docs/discord-server.md`, `docs/discord-start-here.md` | plan of the community Discord server and the ready-to-paste `#start-here` texts (not code) |
 
 ## Repository layout
 
 - `Server\` — the server (.NET 8: ASP.NET for the HTTP "Ozy" API, Lidgren UDP for "Copper"). Project `SteambirdsServer.csproj`.
-  - Folders by topic: `GameData`, `Progression`, `Items`, `Dungeons`, `World`, `Network`, `Planes`, `Skills`, `Compat`.
+  - Folders by topic: `GameData`, `Progression`, `Items`, `Dungeons`, `World` (open world), `Network`, `Planes`, `Skills`,
+    `Social` (friends, flocks, teleport), `Stores`.
     Top-level files: `Program*.cs` (`Program.cs` startup and `Main`, `Program.Transfers.cs` server switches and plane spawn,
-    `Program.Messages.cs` host messages, `Program.Udp.cs` network loop, `Program.Http.cs` login), `Game.cs` (client messages), `Enemies.cs` (AI, waves),
-    `Tutorial.cs` (walker tutorial script), `Maps.cs` (map files), `Accounts.cs`, `PlayerData.cs`, `Ground.cs`, `MapInfo.cs`,
-    `Nexus.cs`, `WorldObjects.cs`, `PlaneSpawn.cs`, `CopperReader.cs`, `MessageCatalog.cs`, `MessageLog.cs`.
-  - Host configs: `progression.json`, `items.json`, `enemies.json`, `dungeons.json`, `world.json`, `network.json`.
-  - Maps: `maps\*.json` (format: `docs/map-format.md`). Loot: `loot_tables\`.
+    `Program.Messages.cs` host messages, `Program.Udp.cs` network loop, `Program.Http.cs` login), `Game*.cs` (client messages,
+    split by topic), `Enemies*.cs` (AI, waves, view radius, guns), `Tutorial*.cs` (walker tutorial script), `Maps.cs` (map files),
+    `Accounts.cs`, `PlayerData.cs`, `Ground.cs`, `MapInfo.cs`, `Nexus.cs`, `WorldObjects.cs`, `PlaneSpawn.cs`, `ScreenEffects.cs`,
+    `CopperReader.cs`, `MessageCatalog.cs`, `MessageLog.cs`.
+  - Host configs (`Server\*.json`, with comments, reread when they change): `progression.json`, `items.json`, `enemies.json`,
+    `dungeons.json`, `world.json`, `network.json`, `stores.json`, `social.json` (created with defaults on first start).
+    `flocks.json`, `world-map.json` and `world-live.json` are written by the server (gitignored).
+  - Maps: `maps\*.json` (format: `docs/map-format.md`, all field names in English). Loot: `loot_tables\`. Enemy AI: `ai\`.
   - Game data exported by the plugin (gitignored, copied from the game): `data\`. Item catalog written by the server: `catalog\`.
-  - Accounts: `accounts\<key>\` (gitignored). Chat messages of the client: `Game.cs`; message IDs: `MessageCatalog.cs`.
-- `Launcher\` — WinForms .NET 8 launcher: `Core\`, `UI\`, `Editor\` (map editor tab), `EnemyAi\` (Enemy AI tab and simulator), `lang\`.
-  Docs: `Launcher\README.md`, `Launcher\Editor\README.md`.
+  - Accounts: `accounts\<key>\` (gitignored). Chat messages of the client: `Game*.cs`; message IDs: `MessageCatalog.cs`.
+- `Launcher\` — WinForms .NET 8 launcher (0.5.0): `Core\`, `UI\` (screens) with `UI\Controls\` (themed controls), `Editor\` (map editor tab),
+  `EnemyAi\` (Enemy AI tab and simulator), `lang\` (English is the default; `pt-BR.json`, `_template.json`).
+  Docs: `Launcher\README.md`, `Launcher\Editor\README.md`, `Launcher\lang\README.md`.
 - `Shared\EnemyAi\` — enemy AI core (file formats, runtime, flight, gun aim, simulator), compiled into **both** `Server` and `Launcher`
   (`<Compile Include="..\Shared\EnemyAi\*.cs">`). The AI files themselves live in `Server\ai\` (format: `Server\ai\README.md`).
 - `QuieterPlugin\` — BepInEx plugin for the game client (net46): diagnostics, data exports, client-side fixes, and the
@@ -71,11 +82,15 @@ Maintained 100% by the community, with some additions and improvements.
   pictures from each player's own copy of the game (installs BepInEx + plugin, opens the game once). See its README.
 - `Branding\` — project logo and square emblem (SVG, PNG, ICO), our own drawing in the style of the original logo.
   Generated by `tools\make_logo.py` (Pillow only); see `Branding\README.md`. Never copy the game's own logo into the repo.
-- `docs\` — design notes (Portuguese snapshots, see the table above).
-- `decompiled\` — decompiled client (Assembly-CSharp and firstpass). Reference only, very large, gitignored:
-  **search it** (`rg` / `Select-String`), never read whole folders.
-- `OldVersions\`, `Assets\`, `Asset ripper\` — older builds and extracted assets (gitignored, not ours).
-- `Chat commands.md` — in-game chat commands.
+- `tools\` — `make_logo.py` and `scale_dungeon_maps.py` (shrinks a dungeon map; refuses to scale twice). The scripts that
+  generated the 17 dungeon maps are gone: the `.json` files are the source now.
+- `docs\` — design notes (see the table above). `Release\` — output of `Build launcher release.ps1` (gitignored).
+- `decompilado\` — decompiled client (Assembly-CSharp and firstpass). Reference only, very large, gitignored:
+  **search it** (`rg` / `Select-String`), never read whole folders. (On the maintainer's PC the folders are still named
+  `decompilado\` and `VersoesAntigas\`; `Clean project.ps1 -RenameFolders` renames them to `decompiled\` and `OldVersions\`.
+  Comments in the code may use either name. Use whichever exists.)
+- `VersoesAntigas\`, `Assets\`, `Asset ripper\` — older builds and extracted assets (gitignored, not ours).
+- `Chat commands.md` — in-game chat commands (the game's and ours).
 
 ## Build and verify — do it yourself after every change
 
@@ -108,9 +123,10 @@ The user's scripts are **interactive** (`Read-Host`). Do not run them yourself u
 - `Push to GitHub.ps1 "message"` — commit and push.
 - `Clean project.ps1` — removes build output, logs, duplicate copies and other garbage (`-WhatIf` only lists them).
 
-The server is run and the game opened from the launcher (Server and Client tabs; the old `Run server.ps1` and `Run game.ps1`
-were removed). Server output and game logs go to `Launcher\dist\logs\` and, on stop, to `server-report.txt`
-(large: search it instead of reading it all).
+The server is run and the game opened from the launcher (Server and Client tabs; the old `Run server.ps1`, `Run game.ps1`
+and `Build server release.ps1` were removed; some code comments still mention them). Server output and game logs go to
+`Launcher\dist\logs\` and, on stop, to `server-report.txt` (large: search it instead of reading it all). `Launcher\dist` is
+the testing copy (it holds the maintainer's accounts and game data: never share it; the release zip is the shareable one).
 
 In-game testing is done by the user. When they report a test, read `server-report.txt`,
 `Launcher\dist\logs\` and `Player.log` with targeted searches.
@@ -119,17 +135,21 @@ In-game testing is done by the user. When they report a test, read `server-repor
 
 - Identifiers, comments and READMEs in English (Portuguese optional). There is no compatibility layer for the old
   Portuguese names: files, folders, map fields and plugin data written by older versions are not read. Portuguese only
-  survives in the `docs\` snapshots, the launcher's translation (`Launcher\lang\pt-BR.json`, `LEIA-ME.md`) and the game's own data.
+  survives in most `docs\` snapshots, the launcher's translation (`Launcher\lang\pt-BR.json`), `CHECKLIST.md`, and the game's own data.
+  Every launcher text goes through `L.T(...)` / `L.F(...)` and needs its entry in `pt-BR.json` and `_template.json`.
 - Split different parts of the project into different files so each one can be maintained on its own. Don't grow big
   files (`Enemies.cs`, `Game.cs` and the like are split into `partial` files by topic): read only the ranges you need.
 - Maps and game content go in data files, never hardcoded (map editor, community dungeons). Map field names are in
   English (`floor`, `decor`, `buildings`...).
-- Launcher: a feature that does not exist yet in the game/server still gets its menu, greyed out and disabled.
+- Launcher: a feature that does not exist yet in the game/server still gets its menu, greyed out and disabled. New screens use
+  the themed controls (`UI\Controls`, `Ui.*`) so they follow the dark and light themes, and no picture or icon of the game.
 - Stay as close as possible to the original game. Anything rebuilt without original data must be documented as a
   reconstruction and, when it makes sense, be configurable by the host.
 - Never commit game files (assets, DLLs, `configBinary`, decompiled code); `.gitignore` covers them.
   Commit / push only when the user asks.
 - Write complete changes in place, then tell the user which files changed and what to test in the game.
+- When a feature, file or command changes, update the docs in the same change: `CHECKLIST.md`, the matching `docs\` note, the
+  READMEs and `Chat commands.md`. (A big part of the docs went stale between 16/11 and 23/11 because they were not.)
 
 ## Key facts
 
@@ -137,6 +157,8 @@ In-game testing is done by the user. When they report a test, read `server-repor
   Game folder: `C:\Program Files (x86)\Steam\steamapps\content\app_386010\depot_386011`.
   Player.log: `%USERPROFILE%\AppData\LocalLow\SpryFox\Steambirds Alliance\Player.log`.
 - Ports (`network.json`): HTTP 6443, Nexus UDP 1111, tutorial 1112, dungeon 1113, open world 1114, server search 6444.
+  One UDP game server per role (`Program.cs`: Nexus 0, World 1, Dungeon 2, Tutorial 3). Players in the same room (Nexus, world, one
+  dungeon instance) see each other through `Network\PlayerRelay.cs`; the tutorial is private.
 - The server reads the game's `configBinary` (DarkConfig + LZMA) directly: units, items, XP tables, skills, unlocks,
   buffs, texts. What lived only on the original server (enemy AI, dungeon room layouts, named loot tables, XP-per-kill
   formula, the Rebel City map) is empty in every client build checked and has to be rebuilt.

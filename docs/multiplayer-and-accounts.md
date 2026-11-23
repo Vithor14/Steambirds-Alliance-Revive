@@ -1,6 +1,6 @@
 # Multiplayer, contas por jogador e launcher 0.3.0
 
-Servidor **v11** e launcher **0.3.0** (16/11/2026, ainda não testados). O que existe: vários PCs entram no mesmo servidor, cada jogador com a própria conta. O que ainda não existe: os jogadores se verem (cada um joga no próprio mundo; inimigos, baús e loot são por conexão).
+Servidor **v11** e launcher **0.3.0** (16/11/2026, testados em 22/11 com dois PCs), revisado em 23/11/2026 para o launcher **0.5.0**. O que existe: vários PCs entram no mesmo servidor, cada jogador com a própria conta, e os jogadores se veem no Nexus, no mundo aberto e nas dungeons (`PlayerRelay`; o tutorial segue privado). O que não existe: troca de servidor entre hosts diferentes, limite de jogadores por dungeon e fila. As partes de amigos e flocks estão em `docs/social.md`; o mundo aberto, em `docs/open-world.md`.
 
 ## Fluxo de login
 
@@ -16,14 +16,14 @@ Servidor **v11** e launcher **0.3.0** (16/11/2026, ainda não testados). O que e
 3. UDP `ServerSetSessionTicket(sessid, versão, username)`: liga a conexão à sessão (`Network\PlayerSessions.cs`). Sessão desconhecida → último login do mesmo IP → senão conta pelo IP.
 4. `/ozy/user/self` e `/queue_check` acham a sessão pelo header `X-Session`.
 
-## Contas (`ContaEsboco.cs`)
+## Contas (`Server\Accounts.cs`)
 
-- Uma pasta por jogador: `accounts\<chave>\account.json` (+ `Chave`, `Nome`, `SteamId`, `CriadaEm`, `UltimoAcesso`), `inventory.json`, `acceptances.json`.
-- A conta antiga (`account.json`, `inventory.json`, `acceptances.json` da raiz) vai para o **primeiro jogador que entrar pelo PC do host** (loopback ou um IP do próprio PC), com cópia em `_backup\migracao-<data>`.
-- **Escopo de conta**: o resto do servidor continua chamando `ContaEsboco.X()` / `InventoryStore.Read/Change` sem dizer a conta. A conta é a do escopo atual (`AsyncLocal`):
-  - `Program.TratarDados` abre o escopo com a conexão de cada mensagem; o welcome e a desconexão também;
-  - `MandarParaONexus`, `MandarParaDungeon`, `NascerAviao`, `TutorialEsboco.SairParaONexus`, `PilotProgression.EnemyKilled/PlaneDestroyed`, `LootDrops.EnemyKilled`, `InventoryHandler.PlaneDestroyed`, `DungeonServer.LeaveToNexus/MarkFinished` abrem o próprio (são chamados também pelos laços de atualização).
-  - Sem escopo: a conta do único jogador online; com nenhum ou vários, uma conta temporária que não salva, e o log avisa uma vez qual método ficou sem escopo (`[CONTA] AVISO: ...`). Esse aviso no log é o sinal de um caminho que precisa de escopo.
+- Uma pasta por jogador: `accounts\<chave>\account.json` (com `Key`, `Name`, `SteamId`, `CreatedAt`, `LastAccess`), `inventory.json`, `acceptances.json` e, conforme o uso, `store.json` (compras, `docs/stores.md`) e `social.json` (amigos, `docs/social.md`). A pasta `accounts\` fica fora do git.
+- A conta única antiga (`account.json`, `inventory.json`, `acceptances.json` na raiz do servidor) **não é mais migrada** desde 22/11 (a camada de compatibilidade foi removida).
+- **Escopo de conta**: o resto do servidor chama `Accounts.X()` / `InventoryStore.Read/Change` sem dizer a conta. A conta é a do escopo atual (`AsyncLocal`):
+  - `Program.Udp.cs` abre o escopo com a conexão de cada mensagem; o welcome e a desconexão também;
+  - as trocas de servidor (`Program.Transfers.cs`), `PilotProgression.EnemyKilled/PlaneDestroyed`, `LootDrops.EnemyKilled`, `InventoryHandler.PlaneDestroyed`, `DungeonServer.LeaveToNexus/MarkFinished` e o tutorial abrem o próprio (são chamados também pelos laços de atualização).
+  - Sem escopo: a conta do único jogador online; com nenhum ou vários, uma conta temporária que não salva, e o log avisa uma vez qual método ficou sem escopo (`[ACCOUNT] WARNING: ...`). Esse aviso no log é o sinal de um caminho que precisa de escopo.
 - `PilotProgression.Start` agora só carrega dados; o que era por conta (patente inicial de piloto novo, níveis, desbloqueios) virou `PilotProgression.PrepareAccount()`, chamado uma vez por conta no login. O inventário de cada conta é lido no primeiro uso (`InventoryStore.Current`), já com os inventários dos aviões e o estado inicial.
 
 ## Rede (`network.json`, `Network\ServerNetworkSettings.cs`)
@@ -34,12 +34,12 @@ Servidor **v11** e launcher **0.3.0** (16/11/2026, ainda não testados). O que e
 | `allowOtherPlayers` | true | HTTP em `http://*:<porta>`; false = `localhost` e o UDP recusa outros PCs. Muda ao reiniciar |
 | `showInServerSearch` | true | responde à busca dos launchers de outros PCs |
 | `maxPlayers` | 16 | conferido no `ServerSetSessionTicket` do Nexus (contas distintas online); quem passa leva `Disconnect("Server full")` |
-| `chatCommands` | everyone | `everyone`, `host` (só o jogo do PC do host) ou `none`; `/sair` e `/jogadores` sempre |
+| `chatCommands` | everyone | `everyone`, `host` (só o jogo do PC do host) ou `none`; `/leave` e `/players` sempre |
 | `welcomeMessage` | "" | chat extra no Nexus |
-| `httpPort` / `nexusPort` / `tutorialPort` / `dungeonPort` / `searchPort` | 6443 / 1111 / 1112 / 1113 / 6444 | lidas ao iniciar; portas UDP repetidas voltam ao padrão |
+| `httpPort` / `nexusPort` / `tutorialPort` / `dungeonPort` / `worldPort` / `searchPort` | 6443 / 1111 / 1112 / 1113 / 1114 / 6444 | lidas ao iniciar; portas UDP repetidas voltam ao padrão |
 
-- Endereços: o servidor guarda os próprios endpoints como `127.0.0.1:<porta>`; `PlayerSessions.AddressFor(conexão, destino)` troca pelo endereço da sessão do jogador nas trocas de servidor (`Program`) e nos portais (`ObjetosEsboco.EnviarPortal`).
-- Chat: "X entrou/saiu do servidor" para os outros do Nexus; `/jogadores` (ou `/players`) lista quem está online. Textos em português ou inglês conforme o idioma do jogo de cada um.
+- Endereços: o servidor guarda os próprios endpoints como `127.0.0.1:<porta>`; `PlayerSessions.AddressFor(conexão, destino)` troca pelo endereço da sessão do jogador nas trocas de servidor (`Program.Transfers.cs`) e nos portais (`WorldObjects.cs`).
+- Chat: "X entrou/saiu do servidor" para os outros do Nexus; `/players` lista quem está online. Textos em português ou inglês conforme o idioma do jogo de cada um.
 
 ## Busca de servidores
 
@@ -47,16 +47,18 @@ Servidor **v11** e launcher **0.3.0** (16/11/2026, ainda não testados). O que e
 - O launcher (`Core\ServerBrowser.cs`, `Core\LocalNetworks.cs`) abre um socket por adaptador IPv4 e manda: broadcast da rede, 255.255.255.255, cada IP da tabela ARP (`GetIpNetTable`) e, em redes ≤ /22 que não são VPN, cada endereço. Radmin (26.x/8) e Hamachi (25.x/8) vão por broadcast + ARP. IPs digitados antes também são perguntados direto.
 - Conectar por IP: `GET http://<ip>:<porta>/revive/info` (5 s); servidor antigo cai no `/ozy/alive`.
 
-## Launcher 0.3.0
+## Launcher 0.3.0 (e o que mudou até a 0.5.0)
+
+O visual do launcher foi refeito na 0.5.0 (cabeçalho, abas agrupadas Client / Server | Map editor / Enemy AI | Settings, sub-abas); o que segue descreve o que cada parte faz, e o `Launcher\README.md` descreve as telas atuais.
 
 - **Client**: nome do jogador (vazio = nome da Steam, lido do `loginusers.vdf` e do registro `ActiveProcess\ActiveUser`), lista de servidores (este PC + achados + digitados), Conectar por IP, *Remove from list*, busca sozinha a cada minuto. Com outro PC escolhido, "Start the server of this PC with the game" fica desmarcado e acinzentado (a preferência salva volta quando "este PC" é escolhido).
 - **Download the game with Steam** (`UI\DepotDownloadForm.cs`, `Core\DepotDownload.cs`): copia o `download_depot`, abre `steam://open/console`, acompanha `Steam\logs\console_log.txt` (`Depot download complete` / `failed`) e o tamanho da pasta `depot_386011`; no fim usa a pasta e cria `steam_appid.txt` (386010). A Steam não aceita comandos de console de fora: o jogador cola e aperta Enter.
 - **Server → Network and multiplayer** (`UI\NetworkPage.cs`): endereços para passar (um por adaptador, VPNs em negrito), regra de firewall `Steambirds Alliance Revive server` para o `SteambirdsServer.exe` em todos os perfis (`netsh` com UAC, `Core\FirewallRule.cs`) e o `network.json` na tela genérica de configurações.
-- **Server → Accounts**: lista de contas (uma por jogador; a antiga no topo enquanto espera o host), aviões da selecionada, editar (duplo clique) e remover (apaga a pasta da conta, com cópia em `_backup`).
-- **Settings → Multiplayer**: porta da busca (6444).
-- `Build launcher.ps1`: a pasta `contas` nunca é copiada para o dist; a conta antiga só vai na primeira vez (quando o dist ainda não tem `contas`); copia também o `README.md` (inglês) do launcher.
+- **Server → Players → Accounts**: lista de contas (uma por jogador), aviões da selecionada, editar (duplo clique) e remover (apaga a pasta da conta, com cópia em `_backup`); **New accounts** define o estado inicial de contas novas.
+- **Settings → Server**: porta da busca (6444).
+- `Build launcher.ps1`: a pasta `accounts` nunca é copiada para o dist (o dist guarda as próprias contas).
 
-## Relay de multiplayer (17/11/2026, escrito sem compilar, ainda não testado)
+## Relay de multiplayer (17/11/2026; testado com dois PCs em 19/11 e 22/11)
 
 `Server\Network\PlayerRelay.cs` repassa o que cada jogador faz para os outros da mesma "sala": todos do Nexus formam uma sala e cada instância de dungeon é outra (o tutorial continua privado):
 
@@ -67,7 +69,7 @@ Servidor **v11** e launcher **0.3.0** (16/11/2026, ainda não testados). O que e
 - **Chat:** `ServerProximityChat` `11732` vira `ClientProximityChat` `1612` para os outros (o cliente do remetente já mostra a própria fala).
 - **Dados do jogador:** `ServerRequestRemotePlayerData` de outra conta online recebe `ClientReceiveRemotePlayerData` com o shortId de relay.
 
-### Ajustes depois do primeiro teste com dois PCs (19/11/2026, sem compilar)
+### Ajustes depois do primeiro teste com dois PCs (19/11/2026; testados em 22/11)
 
 O teste mostrou que aviões, animação de tiro, inimigos, portões e o reset da dungeon funcionavam, mas faltavam o nome, as balas e as skills em área dos outros, e a skill em área do Old Faithful não fazia nada:
 
@@ -79,12 +81,13 @@ O teste mostrou que aviões, animação de tiro, inimigos, portões e o reset da
 
 Repassado em 22/11: `TriggerOtherPlayerSkill` `65043` (`Game.SkillRelay.cs`: o gatilho vai para o dono da nuvem como `TriggerPlayerSkill` `65038`) e o fim das balas (`PlayerRelay.BulletHit` → `ClientKillBullet` `8267`: a bala de um jogador termina onde acertou na tela dos outros, com o id de relay do dono no `BulletId`). Ainda não repassa: `GunFireBatch` `62327`, `61257`/`26781` (o estado vem pelo `UpdateUnitsBatch`). O loot já é por jogador (cada membro sorteia o próprio).
 
-## Dungeons compartilhadas (17/11/2026, escrito sem compilar, ainda não testado)
+## Dungeons compartilhadas (17/11/2026; testado com dois PCs em 22/11)
 
 - **Entrada:** `DungeonServer.PrepareSession` procura uma instância em andamento do mesmo tipo (não terminada) e o jogador entra nela; senão cria uma nova. `Session.Members` tem os jogadores; `sessions` guarda a mesma instância uma vez por jogador.
 - **Estado:** quem chega depois recebe os inimigos, peças de portão e o contador de chefes que já existem (`Enemies.SendStateTo`), mais o chão do mapa como sempre.
 - **Inimigos:** a instância de `Enemies` também tem vários jogadores (`Instance.Members`); spawns, updates, tiros, mortes e falas vão para todos. Cada inimigo persegue e mira o jogador vivo mais próximo; tiros teleguiados usam o id que cada cliente conhece (o próprio avião ou o id de relay do outro).
 - **Progresso:** salas, portões, ondas e checkpoint são da instância (qualquer jogador vivo perto acorda uma sala). XP e loot de cada abate vão para todos os jogadores da instância, cada um com os próprios sacos.
 - **Comandos:** `/leave` tira só quem digitou; `/room` e `/boss` teleportam só quem digitou; `/restart` recomeça a dungeon para todos.
+- **Visão de inimigos:** no mundo aberto cada cliente só recebe os inimigos dentro de `enemies.viewRadius` (23/11, `Enemies.Interest.cs`); nas dungeons e no tutorial o servidor continua mandando tudo.
 - **Reset:** quando o último jogador sai (ou desconecta) a instância e o estado dos inimigos são descartados; a próxima entrada começa do zero. Uma dungeon já concluída não aceita novos jogadores.
-- **Ainda não:** limite de jogadores por dungeon, fila, escalar a dificuldade pelo número de jogadores.
+- **Ainda não:** limite de jogadores por dungeon (o `maxPlayers` do `dungeons.json` ainda não barra a entrada), fila, escalar a dificuldade pelo número de jogadores.

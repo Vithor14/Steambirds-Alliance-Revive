@@ -115,7 +115,7 @@ internal sealed class SettingsTab : UserControl
             settings.ReportOnServerStop = reportOnStop.Checked;
             context.SaveSettings();
         };
-        HelpButton reportHelp = Ui.Help(L.T("Writes logs\\server-report.txt (server output, game logs, account.json and the .txt files of BepInEx), like Run server.ps1 did on Ctrl+C."),
+        HelpButton reportHelp = Ui.Help(L.T("Writes logs\\server-report.txt (server output, game logs, account.json and the .txt files of BepInEx)."),
             L.T("Report"));
 
         var searchPort = new NumberBox

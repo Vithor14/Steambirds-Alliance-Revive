@@ -1,11 +1,11 @@
 # Dungeons da build 190828 (recriadas)
 
-Situação em 15/11/2026. Os mapas ficam em `Server\maps\dungeon_*.json`, gerados por `tools\dungeons-190828\dungeons_190828.py`. O formato e os campos novos estão em `docs/map-format.md` (e em `docs/map-format.md`). Desde a v8 eles rodam no servidor de dungeon (`docs/dungeon-server.md`); só Iron Lair e Bomb Factory estão ligadas no `dungeons.json` (testadas em 15/11; a Bomb Factory ganhou a correção dos barris, v8b).
+Escrito em 15/11/2026, revisado em 23/11/2026. Os mapas ficam em `Server\maps\dungeon_*.json`. Foram gerados em 15/11 por scripts Python que **não estão mais no repositório** (`tools\dungeons-190828`, removida); hoje o `.json` é a fonte e se edita no editor de mapas do launcher. Em 22/11 todos foram reduzidos à metade da largura e da altura (`tools\scale_dungeon_maps.py`, `"scaled": 0.5`; `docs/dungeon-tuning.md`). O formato está em `docs/map-format.md`. Eles rodam no servidor de dungeon (`docs/dungeon-server.md`); só Iron Lair e Bomb Factory estão ligadas no `dungeons.json` (testadas em 15/11; as correções posteriores não foram retestadas).
 
 ## O que se achou no configBinary
 
-- Os 21 arquivos `Dungeons/dungeon_*` da 190828.2045 estão **vazios** (`{}`), como os da 201219. Conferido também nas builds antigas que o usuário baixou (`VersoesAntigas`): 190426.2227, 190609.2106, 190709.0120 e 190911.1941, todas vazias. O desenho das salas ficava só no servidor oficial.
-- Só a 190426 ainda traz camadas de IA nas unidades (`additionalStates` de 53 unidades, `includedStates` 74, `namedUnitStates`, `difficultyTable` 114). Exportadas em `tools\dungeons-190828\ia_190426.json`. Delas saiu o escudo do SN-Z ("toggle_safety": 10 s em 90/70/50/30/10% de vida).
+- Os 21 arquivos `Dungeons/dungeon_*` da 190828.2045 estão **vazios** (`{}`), como os da 201219. Conferido também nas builds antigas que o usuário baixou (pasta `VersoesAntigas`, fora do git): 190426.2227, 190609.2106, 190709.0120 e 190911.1941, todas vazias. O desenho das salas ficava só no servidor oficial.
+- Só a 190426 ainda traz camadas de IA nas unidades (`additionalStates` de 53 unidades, `includedStates` 74, `namedUnitStates`, `difficultyTable` 114; a exportação `ia_190426.json` saiu do repositório junto com os scripts). Delas saiu o escudo do SN-Z ("toggle_safety": 10 s em 90/70/50/30/10% de vida).
 - O que existe e foi usado:
   - Unidades por dungeon (`Units/60D..999D`, 883 unidades em 20 pastas): nome, vida, velocidade, armas e papel (chefe, minichefe, baú, muro, destroços). Todos os templates usados existem no cliente 201219.
   - Nomes e tiers (`Texts/en-US/dungeons`), chaves `key_*` (`Items/Consumables/dungeonkey`) e itens de portal (`Items/Consumables/dungeon`).
@@ -44,25 +44,25 @@ Fora: `dungeon_tutorial` (olfaithful, item próprio), `dungeon_0test`, `dungeon_
 
 - Original: quem aparece em cada dungeon, nomes, vida, armas, papéis, chefes e minichefes, falas, placas, territórios, chaves, quests e mecânicas descritas na wiki; os limiares de escudo do SN-Z (190426) e os grupos de armas por fase (nomes dos `gunMounts`).
 - Recriado: formato e tamanho das salas (36 a 108 u; o walker anda 3 u/s), posição e quantidade dos inimigos, ordem das salas comuns, fases dos chefes (limiares de vida e quem é invocado), ondas das arenas, cadência das invocações periódicas, vida e tempo dos baús de DPS.
-- As unidades invisíveis que dirigiam as salas (`*master`, `*spawner`, `trapmaster`, `arenawave_*`) ficam listadas em `controladores`, só como referência.
+- As unidades invisíveis que dirigiam as salas (`*master`, `*spawner`, `trapmaster`, `arenawave_*`) ficam listadas em `controllers`, só como referência.
 
 ## Unidades invisíveis armadas (lição do teste de 15/11)
 
-Algumas unidades do cliente têm arma e a arte `!EnemyInvisible`. No original elas faziam parte de outra coisa (um barril, um cenário, um roteiro); **colocadas soltas numa sala, atiram no jogador sem serem vistas**. Já corrigido: `bombbarrelboom` e `firebarrelboom` (anel de balas que nasce quando o barril visível explode; gerador `barrel_types`). Ainda para conferir quando cada dungeon abrir: `lavapillar`, `blizzard`, `meowzalaserB/D`, `avatarcannon`, `sunfoxtrap`, `lasergateWE`, `beartrap`, `arena2tripodminionmaster`, `dochatcher`, `trapbutton`, `coilsnake01neck`, `riotguardleader`.
+Algumas unidades do cliente têm arma e a arte `!EnemyInvisible`. No original elas faziam parte de outra coisa (um barril, um cenário, um roteiro); **colocadas soltas numa sala, atiram no jogador sem serem vistas**. Já corrigido: `bombbarrelboom` e `firebarrelboom` (anel de balas que nasce quando o barril visível explode: `onDeath` do barril). Desde 22/11 a regra geral é: unidade invisível sem arma (`trapbutton`) não nasce. Ainda para conferir quando cada dungeon abrir: `lavapillar`, `blizzard`, `meowzalaserB/D`, `avatarcannon`, `sunfoxtrap`, `lasergateWE`, `beartrap`, `arena2tripodminionmaster`, `dochatcher`, `trapbutton`, `coilsnake01neck`, `riotguardleader`.
 
 Dificuldade: vida e dano seguem os tiers originais da 190828 (healthTiers 1…90, damageTiers 1…9,7); não foi escalada. Quando houver itens que melhorem o avião isso se equilibra.
 
-## Mudanças do gerador na v8
+## Como os mapas foram feitos (v8, 15/11)
 
 - Mapas centrados na grade do cliente (o cliente guarda 54 tiles para cada lado da origem; The Dig tem 56 tiles de ponta a ponta).
-- Portões ganham `sala` (para fechar atrás do jogador em salas com `fechaAoEntrar`).
-- Todo `*treasureBIG` com `_reward` vira `bauDeDps` (vida 500 + 250 × tier, 25 s).
-- Removidos os pontos de controle das câmaras laterais do Crypt of Cathulhu (o ponto de controle vale pela linha `ativaEmV`, então salas laterais confundiam a ordem).
-- `check_maps.py` confere também armas por índice, `invocacaoPeriodica`, `bauDeDps`, condições e o tamanho da grade.
+- Portões ganham `room` (para fechar atrás do jogador em salas com `closesOnEnter`).
+- Todo `*treasureBIG` com `_reward` vira `dpsChest` (vida 500 + 250 × tier, 25 s).
+- Sem pontos de controle nas câmaras laterais do Crypt of Cathulhu (o ponto de controle vale pela linha `activeAtV`, então salas laterais confundiam a ordem).
+- O validador do editor de mapas (aba Map editor) confere posições no chão livre, portões, templates do cliente, falas, armas por índice, invocações, baús de DPS, condições e o tamanho da grade (substitui o antigo `check_maps.py`).
 
 ## Próximos passos
 
-1. Retestar a Bomb Factory (barris) e ir até o fim; depois ligar as outras no `dungeons.json` uma por uma, conferindo tamanho das salas e as unidades invisíveis acima.
-2. `proximaDungeon` (Meowza → Three Brothers → Inner Sanctum) e entrada pelas chaves `key_*`.
+1. Retestar a Bomb Factory (barris, reação em cadeia) e ir até o fim; depois ligar as outras no `dungeons.json` uma por uma, conferindo o tamanho das salas (agora 4× menores) e as unidades invisíveis acima.
+2. `nextDungeon` (Meowza → Three Brothers → Inner Sanctum); as chaves `key_*` já levam à dungeon (`Dungeons\DungeonKeys.cs`), falta testar.
 3. Mecânicas especiais (broca, chave das Vaults, altares, emboscada, esteiras, trilhos, respiros).
 4. IA original a partir dos estados da 190426.

@@ -11,15 +11,19 @@ community-made project. The game itself is **not** included: you need your own c
 ## What it does
 
 - **Server**: login, one account per player (saved on the host's PC), planes and hangar, XP and permadeath, skills,
-  items, loot, workshop, stores, Rebel City (the Nexus), the walker tutorial and 17 recreated dungeons.
-- **Multiplayer**: host for LAN or a VPN (Radmin, Hamachi) or over the internet; players share the Nexus and dungeons.
+  items, loot, workshop, stores, Rebel City (the Nexus), the walker tutorial, 17 recreated dungeons, an **open world**
+  generated from a seed (regions, enemy spawns, dungeon carriers) and **friends and flocks**.
+- **Multiplayer**: host for LAN or a VPN (Radmin, Hamachi) or over the internet; players share the Nexus, the open world and
+  the dungeons, can whisper, talk in their flock, and teleport to or join a friend.
 - **Launcher**: downloads the game through Steam, lists servers, hosts a server, and edits accounts, stores,
-  difficulty and dungeons without touching any file.
+  difficulty, dungeons, the open world and the social settings without touching any file.
 - **Map editor**: builds dungeon, Nexus and tutorial maps from the game's own assets, as files the server reads.
 - **Enemy AI editor**: builds enemy behavior as data files and tests them in a simulator.
 
-Not done yet: the open world, quests and missions, flocks, Combat Sim and most dungeon-specific scripts.
-See [CHECKLIST.md](CHECKLIST.md) for the full status.
+Not done yet: quests and missions, the Combat Sim, secure trade, the original boss AI and most dungeon-specific scripts (only
+Iron Lair and Bomb Factory are switched on; the others are ready to try in `dungeons.json`). Several recent features (stores,
+friends and flocks, plane variants, dungeon keys) were tested only with a test client, not in the game yet: please report
+anything odd. See [CHECKLIST.md](CHECKLIST.md) for the full status and [what is new in 0.5.0](docs/update-notes-0.5.0.md).
 
 ## Play or host
 
@@ -46,18 +50,20 @@ cd C:\Steambirds
 ```
 
 This publishes the server, plugin and launcher into `Launcher\dist`. `.\"Build launcher release.ps1"` builds the
-zip for GitHub Releases (launcher, server, `SteambirdsGameFiles.exe` and plugin, with no game files). Chat commands are in [Chat commands.md](Chat%20commands.md).
+zip for GitHub Releases (launcher, server, `SteambirdsGameFiles.exe` and plugin, with no game files). The server and the game are started from the launcher. Chat commands are in
+[Chat commands.md](Chat%20commands.md).
 
 ## Repository
 
 | Path | What it is |
 |---|---|
 | `Server\` | The game server (.NET 8): HTTP login and UDP game servers; maps, loot tables and settings as data files |
-| `Launcher\` | WinForms launcher with the map editor and Enemy AI tabs |
+| `Launcher\` | WinForms launcher (0.5.0) with the map editor and Enemy AI tabs |
 | `Shared\EnemyAi\` | Enemy AI core, shared by the server and the launcher |
 | `QuieterPlugin\` | BepInEx plugin for the game client (data exports and client-side fixes) |
 | `GameFiles\` | `SteambirdsGameFiles.exe`: gets the needed files from your own game copy |
-| `docs\` | Design notes (Portuguese) |
+| `docs\` | Design notes (a few in English, most in Portuguese), release notes and the Discord plan |
+| `Server\maps\`, `Server\ai\`, `Server\loot_tables\` | Maps, enemy AI and loot tables: data files you can edit and share |
 
 ## Contributing
 

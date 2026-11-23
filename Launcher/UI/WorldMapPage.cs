@@ -5,7 +5,7 @@ namespace SteambirdsLauncher.UI;
 // "World map" page of the Server tab: the open world (terrain Basic) as the server built it, with every player and dungeon carrier
 // on it. Hovering a player shows its plane, rank, region, position and health. The data comes from the files the server writes while
 // somebody is in the world (world-map.json and world-live.json, see Core\WorldMapFiles.cs), so it works with the server started
-// by the launcher or by "Run server.ps1" as long as it is the one of the launcher's server folder.
+// by the launcher (or by a server started outside it) as long as it is the one of the launcher's server folder.
 internal sealed class WorldMapPage : UserControl
 {
     private readonly LauncherContext context;

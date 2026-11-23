@@ -5,7 +5,7 @@ using System.Text.Json;
 namespace SteambirdsGameFiles;
 
 // The server of the package, started only while the game is open for the export. With it the game logs in and loads
-// as in normal play on this PC (the launcher's "This PC", "Run game.ps1"): OZY_URL=http://localhost:<httpPort>/ozy and
+// as in normal play on this PC (the launcher's "This PC"): OZY_URL=http://localhost:<httpPort>/ozy and
 // -connecttolocal. A server that is already answering on the port (the launcher's, for example) is used as it is.
 internal sealed class LocalServer : IDisposable
 {

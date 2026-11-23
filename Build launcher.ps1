@@ -2,7 +2,7 @@
 # Builds the full launcher into C:\Steambirds\Launcher\dist, ready to run without dotnet and without typing commands:
 #   dist\SteambirdsLauncher.exe        launcher (Client, Server and Settings tabs)
 #   dist\lang\                         launcher languages (copied from Launcher\lang; English is built into the .exe)
-#   dist\server\SteambirdsServer.exe   server (the same code that Run server.ps1 runs), with maps, data and configs
+#   dist\server\SteambirdsServer.exe   server (started by the launcher's Server tab), with maps, data and configs
 #   dist\plugin\QuieterPlugin.dll      Steambirds Quieter plugin, which the launcher copies into the game's BepInEx folder
 #   dist\editor-assets\                game pictures for the Map editor tab (copied from Launcher\editor-assets)
 #   dist\SteambirdsGameFiles.exe       takes configBinary, the plugin's data files and the map editor pictures from the
@@ -15,7 +15,7 @@
 #     newer. Any other folder of Server\ without code is picked up automatically. Before a file is replaced, the
 #     version the launcher had goes to dist\server\_backup\<date>.
 #   - accounts: the server keeps one per player in server\accounts\<key> (account.json, inventory.json, acceptances.json).
-#     The accounts folder is never copied (dist keeps its own; Run server.ps1 uses the ones in Server).
+#     The accounts folder is never copied (dist keeps its own).
 #   - network.json (name, ports and who can join): copied like the other configs.
 #   - game data: configBinary (from the installed game, Steambirds_Data\StreamingAssets) and portraits_config.txt
 #     (from the game's BepInEx folder) go to dist\server\data, so a host PC WITHOUT the game still has items, loot,
@@ -70,7 +70,7 @@ function RunDotnet($title, [string[]]$arguments) {
 
 # ---------------------------------------------------------------- duplicated .cs files
 
-# Copies "Name-1.cs", "Name (1).cs", "Name - Copia.cs", "Name - Copy.cs" next to "Name.cs" (same rule as Run server.ps1).
+# Copies "Name-1.cs", "Name (1).cs", "Name - Copia.cs", "Name - Copy.cs" next to "Name.cs" (the same rule as Clean project.ps1).
 function FindCopies($folder) {
     $found = @()
     $files = @(Get-ChildItem -LiteralPath $folder -Filter "*.cs" -File -ErrorAction SilentlyContinue)

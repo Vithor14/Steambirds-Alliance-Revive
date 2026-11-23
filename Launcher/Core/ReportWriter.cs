@@ -2,7 +2,7 @@ using System.Text;
 
 namespace SteambirdsLauncher.Core;
 
-// logs\server-report.txt: the same report "Run server.ps1" wrote on Ctrl+C, in one txt:
+// logs\server-report.txt: the report of a test session, in one txt:
 // server output, BepInEx\LogOutput.log, Unity Player.log, the accounts (account.json) and the .txt files of BepInEx.
 // In the game logs the HarmonyX IL and the missing script warnings are summarized, and each log gets a list
 // of its most frequent errors.

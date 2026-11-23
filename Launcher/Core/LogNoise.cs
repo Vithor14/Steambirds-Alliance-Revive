@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 
 namespace SteambirdsLauncher.Core;
 
-// Noise of the game logs, the same rules "Run server.ps1" used for the report:
+// Noise of the game logs, the rules used for the report:
 //  - the IL that HarmonyX dumps for every patch ("Generated patch ..." until the next blank line or log header);
 //  - "The referenced script on this Behaviour ... is missing!" warnings, which come from the game assets.
 // One filter per log: it keeps state between lines.

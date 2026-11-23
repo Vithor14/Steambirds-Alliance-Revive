@@ -4,7 +4,7 @@ namespace SteambirdsLauncher.Core;
 
 // Where the game logs in and plays.
 //  - This PC: OZY_URL=http://localhost:<httpPort>/ozy and "-connecttolocal" (the game joins 127.0.0.1:<nexusPort>
-//    right after the login; "-connecttolocalport" when the Nexus port is not 1111), as "Run game.ps1" did.
+//    right after the login; "-connecttolocalport" when the Nexus port is not 1111).
 //  - Another PC: OZY_URL=http://<ip>:<httpPort>/ozy and no connect argument: the login answers with the Nexus of that
 //    server (its address and port) and the game joins it (GameClient.LoginAndThenJoinNexus).
 // The player name goes in the path of OZY_URL when the server accepts it (FoundServer.OzyUrl).

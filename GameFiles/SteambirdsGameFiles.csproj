@@ -3,7 +3,7 @@
   <!--
     Steambirds Game Files: takes from the player's own copy of the game the files that cannot be published on GitHub
     (configBinary, the data files written by the Steambirds Quieter plugin and the map editor pictures).
-    Published as a single self-contained exe by "Build server release.ps1" and "Build launcher.ps1": nobody needs .NET.
+    Published as a single self-contained exe by "Build launcher release.ps1" and "Build launcher.ps1": nobody needs .NET.
     See README.md.
   -->
   <PropertyGroup>

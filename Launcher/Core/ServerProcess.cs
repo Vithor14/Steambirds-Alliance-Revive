@@ -6,7 +6,7 @@ namespace SteambirdsLauncher.Core;
 
 public enum ServerState { Stopped, Starting, Running, Stopping }
 
-// The server of this PC: server\SteambirdsServer.exe, run the way "Run server.ps1" ran "dotnet run":
+// The server of this PC: server\SteambirdsServer.exe, run like "dotnet run" in the server folder:
 //   - working folder = server\ (maps, configs and accounts are read and written there);
 //   - STEAMBIRDS_GAME / STEAMBIRDS_BEPINEX point to the game, so the server reads the configBinary and the plugin files;
 //   - everything the server prints goes to the console of the Server tab and to logs\server-<date>.log.

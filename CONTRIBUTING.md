@@ -1,7 +1,8 @@
 # Contributing
 
 Thank you for helping. This project is maintained by the community, so the rules below keep the code readable for
-the next person and keep the game's files out of the repository.
+the next person and keep the game's files out of the repository. To talk to the community first, join the
+[Discord](https://discord.gg/sNwTk7T4mu).
 
 ## Before you start
 
@@ -13,20 +14,24 @@ the next person and keep the game's files out of the repository.
 
 - **Never commit game files**: assets, DLLs, `configBinary`, decompiled code, `Server\data\`, accounts, logs. The
   `.gitignore` covers the usual ones; check `git status` before committing.
-- **English everywhere in the code**: identifiers, file and folder names, comments, log messages and README/CONTRIBUTING
-  files. Portuguese is fine in the `docs\` design notes and in the launcher's `lang\pt-BR.json`.
+- **English everywhere in the code**: identifiers, file and folder names, comments, log messages, map and settings field
+  names and README/CONTRIBUTING files. Portuguese is fine in the `docs\` design notes (several of them) and in the
+  launcher's `lang\pt-BR.json`. There is no compatibility layer for the old Portuguese names.
 - **Data, not code**: maps, enemies, dungeons, loot and settings live in files that the server reads and reloads. Do not
   hardcode content in C# when it can be a file the host or the community can edit.
 - **Stay close to the original game.** Anything rebuilt without original data must be marked as a reconstruction (in the
   file that holds it, or in a comment) and, when it makes sense, be configurable.
-- **Split big files.** Do not grow a file past about 60 KB. Use `partial` classes split by topic (see
-  `Server\Enemies*.cs`) or a new file per topic.
+- **Split big files.** Do not grow a file past about 40 KB. Use `partial` classes split by topic (see
+  `Server\Enemies*.cs`, `Server\Game*.cs`, `Server\Program*.cs`) or a new file per topic, in the folder of the area
+  (`Items`, `Dungeons`, `World`, `Social`, `Stores`...).
 
 ## Code
 
 - C# 12 / .NET 8 for the server and the launcher; .NET Framework 4.6 for the BepInEx plugin (the game runs on it).
 - Nullable reference types are on. Do not silence warnings with `!` when a real check is possible.
-- Use the existing helpers (`Json`, `TextFiles`, `ConfigBinary`, `Maps`) instead of writing new ones.
+- Use the existing helpers (`Json`, `TextFiles`, `ConfigBinary`, `Maps`) instead of writing new ones. In the launcher,
+  use the themed controls and `Ui.*` (`Launcher\UI\Controls`) instead of plain WinForms controls, and put every text
+  through `L.T(...)` / `L.F(...)` with its translation in `Launcher\lang\pt-BR.json` and `_template.json`.
 - Comments explain *why* (the game's behavior, the protocol rule, the reconstruction), not what the code does.
 - Log lines start with a tag in capitals in square brackets, like `[ENEMY]`, `[MAP]`, `[DUNGEON]`. Keep the tags in English.
 
@@ -38,7 +43,13 @@ Build every project you touched, from the project folder:
 dotnet build Server\SteambirdsServer.csproj -nologo -v q -clp:ErrorsOnly
 dotnet build Launcher\SteambirdsLauncher.csproj -nologo -v q -clp:ErrorsOnly
 dotnet build QuieterPlugin\QuieterPlugin.csproj -c Release -nologo -v q -clp:ErrorsOnly
+dotnet build GameFiles\SteambirdsGameFiles.csproj -nologo -v q -clp:ErrorsOnly
 ```
+
+The plugin needs the game's DLLs (see `CLAUDE.md`, "Build and verify"). To run what you built, use the launcher:
+`.\"Build launcher.ps1"` puts everything in `Launcher\dist` and the server and the game are started from its Server and
+Client tabs. Do not share `Launcher\dist` as it is (it holds your accounts and logs); the release zip comes from
+`.\"Build launcher release.ps1"`.
 
 The build must finish with no errors. Warnings are welcome to fix, but they do not block a change.
 
@@ -52,15 +63,19 @@ files, which hold Steam IDs.
 
 ## Maps and dungeons
 
-- A map is a `.json` file in `Server\maps\`. The format is in `docs\map-format.md`.
+- A map is a `.json` file in `Server\maps\`. The format is in `docs\map-format.md` (all field names in English).
+- Enemy AI and behaviors are `.json` files in `Server\ai\` (format: `Server\ai\README.md`); loot tables are files in
+  `Server\loot_tables\` (`README.md` there); the host settings are `Server\*.json` (`dungeons.json`, `world.json`,
+  `stores.json`, `social.json`...).
 - Edit maps with the launcher's map editor, or by hand, and open them in the editor to check them (the validator lists
   errors and warnings). Say in the pull request when a map was changed by hand.
 
 ## Documentation
 
 - Update [CHECKLIST.md](CHECKLIST.md) when the state of an area changes (done, partial, missing). Keep its style.
-- Design notes in `docs\` are in Portuguese and are snapshots: when they disagree with the code, the code and the
-  checklist are right.
+- Design notes in `docs\` are snapshots (most are in Portuguese; `stores`, `open-world`, `social`, `enemy-ai` and
+  `dungeon-tuning` are in English): when they disagree with the code, the code and the checklist are right. Fix the
+  note when you notice it is wrong.
 - Update the README when a command, a path or a requirement changes.
 
 ## Commits and pull requests

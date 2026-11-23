@@ -2,7 +2,7 @@ using SteambirdsLauncher.Core;
 
 namespace SteambirdsLauncher.UI;
 
-// "Server" tab: hosts the server of this PC (what "Run server.ps1" did) for this PC and for players of other PCs,
+// "Server" tab: hosts the server of this PC for this PC and for players of other PCs,
 // and edits its config files, its network settings (network.json) and the accounts of the players.
 // The pages are grouped in a side navigation: what the server prints (Monitor), how the game is tuned (Game rules),
 // who plays (Players), what is played on (World) and how others join (Connection).
@@ -29,7 +29,7 @@ internal sealed class ServerTab : UserControl
         stopButton = Ui.Button(L.T("Stop"), (_, _) => context.StopServer());
         restartButton = Ui.Button(L.T("Restart"), (_, _) => context.RestartServer());
         ThemedButton reportButton = Ui.Button(L.T("Write report now"), (_, _) => context.WriteReport());
-        tip.SetToolTip(reportButton, L.T("Writes logs\\server-report.txt (server output, game logs, account.json and the .txt files of BepInEx), like Run server.ps1 did on Ctrl+C."));
+        tip.SetToolTip(reportButton, L.T("Writes logs\\server-report.txt (server output, game logs, account.json and the .txt files of BepInEx)."));
         statePill = new StatusPill { Anchor = AnchorStyles.Right };
         portsLabel = Ui.Note("");
         portsLabel.Margin = new Padding(3, 2, 3, 0);
