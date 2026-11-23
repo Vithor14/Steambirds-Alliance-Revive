@@ -23,6 +23,16 @@ internal sealed class EditorContext
 
     public IEnumerable<string> TypeNames() => Json.ObjectProperties(Json.ObjOrNull(Root, "types")).Select(p => p.Key);
 
+    // Picture of the game unit a unit type of this map is made from (its "template"; a type with no template is
+    // looked up by its own name). Null when the type, the unit or the pictures do not exist.
+    public AssetPicture? PictureOfType(string typeName)
+    {
+        if (typeName.Length == 0 || !EditorAssets.Current.HasPictures) return null;
+        JsonObject? type = Json.ObjOrNull(Json.ObjOrNull(Root, "types"), typeName);
+        string template = Json.Str(type, "template");
+        return EditorAssets.Current.PictureOfUnit(template.Length > 0 ? template : typeName);
+    }
+
     public IEnumerable<string> RoomNames() =>
         Json.Objects(Json.ArrOrNull(Root, "encounters")).Select(r => Json.Str(r, "room")).Where(n => n.Length > 0);
 

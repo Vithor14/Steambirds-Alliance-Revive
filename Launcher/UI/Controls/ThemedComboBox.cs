@@ -54,6 +54,7 @@ internal sealed class ThemedComboBox : ComboBox
     private static extern IntPtr SendMessage(IntPtr window, int message, IntPtr wParam, IntPtr lParam);
 
     private bool hover;
+    private Func<string, int, Image?>? itemImage;
 
     public ThemedComboBox()
     {
@@ -61,6 +62,30 @@ internal sealed class ThemedComboBox : ComboBox
         FlatStyle = FlatStyle.Flat;
         ItemHeight = LogicalToDeviceUnits(20);
         SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
+    }
+
+    // A picture drawn before the text of every choice (text, size in pixels -> picture; null = no room for one).
+    // The rows are taller while it is set.
+    public Func<string, int, Image?>? ItemImage
+    {
+        get => itemImage;
+        set
+        {
+            itemImage = value;
+            ItemHeight = LogicalToDeviceUnits(value == null ? 20 : 30);
+        }
+    }
+
+    private int ImageSize => Dpi.Px(this, 24);
+
+    // Draws the picture of a choice inside "slot" and returns the width it used (0 = none).
+    private int DrawChoiceImage(Graphics g, string text, Rectangle slot)
+    {
+        Image? image = itemImage?.Invoke(text, ImageSize);
+        if (image == null) return 0;
+        int size = ImageSize;
+        g.DrawImage(image, slot.X + Dpi.Px(this, 4), slot.Y + (slot.Height - size) / 2, size, size);
+        return size + Dpi.Px(this, 6);
     }
 
     protected override void WndProc(ref Message m)
@@ -134,7 +159,8 @@ internal sealed class ThemedComboBox : ComboBox
         if (DropDownStyle == ComboBoxStyle.DropDownList)
         {
             string text = SelectedItem != null ? GetItemText(SelectedItem) ?? "" : Text;
-            var textBounds = new Rectangle(Dpi.Px(this, 8), 0, Math.Max(0, all.Width - arrowWidth - Dpi.Px(this, 8)), all.Height);
+            int pictureWidth = text.Length > 0 ? DrawChoiceImage(g, text, new Rectangle(0, 0, all.Width, all.Height)) : 0;
+            var textBounds = new Rectangle(Dpi.Px(this, 8) + pictureWidth, 0, Math.Max(0, all.Width - arrowWidth - Dpi.Px(this, 8) - pictureWidth), all.Height);
             TextRenderer.DrawText(g, text, Font, textBounds, fore,
                 TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
         }
@@ -165,7 +191,8 @@ internal sealed class ThemedComboBox : ComboBox
         Color fore = selected ? p.SelectionText : p.Text;
         using (var brush = new SolidBrush(back)) e.Graphics.FillRectangle(brush, e.Bounds);
         string text = GetItemText(Items[e.Index]) ?? "";
-        Rectangle textBounds = new Rectangle(e.Bounds.X + Dpi.Px(this, 8), e.Bounds.Y, e.Bounds.Width - Dpi.Px(this, 12), e.Bounds.Height);
+        int pictureWidth = text.Length > 0 ? DrawChoiceImage(e.Graphics, text, e.Bounds) : 0;
+        Rectangle textBounds = new Rectangle(e.Bounds.X + Dpi.Px(this, 8) + pictureWidth, e.Bounds.Y, e.Bounds.Width - Dpi.Px(this, 12) - pictureWidth, e.Bounds.Height);
         TextRenderer.DrawText(e.Graphics, text, Font, textBounds, fore,
             TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
     }

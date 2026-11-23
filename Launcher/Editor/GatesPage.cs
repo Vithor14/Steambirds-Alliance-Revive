@@ -77,7 +77,7 @@ internal sealed class GatesPage : EditorPage
         yield return new FieldSpec("name", "Gate", FieldKind.Text) { Help = "Name of the gate. Other parts of the map (rooms, conditions) point to it by this name." };
         yield return new FieldSpec("type", "Unit type of the boxes", FieldKind.EditableChoice)
         {
-            Choices = Context.TypeNames,
+            Choices = Context.TypeNames, Picture = Context.PictureOfType,
             Help = "A type of the \"Unit types\" page (or of enemies.json): one box of this type is placed on each free cell."
         };
         yield return new FieldSpec("damageable", "Destructible barricade", FieldKind.Bool)

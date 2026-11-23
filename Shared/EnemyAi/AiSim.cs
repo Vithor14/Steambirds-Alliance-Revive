@@ -15,6 +15,15 @@ public sealed class AiGunStats
     public float Duration;
     public float Range;
     public int Multi = 1;
+
+    // Extra data of the mount for the launcher (not used by the simulation): turn speed of the mount, where it sits on the
+    // art, the gun group of the client, the bullet's own turn rate and the name of the gun type (shot type) of the game.
+    public float SlewRate;
+    public float OffsetX;
+    public float OffsetY;
+    public int Group;
+    public float BulletTurn;
+    public string GunType = "";
 }
 
 // What the simulator needs to know about a game unit (the launcher reads it from units_config.txt).
@@ -58,6 +67,9 @@ public sealed class AiSimBullet
     public float X, Y, VX, VY;
     public float Life;
     public bool FromPlayer;
+
+    // Index of the gun that fired it (AiGunStats.Index), so the launcher can color the shots by gun.
+    public int Gun;
 }
 
 // A small flight arena where an AI runs against a scripted player plane. Headless: the launcher only draws it.
@@ -364,7 +376,8 @@ public sealed class AiSim
                     X = X, Y = Y,
                     VX = MathF.Sin(heading) * Math.Max(1f, m.Speed),
                     VY = MathF.Cos(heading) * Math.Max(1f, m.Speed),
-                    Life = m.Duration > 0.05f ? m.Duration : 1.5f
+                    Life = m.Duration > 0.05f ? m.Duration : 1.5f,
+                    Gun = m.Index
                 });
             }
             ShotsFired++;

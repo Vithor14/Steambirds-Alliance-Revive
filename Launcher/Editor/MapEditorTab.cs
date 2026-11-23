@@ -70,6 +70,12 @@ internal sealed class MapEditorTab : UserControl
 
         // ---- left palette
         FlowLayoutPanel palette = BuildPalette(out unitTypeBox, out roomBox, out gateTypeBox, out groupBox, out snapBox);
+        // The unit types of the palette show the picture of their game unit.
+        Func<string, int, Image?> typeImage = (name, size) => EditorAssets.Current.HasPictures
+            ? editor.PictureOfType(name)?.Thumb(size) ?? AssetPicture.Placeholder(size)
+            : null;
+        ((ThemedComboBox)unitTypeBox).ItemImage = typeImage;
+        ((ThemedComboBox)gateTypeBox).ItemImage = typeImage;
 
         // ---- menu and status
         menu = new MenuStrip { Renderer = new EditorRenderer(), Dock = DockStyle.Top };
@@ -436,7 +442,22 @@ internal sealed class MapEditorTab : UserControl
         ai.Click += (_, _) => EnemyAiEditors.Current?.Edit(this, "", new System.Text.Json.Nodes.JsonObject(), () => { }, () => { });
         tools.DropDownItems.Add(ai);
 
-        menu.Items.AddRange(new ToolStripItem[] { file, edit, view, tools });
+        var help = new ToolStripMenuItem(L.T("Help"));
+        help.DropDownItems.Add(Item(L.T("Help topics..."), () => ShowHelp(0), "F1"));
+        help.DropDownItems.Add(new ToolStripSeparator());
+        IReadOnlyList<HelpTopic> topics = MapEditorHelp.Topics;
+        for (int i = 0; i < topics.Count; i++)
+        {
+            int index = i;
+            help.DropDownItems.Add(Item(L.T(topics[i].Title), () => ShowHelp(index)));
+        }
+
+        menu.Items.AddRange(new ToolStripItem[] { file, edit, view, tools, help });
+    }
+
+    private void ShowHelp(int topic)
+    {
+        HelpWindow.ShowFor(FindForm() ?? (IWin32Window)this, "map", L.T("Help: Map editor"), MapEditorHelp.Topics, topic);
     }
 
     private void FillServerMaps()
@@ -804,6 +825,9 @@ internal sealed class MapEditorTab : UserControl
                 return true;
             case Keys.Control | Keys.N:
                 NewMap(false);
+                return true;
+            case Keys.F1:
+                ShowHelp(0);
                 return true;
         }
         return base.ProcessCmdKey(ref message, keyData);

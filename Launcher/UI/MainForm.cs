@@ -142,7 +142,7 @@ internal sealed class MainForm : Form
                 aiStoreLoaded = true;
             }
             aiTab = new AiTab(context, aiStore) { Dock = DockStyle.Fill };
-            EnemyAiEditors.Current = new AiEditorBridge(aiStore, OpenAi);
+            EnemyAiEditors.Current = new AiEditorBridge(aiStore, OpenAiForType);
             context.OpenAiTab = OpenAi;
             return aiTab;
         }
@@ -167,6 +167,15 @@ internal sealed class MainForm : Form
         if (nav == null || nav.PageCount < 5) return;
         nav.Select(aiIndex);
         if (!string.IsNullOrWhiteSpace(id)) aiTab?.OpenBrain(id);
+    }
+
+    // "Open in the AI editor" of the map editor: the Enemy AI tab with this unit type of the map already in the simulator
+    // (an empty name just goes to the tab).
+    private void OpenAiForType(string typeName, System.Text.Json.Nodes.JsonObject type)
+    {
+        if (nav == null || nav.PageCount < 5) return;
+        nav.Select(aiIndex);
+        if (typeName.Length > 0) aiTab?.OpenType(typeName, type);
     }
 
     // The map editor is the newest part of the launcher. If it fails to open, the error goes to

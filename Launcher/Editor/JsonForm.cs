@@ -21,7 +21,10 @@ internal enum FieldKind
     EditableChoice,
     IntList,
     StringList,
-    Positions
+    Positions,
+
+    // The gun mounts of a unit as a checklist (needs FieldSpec.Guns); stored as a list of indexes, empty = all of them.
+    GunMounts
 }
 
 // One field of a property page: the key in the JSON object ("a.b" reaches the object "a" inside it), the label
@@ -55,8 +58,14 @@ internal sealed class FieldSpec
     public bool ReadOnly { get; init; }
     public double Increment { get; init; } = -1;
 
+    // GunMounts: the guns of the unit the form is about (asked every time the form shows its values).
+    public Func<IReadOnlyList<SteambirdsAi.AiGunStats>>? Guns { get; init; }
+
     // Positions: write only "u" and "v" (routes have no rotation).
     public bool NoRotation { get; init; }
+
+    // Choice and EditableChoice: the picture of a choice (a unit, a floor piece), drawn next to its name in the list.
+    public Func<string, AssetPicture?>? Picture { get; init; }
 
     public static FieldSpec Header(string label) => new FieldSpec("", label, FieldKind.Header);
 }
@@ -140,7 +149,7 @@ internal sealed class JsonForm : Panel
         else
         {
             Label caption = Ui.Text(L.T(spec.Label));
-            caption.Anchor = spec.Kind is FieldKind.MultiText or FieldKind.Positions ? AnchorStyles.Top | AnchorStyles.Left : AnchorStyles.Left;
+            caption.Anchor = spec.Kind is FieldKind.MultiText or FieldKind.Positions or FieldKind.GunMounts ? AnchorStyles.Top | AnchorStyles.Left : AnchorStyles.Left;
             row.Caption = caption;
             table.Controls.Add(caption, 0, rowIndex);
             table.Controls.Add(editor, 1, rowIndex);
@@ -187,6 +196,11 @@ internal sealed class JsonForm : Panel
                     Margin = new Padding(3, 2, 3, 2),
                     DropDownWidth = 320
                 };
+                if (spec.Picture != null)
+                {
+                    Func<string, AssetPicture?> picture = spec.Picture;
+                    combo.ItemImage = (text, size) => EditorAssets.Current.HasPictures ? picture(text)?.Thumb(size) ?? AssetPicture.Placeholder(size) : null;
+                }
                 if (spec.Kind == FieldKind.Choice) combo.SelectedIndexChanged += (_, _) => CommitText(spec, combo.Text);
                 else
                 {
@@ -195,6 +209,12 @@ internal sealed class JsonForm : Panel
                     combo.KeyDown += (_, e) => EnterCommits(e, () => CommitText(spec, combo.Text));
                 }
                 return combo;
+            }
+            case FieldKind.GunMounts:
+            {
+                var list = new GunMountList { Anchor = AnchorStyles.Left | AnchorStyles.Top };
+                list.Changed += on => CommitGuns(spec, on);
+                return list;
             }
             default:
             {
@@ -276,6 +296,9 @@ internal sealed class JsonForm : Panel
                 number.Value = (decimal)Math.Clamp(value, spec.Min, spec.Max);
                 break;
             }
+            case GunMountList guns:
+                guns.Show(spec.Guns?.Invoke() ?? Array.Empty<SteambirdsAi.AiGunStats>(), Json.Ints(node).ToList());
+                break;
             case ComboBox combo:
                 LoadCombo(combo, spec, Json.AsString(node));
                 break;
@@ -416,6 +439,19 @@ internal sealed class JsonForm : Panel
         {
             if (spec.Kind == FieldKind.Int) Write(data, spec.Key, JsonValue.Create((int)Math.Round(value))!);
             else Write(data, spec.Key, JsonValue.Create(Json.Round(value))!);
+        });
+    }
+
+    private void CommitGuns(FieldSpec spec, List<int> on)
+    {
+        if (loading || Data == null) return;
+        JsonObject data = Data;
+        List<int> old = Json.Ints(Read(data, spec.Key)).ToList();
+        if (old.SequenceEqual(on)) return;
+        Apply(spec, () =>
+        {
+            if (on.Count == 0) Remove(data, spec.Key);
+            else Write(data, spec.Key, Json.IntArray(on));
         });
     }
 

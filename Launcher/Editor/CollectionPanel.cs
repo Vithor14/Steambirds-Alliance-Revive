@@ -18,13 +18,16 @@ internal sealed class CollectionPanel : Panel
     private readonly Button deleteButton;
     private readonly TextBox? nameBox;
     private readonly Button? renameButton;
+    private readonly Func<ListItem, AssetPicture?>? picture;
     private bool loading;
     private bool programmatic;
 
     public CollectionPanel(MapSession session, ItemSource source, IEnumerable<FieldSpec> fields, string newName,
-        int listHeight = 100, Action<string, string>? fieldRenamed = null, Control? extra = null, int formHeight = 0)
+        int listHeight = 100, Action<string, string>? fieldRenamed = null, Control? extra = null, int formHeight = 0,
+        Func<ListItem, AssetPicture?>? picture = null)
     {
         this.session = session;
+        this.picture = picture;
         this.source = source;
         this.newName = newName;
         this.fieldRenamed = fieldRenamed;
@@ -41,6 +44,13 @@ internal sealed class CollectionPanel : Panel
             Margin = new Padding(3, 3, 3, 0),
             HorizontalScrollbar = true
         };
+        if (picture != null)
+        {
+            // The picture of the unit / floor piece comes before its name.
+            list.DrawMode = DrawMode.OwnerDrawFixed;
+            list.ItemHeight = list.LogicalToDeviceUnits(30);
+            list.DrawItem += DrawListItem;
+        }
         list.SelectedIndexChanged += (_, _) =>
         {
             if (loading) return;
@@ -110,6 +120,27 @@ internal sealed class CollectionPanel : Panel
     }
 
     // ------------------------------------------------------------------ list
+
+    private void DrawListItem(object? sender, DrawItemEventArgs e)
+    {
+        if (e.Index < 0 || e.Index >= list.Items.Count) return;
+        Theme.Palette p = Theme.P;
+        bool selected = (e.State & DrawItemState.Selected) != 0;
+        using (var back = new SolidBrush(selected ? p.Selection : list.BackColor)) e.Graphics.FillRectangle(back, e.Bounds);
+
+        var item = (ListItem)list.Items[e.Index]!;
+        int size = list.LogicalToDeviceUnits(24);
+        int left = e.Bounds.X + list.LogicalToDeviceUnits(4);
+        if (EditorAssets.Current.HasPictures)
+        {
+            Bitmap image = picture?.Invoke(item)?.Thumb(size) ?? AssetPicture.Placeholder(size);
+            e.Graphics.DrawImage(image, left, e.Bounds.Y + (e.Bounds.Height - size) / 2, size, size);
+            left += size + list.LogicalToDeviceUnits(6);
+        }
+        var textBounds = new Rectangle(left, e.Bounds.Y, Math.Max(0, e.Bounds.Right - left), e.Bounds.Height);
+        TextRenderer.DrawText(e.Graphics, item.Text, list.Font, textBounds, selected ? p.SelectionText : list.ForeColor,
+            TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+    }
 
     // Reads the list again from the map and keeps the selection when the entry is still there.
     public void Reload(JsonObject? keepData = null, string? keepKey = null)

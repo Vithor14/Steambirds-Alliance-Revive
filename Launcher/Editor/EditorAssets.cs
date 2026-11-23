@@ -18,9 +18,85 @@ internal sealed class AssetPicture
         Average = ComputeAverage(image);
     }
 
+    private readonly Dictionary<int, Bitmap> thumbs = new Dictionary<int, Bitmap>();
+    private Rectangle? content;
+
     public Bitmap Image { get; }
     public double Half { get; }
     public Color Average { get; }
+
+    // The picture cut to what is drawn (the pictures have a lot of empty border) and fitted into a square of "size"
+    // pixels, for the lists. Kept for the next time.
+    public Bitmap Thumb(int size)
+    {
+        size = Math.Clamp(size, 8, 256);
+        lock (thumbs)
+        {
+            if (thumbs.TryGetValue(size, out Bitmap? ready)) return ready;
+            Rectangle box = content ??= ContentBounds(Image);
+            var thumb = new Bitmap(size, size, PixelFormat.Format32bppPArgb);
+            using (Graphics g = Graphics.FromImage(thumb))
+            {
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                float scale = Math.Min((size - 2f) / box.Width, (size - 2f) / box.Height);
+                float w = box.Width * scale;
+                float h = box.Height * scale;
+                g.DrawImage(Image, new RectangleF((size - w) / 2f, (size - h) / 2f, w, h), box, GraphicsUnit.Pixel);
+            }
+            thumbs[size] = thumb;
+            return thumb;
+        }
+    }
+
+    private static readonly Dictionary<int, Bitmap> Placeholders = new Dictionary<int, Bitmap>();
+
+    // What a list shows for something that has no picture: a dotted square, so the names stay in line.
+    public static Bitmap Placeholder(int size)
+    {
+        size = Math.Clamp(size, 8, 256);
+        lock (Placeholders)
+        {
+            if (Placeholders.TryGetValue(size, out Bitmap? ready)) return ready;
+            var bitmap = new Bitmap(size, size, PixelFormat.Format32bppPArgb);
+            using (Graphics g = Graphics.FromImage(bitmap))
+            using (var pen = new Pen(Color.FromArgb(110, 128, 128, 128)) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dot })
+            {
+                g.DrawRectangle(pen, 2, 2, size - 5, size - 5);
+            }
+            Placeholders[size] = bitmap;
+            return bitmap;
+        }
+    }
+
+    // Smallest rectangle that holds every pixel that is not (almost) transparent.
+    private static Rectangle ContentBounds(Bitmap image)
+    {
+        int minX = image.Width, minY = image.Height, maxX = -1, maxY = -1;
+        BitmapData data = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppPArgb);
+        try
+        {
+            var row = new byte[data.Stride];
+            for (int y = 0; y < image.Height; y++)
+            {
+                System.Runtime.InteropServices.Marshal.Copy(data.Scan0 + y * data.Stride, row, 0, data.Stride);
+                for (int x = 0; x < image.Width; x++)
+                {
+                    if (row[x * 4 + 3] < 24) continue;
+                    if (x < minX) minX = x;
+                    if (x > maxX) maxX = x;
+                    if (y < minY) minY = y;
+                    maxY = y;
+                }
+            }
+        }
+        finally
+        {
+            image.UnlockBits(data);
+        }
+        if (maxX < minX || maxY < minY) return new Rectangle(0, 0, image.Width, image.Height);
+        return new Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
+    }
 
     private static Color ComputeAverage(Bitmap image)
     {
@@ -133,6 +209,22 @@ internal sealed class EditorAssets
         return null;
     }
 
+    // Picture of a game unit, from its name or from a "template" of the map (null without pictures).
+    public AssetPicture? PictureOfUnit(string template)
+    {
+        if (!HasPictures || template.Length == 0) return null;
+        GameUnit? unit = FindUnit(template);
+        return unit == null || unit.Art.Length == 0 ? null : UnitPicture(unit.Art);
+    }
+
+    // Picture of a floor piece or decoration, by its name or, without a name, by its id in ground_assets.txt.
+    public AssetPicture? PictureOfGround(string name, int id = -1)
+    {
+        if (!HasPictures) return null;
+        if (name.Length == 0 && id >= 0) name = GroundName(id);
+        return name.Length == 0 ? null : GroundPicture(name);
+    }
+
     private void ReadThumbs()
     {
         try
@@ -211,7 +303,7 @@ internal sealed class EditorAssets
                 {
                     if (line.StartsWith("gun\t", StringComparison.Ordinal))
                     {
-                        // gun <unit> <index> <name> <mode> <angle> <arc> <?> <rof> <burst> <cooldown> <damage> <speed> <duration> <range> <multi>
+                        // gun <unit> <index> <name> <mode> <angle> <arc> <slew> <rof> <burst> <cooldown> <damage> <speed> <duration> <range> <multi> <offsetX> <offsetY> <group> <bulletTurn> [gunType]
                         string[] g = line.Split('\t');
                         if (g.Length < 19 || !units.TryGetValue(g[1], out GameUnit? owner)) continue;
                         owner.Guns.Add(new SteambirdsAi.AiGunStats
@@ -228,7 +320,13 @@ internal sealed class EditorAssets
                             Speed = (float)ParseNumber(g[12]),
                             Duration = (float)ParseNumber(g[13]),
                             Range = (float)ParseNumber(g[14]),
-                            Multi = Math.Max(1, (int)ParseNumber(g[15]))
+                            Multi = Math.Max(1, (int)ParseNumber(g[15])),
+                            SlewRate = (float)ParseNumber(g[7]),
+                            OffsetX = (float)ParseNumber(g[16]),
+                            OffsetY = (float)ParseNumber(g[17]),
+                            Group = (int)ParseNumber(g[18]),
+                            BulletTurn = g.Length > 19 ? (float)ParseNumber(g[19]) : 0f,
+                            GunType = g.Length > 20 ? g[20] : ""
                         });
                         continue;
                     }

@@ -23,14 +23,14 @@ internal sealed class RoomsPage : EditorPage
                 () => Json.ArrOrNull(CurrentRoom, "enemies"),
                 () => CurrentRoom == null ? null : Json.Arr(CurrentRoom, "enemies"),
                 Context.DefaultUnitType),
-            GroupFields(), "", listHeight: 80);
+            GroupFields(), "", listHeight: 80, picture: GroupPicture);
 
         waveGroups = new CollectionPanel(Session,
             new UnitGroupSource(
                 () => Json.ArrOrNull(CurrentWave, "groups"),
                 () => CurrentWave == null ? null : Json.Arr(CurrentWave, "groups"),
                 Context.DefaultUnitType),
-            GroupFields(), "", listHeight: 70);
+            GroupFields(), "", listHeight: 70, picture: GroupPicture);
 
         waves = new CollectionPanel(Session,
             new ObjectArraySource(
@@ -119,6 +119,9 @@ internal sealed class RoomsPage : EditorPage
     }
 
     // Fields of a room.
+    // The picture of the unit type of a group of enemies of the list.
+    private AssetPicture? GroupPicture(ListItem item) => Context.PictureOfType(Json.Str(item.Data, "type"));
+
     private IEnumerable<FieldSpec> RoomFields()
     {
         yield return new FieldSpec("room", "Room", FieldKind.Text) { Help = "Name of the room. Gates and conditions refer to it (cleared:<room>)." };
@@ -152,7 +155,7 @@ internal sealed class RoomsPage : EditorPage
     {
         yield return new FieldSpec("type", "Unit type", FieldKind.Choice)
         {
-            Choices = Context.TypeNames,
+            Choices = Context.TypeNames, Picture = Context.PictureOfType,
             AllowEmpty = false,
             Help = "A type of the \"Unit types\" page."
         };

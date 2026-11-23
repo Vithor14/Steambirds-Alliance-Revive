@@ -92,7 +92,7 @@ internal sealed class PointsPage : EditorPage
                 "name",
                 name => new JsonObject { ["id"] = 0, ["name"] = "", ["u"] = 0, ["v"] = 0, ["z"] = 0.5, ["rot"] = 45 },
                 uniqueNames: false),
-            DecorFields(), "", listHeight: 150);
+            DecorFields(), "", listHeight: 150, picture: GroundPicture);
 
         buildingsPanel = new CollectionPanel(Session,
             new ObjectArraySource(
@@ -110,7 +110,7 @@ internal sealed class PointsPage : EditorPage
                 "name",
                 name => new JsonObject { ["p"] = 0, ["q"] = 0, ["id"] = 0, ["name"] = "" },
                 uniqueNames: false),
-            PieceFields(), "", listHeight: 150);
+            PieceFields(), "", listHeight: 150, picture: GroundPicture);
 
         Add("Points", pointsPanel);
         Add("Groups of points", groupsPanel);
@@ -316,12 +316,19 @@ internal sealed class PointsPage : EditorPage
         yield return Rotation();
     }
 
+    // The picture of a decoration or a floor piece of the list (by its name, or by its id when it has no name).
+    private static AssetPicture? GroundPicture(ListItem item)
+    {
+        return EditorAssets.Current.PictureOfGround(Json.Str(item.Data, "name"), Json.Int(item.Data, "id"));
+    }
+
     private static IEnumerable<FieldSpec> GroundNameFields(string idKey)
     {
         yield return new FieldSpec(idKey, "Ground asset id", FieldKind.Int) { Min = 0, Max = 99999999, Help = "Id of the floor asset in the game (ground_assets.txt). Picking a name below fills it." };
         yield return new FieldSpec("name", "Ground asset name", FieldKind.EditableChoice)
         {
             Choices = () => EditorAssets.Current.GroundNames.Values.Distinct().OrderBy(n => n, StringComparer.OrdinalIgnoreCase).ToList(),
+            Picture = name => EditorAssets.Current.PictureOfGround(name),
             Help = "Names come from ground_assets.txt. Picking a name fills the id."
         };
     }

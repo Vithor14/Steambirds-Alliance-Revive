@@ -135,6 +135,31 @@ public static class AiGunAim
         return true;
     }
 
+    // Name and one-line explanation of a FireMode of the game (the numbers of units_config.txt).
+    public static string ModeName(int mode) => mode switch
+    {
+        0 => "Aimed",
+        1 => "ArcRight",
+        2 => "ArcLeft",
+        3 => "Hose",
+        5 => "Sprinkler",
+        6 => "SprinklerTurnback",
+        7 => "JustShootDammit",
+        _ => "Mode " + mode
+    };
+
+    public static string ModeHelp(int mode) => mode switch
+    {
+        0 => "turns toward the player inside its firing arc",
+        1 => "sweeps the arc from left to right during each burst",
+        2 => "sweeps the arc from right to left during each burst",
+        3 => "sweeps the arc back and forth like a hose",
+        5 => "spirals around without aiming",
+        6 => "spirals around without aiming and turns back",
+        7 => "shoots where the mount points, aiming or not",
+        _ => "unknown pattern"
+    };
+
     // How far a bullet of this gun goes.
     public static float Range(float speed, float duration, float range)
     {

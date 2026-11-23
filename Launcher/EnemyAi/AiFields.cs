@@ -49,9 +49,10 @@ internal static class AiFields
 
         yield return FieldSpec.Header("Weapons");
         yield return new FieldSpec("fire.enabled", "Shoots", FieldKind.Bool) { DefaultBool = true, Help = "Off = the unit does not shoot in this state." };
-        yield return new FieldSpec("fire.guns", "Weapons (mounts)", FieldKind.IntList)
+        yield return new FieldSpec("fire.guns", "Weapons (mounts)", FieldKind.GunMounts)
         {
-            Help = "Gun mounts that shoot (0 = the first). Empty = the ones the unit type uses."
+            Guns = () => AiUnits.CurrentGuns,
+            Help = "The gun mounts of the unit in the simulator. Checked = shoots in this state. All checked = every mount of the unit. Click a name to see its data."
         };
         yield return Number("fire.rateMult", "Fire rate multiplier", 1, 0, 20, 0.1, "2 = twice as often.");
         yield return Number("fire.range", "Shooting range", 0, 0, 500, 1, "Distance at which the unit shoots. 0 = the range of the gun.");

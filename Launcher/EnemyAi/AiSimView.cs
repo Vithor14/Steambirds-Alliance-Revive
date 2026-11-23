@@ -11,13 +11,9 @@ namespace SteambirdsLauncher.EnemyAi;
 // it with the art of the game unit, its guns and bullets. The player flies where you click, in a circle, or stands still.
 internal sealed class AiSimView : Panel
 {
-    private static string lastUnitName = "";
-
     private readonly LauncherContext context;
     private readonly AiSim sim = new AiSim();
     private readonly SimCanvas canvas;
-    private readonly ComboBox unitBox;
-    private readonly CheckBox armedOnly;
     private readonly Button playButton;
     private readonly ComboBox speedBox;
     private readonly ComboBox playerBox;
@@ -39,9 +35,12 @@ internal sealed class AiSimView : Panel
     private double lastTick;
     private double lastTrail;
     private bool playing = true;
-    private bool loading;
     private AiBrain? brain;
     private string title = "";
+    private string unitName = "";
+    private string unitCaption = "";
+    private string aiCaption = "";
+    private bool temporary;
     private AssetPicture? picture;
 
     public AiSimView(LauncherContext context)
@@ -51,17 +50,6 @@ internal sealed class AiSimView : Panel
         sim.EventAdded += AddLog;
 
         canvas = new SimCanvas(this) { Dock = DockStyle.Fill };
-
-        unitBox = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDown, AutoCompleteMode = AutoCompleteMode.SuggestAppend, AutoCompleteSource = AutoCompleteSource.ListItems, Width = 190 };
-        unitBox.SelectionChangeCommitted += (_, _) => UnitChosen();
-        unitBox.KeyDown += (_, e) =>
-        {
-            if (e.KeyCode != Keys.Enter) return;
-            e.SuppressKeyPress = true;
-            UnitChosen();
-        };
-        armedOnly = new ThemedCheckBox { Text = L.T("Armed units only"), AutoSize = true, Checked = true };
-        armedOnly.CheckedChanged += (_, _) => FillUnits();
 
         playButton = Ui.Button(L.T("Pause"), (_, _) => TogglePlay());
         Button restart = Ui.Button(L.T("Restart"), (_, _) => Restart());
@@ -91,7 +79,6 @@ internal sealed class AiSimView : Panel
         freeAim.CheckedChanged += (_, _) => TuningChanged();
 
         var tip = context.ToolTip;
-        tip.SetToolTip(unitBox, L.T("The game unit that carries the AI: its art, speed, turning and guns."));
         tip.SetToolTip(playerBox, L.T("How the player's plane moves in the test. With the first option, click on the map to send it somewhere."));
         tip.SetToolTip(playerVisible, L.T("Off = there is no player to look at (to test what the AI does when the player is gone)."));
         tip.SetToolTip(drain, L.T("The unit loses this percent of its health every second (to test health conditions and phases)."));
@@ -104,7 +91,6 @@ internal sealed class AiSimView : Panel
         var controls = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = true, FlowDirection = FlowDirection.LeftToRight };
         controls.Controls.AddRange(new Control[]
         {
-            Pair(L.T("Unit"), unitBox), armedOnly,
             playButton, restart, Pair(L.T("Speed"), speedBox),
             Pair(L.T("Player"), playerBox), Pair(L.T("speed"), playerSpeed), Pair(L.T("circle"), playerRadius), playerVisible,
             Pair(L.T("Health lost %/s"), drain), hit, heal, respawn,
@@ -121,7 +107,7 @@ internal sealed class AiSimView : Panel
 
         timer.Tick += (_, _) => Tick();
         VisibleChanged += (_, _) => UpdateTimer();
-        FillUnits();
+        ApplyUnit();
         sim.PlayerSpeed = 8;
         sim.CircleRadius = 22;
         sim.SetPlayerMode(AiPlayerMode.Circle);
@@ -172,61 +158,40 @@ internal sealed class AiSimView : Panel
         canvas.Invalidate();
     }
 
-    // The game data may have changed (another game folder).
-    public void ReloadUnits()
+    // What the tab chose: the game unit that is flown and drawn, and what the enemy type says about it (speed, aim...).
+    // A plain game unit has no type, so its settings are the neutral ones.
+    public void SetUnit(AiUnitChoice? choice)
     {
-        FillUnits();
-    }
-
-    private void FillUnits()
-    {
-        loading = true;
-        try
-        {
-            unitBox.Items.Clear();
-            IEnumerable<GameUnit> units = EditorAssets.Current.Units.Values.Where(u => !u.Wall);
-            if (armedOnly.Checked) units = units.Where(u => u.Armed);
-            foreach (GameUnit unit in units.OrderBy(u => u.Name, StringComparer.OrdinalIgnoreCase)) unitBox.Items.Add(unit.Name);
-            if (unitBox.Items.Count == 0) unitBox.Items.Add(L.T("(test plane)"));
-
-            string wanted = lastUnitName;
-            int index = wanted.Length > 0 ? unitBox.Items.IndexOf(wanted) : -1;
-            if (index < 0)
-            {
-                // A mobile, visible unit with guns makes a good first choice: the middle one by health.
-                List<GameUnit> candidates = EditorAssets.Current.Units.Values
-                    .Where(u => u.Armed && !u.Wall && !u.Boss && u.VelMax >= 3 && u.VelMax <= 12 && u.Art.Length > 0 && !u.Art.StartsWith("!") &&
-                                !u.Name.StartsWith("tut", StringComparison.OrdinalIgnoreCase) && !u.Name.StartsWith("ally", StringComparison.OrdinalIgnoreCase))
-                    .OrderBy(u => u.MaxHealth).ThenBy(u => u.Name, StringComparer.Ordinal).ToList();
-                GameUnit? first = candidates.Count == 0 ? null : candidates[candidates.Count / 3];
-                index = first == null ? 0 : Math.Max(0, unitBox.Items.IndexOf(first.Name));
-            }
-            unitBox.SelectedIndex = index;
-        }
-        finally
-        {
-            loading = false;
-        }
-        ApplyUnit();
-        if (brain != null) SetBrain(brain, title);
-    }
-
-    private void UnitChosen()
-    {
-        if (loading) return;
-        // From the list the chosen item is the answer (the text box may still show the old one); after Enter, the typed name.
-        string name = unitBox.SelectedItem?.ToString() ?? unitBox.Text.Trim();
-        if (!EditorAssets.Current.Units.ContainsKey(unitBox.Text.Trim()) || unitBox.DroppedDown) unitBox.Text = name;
-        lastUnitName = unitBox.Text.Trim();
+        unitName = choice?.UnitName ?? "";
+        unitCaption = choice == null ? "" : choice.IsType ? choice.TypeName + " (" + (unitName.Length > 0 ? unitName : L.T("test plane")) + ")" : unitName.Length > 0 ? unitName : L.T("test plane");
+        speedMult.Value = Clamp(speedMult, choice?.SpeedMult ?? 1f);
+        turnMult.Value = Clamp(turnMult, choice?.TurnMult ?? 1f);
+        fireMult.Value = Clamp(fireMult, choice?.FireRateMult ?? 1f);
+        aimLead.Value = Clamp(aimLead, choice?.AimLead ?? 0f);
+        freeAim.Checked = choice?.FreeAim ?? false;
         ApplyUnit();
         sim.Reset();
         trail.Clear();
+        log.Clear();
+        canvas.Invalidate();
     }
+
+    // The weapons of the unit in the simulator (what the weapons checklist of the editors shows).
+    public IReadOnlyList<AiGunStats> UnitGuns => sim.Unit.Guns;
+
+    // What the HUD says: which AI the unit runs, and whether it is the unit's own or one loaded only to be edited.
+    public void SetCaptions(string ai, bool loadedForEditing)
+    {
+        aiCaption = ai;
+        temporary = loadedForEditing;
+        canvas.Invalidate();
+    }
+
+    private static decimal Clamp(NumberBox box, float value) => Math.Clamp((decimal)value, box.Minimum, box.Maximum);
 
     private void ApplyUnit()
     {
-        string name = unitBox.Text.Trim();
-        if (EditorAssets.Current.Units.TryGetValue(name, out GameUnit? unit))
+        if (unitName.Length > 0 && EditorAssets.Current.Units.TryGetValue(unitName, out GameUnit? unit))
         {
             sim.Unit = unit.ToStats();
             picture = EditorAssets.Current.UnitPicture(unit.Art);
@@ -512,13 +477,26 @@ internal sealed class AiSimView : Panel
             }
         }
 
+        private static readonly Color[] GunColors =
+        {
+            Color.FromArgb(230, 70, 50), Color.FromArgb(240, 160, 30), Color.FromArgb(170, 70, 220), Color.FromArgb(30, 190, 190),
+            Color.FromArgb(230, 60, 160), Color.FromArgb(120, 190, 40)
+        };
+
+        // Each gun of the unit has its own color: the shots and the gun list of the HUD use it.
+        private static Color GunColor(int gun, int alpha)
+        {
+            Color c = GunColors[Math.Abs(gun) % GunColors.Length];
+            return Color.FromArgb(alpha, c);
+        }
+
         private void DrawBullets(Graphics g)
         {
-            using var fill = new SolidBrush(Color.FromArgb(230, 230, 70, 50));
             foreach (AiSimBullet b in view.sim.Bullets)
             {
                 PointF at = ToScreen(b.X, b.Y);
-                g.FillEllipse(fill, at.X - 2.5f, at.Y - 2.5f, 5f, 5f);
+                using var fill = new SolidBrush(GunColor(b.Gun, 235));
+                g.FillEllipse(fill, at.X - 3f, at.Y - 3f, 6f, 6f);
             }
         }
 
@@ -582,16 +560,40 @@ internal sealed class AiSimView : Panel
             AiSim sim = view.sim;
             if (view.brain == null)
             {
-                TextRenderer.DrawText(g, L.T("Select an AI or a behavior on the left."), Font, new Point(10, 10), p.Muted);
+                TextRenderer.DrawText(g, L.T("This unit has no AI file. Load one from the list on the left to see it act."), Font, new Point(10, 10), p.Muted);
                 return;
             }
             using var big = new Font(Font.FontFamily, 11f, FontStyle.Bold);
-            TextRenderer.DrawText(g, view.title, big, new Point(10, 8), p.Text);
-            TextRenderer.DrawText(g, L.T("State") + ": " + sim.StateId + "  (" + sim.StateTime.ToString("0.0") + "s)", Font, new Point(10, 30), p.Good);
+            int y = 8;
+            TextRenderer.DrawText(g, L.T("Unit") + ": " + view.unitCaption, big, new Point(10, y), p.Text);
+            y += 22;
+            TextRenderer.DrawText(g, (view.temporary ? L.T("AI loaded to test") : L.T("AI of the unit")) + ": " + view.aiCaption, Font, new Point(10, y),
+                view.temporary ? p.Warn : p.Good);
+            y += 18;
+            TextRenderer.DrawText(g, L.T("State") + ": " + sim.StateId + "  (" + sim.StateTime.ToString("0.0") + "s)", Font, new Point(10, y), p.Good);
+            y += 18;
             if (sim.Last != null && sim.Last.State.BehaviorId.Length > 0)
-                TextRenderer.DrawText(g, L.T("behavior") + ": " + sim.Last.State.BehaviorId, Font, new Point(10, 48), p.Muted);
+            {
+                TextRenderer.DrawText(g, L.T("behavior") + ": " + sim.Last.State.BehaviorId, Font, new Point(10, y), p.Muted);
+                y += 18;
+            }
+            DrawGunList(g, p, y + 2);
             TextRenderer.DrawText(g, L.T("Left click: send the player there    Right drag: move the view    Wheel: zoom"), Font,
                 new Point(10, Height - 20), p.Muted);
+        }
+
+        // The guns of the unit: color = the color of its shots; dimmed when the state does not let it fire right now.
+        private void DrawGunList(Graphics g, Theme.Palette p, int y)
+        {
+            AiOutput? o = view.sim.Last;
+            foreach (AiGunStats gun in view.sim.Unit.Guns.Where(x => x.Damage > 0f))
+            {
+                bool allowed = o != null && o.FireEnabled && (o.Guns.Length == 0 || Array.IndexOf(o.Guns, gun.Index) >= 0);
+                using (var dot = new SolidBrush(GunColor(gun.Index, allowed ? 255 : 90))) g.FillEllipse(dot, 12, y + 4, 9, 9);
+                string name = gun.Name.Length > 0 ? gun.Name : "gun" + gun.Index;
+                TextRenderer.DrawText(g, "#" + gun.Index + " " + name + (allowed ? "" : "  (" + L.T("off in this state") + ")"), Font, new Point(26, y), allowed ? p.Text : p.Muted);
+                y += 16;
+            }
         }
     }
 }

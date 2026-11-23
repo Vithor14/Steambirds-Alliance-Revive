@@ -15,7 +15,8 @@ internal interface IEnemyAiEditor
     // Ids of the AIs that exist (for the list of the "ai" field).
     IEnumerable<string> BrainIds();
 
-    // Opens the AI tab on the AI the unit type uses (an empty id just opens the tab).
+    // Goes to the AI tab with this unit type of the map loaded in the simulator and its AI open in the editor
+    // (an empty type name just goes to the tab).
     void Edit(IWin32Window owner, string typeName, JsonObject unitType, Action beforeChange, Action afterChange);
 
     // Problems of the AI of a unit type (shown with the others when the map is saved). May return an empty list.

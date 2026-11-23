@@ -30,7 +30,8 @@ internal sealed class UnitTypesPage : EditorPage
             PhaseFields(), "", listHeight: 70);
 
         aiState = Ui.Wrapping("", 400, true);
-        aiButton = Ui.Button(L.T("Edit AI..."), (_, _) => EditAi());
+        aiButton = Ui.Primary(L.T("Open in the AI editor"), (_, _) => EditAi());
+        Context.Tip.SetToolTip(aiButton, L.T("Goes to the Enemy AI tab with this unit type loaded in the simulator (its game unit, speed, fire rate and AI), ready to edit."));
         aiForm = new JsonForm(AiFieldSpecs(), Session.Checkpoint, TabFieldChanged);
         TabPage aiPage = BuildAiPage();
 
@@ -42,7 +43,7 @@ internal sealed class UnitTypesPage : EditorPage
         phasesPage.Controls.Add(phases);
 
         inner = new ThemedTabControl { Dock = DockStyle.Fill, Padding = new Point(8, 3) };
-        inner.TabPages.AddRange(new[] { combatPage, deathPage, phasesPage, aiPage });
+        inner.TabPages.AddRange(new[] { combatPage, aiPage, deathPage, phasesPage });
 
         types = new CollectionPanel(Session,
             new ObjectDictionarySource(
@@ -50,7 +51,8 @@ internal sealed class UnitTypesPage : EditorPage
                 () => Json.Obj(Document.Root, "types"),
                 name => new JsonObject { ["name"] = name, ["template"] = "", ["behavior"] = "chase" },
                 (oldName, newName) => MapRefactor.Rename(Document, NameKind.UnitType, oldName, newName)),
-            GeneralFields(), "unit", listHeight: 110, extra: inner, formHeight: 150);
+            GeneralFields(), "unit", listHeight: 110, extra: inner, formHeight: 150,
+            picture: item => Context.PictureOfType(item.Key));
 
         types.ItemSelected += item =>
         {
@@ -97,7 +99,7 @@ internal sealed class UnitTypesPage : EditorPage
         var page = new TabPage(L.T("Enemy AI")) { Padding = new Padding(6) };
         Label title = Ui.Bold(L.T("Enemy AI"));
         Label text = Ui.Wrapping(
-            L.T("The unit can use an AI made in the Enemy AI tab of the launcher. The AI lives in its own file (server\\ai\\brains), not in the map, so the same one can serve many maps and can be shared. Empty = the unit uses the behavior of the Combat tab."),
+            L.T("How this unit moves, when it shoots and when it blows up is an AI made in the Enemy AI tab of the launcher. The AI lives in its own file (server\\ai\\brains), not in the map, so the same one can serve many maps and can be shared. Pick it here and use the button to edit it and test it on this unit."),
             400, true);
         var table = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1 };
         table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
@@ -120,7 +122,7 @@ internal sealed class UnitTypesPage : EditorPage
         yield return new FieldSpec(EnemyAiEditors.AiField, "AI (file)", FieldKind.EditableChoice)
         {
             Choices = () => EnemyAiEditors.Current?.BrainIds() ?? Enumerable.Empty<string>(),
-            Help = "Id of an AI file of the server's ai\\brains folder. Empty = the \"behavior\" of the Combat tab."
+            Help = "Id of an AI file of the server's ai\\brains folder. Empty = no AI: the unit keeps the built-in behavior the map already has."
         };
     }
 
@@ -133,9 +135,12 @@ internal sealed class UnitTypesPage : EditorPage
             aiState.Text = "";
             return;
         }
+        string behavior = Json.Str(type, "behavior");
         aiState.Text = EnemyAiEditors.HasAi(type)
             ? L.F("This type uses the AI \"{0}\".", Json.Str(type, EnemyAiEditors.AiField))
-            : L.T("This type uses the plain behavior of the Combat tab.");
+            : behavior.Length > 0
+                ? L.F("This type has no AI. It keeps the built-in behavior \"{0}\" of the map (not edited here). Pick an AI above, or open the AI editor, to control how it moves and shoots.", behavior)
+                : L.T("This type has no AI. Pick one above, or open the AI editor, to control how it moves and shoots.");
     }
 
     private void EditAi()
@@ -163,6 +168,7 @@ internal sealed class UnitTypesPage : EditorPage
         yield return new FieldSpec("template", "Game unit (template)", FieldKind.EditableChoice)
         {
             Choices = GameUnitNames,
+            Picture = name => EditorAssets.Current.PictureOfUnit(name),
             Help = "The unit of the game this type is made from (units_config.txt).\nSeveral can be given as a|b, or auto:<name>."
         };
         yield return new FieldSpec("team", "Team (1 ally, 2 enemy)", FieldKind.OptionalNumber) { Help = "Side of the unit: 1 = ally of the player, 2 = enemy. Empty = the team of the game unit." };
@@ -182,26 +188,16 @@ internal sealed class UnitTypesPage : EditorPage
             Help = "The unit is never needed to clear the room, even when it has weapons."
         };
 
-        yield return FieldSpec.Header("Behavior");
-        yield return new FieldSpec("behavior", "Behavior", FieldKind.Choice)
-        {
-            Choices = () => EditorContext.Behaviors,
-            Help = "perseguir (chase), circular, torre (turret), kamikaze (explodes on contact), investida (charge), patrulhar, escoltar, parado (still)."
-        };
-        yield return Number("aggroRadius", "Aggro radius", "0 = shoots as soon as it is born.");
-        yield return Number("preferredDistance", "Preferred distance", "Distance the unit keeps from the player. Bigger than the weapon range = it never shoots.");
-        yield return Number("contactRadius", "Contact radius", "Kamikaze: distance where it explodes (default 1.4).");
-        yield return Number("shotRange", "Shooting range", "Distance at which the unit starts to shoot.");
-        yield return Number("aimLead", "Aim lead", "How far ahead of a moving player the unit aims (0 = at the player).");
+        // How the unit moves, when it shoots, which guns and when it blows up are made in the Enemy AI editor (the "Enemy AI"
+        // tab of this page opens it). What stays here is what an AI file does not say.
+        yield return FieldSpec.Header("Shooting");
         yield return Number("firstShotDelay", "Delay of the first shot (s)", "Seconds the unit waits before its first shot after it wakes up.");
         yield return new FieldSpec("freeAim", "Free aim", FieldKind.Bool) { Help = "The guns aim at the player on their own instead of pointing where the unit faces." };
         yield return new FieldSpec("homingBullets", "Homing bullets", FieldKind.Bool) { Help = "The bullets steer toward the player after they are fired." };
-        yield return new FieldSpec("guns", "Weapons (mounts)", FieldKind.IntList)
-        {
-            Help = "Indexes of the gun mounts of the unit that shoot (0 = the first). Empty = all of them."
-        };
+
+        yield return FieldSpec.Header("Escort and patrol (built-in behaviors)");
         yield return new FieldSpec("route", "Route", FieldKind.EditableChoice) { Choices = Context.RouteNames, Help = "The route is not used by the server yet." };
-        yield return new FieldSpec("target", "Target", FieldKind.Text) { Help = "Name of a point, group or unit type the unit goes for (escort and patrol behaviors)." };
+        yield return new FieldSpec("target", "Target", FieldKind.Text) { Help = "Name of a point, group or unit type the unit goes for (the built-in escort and patrol behaviors of the map; an AI has no escort or patrol mode)." };
 
         yield return FieldSpec.Header("Health and speed");
         yield return Number("health", "Health", "Starting health. Empty = the health of the game unit.");
@@ -223,7 +219,7 @@ internal sealed class UnitTypesPage : EditorPage
         yield return FieldSpec.Header("When it dies");
         yield return new FieldSpec("onDeath", "Leaves", FieldKind.EditableChoice)
         {
-            Choices = Context.TypeNames,
+            Choices = Context.TypeNames, Picture = Context.PictureOfType,
             Help = "Unit type that appears where this one died (wreckage, reward chest, ring of bullets)."
         };
         yield return new FieldSpec("sequence", "Then comes (sequence)", FieldKind.StringList)
@@ -234,7 +230,7 @@ internal sealed class UnitTypesPage : EditorPage
         yield return new FieldSpec("visualEffect", "Visual effect", FieldKind.Text) { Help = "Name of a statefulEffects of the client." };
 
         yield return FieldSpec.Header("Summons");
-        yield return new FieldSpec("periodicSummon.type", "Summons", FieldKind.EditableChoice) { Choices = Context.TypeNames, Help = "Unit type this unit keeps summoning while it is alive." };
+        yield return new FieldSpec("periodicSummon.type", "Summons", FieldKind.EditableChoice) { Choices = Context.TypeNames, Picture = Context.PictureOfType, Help = "Unit type this unit keeps summoning while it is alive." };
         yield return new FieldSpec("periodicSummon.seconds", "Every (s)", FieldKind.OptionalNumber) { Help = "Seconds between two summons." };
         yield return new FieldSpec("periodicSummon.count", "Amount each time", FieldKind.OptionalNumber) { Help = "How many units appear at each summon." };
         yield return new FieldSpec("periodicSummon.max", "At most alive", FieldKind.OptionalNumber) { Help = "It stops summoning while this many of its summons are alive." };
@@ -243,8 +239,8 @@ internal sealed class UnitTypesPage : EditorPage
 
         yield return FieldSpec.Header("Damage chest (Big Treasure)");
         yield return new FieldSpec("dpsChest.seconds", "Seconds to open it", FieldKind.OptionalNumber) { Help = "The chest opens if the players do enough damage to it within this time." };
-        yield return new FieldSpec("dpsChest.reward", "Reward", FieldKind.EditableChoice) { Choices = Context.TypeNames, Help = "Unit type that appears (the loot chest) when the chest is beaten in time." };
-        yield return new FieldSpec("dpsChest.fail", "If it fails", FieldKind.EditableChoice) { Choices = Context.TypeNames, Help = "Unit type that appears when the time runs out." };
+        yield return new FieldSpec("dpsChest.reward", "Reward", FieldKind.EditableChoice) { Choices = Context.TypeNames, Picture = Context.PictureOfType, Help = "Unit type that appears (the loot chest) when the chest is beaten in time." };
+        yield return new FieldSpec("dpsChest.fail", "If it fails", FieldKind.EditableChoice) { Choices = Context.TypeNames, Picture = Context.PictureOfType, Help = "Unit type that appears when the time runs out." };
 
         yield return FieldSpec.Header("Speech (client bark keys)");
         yield return new FieldSpec("barks.onWake", "When it wakes up", FieldKind.Text) { Help = "Key of the speech line (client bark table) the unit says when it wakes up." };
@@ -258,11 +254,14 @@ internal sealed class UnitTypesPage : EditorPage
         {
             Help = "0.66 = the phase starts when the health goes under 66%."
         };
-        yield return new FieldSpec("behavior", "Behavior", FieldKind.Choice) { Choices = () => EditorContext.Behaviors };
+        yield return new FieldSpec("ai", "AI (file)", FieldKind.EditableChoice)
+        {
+            Choices = () => EnemyAiEditors.Current?.BrainIds() ?? Enumerable.Empty<string>(),
+            Help = "AI file (Enemy AI tab) the boss switches to when the phase starts. Empty = it keeps the AI it had."
+        };
         yield return Number("speedMultiplier", "Speed multiplier", "Multiplies the speed of the unit (2 = twice as fast).");
         yield return Number("fireRateMultiplier", "Fire rate multiplier", "Multiplies how often the unit shoots (2 = twice as often).");
-        yield return new FieldSpec("guns", "Weapons (mounts)", FieldKind.IntList) { Help = "Indexes of the gun mounts that shoot during this phase. Empty = the ones of the type." };
-        yield return new FieldSpec("summon", "Summons", FieldKind.EditableChoice) { Choices = Context.TypeNames, Help = "Unit type summoned when the phase starts." };
+        yield return new FieldSpec("summon", "Summons", FieldKind.EditableChoice) { Choices = Context.TypeNames, Picture = Context.PictureOfType, Help = "Unit type summoned when the phase starts." };
         yield return Number("summonCount", "Amount summoned", "How many units are summoned when the phase starts.");
         yield return new FieldSpec("message", "Message", FieldKind.Text) { Help = "Chat message shown when the phase starts." };
         yield return Number("shieldSeconds", "Shield (s)", "The boss takes no damage for this long.");

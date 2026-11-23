@@ -43,8 +43,20 @@ what the original server did.
 
 ## The launcher tab
 
-Left: the files (AIs and behaviors) with New / Duplicate / Rename / Delete / Save / Save all / Revert / Import / Export /
-Open folder / Reload. Middle: the editor (a brain: info, states, State / Own values / Transitions tabs with conditions;
+The editor only edits **the AI of the unit in the simulator** (23/11/2026). The unit bar (`AiTab`, `AiUnits.cs`) lists the enemy
+types of `enemies.json` (game unit of the `template`, `ai`, speed / turn / fire-rate multipliers, aim lead, free aim; the
+`auto:` templates use a copy of the server's pick, which can differ for island missions) and then the plain game units. A type
+shows its own `ai` file in the editor; a plain unit, or a type with only a built-in `behavior`, has none. Any other AI or
+behavior is chosen in the file list and put on the unit with *Load on the unit* (double-click), edited and saved there, and
+*Back to the unit's AI* returns the unit to its own AI (the loaded file is dropped when another unit is chosen; unsaved
+files stay marked in the list). The banner above the editor and the simulator's HUD say which file runs and whether it is the unit's
+own or only loaded to be tried. The file buttons (Duplicate, Rename, Delete, Export) act on the file selected in the list;
+Save / Revert act on the file in the editor. Renaming or deleting an AI that a type of `enemies.json` uses warns first.
+
+The actions are in a menu bar like the map editor's (23/11/2026): *File* (New AI / New behavior, Save, Save all, Revert, Import, Export,
+Open folder, Reload), *Edit* (Duplicate, Rename, Delete) and *Help* (F1, `AiHelp.cs`: a topic per area; the window is `UI\HelpWindow.cs`).
+The map editor's *Open in the AI editor* button (`AiTab.OpenType`) adds the unit type of the map to the unit list as `map type: ...`
+(`AiUnits.FromType`, the same reading as the `enemies.json` types) and opens its AI. Left: the files (AIs and behaviors). Middle: the editor (a brain: info, states, State / Own values / Transitions tabs with conditions;
 a behavior: info and movement / weapons / contact) and the list of problems of the file (same checks as the server). Right:
 the simulator.
 
@@ -52,6 +64,14 @@ Simulator: pick any game unit (`units_config.txt`: art picture from `editor-asse
 plane follows clicks, circles or stands still; the speed, turn and fire-rate multipliers, aim lead and free aim of the unit
 type can be tried; "Health lost %/s" and *Hit* test health conditions; "Player in sight" off tests the no-target case.
 It draws the trail, the destination the AI is flying to (dashed line and cross), bullets, the state and the state log.
+The "Weapons (mounts)" field (`fire.guns`) is a checklist made from the guns of the unit in the simulator
+(`FieldKind.GunMounts`, `Editor\GunMountList.cs`; the guns come from `AiUnits.CurrentGuns`): checked = shoots in that state,
+all checked = the field is removed (every mount of the unit). At least one mount stays checked (turn off *Shoots* for none).
+Clicking a mount name shows its data: pattern, mount angle and arc, position on the art, fire rate / burst / reload,
+bullets, damage, speed, lifetime, reach, bullet steering and the shot type (gun type name). The shot type is the last column
+of the `gun` lines of `units_config.txt` (plugin 1.22.0 with this change): rebuild the plugin and export the game files again
+to get it. Every gun of the unit has a color (HUD list, dimmed when the current state does not let it fire) and its bullets are drawn in
+that color, so it is clear which gun fired what (`AiSimBullet.Gun`).
 Editing restarts the simulation with the new AI; a behavior alone is simulated as a one-state AI.
 
 Unsaved files are kept when the language changes (the tab is rebuilt) and the launcher asks to save before closing.
