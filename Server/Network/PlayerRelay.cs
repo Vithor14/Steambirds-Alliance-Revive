@@ -362,6 +362,12 @@ public static class PlayerRelay
             if (text.Length > MaxChatLength) text = text.Substring(0, MaxChatLength);
             if (string.IsNullOrWhiteSpace(text) && quickChatId == 0) return 0;
 
+            // The sender's default flock goes with the line (the chat shows it next to the name).
+            byte[]? flockId = null;
+            string flockName = "";
+            Accounts.Account? senderAccount = Accounts.FindById(PlayerData.ToBase64Url(sender.Account));
+            if (senderAccount != null) SocialHandler.DefaultFlock(senderAccount, out flockId, out flockName);
+
             int delivered = 0;
             foreach (Member observer in members.Values)
             {
@@ -373,8 +379,8 @@ public static class PlayerRelay
                 WriteGeneralId(m, sender.Account);              // accountId
                 m.Write(sender.Name);                           // userName
                 m.Write(text);                                  // text
-                WriteGeneralId(m, null);                        // flockId = none
-                m.Write("");                                    // flockName
+                WriteGeneralId(m, flockId);                     // flockId
+                m.Write(flockName);                             // flockName
                 m.Write(quickChatId);                           // quickChatId
                 m.Write(false);                                 // showToSelf
                 m.Write(sender.Rank);                           // rank
@@ -387,6 +393,34 @@ public static class PlayerRelay
 
             log("CHAT", "[" + sender.Room + "] " + sender.Name + ": " + text + " -> " + delivered + " player(s)");
             return delivered;
+        }
+    }
+
+    // Where the live plane of this account is now (the last position its client reported). False when it has no plane in a room.
+    public static bool PositionOfAccount(byte[] account, out float x, out float y, out float rotation)
+    {
+        x = 0f;
+        y = 0f;
+        rotation = 0f;
+        lock (Gate)
+        {
+            Member? owner = members.Values.FirstOrDefault(m => m.RelayId != 0 && m.Account.SequenceEqual(account) &&
+                                                               m.Connection.Status == NetConnectionStatus.Connected);
+            if (owner == null) return false;
+            x = owner.X;
+            y = owner.Y;
+            rotation = owner.Rotation;
+            return true;
+        }
+    }
+
+    // Name of the player whose plane has this relay id (what the other players see as its unit id), "" if none.
+    public static string NameOfRelayId(int relayId)
+    {
+        if (relayId == 0) return "";
+        lock (Gate)
+        {
+            return members.Values.FirstOrDefault(m => m.RelayId == relayId)?.Name ?? "";
         }
     }
 
@@ -434,10 +468,15 @@ public static class PlayerRelay
             using Accounts.Scope scope = Accounts.UseFor(owner.Connection);
             Accounts.SavedPlane? plane = owner.RelayId != 0 ? Accounts.GetPlane(owner.CharacterId) : null;
 
+            // The owner's default flock: the name plate shows it and the radar colors flockmates.
+            byte[]? flockId = null;
+            string flockName = "";
+            SocialHandler.DefaultFlock(Accounts.Current, out flockId, out flockName);
+
             NetOutgoingMessage m = server.CreateMessage();
             PlayerData.WriteClientReceiveRemotePlayerData(m, owner.RelayId, owner.Account, owner.Name, false,
                 plane != null ? owner.CharacterId : null, plane != null ? owner.ClassId : null, owner.ServerName,
-                plane?.Level ?? PlayerData.StartingPlaneLevel, Accounts.Pilot());
+                plane?.Level ?? PlayerData.StartingPlaneLevel, Accounts.Pilot(), flockId, flockName);
             server.SendMessage(m, requester, NetDeliveryMethod.ReliableOrdered, 0);
 
             log("MSG", "data of '" + owner.Name + "' sent to another player (ClientReceiveRemotePlayerData, " +

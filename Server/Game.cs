@@ -36,8 +36,6 @@ public static partial class Game
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
 
     private const ushort MsgResyncSender = 3;
-    private const ushort MsgFriendData = 12100;
-    private const ushort MsgRequestFriendData = 12200;
     private const ushort MsgRemotePlayerData = 12509;
     private const ushort MsgSpawnGreenTeamAlly = 23584;
     private const ushort MsgRequestKill = 25386;
@@ -132,6 +130,7 @@ public static partial class Game
         public byte[]? Account;
         public string Name = "";
         public string Server = "";
+        public int TimeZone;
         public string? CharacterId;
         public string? Class;
         public double LastDataSent = -10;
@@ -239,6 +238,13 @@ public static partial class Game
             CloseSequences(j, now, log);
             Summarize(j, now, log);
 
+            // Friends, flocks, whispers and the way to another player (Social\).
+            if (SocialHandler.HandlesMessage(id))
+            {
+                SocialHandler.HandleMessage(server, msg, id, role);
+                return true;
+            }
+
             if (info.RpcReturn != null)
             {
                 ReplyRpc(server, msg, info, j, log);
@@ -314,10 +320,6 @@ public static partial class Game
 
                 case MsgRemotePlayerData:
                     HandlePlayerData(server, j, msg, times, now, log);
-                    return true;
-
-                case MsgRequestFriendData:
-                    HandleFriendList(server, j, msg, log);
                     return true;
 
                 case MsgSpawnUnitsBatch:
@@ -451,6 +453,16 @@ public static partial class Game
         lock (gate)
         {
             return players.TryGetValue(connection.RemoteUniqueIdentifier, out var j) ? j.Language : "";
+        }
+    }
+
+    // The client's time zone in hours from UTC (ServerSetLocalAndTimezone). 0 until it arrives.
+    public static int GetTimeZone(NetConnection? connection)
+    {
+        if (connection == null) return 0;
+        lock (gate)
+        {
+            return players.TryGetValue(connection.RemoteUniqueIdentifier, out var j) ? j.TimeZone : 0;
         }
     }
 

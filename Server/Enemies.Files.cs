@@ -49,6 +49,21 @@ public static partial class Enemies
         return null;
     }
 
+    // What the open world needs to know about a unit of units_config.txt before it puts it on the map.
+    // Null when the name is not in the catalog.
+    public sealed record UnitSummary(string Name, int Tier, bool Armed, bool Boss, bool Wall, bool Player, bool Invisible, float MaxHealth);
+
+    public static UnitSummary? FindUnit(string name)
+    {
+        lock (Game.Lock)
+        {
+            GameUnit? u = FindInCatalog(name);
+            if (u == null) return null;
+            return new UnitSummary(u.Name, u.Tier, u.Armed, u.Boss, u.Wall, u.Player,
+                u.Art.StartsWith("!EnemyInvisible", StringComparison.OrdinalIgnoreCase), u.MaxHp);
+        }
+    }
+
     private static string FailureReason(EnemyType type)
     {
         Resolver(type, out string reason);

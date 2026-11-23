@@ -220,14 +220,16 @@ public static class PlayerData
     // bool isAdmin, bool isTester (1 bit each), int planeLevel, Pilot, StandardInventory, string serverName, bool isJoinable.
     // Without a plane (null characterId) the inventory goes empty, in the storage format.
     public static void WriteClientReceiveRemotePlayerData(NetBuffer buf, int unitShortId, byte[] accountId, string playerName,
-        bool isAdmin, string? characterId, string? planeClass, string serverName, int planeLevel, PilotSave pilot)
+        bool isAdmin, string? characterId, string? planeClass, string serverName, int planeLevel, PilotSave pilot,
+        byte[]? flockId = null, string flockName = "", bool isJoinable = false)
     {
         buf.Write(MsgClientReceiveRemotePlayerData);
         buf.Write(unitShortId);               // unit of the plane (0 = no plane)
         WriteGeneralId(buf, accountId);       // accountId
         buf.Write(playerName);                // playerName
-        WriteNoneGeneralId(buf);              // flockId = none
-        buf.Write("");                        // flockName
+        if (flockId != null && flockId.Length == 16) WriteGeneralId(buf, flockId);   // flockId (the default flock of the player)
+        else WriteNoneGeneralId(buf);
+        buf.Write(flockName ?? "");           // flockName
         buf.Write(isAdmin);                   // isAdmin (1 bit)
         buf.Write(false);                     // isTester (1 bit)
         buf.Write(planeLevel);                // planeLevel
@@ -237,7 +239,7 @@ public static class PlayerData
         else
             WriteStorageInventory(buf, accountId);
         buf.Write(serverName);                // serverName
-        buf.Write(false);                     // isJoinable
+        buf.Write(isJoinable);                // isJoinable (a friend on another server that can be joined)
     }
 
     // GeneratedDispatcher.Pack_ClientAddPlane (ID 55110)
@@ -403,7 +405,12 @@ public static class PlayerData
         buf.WriteVariableInt32(0);             // lastServerIDs
         buf.WriteVariableInt32(0);             // lastSnapshotTime
         buf.Write(0);                          // combatSimAttempts
-        WriteNoneGeneralId(buf);               // defaultFlockId = GeneralID.None
+        // defaultFlockId: the flock of the name plate and /f (Social\). The name follows in ClientUpdatePlayerDataDefaultGuild.
+        byte[]? defaultFlock = null;
+        Accounts.Account? owner = Accounts.FindById(ToBase64Url(accountId));
+        if (owner != null) SocialHandler.DefaultFlock(owner, out defaultFlock, out _);
+        if (defaultFlock != null) WriteGeneralId(buf, defaultFlock);
+        else WriteNoneGeneralId(buf);
     }
 
     // GeneratedDispatcher.Pack_ClientWelcomeMessage (ID 48913)
@@ -413,7 +420,7 @@ public static class PlayerData
     // shows TextMachine.GetDungeonNameOrNull(scenario), so a dungeon sends its terrain name there too.
     public static void WriteClientWelcome(NetBuffer buf, byte[] accountId, string playerName, Dictionary<string, LegalAcceptance> acceptances,
         byte serverRole, string procId, IReadOnlyList<Accounts.SavedPlane> planes, IReadOnlyList<string> finishedDungeons,
-        PilotSave pilot, string? terrainName = null, string scenario = "")
+        PilotSave pilot, string? terrainName = null, string scenario = "", float worldRadius = 650f)
     {
         // real names: territories[].name in the configBinary
         var terrain = !string.IsNullOrEmpty(terrainName) ? terrainName : serverRole == 3 ? "DungeonTutorialWalker" : "Nexus";
@@ -421,7 +428,7 @@ public static class PlayerData
         buf.Write(MsgClientWelcomeMessage);
         buf.Write(terrain);                    // terrainName
         buf.Write(12.0f);                      // terrainCellSize = WorldLayout.cellSize (= GroundPlacement.tileSize)
-        buf.Write(650.0f);                     // terrainWorldRadius = WorldLayout.worldRadius default
+        buf.Write(worldRadius);                // terrainWorldRadius (WorldLayout.worldRadius default 650; the open world is bigger)
         buf.Write(0);                          // wallsPerCell
         buf.Write(serverRole);                 // serverRole
         buf.Write(procId);                     // procId

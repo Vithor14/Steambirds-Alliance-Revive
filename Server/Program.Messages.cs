@@ -134,11 +134,14 @@ public static partial class Program
                 return;
             }
 
-            var procId = role == RoleNexus ? "revive-1" : role == RoleDungeon ? "revive-dungeon-1" : "revive-tutorial-1";
+            var procId = role == RoleNexus ? "revive-1" : role == RoleDungeon ? "revive-dungeon-1" : role == RoleWorld ? "revive-world-1" : "revive-tutorial-1";
             // Dungeon server: the session is born before the welcome, which carries the dungeon's terrain (the client's TerrainConfig).
+            // The open world works the same way: its map exists before the welcome, which carries the terrain "Basic".
             string? dungeonTerrain = role == RoleDungeon
                 ? DungeonServer.PrepareSession(server, connection, Accounts.AccountIdText, Clock.Elapsed.TotalSeconds, Log)
-                : null;
+                : role == RoleWorld
+                    ? WorldServer.PrepareSession(server, connection, Clock.Elapsed.TotalSeconds, Log)
+                    : null;
             // Expired buffs leave, a pilot without a portrait gets one and the unlocks are checked before the welcome.
             PilotProgression.PrepareForWelcome();
             InventoryHandler.PrepareForWelcome(RoleName(role));
@@ -148,7 +151,7 @@ public static partial class Program
             var acceptances = Accounts.Acceptances();
             var welcome = server.CreateMessage();
             PlayerData.WriteClientWelcome(welcome, Accounts.AccountId, name, acceptances, role, procId, planes, finished, pilot,
-                dungeonTerrain, dungeonTerrain ?? "");
+                dungeonTerrain, dungeonTerrain ?? "", role == RoleWorld ? WorldServer.RadiusFor(connection) : 650f);
             int welcomeBytes = welcome.LengthBytes;
             int pilotXp = Accounts.Read(data => PilotProgression.ComputedPilotXp(data));
             server.SendMessage(welcome, connection, NetDeliveryMethod.ReliableOrdered, 0);
@@ -161,9 +164,11 @@ public static partial class Program
             Game.Identify(connection, RoleName(role), Accounts.AccountId, name, procId, Clock.Elapsed.TotalSeconds);
             // Multiplayer: from now on the other players of this server can see and hear this one (Network\PlayerRelay.cs).
             // The Nexus is one group; each dungeon instance is a group of its own; the tutorial is private.
-            string? relayRoom = role == RoleNexus ? PlayerRelay.NexusRoom : role == RoleDungeon ? DungeonServer.RoomKey(connection) : null;
+            string? relayRoom = role == RoleNexus ? PlayerRelay.NexusRoom : role == RoleDungeon ? DungeonServer.RoomKey(connection) : role == RoleWorld ? WorldServer.RoomKey(connection) : null;
             if (relayRoom != null)
                 PlayerRelay.Joined(server, connection, relayRoom, name, Accounts.AccountId, procId, Accounts.Pilot().Level);
+            // Social: online for the friend list and the flock roster, and the default flock goes to the client.
+            SocialHandler.PlayerIdentified(server, connection, role, RoleName(role));
             PilotProgression.PlayerIdentified(server, connection, RoleName(role), Clock.Elapsed.TotalSeconds);
             // Ingredient wallet (ClientUpdateIngredients); the items already went in the PlayerData of the welcome.
             InventoryHandler.PlayerIdentified(server, connection, RoleName(role));
@@ -178,6 +183,10 @@ public static partial class Program
             {
                 DungeonServer.PlayerJoined(server, connection, Clock.Elapsed.TotalSeconds, Log);
             }
+            else if (role == RoleWorld)
+            {
+                WorldServer.PlayerJoined(server, connection, Clock.Elapsed.TotalSeconds, Log);
+            }
             else
             {
                 int floorBytes = Nexus.SendFloor(server, connection, out string floorSummary);
@@ -187,7 +196,7 @@ public static partial class Program
             }
 
             // ClientMapInfo of the terrain (client events: the original hints of the tutorial and the Nexus).
-            var terrain = role == RoleTutorial ? Tutorial.DungeonName : role == RoleDungeon ? dungeonTerrain ?? "" : "Nexus";
+            var terrain = role == RoleTutorial ? Tutorial.DungeonName : role == RoleDungeon || role == RoleWorld ? dungeonTerrain ?? "" : "Nexus";
             var mapInfo = server.CreateMessage();
             int infoBytes = MapInfo.WriteMessage(mapInfo, terrain, Log);
             if (infoBytes >= 0)
@@ -247,6 +256,41 @@ public static partial class Program
         if (msgId == MsgServerSendMeThroughPortal)
         {
             int portal = msg.ReadInt32();
+
+            // Nexus: the portal of the open world -> world server with the plane.
+            if (role == RoleNexus && WorldServer.IsNexusPortal(portal))
+            {
+                bool open = WorldServer.Available(out string worldReason);
+                var answer = server.CreateMessage();
+                PlayerData.WriteClientPortalResult(answer, portal, open);
+                server.SendMessage(answer, msg.SenderConnection, NetDeliveryMethod.ReliableOrdered, 0);
+                if (!open)
+                {
+                    Log("PORTAL", $"[nexus] ServerSendMeThroughPortal({portal}): the open world is not available ({worldReason}) -> ClientPortalResult false");
+                    WorldObjects.SendChat(server, msg.SenderConnection, "The open world is not available: " + worldReason + ".");
+                    return;
+                }
+                Log("PORTAL", $"[nexus] ServerSendMeThroughPortal({portal}): portal of the open world -> ClientPortalResult true");
+                SendToWorld(server, msg.SenderConnection, "[nexus] portal of the open world");
+                return;
+            }
+
+            // Open world: a dungeon carrier -> dungeon server with the plane.
+            if (role == RoleWorld)
+            {
+                DungeonCatalog.Entry? carrierEntry = WorldServer.CarrierEntry(msg.SenderConnection, portal, Clock.Elapsed.TotalSeconds);
+                var answer = server.CreateMessage();
+                PlayerData.WriteClientPortalResult(answer, portal, carrierEntry != null);
+                server.SendMessage(answer, msg.SenderConnection, NetDeliveryMethod.ReliableOrdered, 0);
+                if (carrierEntry == null)
+                {
+                    Log("PORTAL", $"[world] ServerSendMeThroughPortal({portal}): unknown or expired carrier -> ClientPortalResult false");
+                    return;
+                }
+                Log("PORTAL", $"[world] ServerSendMeThroughPortal({portal}): carrier of {carrierEntry.Label} -> ClientPortalResult true");
+                SendToDungeon(server, msg.SenderConnection, carrierEntry.Type, "[world] carrier of " + carrierEntry.Label);
+                return;
+            }
 
             // Nexus: dungeon carrier (DungeonCatalog) -> dungeon server with the plane.
             if (role == RoleNexus)
@@ -363,12 +407,27 @@ public static partial class Program
             return;
         }
 
-        // ServerRequestSpawnPlayerPlane: ushort 4940, string characterId, bool isAtHangar, GeneralID (ignored)
+        // ServerRequestSpawnPlayerPlane: ushort 4940, string characterId, bool isAtHangar, GeneralID targetAccountId.
+        // The account is the player the client was going to join ("Join Server" of the friend list or the flock roster): the new
+        // plane is born next to them when the server can (Social\SocialHandler.Teleport.cs).
         if (msgId == MsgServerRequestSpawnPlayerPlane)
         {
             var characterId = msg.ReadString();
-            Log("SPAWN", $"[{RoleName(role)}] {PlayerSessions.NameOf(msg.SenderConnection)}: ServerRequestSpawnPlayerPlane characterId='{characterId}'");
-            SpawnPlane(server, msg.SenderConnection, role, characterId, PlaneSpawn.PlayerPlaneShortId, null, -1f, "spawn");
+            byte[]? joining = null;
+            try
+            {
+                msg.ReadBoolean();
+                joining = CopperReader.ReadGeneralId(msg);
+            }
+            catch
+            {
+                // An older message without the target: the normal spawn point.
+            }
+            (float X, float Y, float Rotation)? beside = SocialHandler.ArrivalPlace(msg.SenderConnection, joining);
+            Log("SPAWN", $"[{RoleName(role)}] {PlayerSessions.NameOf(msg.SenderConnection)}: ServerRequestSpawnPlayerPlane characterId='{characterId}'" +
+                (beside != null ? " (next to the player they joined)" : ""));
+            SpawnPlane(server, msg.SenderConnection, role, characterId, PlaneSpawn.PlayerPlaneShortId,
+                beside == null ? null : (beside.Value.X, beside.Value.Y, beside.Value.Rotation), -1f, "spawn");
             return;
         }
 

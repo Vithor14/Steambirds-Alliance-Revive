@@ -231,6 +231,37 @@ public static class Accounts
         lock (gate) return loaded.Values.ToList();
     }
 
+    // An account that already exists (loaded, or saved in accounts\<key>) without touching it: the name and the last access
+    // stay as they are. Null when there is no such account. Used by the social features to read friends and flockmates who are offline.
+    public static Account? FindExisting(string key)
+    {
+        key = SteamTicket.Clean(key);
+        lock (gate)
+        {
+            if (loaded.TryGetValue(key, out Account? account)) return account;
+            string folder = Path.Combine(AccountsFolder, key);
+            if (!File.Exists(Path.Combine(folder, AccountFileName))) return null;
+            account = LoadFrom(key, folder);
+            loaded[key] = account;
+            return account;
+        }
+    }
+
+    // The account with this accountId (base64url of the 16 bytes): loaded, or found in accounts\ (AccountDirectory).
+    public static Account? FindById(string? idText)
+    {
+        if (string.IsNullOrEmpty(idText)) return null;
+        lock (gate)
+        {
+            foreach (Account account in loaded.Values)
+            {
+                if (string.Equals(account.IdText, idText, StringComparison.Ordinal)) return account;
+            }
+        }
+        AccountDirectory.Entry? entry = AccountDirectory.Find(idText);
+        return entry == null ? null : FindExisting(entry.Key);
+    }
+
     // ================================================================== scope
 
     // The static methods below use this account until the scope is disposed. null keeps the current one.

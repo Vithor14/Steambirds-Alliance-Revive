@@ -486,7 +486,7 @@ internal sealed class ClientTab : UserControl
     }
 
     private static string ConnectionHints() =>
-        L.T("Check that:\n• the server is running on the other PC and accepts players of other PCs (Server tab > Network and multiplayer);\n• both PCs are on the same network or VPN (Radmin, Hamachi) and the VPN is connected;\n• the Windows Firewall of the server PC allows the server (Server tab > Network and multiplayer > Allow in the Windows Firewall);\n• on the internet, the router of the server forwards the ports (TCP 6443 and UDP 1111 to 1113 by default).");
+        L.T("Check that:\n• the server is running on the other PC and accepts players of other PCs (Server tab > Network and multiplayer);\n• both PCs are on the same network or VPN (Radmin, Hamachi) and the VPN is connected;\n• the Windows Firewall of the server PC allows the server (Server tab > Network and multiplayer > Allow in the Windows Firewall);\n• on the internet, the router of the server forwards the ports (TCP 6443 and UDP 1111 to 1114 by default).");
 
     // ------------------------------------------------------------------ actions
 

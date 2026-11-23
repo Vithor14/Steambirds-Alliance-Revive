@@ -377,6 +377,7 @@ public static partial class Enemies
             instances.Remove(connection.RemoteUniqueIdentifier);
             inst.Members.Remove(connection);
             inst.Tracks.Remove(connection.RemoteUniqueIdentifier);
+            inst.Known.Remove(connection.RemoteUniqueIdentifier);
             if (inst.Members.Count > 0)
             {
                 // Other players stay: the instance goes on with the first of them.

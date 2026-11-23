@@ -257,7 +257,7 @@ function CopyServerData() {
     # Files in the root: configs (.json) and texts (.md). appsettings.json always comes from the project.
     $rootFiles = @(Get-ChildItem -LiteralPath $serverFolder -File | Where-Object {
         (@(".json", ".md") -contains $_.Extension.ToLowerInvariant()) -and
-        ($_.Name -ne "appsettings.Development.json") -and ($_.Name -ne "appsettings.json")
+        ($_.Name -ne "appsettings.Development.json") -and ($_.Name -ne "appsettings.json") -and ($_.Name -ne "flocks.json")
     })
     foreach ($file in $rootFiles) {
         CopyIfNewer $file.FullName (Join-Path $distServerFolder $file.Name) $file.Name
@@ -506,3 +506,4 @@ $openNow = Read-Host "Open the launcher now? (Y/N)"
 if ($openNow -match '^[yYsS]') {
     Start-Process -FilePath (Join-Path $distFolder "SteambirdsLauncher.exe") -WorkingDirectory $distFolder
 }
+Read-Host "everything ok?"

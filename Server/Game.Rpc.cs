@@ -44,7 +44,9 @@ public static partial class Game
     // when the cached copy is older than 30 s, it asks EVERY frame until a new answer arrives
     // (RemotePlayerCache.GetPlayerData). Without an answer, this reached ~60 requests per second.
     // For the player's own account the server answers with ClientReceiveRemotePlayerData.
-    // For other accounts there is no answer: answering "absent" (33421) would make the client ask every frame.
+    // For other accounts: players on this server (PlayerRelay), players on another server of this host or offline (SocialHandler:
+    // the friend list needs them). An account this server does not know gets no answer: answering "absent" (33421) would make
+    // the client ask every frame.
     private static void HandlePlayerData(NetServer server, Player j, NetIncomingMessage msg, int times, double now,
         Action<string, string> log)
     {
@@ -54,13 +56,14 @@ public static partial class Game
 
         if (!isSelf)
         {
-            // Another player online on this server: its name, rank, plane level and equipment. An unknown account gets no
-            // answer (an "absent" answer would make the client ask every frame).
+            // Another player online on this server: its name, rank, plane level and equipment.
             if (PlayerRelay.AnswerPlayerData(server, msg.SenderConnection, account, log)) return;
+            // Somebody on another server or offline (the friend list and the flock roster ask for them).
+            if (SocialHandler.AnswerRemoteData(server, msg.SenderConnection, account, log)) return;
             if (times == 1 || times % 100 == 0)
             {
                 log("MSG", j.Role + " ServerRequestRemotePlayerData x" + times + ": accountId=" + text +
-                    " (account not online on this server: no answer)");
+                    " (account unknown to this server: no answer)");
             }
             return;
         }
@@ -72,9 +75,10 @@ public static partial class Game
 
         int unit = j.PlaneAlive ? j.PlaneShortId : 0;
         Accounts.SavedPlane? plane = j.PlaneAlive ? Accounts.GetPlane(j.CharacterId) : null;
+        SocialHandler.DefaultFlock(Accounts.Current, out byte[]? flockId, out string flockName);
         NetOutgoingMessage response = server.CreateMessage();
         PlayerData.WriteClientReceiveRemotePlayerData(response, unit, j.Account!, j.Name, AdminAccount,
-            j.CharacterId, j.Class, j.Server, plane?.Level ?? PlayerData.StartingPlaneLevel, Accounts.Pilot());
+            j.CharacterId, j.Class, j.Server, plane?.Level ?? PlayerData.StartingPlaneLevel, Accounts.Pilot(), flockId, flockName);
         server.SendMessage(response, msg.SenderConnection, NetDeliveryMethod.ReliableOrdered, 0);
 
         if (j.DataSent <= 2 || j.DataSent % 20 == 0)
@@ -86,19 +90,7 @@ public static partial class Game
         }
     }
 
-    // ServerRequestFriendData() -> ClientReceiveFriendData(FriendData).
-    // FriendDataSerializer: five lists of GeneralID (friends, mutual, blocked, muted, soulmates),
-    // each with an int count. Here all of them are empty.
-    private static void HandleFriendList(NetServer server, Player j, NetIncomingMessage msg, Action<string, string> log)
-    {
-        NetOutgoingMessage response = server.CreateMessage();
-        response.Write(MsgFriendData);
-        for (int i = 0; i < 5; i++) response.Write(0);
-        server.SendMessage(response, msg.SenderConnection, NetDeliveryMethod.ReliableOrdered, 0);
-
-        log("MSG", j.Role + " friend list requested -> ClientReceiveFriendData sent (" + response.LengthBytes +
-            " bytes, empty list)");
-    }
+    // The friend list (ServerRequestFriendData, ServerAddFriend, ServerDeleteFriend) is answered in Social\SocialHandler.Friends.cs.
 
     // ------------------------------------------------------------------ RPC
 
@@ -125,6 +117,14 @@ public static partial class Game
         if (MissionTransport.IsMissionRpc(info.Id))
         {
             MissionTransport.HandleRpc(server, msg, info.Id, j.Role, log);
+            j.Rpcs++;
+            return;
+        }
+
+        // The Flock Hall: create, join, leave, roster, invites, roles (Social\SocialHandler.Flocks.cs).
+        if (SocialHandler.IsRpc(info.Id))
+        {
+            SocialHandler.HandleRpc(server, msg, info.Id, j.Role, log);
             j.Rpcs++;
             return;
         }
@@ -211,6 +211,7 @@ public static partial class Game
         string language = msg.ReadString() ?? "";
         int timeZone = msg.ReadInt32();
         j.Language = language;
+        j.TimeZone = timeZone;
         log("MSG", j.Role + " client language: '" + language + "', time zone UTC" + (timeZone >= 0 ? "+" : "") + timeZone);
     }
 

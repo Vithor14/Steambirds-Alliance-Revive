@@ -1,0 +1,71 @@
+// Open world of the server (terrain 'Basic'). Reloaded when it changes; the map values (seed, landFraction) apply the next
+// time the world is built (when the first player arrives after everybody left).
+{
+  // false: no portal in the Nexus and /world refuses.
+  "enabled": true,
+
+  // Name on the Nexus portal.
+  "name": "Open World",
+
+  // Players in the world at the same time.
+  "maxPlayers": 16,
+
+  // Seed of the map: the same seed makes the same world. 0 = a new random world each time it is built.
+  "seed": 201219,
+
+  // Size of the world: 1 = the client's default radius (650 units), 1.3333 = a third wider. The regions grow with it.
+  "sizeScale": 1.3333,
+
+  // Size of each island and biome (1 = the disk sizes of the game's config, 24.5 to 61 units). Bigger = fewer, larger regions with room for enemies.
+  "biomeScale": 2.5,
+
+  // "original": the twelve zones laid out like the game's own world map (Ruined City in the center, Mecha Hunting Grounds, Graveyard,
+  // Fishing Zone... around it). "random": islands made of random disks (biomeScale and landFraction apply to this one only).
+  "layout": "original",
+
+  // Build the world when the server starts (and again when the map settings change), before any player comes in, so the launcher
+  // shows it and the first player does not wait. false: it is built when the first player arrives.
+  "pregenerate": true,
+
+  // Invisible wall at the edge of the world: a plane closer than edgeMargin units to the border is stopped and put back.
+  "edgeWall": true,
+  "edgeMargin": 24,
+
+  // Fraction of the world's circle that is land (the rest is water).
+  "landFraction": 0.6,
+
+  // Where players are born (the center of the starting beach) and the radius around it with no enemies (units).
+  "spawn": { "x": 0, "y": 8.5, "rotation": 0, "safeZoneRadius": 70 },
+
+  // The portal to the world in the Nexus (u, v of the Nexus map, like the dungeon carriers of dungeons.json).
+  "nexusPortal": { "enabled": true, "u": 58, "v": 9, "rot": 0 },
+
+  // Enemies: they only exist near the players. The type of enemy comes from the region (beach, lowlands, midlands, highlands,
+  // mountains, highmountains). The AI is the same as everywhere else (enemies.json / the Enemy AI tab).
+  "enemies": {
+    "enabled": true,
+    "spawnRadius": 150,
+    "despawnRadius": 260,
+    // A client is only told about the enemies within viewRadius units of its plane (so the radar shows no arrows for the far ones).
+    // 0 = every enemy to every player. Keep it above wakeRadius.
+    "viewRadius": 90,
+    "siteSpacingTiles": 4,
+    "maxAlive": 100,
+    "groupSizeMax": 4,
+    "wakeRadius": 75,
+    "respawnScale": 1.0,
+    "healthMultiplier": 1.0,
+    "tierOffset": 0,
+    "skip": []
+  },
+
+  // Dungeon carriers that appear in the world (the dungeons come from dungeons.json).
+  "carriers": {
+    "enabled": true,
+    "maxAtOnce": 2,
+    "everySeconds": 180,
+    "lifetimeSeconds": 600,
+    "minDistance": 120,
+    "maxDistance": 900
+  }
+}

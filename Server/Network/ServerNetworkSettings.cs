@@ -32,6 +32,7 @@ public sealed class ServerNetworkSettings
     public int NexusPort { get; set; } = NetworkPorts.DefaultNexus;
     public int TutorialPort { get; set; } = NetworkPorts.DefaultTutorial;
     public int DungeonPort { get; set; } = NetworkPorts.DefaultDungeon;
+    public int WorldPort { get; set; } = NetworkPorts.DefaultWorld;
 
     // UDP port that answers the server search of the launchers. Launchers search on 6444 unless set otherwise.
     public int SearchPort { get; set; } = NetworkPorts.DefaultSearch;
@@ -47,16 +48,19 @@ public sealed class NetworkPorts
     public const int DefaultNexus = 1111;
     public const int DefaultTutorial = 1112;
     public const int DefaultDungeon = 1113;
+    public const int DefaultWorld = 1114;
     public const int DefaultSearch = 6444;
 
     public int Http { get; init; } = DefaultHttp;
     public int Nexus { get; init; } = DefaultNexus;
     public int Tutorial { get; init; } = DefaultTutorial;
     public int Dungeon { get; init; } = DefaultDungeon;
+    public int World { get; init; } = DefaultWorld;
     public int Search { get; init; } = DefaultSearch;
 
     public override string ToString() =>
-        "HTTP " + Http + " (TCP), Nexus " + Nexus + ", tutorial " + Tutorial + ", dungeon " + Dungeon + ", search " + Search + " (UDP)";
+        "HTTP " + Http + " (TCP), Nexus " + Nexus + ", tutorial " + Tutorial + ", dungeon " + Dungeon + ", world " + World +
+        ", search " + Search + " (UDP)";
 }
 
 public static class ServerNetworkSettingsFile
@@ -127,21 +131,23 @@ public static class ServerNetworkSettingsFile
             int nexus = ValidPort(s.NexusPort, NetworkPorts.DefaultNexus, "nexusPort");
             int tutorial = ValidPort(s.TutorialPort, NetworkPorts.DefaultTutorial, "tutorialPort");
             int dungeon = ValidPort(s.DungeonPort, NetworkPorts.DefaultDungeon, "dungeonPort");
+            int world = ValidPort(s.WorldPort, NetworkPorts.DefaultWorld, "worldPort");
             int search = ValidPort(s.SearchPort, NetworkPorts.DefaultSearch, "searchPort");
 
-            // The three UDP game ports and the search port must be different (TCP and UDP can share a number).
-            var udp = new[] { nexus, tutorial, dungeon, search };
+            // The four UDP game ports and the search port must be different (TCP and UDP can share a number).
+            var udp = new[] { nexus, tutorial, dungeon, world, search };
             if (udp.Distinct().Count() != udp.Length)
             {
                 log("NETWORK", "repeated UDP ports in " + FileName + " (nexus " + nexus + ", tutorial " + tutorial + ", dungeon " + dungeon +
-                    ", search " + search + "): using the default ports 1111, 1112, 1113 and 6444");
+                    ", world " + world + ", search " + search + "): using the default ports 1111, 1112, 1113, 1114 and 6444");
                 nexus = NetworkPorts.DefaultNexus;
                 tutorial = NetworkPorts.DefaultTutorial;
                 dungeon = NetworkPorts.DefaultDungeon;
+                world = NetworkPorts.DefaultWorld;
                 search = NetworkPorts.DefaultSearch;
             }
 
-            Ports = new NetworkPorts { Http = http, Nexus = nexus, Tutorial = tutorial, Dungeon = dungeon, Search = search };
+            Ports = new NetworkPorts { Http = http, Nexus = nexus, Tutorial = tutorial, Dungeon = dungeon, World = world, Search = search };
             OpenToOtherPcs = s.AllowOtherPlayers;
             log("NETWORK", "server '" + s.ServerName + "': " + Ports + "; " +
                 (OpenToOtherPcs ? "accepts players from other PCs" : "only this PC (allowOtherPlayers = false)") +
@@ -182,7 +188,7 @@ public static class ServerNetworkSettingsFile
             if (read.MaxPlayers < 1) read.MaxPlayers = 1;
 
             bool portsChanged = !atStart && (read.HttpPort != Ports.Http || read.NexusPort != Ports.Nexus ||
-                                             read.TutorialPort != Ports.Tutorial || read.DungeonPort != Ports.Dungeon ||
+                                             read.TutorialPort != Ports.Tutorial || read.DungeonPort != Ports.Dungeon || read.WorldPort != Ports.World ||
                                              read.SearchPort != Ports.Search || read.AllowOtherPlayers != OpenToOtherPcs);
             current = read;
             if (!atStart)
@@ -225,10 +231,11 @@ public static class ServerNetworkSettingsFile
   // TCP port of the login (the launcher opens the game with OZY_URL=http://<ip>:<httpPort>/ozy).
   ""httpPort"": 6443,
 
-  // UDP ports of the Nexus, the tutorial and the dungeons.
+  // UDP ports of the Nexus, the tutorial, the dungeons and the open world.
   ""nexusPort"": 1111,
   ""tutorialPort"": 1112,
   ""dungeonPort"": 1113,
+  ""worldPort"": 1114,
 
   // UDP port of the server search of the launchers (they search on 6444 unless set otherwise).
   ""searchPort"": 6444

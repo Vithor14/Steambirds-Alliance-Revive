@@ -33,6 +33,7 @@ FileList.txt
 
 # Server: accounts of the players (one folder per Steam ID), backups and files sent by the game
 /Server/accounts/
+/Server/flocks.json
 /Server/_backup/
 /Server/client-uploads/
 
@@ -53,3 +54,8 @@ FileList.txt
 # game (game art, not ours). Each person generates their own; the editor works without them.
 /Launcher/editor-assets/
 
+
+# Server: files the open world writes for the launcher's World map page
+/Server/world-map.json
+/Server/world-live.json
+/Server/*.tmp

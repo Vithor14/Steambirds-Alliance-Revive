@@ -156,9 +156,13 @@ public static partial class Game
         if (ProgressionHandler.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
         if (InventoryHandler.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
         if (StoreHandler.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
+        // Friends (/friends, /addfriend NAME).
+        if (SocialHandler.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
         // Dungeons (/dungeons, /dungeon X; inside a dungeon /room, /boss, /leave, /restart) before the tutorial,
         // which also uses /leave and /restart: DungeonServer.Command only takes those inside a dungeon.
         if (DungeonServer.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
+        // Open world (/world, /worldinfo, /carrier).
+        if (WorldServer.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
         if (Tutorial.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
         if (!Enemies.Command(server, msg.SenderConnection, role, pieces, now, log))
             log("MSG", j.Role + " chat command not handled by the server: " + string.Join(" ", pieces));

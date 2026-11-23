@@ -31,6 +31,8 @@ All of them depend on multiplayer, friends or flocks, which our server only part
 | Command | What it does |
 | --- | --- |
 | `/friend NAME` | Adds a friend who is on the same server |
+| `/friends` | (our server) Lists your friends and where each one is |
+| `/addfriend NAME` | (our server) Adds any player this server knows, even offline or on another server |
 | `/unfriend NAME` | Ends the friendship |
 | `/block NAME` / `/unblock NAME` | Blocks or unblocks every interaction with the player |
 | `/blocklist` | Lists the blocked players |
@@ -123,6 +125,18 @@ Dungeon server (port 1113).
 | `/boss` | in the dungeon | Jumps to the boss room |
 | `/restart` | in the dungeon | Restarts the dungeon from the beginning |
 | `/leave` | in the dungeon | Goes back to the Nexus |
+
+### Open world
+
+Open world server (port 1114, terrain `Basic`, settings in `world.json`). The Nexus also has a portal to it.
+
+| Command | Where | What it does |
+| --- | --- | --- |
+| `/world` | anywhere | Goes to the open world (builds the map if nobody is in it) |
+| `/worldinfo` | anywhere | Seed, players, spawn sites with enemies, your position, region and elevation, and the carriers |
+| `/carrier [NAME]` | in the world | Puts a dungeon carrier of an open dungeon next to you (to test; with no name, the first open dungeon) |
+
+The way back is the menu's "Return to Rebel City" (or `/leave`).
 
 ### Tutorial
 

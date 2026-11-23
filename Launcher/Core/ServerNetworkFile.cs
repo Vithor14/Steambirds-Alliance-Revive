@@ -12,6 +12,7 @@ public sealed class ServerNetworkFile
     public const int DefaultNexusPort = 1111;
     public const int DefaultTutorialPort = 1112;
     public const int DefaultDungeonPort = 1113;
+    public const int DefaultWorldPort = 1114;
     public const int DefaultSearchPort = 6444;
 
     public static string FilePath => LauncherPaths.ServerFile(FileName);
@@ -24,6 +25,7 @@ public sealed class ServerNetworkFile
     public int NexusPort { get; private set; } = DefaultNexusPort;
     public int TutorialPort { get; private set; } = DefaultTutorialPort;
     public int DungeonPort { get; private set; } = DefaultDungeonPort;
+    public int WorldPort { get; private set; } = DefaultWorldPort;
     public int SearchPort { get; private set; } = DefaultSearchPort;
 
     // Error reading the file (the defaults are used), or null.
@@ -47,7 +49,7 @@ public sealed class ServerNetworkFile
     }
 
     public string PortsDescription =>
-        L.F("HTTP {0} (TCP) · Nexus {1} · Tutorial {2} · Dungeon {3} · search {4} (UDP)", HttpPort, NexusPort, TutorialPort, DungeonPort, SearchPort);
+        L.F("HTTP {0} (TCP) · Nexus {1} · Tutorial {2} · Dungeon {3} · World {4} · search {5} (UDP)", HttpPort, NexusPort, TutorialPort, DungeonPort, WorldPort, SearchPort);
 
     private static ServerNetworkFile Load()
     {
@@ -66,6 +68,7 @@ public sealed class ServerNetworkFile
             file.NexusPort = Port(ReadInt(root, "nexusPort"), DefaultNexusPort);
             file.TutorialPort = Port(ReadInt(root, "tutorialPort"), DefaultTutorialPort);
             file.DungeonPort = Port(ReadInt(root, "dungeonPort"), DefaultDungeonPort);
+            file.WorldPort = Port(ReadInt(root, "worldPort"), DefaultWorldPort);
             file.SearchPort = Port(ReadInt(root, "searchPort"), DefaultSearchPort);
         }
         catch (Exception e)

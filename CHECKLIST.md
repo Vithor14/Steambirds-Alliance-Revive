@@ -1,6 +1,6 @@
 # Steambirds Alliance Revive — Checklist
 
- **Lojas, compras e vagas (22/11/2026, compiladas; só testadas com um cliente de teste que fala as mesmas mensagens, falta o jogo):** `Server\Stores\` monta as prateleiras das 4 lojas a partir do `store` do `configBinary` (294 produtos, que o cliente já trazia), trata `ServerPurchaseInStore` `54296`, desconta ouro/ferro da conta, entrega itens, desbloqueios e vagas (hangar, loadouts, armazém, cargo), guarda as compras em `accounts\<chave>\store.json` e lê as regras do host em `stores.json` (aba Stores do launcher). Sem pacotes de ouro da Steam. Detalhes e bytes em `docs\stores.md`.Situação em **19/11/2026**: nomes, comentários, logs e READMEs em inglês e `Program.cs` dividido em partes (seção 14; os quatro projetos compilam e o servidor sobe e responde ao login, mas o jogo ainda não foi aberto com essa versão: rodar `Build launcher.ps1` e `Build plugin.ps1` antes de testar). Servidor Server v7 (troca de avião no hangar e XP de piloto em tempo real; a v6 rodou no jogo em 14/11: XP por abate, nível do avião e desbloqueio do paladin funcionaram), plugin Steambirds Quieter 1.20.0, cliente **201219.1413** (depot 386011, manifest 58813776496064724). As 17 dungeons da build 190828 foram recriadas em `maps\dungeon_*.json`. **v8 (15/11, ainda não testada no jogo):** servidor de dungeon na porta 1113 (`Dungeons\`), com Iron Lair e Bomb Factory ligadas no `dungeons.json`. **v9 (15/11, ainda não testada no jogo):** itens, inventário autoritativo e loot (`Items\`, `loot_tables\`, `itens.json`, `inventario.json`) e o catálogo de itens (`itens\catalogo_de_itens.md`). **Launcher 0.1.0 (15/11, compilado e testado no PC: subiu o servidor e abriu o jogo):** `Launcher\` (WinForms, .NET 8) com abas Client e Server, montado pelo `Build launcher.ps1` em `Launcher\dist` (servidor e launcher como .exe self-contained, sem `dotnet run`); o que ainda não existe no projeto aparece acinzentado. **Launcher 0.2.0 (15/11, ainda não testado):** aba Settings (tema escuro, pastas e logs), inglês como padrão com português e pasta `lang` para a comunidade, idioma do jogo (`-locale`), desbloqueios iniciais em checklist, um campo por moeda e janela para editar e remover a conta. **v11 + Launcher 0.3.0 (16/11, ainda não testados):** contas por jogador (`contas\<steam_ID>\`, Steam ID tirado do ticket de login; a conta antiga vai para o primeiro jogador do PC do host), servidor aberto para outros PCs (`rede.json` com nome, portas, máximo de jogadores e comandos de chat; HTTP em todas as redes; o endereço de cada troca de servidor e portal é o que o jogo de cada jogador usou), busca de servidores (UDP 6444) e `/revive/info`; no launcher, lista de servidores da rede local e das VPNs, Conectar por IP, nome do jogador, download do depot pela Steam, aba Rede e multiplayer (endereços, firewall, portas) e lista de contas. Cada jogador ainda joga no próprio mundo (não se veem). **Relay de multiplayer no Nexus (17/11, escrito sem compilar, ainda não testado):** `Server\Network\PlayerRelay.cs` repassa avião, movimento, tiros, mortes e chat entre os jogadores do Nexus; nomes antigos em português corrigidos no `Compat\LegacyFiles.cs` (servidor e launcher). **Dungeons com vários jogadores (17/11, escrito sem compilar, ainda não testado):** quem entra numa dungeon já em andamento do mesmo tipo entra na mesma instância (mesmas salas, inimigos e portões; se vêem pelo `PlayerRelay`); quando o último jogador sai a instância é descartada e a próxima entrada começa do zero. **Launcher + aba Map editor (16/11, escrita sem compilar, ainda não testada):** editor visual de mapas dentro do launcher (`Launcher\Editor`, imagens em `Launcher\editor-assets`). **Release do servidor e arquivos do jogo (20/11, escritos sem compilar, ainda não testados):** `Build server release.ps1` monta `Release\SteambirdsServer-<versão>-win-x64.zip` para o GitHub Releases (servidor, `SteambirdsGameFiles.exe`, plugin, configs e mapas, sem nenhum arquivo do jogo); `GameFiles\` (`SteambirdsGameFiles.exe`) pega da cópia do jogo de cada jogador o `configBinary`, instala o BepInEx e o plugin, abre o jogo uma vez em modo de exportação (plugin 1.21.0, `GameFilesExport.cs`) e copia os dados do plugin para `data\` e as imagens do editor para `editor-assets\`.
+ **Mundo aberto (22/11/2026, testado no jogo: funcionou):** `Server\World\` (porta UDP 1114, `worldPort` no `network.json`, `world.json` do host) gera o mapa do terreno `Basic` por semente (regiões por elevação, ilhas em discos, cânions, muros, peças de chão), manda o chão em pedaços, o nome da região, inimigos por região perto dos jogadores e porta-aviões de dungeon que aparecem e somem; o Nexus ganhou um portal para o mundo e há `/world`, `/worldinfo` e `/carrier`. Chefes de setpiece, quests de ilha, eventos e IA própria dos inimigos ficaram de fora (seção 7 e `docs\open-world.md`). **Lojas, compras e vagas (22/11/2026, compiladas; só testadas com um cliente de teste que fala as mesmas mensagens, falta o jogo):** `Server\Stores\` monta as prateleiras das 4 lojas a partir do `store` do `configBinary` (294 produtos, que o cliente já trazia), trata `ServerPurchaseInStore` `54296`, desconta ouro/ferro da conta, entrega itens, desbloqueios e vagas (hangar, loadouts, armazém, cargo), guarda as compras em `accounts\<chave>\store.json` e lê as regras do host em `stores.json` (aba Stores do launcher). Sem pacotes de ouro da Steam. Detalhes e bytes em `docs\stores.md`.Situação em **19/11/2026**: nomes, comentários, logs e READMEs em inglês e `Program.cs` dividido em partes (seção 14; os quatro projetos compilam e o servidor sobe e responde ao login, mas o jogo ainda não foi aberto com essa versão: rodar `Build launcher.ps1` e `Build plugin.ps1` antes de testar). Servidor Server v7 (troca de avião no hangar e XP de piloto em tempo real; a v6 rodou no jogo em 14/11: XP por abate, nível do avião e desbloqueio do paladin funcionaram), plugin Steambirds Quieter 1.20.0, cliente **201219.1413** (depot 386011, manifest 58813776496064724). As 17 dungeons da build 190828 foram recriadas em `maps\dungeon_*.json`. **v8 (15/11, ainda não testada no jogo):** servidor de dungeon na porta 1113 (`Dungeons\`), com Iron Lair e Bomb Factory ligadas no `dungeons.json`. **v9 (15/11, ainda não testada no jogo):** itens, inventário autoritativo e loot (`Items\`, `loot_tables\`, `itens.json`, `inventario.json`) e o catálogo de itens (`itens\catalogo_de_itens.md`). **Launcher 0.1.0 (15/11, compilado e testado no PC: subiu o servidor e abriu o jogo):** `Launcher\` (WinForms, .NET 8) com abas Client e Server, montado pelo `Build launcher.ps1` em `Launcher\dist` (servidor e launcher como .exe self-contained, sem `dotnet run`); o que ainda não existe no projeto aparece acinzentado. **Launcher 0.2.0 (15/11, testado em 22/11):** aba Settings (tema escuro, pastas e logs), inglês como padrão com português e pasta `lang` para a comunidade, idioma do jogo (`-locale`), desbloqueios iniciais em checklist, um campo por moeda e janela para editar e remover a conta. **v11 + Launcher 0.3.0 (16/11, testados em 22/11, inclusive com dois PCs):** contas por jogador (`contas\<steam_ID>\`, Steam ID tirado do ticket de login; a conta antiga vai para o primeiro jogador do PC do host), servidor aberto para outros PCs (`rede.json` com nome, portas, máximo de jogadores e comandos de chat; HTTP em todas as redes; o endereço de cada troca de servidor e portal é o que o jogo de cada jogador usou), busca de servidores (UDP 6444) e `/revive/info`; no launcher, lista de servidores da rede local e das VPNs, Conectar por IP, nome do jogador, download do depot pela Steam, aba Rede e multiplayer (endereços, firewall, portas) e lista de contas. Cada jogador ainda joga no próprio mundo (não se veem). **Relay de multiplayer no Nexus (17/11, testado com dois PCs em 19/11 e 22/11):** `Server\Network\PlayerRelay.cs` repassa avião, movimento, tiros, mortes e chat entre os jogadores do Nexus; nomes antigos em português corrigidos no `Compat\LegacyFiles.cs` (servidor e launcher). **Dungeons com vários jogadores (17/11, testado com dois PCs em 22/11):** quem entra numa dungeon já em andamento do mesmo tipo entra na mesma instância (mesmas salas, inimigos e portões; se vêem pelo `PlayerRelay`); quando o último jogador sai a instância é descartada e a próxima entrada começa do zero. **Launcher + aba Map editor (16/11, compilada e testada em 22/11):** editor visual de mapas dentro do launcher (`Launcher\Editor`, imagens em `Launcher\editor-assets`). **Release do servidor e arquivos do jogo (20/11, compilados e testados em 22/11):** `Build server release.ps1` monta `Release\SteambirdsServer-<versão>-win-x64.zip` para o GitHub Releases (servidor, `SteambirdsGameFiles.exe`, plugin, configs e mapas, sem nenhum arquivo do jogo); `GameFiles\` (`SteambirdsGameFiles.exe`) pega da cópia do jogo de cada jogador o `configBinary`, instala o BepInEx e o plugin, abre o jogo uma vez em modo de exportação (plugin 1.21.0, `GameFilesExport.cs`) e copia os dados do plugin para `data\` e as imagens do editor para `editor-assets\`.
 
 **Legenda**
 - [x] feito
@@ -13,25 +13,25 @@
 
 | # | Área | Feito | Parcial | Falta |
 |---|---|---|---|---|
-| 1 | Base: conexão, login e conta | 12 | 3 | 3 |
-| 2 | Avião, classes e hangar | 6 | 5 | 4 |
+| 1 | Base: conexão, login e conta | 14 | 2 | 2 |
+| 2 | Avião, classes e hangar | 8 | 7 | 0 |
 | 3 | Piloto, permadeath e progressão | 0 | 13 | 0 |
-| 4 | Combate e inimigos | 7 | 4 | 4 |
-| 5 | Itens, inventário e loot | 2 | 11 | 3 |
-| 6 | Rebel City (Nexus) e prédios | 3 | 4 | 6 |
-| 7 | Mundo aberto (ilhas) | 0 | 0 | 9 |
-| 8 | Dungeons e tutoriais | 5 | 8 | 5 |
+| 4 | Combate e inimigos | 8 | 9 | 1 |
+| 5 | Itens, inventário e loot | 2 | 14 | 0 |
+| 6 | Rebel City (Nexus) e prédios | 4 | 4 | 5 |
+| 7 | Mundo aberto (ilhas) | 5 | 2 | 3 |
+| 8 | Dungeons e tutoriais | 5 | 13 | 5 |
 | 9 | Quests, missões e conversas | 0 | 3 | 6 |
-| 10 | Social: chat, amigos, flocks e troca | 2 | 1 | 7 |
+| 10 | Social: chat, amigos, flocks e troca | 2 | 2 | 6 |
 | 11 | Combat Sim | 0 | 0 | 5 |
 | 12 | Troca de servidores | 1 | 1 | 3 |
 | 13 | Áudio, interface e extras | 0 | 1 | 5 |
-| 14 | Código e repositório | 7 | 2 | 0 |
-| 15 | Launcher base — aba Client (objetivo intermediário) | 2 | 6 | 1 |
-| 16 | Launcher — aba Server | 0 | 8 | 3 |
-| 17 | Launcher standalone (objetivo final) | 0 | 5 | 0 |
-| 18 | Editor de mapas | 2 | 5 | 3 |
-| | **Total** | **49** | **78** | **68** |
+| 14 | Código e repositório | 8 | 1 | 0 |
+| 15 | Launcher base — aba Client (objetivo intermediário) | 8 | 0 | 1 |
+| 16 | Launcher — aba Server | 5 | 8 | 2 |
+| 17 | Launcher standalone (objetivo final) | 3 | 4 | 0 |
+| 18 | Editor de mapas | 6 | 3 | 3 |
+| | **Total** | **79** | **87** | **47** |
 
 Os apêndices (classes, terrenos e chefes) e as observações abaixo ficam fora da conta.
 
@@ -60,7 +60,7 @@ O cliente traz os **dados**, mas as **regras** ficavam no servidor original. O s
 - [x] Sorteio do retrato do piloto: feito no servidor com as peças exportadas pelo plugin
 
 **Regras que só existiam no servidor (precisam ser recriadas)**
-- [ ] Mundo aberto: rodar a geração, decidir onde e quando cada inimigo nasce, densidade, respawn, hora dos eventos e chefes de setpiece, quando um porta-aviões de dungeon aparece
+- [ ] 🟡 Mundo aberto (22/11, `Server\World\`, `docs\open-world.md`): a geração, onde e quando cada inimigo nasce, densidade, respawn e quando um porta-aviões de dungeon aparece foram recriados (sítios de spawn por região, `world.json`). Cada cliente só recebe os inimigos dentro de `enemies.viewRadius` (23/11, `Enemies.Interest.cs`), então o radar não mostra setas de inimigos distantes; falta testar no jogo. Falta a hora dos eventos e os chefes de setpiece
 - [ ] 🟡 Roteiro das dungeons: ordem das salas, portões, quem acorda quando, fases dos chefes. Feito no tutorial do walker; nas 17 dungeons da 190828 está descrito nos mapas (`tipos` e `encontros`) e o servidor de dungeon (v8) roda essa parte genérica. Os roteiros especiais (broca, chave, altares, emboscadas) ainda não
 - [ ] 🟡 Loot: sortear o drop (algoritmo do cliente, `SteambirdsLootTable.DrawLoot`), criar o saco, raridade. Feito na v9; falta testar e "quem pode pegar" com vários jogadores
 - [ ] 🟡 Inventário autoritativo: validar trocas de vaga, criar ids de item, desgaste, reforja (com sorteio) e reciclagem. Feito na v9; falta testar
@@ -68,7 +68,7 @@ O cliente traz os **dados**, mas as **regras** ficavam no servidor original. O s
 - [ ] Quests: quais quests cada prédio oferece, contagem do progresso dos objetivos, entrega das recompensas
 - [ ] Missões e squads: rotação das missões do porta-aviões e formação dos grupos
 - [ ] Social: flocks (os dados das guildas ficavam no backend Ozy), amigos, chat entre jogadores, troca segura, rankings e pontuação do Combat Sim
-- [ ] 🟡 Dungeon compartilhada (17/11): jogadores do mesmo tipo de dungeon dividem a instância (inimigos, portões, salas, ondas; cada um recebe XP e o próprio loot; inimigos perseguem o jogador mais próximo) e a instância some quando fica vazia. Falta testar com dois PCs; ainda sem limite de jogadores por dungeon e sem fila
+- [ ] 🟡 Dungeon compartilhada (17/11): jogadores do mesmo tipo de dungeon dividem a instância (inimigos, portões, salas, ondas; cada um recebe XP e o próprio loot; inimigos perseguem o jogador mais próximo) e a instância some quando fica vazia. Testado com dois PCs em 22/11; ainda sem limite de jogadores por dungeon e sem fila
 - [ ] Orquestração: listar servidores, subir uma instância de dungeon por grupo, fila e troca entre servidores (no projeto vira o launcher e a aba Server)
 - [ ] Multiplayer: repassar a cada jogador o que os outros fazem por perto e decidir quem tem autoridade sobre o dano nos inimigos
 - [ ] 🟡 Economia: o ouro vinha de microtransações da Steam e não volta. Regra nova, configurável no `stores.json`: `priceMode` `currency` (a conta paga com o próprio ouro e ferro; o host dá ouro com `/currency gold N`, `startingCurrencies` do `items.json` ou o editor de contas) ou `free` (tudo custa 0), mais `discountPercent` e `discount` por produto. Falta: ferro por XP de piloto (`pilotXpPer1Currency` 10 / `ClientNotificationGiveCurrencyForPilotXp` `54391`), que era a forma de ganhar ferro jogando
@@ -92,10 +92,10 @@ O cliente traz os **dados**, mas as **regras** ficavam no servidor original. O s
 - [x] Servidor lê o `configBinary` do jogo direto da pasta instalada (DarkConfig + LZMA, `GameData\ConfigBinary.cs`): tabelas de XP, `pilotScore`, skills, desbloqueios, buffs, unidades e textos
 - [x] Relatório automático de cada teste (`Run server.ps1`) e plugin de diagnóstico opcional
 - [x] Conta salva em disco (`account.json` com piloto, aviões e dungeons; `inventory.json`; `acceptances.json`)
-- [ ] 🟡 Uma conta por jogador (v11): `accounts\steam_<SteamID>\` no PC do host. O Steam ID sai do ticket de sessão da Steam que o jogo manda no login (bytes 12 a 19; sem ticket, a conta é do PC); o `sessid` de cada login liga as conexões UDP à conta. A conta única antiga (`account.json` da raiz) não é mais migrada. O resto do servidor continua chamando `Accounts` sem dizer a conta: cada mensagem abre o "escopo" da conta do jogador da conexão. Falta testar
-- [ ] 🟡 Servidor aberto para outros PCs (v11): HTTP em todas as redes (`allowOtherPlayers` no `network.json`), o login devolve o Nexus no endereço que o jogo usou (LAN, Radmin, Hamachi ou IP público) e as trocas de servidor e os portais usam o endereço de cada jogador. Portas, nome, máximo de jogadores e comandos de chat (`everyone`, `host`, `none`) no `network.json`; `/jogadores` no chat; aviso de quem entra e sai. Falta testar com dois PCs
+- [x] Uma conta por jogador (v11, testado em 22/11): `accounts\steam_<SteamID>\` no PC do host. O Steam ID sai do ticket de sessão da Steam que o jogo manda no login (bytes 12 a 19; sem ticket, a conta é do PC); o `sessid` de cada login liga as conexões UDP à conta. A conta única antiga (`account.json` da raiz) não é mais migrada. O resto do servidor continua chamando `Accounts` sem dizer a conta: cada mensagem abre o "escopo" da conta do jogador da conexão
+- [x] Servidor aberto para outros PCs (v11, testado em 22/11): HTTP em todas as redes (`allowOtherPlayers` no `network.json`), o login devolve o Nexus no endereço que o jogo usou (LAN, Radmin, Hamachi ou IP público) e as trocas de servidor e os portais usam o endereço de cada jogador. Portas, nome, máximo de jogadores e comandos de chat (`everyone`, `host`, `none`) no `network.json`; `/jogadores` no chat; aviso de quem entra e sai
 - [ ] 🟡 Todo jogador entra como admin (`isAdmin`), o que evita a desconexão automática após 120 s parado; quem usa os comandos de chat do servidor agora é escolhido no `network.json` (`chatCommands`: todos, só o host ou ninguém)
-- [ ] 🟡 **Multiplayer (Nexus):** `PlayerRelay` repassa o avião (SpawnUnitsBatch com o PeerId do dono e shortId de relay 7.000.000+), `UpdateUnitsBatch` (posição, mira, estado, vida, nome, sinal das armas e efeitos), `GunFire` (com o relógio do atirador convertido para o do servidor), `KillUnitsBatch` (morte, troca de avião, saída), nuvens das skills e `ClientReceiveRemotePlayerData` de quem está online. Teste de 19/11 com dois PCs: aviões, animação de tiro, inimigos, portões e reset da dungeon funcionaram; nome, balas e skills em área dos outros foram corrigidos no mesmo dia (falta testar). `TriggerOtherPlayerSkill` repassado (22/11), balas dos outros terminam onde acertam (`ClientKillBullet`); ainda sem `GunFireBatch` `62327`, nuvens para quem entra depois que elas foram criadas. Tutorial segue um mundo por jogador
+- [ ] 🟡 **Multiplayer (Nexus):** `PlayerRelay` repassa o avião (SpawnUnitsBatch com o PeerId do dono e shortId de relay 7.000.000+), `UpdateUnitsBatch` (posição, mira, estado, vida, nome, sinal das armas e efeitos), `GunFire` (com o relógio do atirador convertido para o do servidor), `KillUnitsBatch` (morte, troca de avião, saída), nuvens das skills e `ClientReceiveRemotePlayerData` de quem está online. Teste de 19/11 com dois PCs: aviões, animação de tiro, inimigos, portões e reset da dungeon funcionaram; nome, balas e skills em área dos outros foram corrigidos no mesmo dia (testado em 22/11). `TriggerOtherPlayerSkill` repassado (22/11), balas dos outros terminam onde acertam (`ClientKillBullet`); ainda sem `GunFireBatch` `62327`, nuvens para quem entra depois que elas foram criadas. Tutorial segue um mundo por jogador
 - [ ] Login por usuário e senha (`/user/create`, `/user/change`, `/user/reset_request`, `/activation/*`); opcional, já que o login pela Steam funciona
 - [ ] `/msg_interface_config` (mensagens/banners da interface)
 
@@ -105,7 +105,7 @@ O cliente traz os **dados**, mas as **regras** ficavam no servidor original. O s
 - [x] Spawn do avião com classe, variante, conta e characterId nas opções da unidade
 - [x] Itens iniciais equipados (tabela das 15 classes no `PlayerData.cs`)
 - [x] Seleção de avião (save slot) e menu de opções funcionando
-- [ ] 🟡 Classes: só o **walker** foi testado (lista das 15 no Apêndice A)
+- [x] Classes: as 15 foram testadas no jogo e funcionam (22/11; lista no Apêndice A)
 - [ ] 🟡 Modelo de voo por classe (v10, `Planes\PlayerPlaneTemplates.cs`): o spawn usa o `planeName` da classe (configBinary `playerclasses`) em vez de `playerPlane` para todos. walker, paladin, support, pirate, siegetank e daggerknight → `walkerClassPlane` (8 direções, paira parado, armas seguem o mouse); olfaithful, duster e wizard → `playerPlane` (sempre para frente, tiro para frente). Conferido nas builds 190426–190911; falta conferir no jogo com a 201219
 - [x] Unlock de classes pelo nível dos aviões: regras `unlocks` do configBinary (always / classLevelGreater) com `highestLevels`; o item novo vai no `ClientUpdatePlayer`. Testado: walker nível 9 desbloqueou e criou um paladin
 - [ ] 🟡 Trocar de avião no Hangar (`ServerRequestChangePlayerPlane` `15839`): na v6 o jogador ficava preso no hangar. A v7 tira o avião atual (`KillUnitsBatch` com `ChangePlane`) e cria o escolhido no mesmo lugar com outro shortId. Falta conferir no jogo; `ClientShowPlaneSelection` `24120` sem uso
@@ -149,7 +149,7 @@ Código em `Server\Progression` e doc em `docs/progression.md`. Tudo abaixo aind
 - [x] Comandos de teste no chat (`/inimigo`, `/spawn`, `/chefe`, `/onda`, `/catalogo`…)
 - [ ] 🟡 Inimigos atravessam muros (só ficam presos à área da sala)
 - [ ] 🟡 Rotação visual das torretas (`FIELDMASK_GUNS` `4096`, `Enemies.Guns.cs`, 22/11, sem teste no jogo): o `UpdateUnitsBatch` dos inimigos leva o ângulo alvo de cada arma (índice, relógio de recarga x64, ângulo x32, termina em -1, como o `UnitScript.SyncGuns` lê). Armas "Aimed" seguem o jogador dentro do arco; as de padrão (arco, mangueira, sprinkler) mostram o ângulo do último tiro por 1 s e voltam ao repouso. Só manda quando o ângulo muda mais de 2°
-- [ ] 🟡 IA em arquivos (22/11, compilada; o simulador e o fluxo de edição foram testados com um programa de teste que abre a aba real, falta usar no jogo): `Server\ai\behaviors\*.json` e `Server\ai\brains\*.json` (máquina de estados: cada estado age como um comportamento e tem transições com condições), lidos pelo servidor (`Enemies.Brains.cs`) e relidos ao mudar; o tipo de unidade usa `"ai": "<id>"` (também em `phases`). Vem com 6 IAs e 10 comportamentos de exemplo e tipos `ai_*` no `enemies.json` (`/enemy ai_chaser`, `/brains`). Formato em `Server\ai\README.md`, código em `docs/enemy-ai.md`. Falta testar no jogo
+- [x] IA em arquivos (22/11, compilada e testada no launcher e no jogo): `Server\ai\behaviors\*.json` e `Server\ai\brains\*.json` (máquina de estados: cada estado age como um comportamento e tem transições com condições), lidos pelo servidor (`Enemies.Brains.cs`) e relidos ao mudar; o tipo de unidade usa `"ai": "<id>"` (também em `phases`). Vem com 6 IAs e 10 comportamentos de exemplo e tipos `ai_*` no `enemies.json` (`/enemy ai_chaser`, `/brains`). Formato em `Server\ai\README.md`, código em `docs/enemy-ai.md`
 - [ ] Comportamento original de cada inimigo: hoje são comportamentos genéricos para 856 unidades armadas; a IA de cada chefe precisa ser recriada a partir de vídeos (Apêndice C)
 - [ ] 🟡 Aliados: `ServerSpawnGreenTeamAlly` `23584` chega e só é registrado
 - [ ] 🟡 Efeitos de status: `ServerReportPlayerEffect` e `ServerShowInstantEffect` chegam e só são registrados; faltam `ClientCloudEffect` `32571`, `ServerReportCloudEffect` `27911`, `ClientInstantEffect` `58535`
@@ -205,22 +205,23 @@ Código em `Server\Items` (v9, ainda não testada no jogo). Tabelas de loot em `
 - [ ] 🟡 Pilot's Pub e Oficina: abrem com lista de quests vazia (ver seção 9)
 - [ ] Hangar: troca de avião (seção 2)
 - [ ] Pilot School: tutoriais das outras classes (seção 8)
-- [ ] Flock Hall: flocks (seção 10); `ServerFindFlockSuggestion` responde `not_implemented`
+- [ ] 🟡 Flock Hall: flocks feitas no servidor (seção 10); falta abrir o Flock Hall no jogo
 - [ ] Combat Sim (seção 11)
 - [ ] 🟡 Porta-aviões das missões: abre com lista vazia (seção 9)
-- [ ] Levar o jogador do Nexus para os mundos/ilhas (seção 7)
+- [x] Levar o jogador do Nexus para o mundo aberto (22/11): portal no Nexus (`world.json` > `nexusPortal`, agora depois da nave das missões, u 72 v 9, tipo `Basic`) que troca o servidor com o avião; testado só com um cliente de teste, falta o jogo. Só um mundo (sem lista de mundos/ilhas) Testado no jogo em 22/11.
 
 ## 7. Mundo aberto (ilhas)
 
-- [ ] Servidor de mundo (terreno `Basic`, papel World)
-- [ ] Gerar o mapa do mundo: o `WorldLayout` do cliente traz o algoritmo (semente, raio 650, mapas ASCII, assets de chão, cânions); quem gerava era o servidor
-- [ ] Regiões do mundo (o cliente cita midlands e highlands; o anúncio do lançamento cita a região Palace) e nome da sub-região na tela (`ReceiveCurrentSubterritoryName` `62683`)
-- [ ] Spawn de inimigos por região e por nível de ilha (spawn rules; cada unidade tem faixa `ilhaMin`/`ilhaMax`)
-- [ ] Chefes de setpiece, chefes de evento e setpieces que aparecem (IslandConfig, EventBossesConfig, PopupSetpieceConfig)
+- [x] Servidor de mundo (terreno `Basic`, papel World; `Server\World\WorldServer*.cs`, porta UDP 1114): welcome, chão, spawn, jogadores no mesmo mundo (se veem pelo `PlayerRelay`), mundo descartado quando o último sai. Testado só com um cliente de teste; falta o jogo Testado no jogo em 22/11.
+- [x] Mapa do mundo (`WorldGenerator`, `docs\open-world.md`): o cliente traz a estrutura e as tabelas (elevação, discos, grupos de cânion, peças de chão), mas não o programa que enchia o mapa. Recriado por semente: círculo de raio 650, praia no centro, regiões por elevação, ilhas em discos, cânions (`MakeWideCanyons`), muros em faixas e as peças de chão como o cliente escolhe. Em 22/11 o layout padrão passou a ser as 12 zonas do mapa do próprio jogo (`layout: original` no `world.json`, `WorldZones.cs`) e o tamanho ficou em `sizeScale` 1,3333 (raio 867, 16 mil tiles) e muro invisível na borda feito pelo servidor (`WorldServer.Edge.cs`: o avião que passa de `edgeMargin` é parado e devolvido; não é um muro do cliente). Falta ver no jogo se o desenho parece o original e se o muro da borda incomoda Testado no jogo em 22/11.
+- [x] Regiões do mundo (beach, lowlands, midlands, highlands, mountains, highmountains, cada uma com variantes 1 a 3) e nome da sub-região na tela (`ReceiveCurrentSubterritoryName` `62683`, enviado ao mudar de região). Falta a região Palace do anúncio do lançamento e conferir o que o cliente faz com o nome Testado no jogo em 22/11.
+- [x] Spawn de inimigos por região (`WorldEnemyPools`, `WorldServer.Sites.cs`): sítios de spawn na terra, grupos (líder e seguidores) ou solitários da pasta de unidades da região, só perto dos jogadores, dormindo até alguém chegar perto, respawn pelo `secondsPerStandardEnemyIn10x10` da região. IA: a padrão (`chase`); nada novo. Falta o nível de ilha (`islandMin`/`islandMax` só existe nos chefes), densidade conferida no jogo e a composição original dos grupos Testado no jogo em 22/11.
+- [ ] Chefes de setpiece, chefes de evento e setpieces que aparecem (IslandConfig, EventBossesConfig, PopupSetpieceConfig; os dados de `islandQuestEnemies` e `events` vêm no `configBinary`, a configuração `island` vem vazia)
 - [ ] Quests de ilha (`ClientReceiveIslandQuestNotification` `54199`)
-- [ ] Porta-aviões de dungeon que aparecem no mundo (`ClientReceivePortalUpdate` `35053`, `ServerSendMeThroughPortal`)
-- [ ] Teleporte para casa/local (`ServerNotifyCompleteTeleport` `12006`), nascimento com zona segura. O tempo do "Voltar para Rebel City" do menu é do cliente (`teleportNexusDelay`): o plugin (1.23.0) sobe para no mínimo 3 s (`NexusTeleportDelaySeconds` no BepInEx cfg)
+- [x] Porta-aviões de dungeon que aparecem no mundo (`WorldServer.Carriers.cs`): uma dungeon aberta do `dungeons.json` por vez, até `maxAtOnce`, a cada `everySeconds`, por `lifetimeSeconds`, com contagem regressiva; entrar leva à dungeon (`ServerSendMeThroughPortal`) e o aviso no chat diz a direção. Falta `ClientReceivePortalUpdate` `35053` (jogadores em cada porta-aviões) e a regra original de quando e onde aparecem Testado no jogo em 22/11.
+- [ ] 🟡 Nascimento com zona segura (`spawn.safeZoneRadius`: sem inimigos nem muros em volta). Teleporte para casa/local: `ServerNotifyCompleteTeleport` `12006` não tem tratamento (o cliente se teleporta sozinho); o tempo do "Voltar para Rebel City" do menu é do cliente (`teleportNexusDelay`): o plugin (1.23.0) sobe para no mínimo 3 s (`NexusTeleportDelaySeconds` no BepInEx cfg)
 - [ ] Eventos agendados (UGUIUpcomingEventsList)
+- [ ] 🟡 Aba Server > World map do launcher (22/11): mapa por zona com jogadores e porta-aviões e dados ao passar o mouse, testado no jogo. Novo em 22/11 (compilado e testado só com um cliente de teste e uma tela renderizada por programa; falta o jogo): abas Map e World settings (edita o `world.json`: ligar, nome, máximo de jogadores, forma de geração, tamanho, semente, montar antes, muro da borda), botão Reroll world (grava uma semente nova) e mundo montado antes do primeiro jogador (`pregenerate`). Falta editar no launcher as chaves aninhadas (inimigos, porta-aviões, ponto de nascimento) e o mundo na lista de servidores/portas do launcher
 
 ## 8. Dungeons e tutoriais
 
@@ -275,9 +276,9 @@ Doc das dungeons recriadas: `docs/dungeons-190828.md`. Servidor de dungeon: `doc
 
 - [x] Mensagens do servidor no chat (`ClientReceiveText`) e falas de NPC (`ClientShowUnitChat`)
 - [x] Comandos `/` desconhecidos do cliente chegam ao servidor (`SlashCommand`)
-- [ ] 🟡 Chat entre jogadores: proximidade (`11732` → `1612`, repassado no Nexus pelo `PlayerRelay`, falta testar); sussurro (`11731`/`11730`), chat da flock (`11733`/`11734`)
-- [ ] 🟡 Amigos: a lista é respondida vazia; faltam adicionar e remover (`ServerAddFriend` `12201`, `ServerDeleteFriend` `12202`)
-- [ ] Flocks (guildas): criar, entrar, sair, convites, cargos, expulsar, banir, silenciar, buscar, sugestão (`30000`–`30016`), flock padrão (`48916`)
+- [ ] 🟡 Chat entre jogadores: proximidade (`11732` → `1612`, repassado pelo `PlayerRelay`, agora com a flock no nome; falta testar); sussurro (`11731`/`11730`) e chat da flock (`11733`/`11734`) feitos em `ServerSocialSocialHandler.Chat.cs`, testados com cliente de teste, falta testar no jogo
+- [ ] 🟡 Amigos: lista salva por conta (`accounts<chave>social.json`), adicionar/remover/bloquear/silenciar (`12201`/`12202`), dados de amigos em outro servidor ou offline, `/friends` e `/addfriend NOME`; testado com cliente de teste, falta testar no jogo
+- [ ] 🟡 Flocks (guildas): criar (gasta o token de fundador, configurável), entrar, sair, convites, cargos, expulsar, banir, silenciar, buscar, sugestão (`30000`–`30016`), flock padrão (`48916`), salvas em `flocks.json`; testado com cliente de teste, falta testar no Flock Hall do jogo
 - [ ] Troca segura entre jogadores (`12500`–`12508`)
 - [ ] Barracas de venda (`RequestOpenStall` `60871` / `RequestCloseStall` `22615`)
 - [ ] Espectar e seguir jogadores (`ServerSpectate` `17500`, viewpoints `3276`, `3761`, `14265`, `34455`)
@@ -297,7 +298,7 @@ Doc das dungeons recriadas: `docs/dungeons-190828.md`. Servidor de dungeon: `doc
 - [x] Nexus ↔ tutorial levando o mesmo avião (`ClientSwitchToServer`, `ClientSwitchToServerWithPlane`, `ClientPortalResult`), agora com XP e nível
 - [ ] 🟡 Nexus → dungeon e volta com o mesmo avião (porta-aviões, `/dungeon`, porta-aviões de saída, `/sair`); falta testar no jogo. Nexus → mundo e Combat Sim ainda não
 - [ ] Vários Nexus e troca entre eles no jogo (`ServerSendMeToOtherNexus` `28738`). A lista que o jogo mostra vem de `procs` no `/user/login` e `/user/self`; hoje vai o Nexus do próprio servidor (no endereço que o jogo usou). É por aqui que a lista do jogo pode espelhar a do launcher
-- [ ] Ir para o servidor de outro jogador (`ServerSendMeToPlayerServer` `43983` / `ClientSendMeToPlayerServerFailed` `46627`)
+- [ ] 🟡 Ir para o servidor de outro jogador (`ServerSendMeToPlayerServer` `43983` / `ClientSendMeToPlayerServerFailed` `46627`): Nexus ↔ mundo aberto e no mesmo servidor, o avião nasce ao lado do amigo; testado com cliente de teste, falta testar no jogo (`docs/social.md`)
 - [ ] Contas entre hosts diferentes: cada host guarda as próprias contas, então trocar de PC precisa de uma regra (conta por host ou transferência)
 
 ## 13. Áudio, interface e extras
@@ -318,29 +319,29 @@ Doc das dungeons recriadas: `docs/dungeons-190828.md`. Servidor de dungeon: `doc
 - [x] Dividir arquivos grandes. `Enemies.cs` (era `InimigosEsboco.cs`, 118 KB) virou 7 arquivos `partial` por tema (`Enemies.Scripts`, `Encounters`, `Ai`, `Messages`, `Files`, `Util`); `Game.cs` (60 KB) virou 6 (`Actions`, `Players`, `Rpc`, `Shots`, `Units`); `Tutorial.cs` (61 KB) virou 6 (`Commands`, `Helpers`, `Instructor`, `Script`, `Session`); `DungeonServer.cs` (57 KB) virou 6 (`Commands`, `Helpers`, `Session`, `Tick`, `Units`); `Items\InventoryHandler.cs` (45 KB) virou 5 (`.Moves`, `.Use`, `.Commands`, `.Send`); e, em 22/11, `Program.cs` (54 KB, código de topo de arquivo) virou a classe `Program` com `Main` em 5 arquivos `partial` (`Program.cs`: constantes, estado e `Main`; `Program.Transfers.cs`: troca de servidor e nascimento do avião; `Program.Messages.cs`: mensagens do cliente; `Program.Udp.cs`: laço UDP; `Program.Http.cs`: login e info do servidor). Nenhum arquivo do servidor passa de 40 KB; os maiores agora são `Progression\PilotProgression.cs` (39 KB), `Enemies.cs` (36 KB) e `Items\LootTables.cs` (33 KB)
 - [x] README de instalação e de contribuição para o GitHub (`README.md`, `CONTRIBUTING.md`)
 - [x] Servidor como executável publicado (sem `dotnet run`): o `Build launcher.ps1` publica o `SteambirdsServer.exe` self-contained em `Launcher\dist\server`, com mapas, dados e configs. Rodou pelo launcher em 15/11
-- [ ] 🟡 Release do servidor para o GitHub (20/11): `Build server release.ps1` publica servidor, `SteambirdsGameFiles.exe` e plugin e monta `Release\SteambirdsServer-<versão>-win-x64.zip` com `Start server.cmd`, README (`Packaging\server`), configs, `maps\` e `loot_tables\`; confere que não entrou arquivo do jogo, conta ou log antes de zipar. Pastas de dados novas do servidor só entram se forem adicionadas em `$releaseFolders` no script. Falta rodar
-- [ ] 🟡 Arquivos do jogo fora do GitHub (20/11): `GameFiles\` (`SteambirdsGameFiles.exe`, também no `Launcher\dist`) pega da cópia do jogo de cada jogador o `configBinary`, os `.txt` do plugin e as imagens do editor (ver seção 18). Falta compilar e testar. Atenção: o `Launcher\dist` montado pelo `Build launcher.ps1` ainda copia o `configBinary` e o `server\data` do PC de desenvolvimento, então o zip do launcher não deve ir para o GitHub assim
+- [x] Release do servidor para o GitHub (20/11, testado em 22/11): `Build server release.ps1` publica servidor, `SteambirdsGameFiles.exe` e plugin e monta `Release\SteambirdsServer-<versão>-win-x64.zip` com `Start server.cmd`, README (`Packaging\server`), configs, `maps\` e `loot_tables\`; confere que não entrou arquivo do jogo, conta ou log antes de zipar. Pastas de dados novas do servidor só entram se forem adicionadas em `$releaseFolders` no script
+- [ ] 🟡 Arquivos do jogo fora do GitHub (20/11): `GameFiles\` (`SteambirdsGameFiles.exe`, também no `Launcher\dist`) pega da cópia do jogo de cada jogador o `configBinary`, os `.txt` do plugin e as imagens do editor (ver seção 18). Compilado e testado em 22/11. Atenção: o `Launcher\dist` montado pelo `Build launcher.ps1` ainda copia o `configBinary` e o `server\data` do PC de desenvolvimento, então o zip do launcher não deve ir para o GitHub assim
 
 ## 15. Launcher base — aba Client (objetivo intermediário)
 
 - [x] Scripts PowerShell que sobem o servidor e abrem o jogo (`Run server.ps1`, `Run game.ps1`)
 - [x] Programa de launcher com abas Client, Server e Settings: `Launcher\` (WinForms, .NET 8, `Core\` e `UI\`), montado pelo `Build launcher.ps1` em `Launcher\dist`. Tudo fica na pasta do exe (`launcher.json`, `lang\`, `logs\`, `server\`, `plugin\`). Console do cliente com o `LogOutput.log` e o `Player.log`. Doc em `Launcher\README.md`. A 0.1.0 compilou e rodou no PC em 15/11
-- [ ] 🟡 Aba Settings (0.2.0): tema claro/escuro, pasta do jogo e os botões de abrir pastas, logs e arquivos (jogo, BepInEx, servidor, mapas, backups, configs). Falta testar
-- [ ] 🟡 Idiomas (0.2.0): launcher em inglês por padrão, português em `lang\pt-BR.json`, pasta `lang` com `_template.json` e `README.md` para a comunidade adicionar idiomas (`<código>.missing.json` lista o que falta traduzir); idioma do jogo escolhido no launcher (lista do `Texts/locales` do jogo, passado com `-locale`). Falta testar
-- [ ] 🟡 Escolher o nome do jogador (0.3.0): padrão = nome da conta Steam (`loginusers.vdf`); vai no caminho do `OZY_URL` (`/n/<hex>/ozy`) e o servidor usa no login. A conta continua sendo a da Steam. Falta testar
-- [ ] 🟡 Lista de servidores na rede local (0.3.0): pergunta UDP na porta 6444 por broadcast, para a tabela ARP e para cada endereço de redes pequenas; o servidor responde com nome, jogadores e porta (`Network\LanDiscovery.cs`). Busca sozinha a cada minuto. Falta testar
-- [ ] 🟡 Lista de servidores em VPN (Radmin, Hamachi, ZeroTier...) e Conectar por IP (0.3.0): broadcast e tabela ARP de cada adaptador de VPN; IP manual conferido em `/revive/info` e guardado na lista. Falta testar
-- [ ] 🟡 Botão de abrir o jogo já apontando para o servidor escolhido: este PC com `-connecttolocal` (e `-connecttolocalport` se o Nexus mudar de porta), sobe o servidor antes se precisar; outro PC sem `-connecttolocal` (o login devolve o Nexus dele) e com "Iniciar o servidor deste PC" desmarcado e acinzentado. Falta testar outro PC
+- [x] Aba Settings (0.2.0, testada em 22/11): tema claro/escuro, pasta do jogo e os botões de abrir pastas, logs e arquivos (jogo, BepInEx, servidor, mapas, backups, configs)
+- [x] Idiomas (0.2.0, testado em 22/11): launcher em inglês por padrão, português em `lang\pt-BR.json`, pasta `lang` com `_template.json` e `README.md` para a comunidade adicionar idiomas (`<código>.missing.json` lista o que falta traduzir); idioma do jogo escolhido no launcher (lista do `Texts/locales` do jogo, passado com `-locale`)
+- [x] Escolher o nome do jogador (0.3.0, testado em 22/11): padrão = nome da conta Steam (`loginusers.vdf`); vai no caminho do `OZY_URL` (`/n/<hex>/ozy`) e o servidor usa no login. A conta continua sendo a da Steam
+- [x] Lista de servidores na rede local (0.3.0, testada em 22/11): pergunta UDP na porta 6444 por broadcast, para a tabela ARP e para cada endereço de redes pequenas; o servidor responde com nome, jogadores e porta (`Network\LanDiscovery.cs`). Busca sozinha a cada minuto
+- [x] Lista de servidores em VPN (Radmin, Hamachi, ZeroTier...) e Conectar por IP (0.3.0, testados em 22/11): broadcast e tabela ARP de cada adaptador de VPN; IP manual conferido em `/revive/info` e guardado na lista
+- [x] Botão de abrir o jogo já apontando para o servidor escolhido: este PC com `-connecttolocal` (e `-connecttolocalport` se o Nexus mudar de porta), sobe o servidor antes se precisar; outro PC sem `-connecttolocal` (o login devolve o Nexus dele) e com "Iniciar o servidor deste PC" desmarcado e acinzentado. Testado neste PC e em outro PC (22/11)
 - [ ] Lista de servidores dentro do jogo igual à do launcher, com troca entre eles (seção 12)
 
 ## 16. Launcher — aba Server
 
-- [ ] 🟡 Hospedar o servidor pelo launcher: aba Servidor com iniciar, parar e reiniciar, console colorido com filtro, log por sessão (`logs\server-<date>.log`) e o `server-report.txt` ao parar (como o `Run server.ps1`). Jogadores de outros PCs entram desde a 0.3.0 (falta testar)
-- [ ] 🟡 Contas salvas no PC do host, uma por jogador (`server\accounts`, v11). Falta testar
+- [x] Hospedar o servidor pelo launcher: aba Servidor com iniciar, parar e reiniciar, console colorido com filtro, log por sessão (`logs\server-<date>.log`) e o `server-report.txt` ao parar (como o `Run server.ps1`). Jogadores de outros PCs entram desde a 0.3.0 (testado em 22/11)
+- [x] Contas salvas no PC do host, uma por jogador (`server\accounts`, v11, testado em 22/11)
 - [ ] 🟡 Configurações: telas Progressão, Itens e loot e Inimigos e dificuldade, montadas a partir do `progression.json`, `items.json` e `enemies.json` (cada chave vira um campo e o comentário vira a explicação; salvar mantém os comentários; o servidor relê sozinho). Dificuldade: `multiplicadorGlobalDeVida`, `dungeonDifficulty` e o multiplicador de vida de cada dungeon
-- [ ] 🟡 Rede e multiplayer (0.3.0): endereços para passar aos outros jogadores (um por rede, com botão de copiar), regra do Firewall do Windows (cria com permissão de administrador) e o `network.json` (nome, outros PCs, busca, máximo de jogadores, comandos de chat, mensagem de boas-vindas e as portas HTTP, Nexus, tutorial, dungeon e busca). Falta testar
+- [x] Rede e multiplayer (0.3.0, testada em 22/11): endereços para passar aos outros jogadores (um por rede, com botão de copiar), regra do Firewall do Windows (cria com permissão de administrador) e o `network.json` (nome, outros PCs, busca, máximo de jogadores, comandos de chat, mensagem de boas-vindas e as portas HTTP, Nexus, tutorial, dungeon e busca)
 - [ ] 🟡 Aba de contas: estado inicial de contas novas editável (patente; desbloqueios em checklist com as classes do jogo; um campo por moeda do jogo; ingredientes e itens no armazém)
-- [ ] 🟡 Ver, editar e apagar contas: lista com uma linha por jogador (nome, Steam ID, último jogo, patente, aviões...) e os aviões da selecionada (0.3.0); janela de edição (piloto e patente, aviões com variante/nível/XP, desbloqueios, dungeons terminadas, moedas e ingredientes) e remover a conta, com cópia em `server\_backup`. Só com o servidor do launcher parado. Falta testar
+- [x] Ver, editar e apagar contas (testado em 22/11): lista com uma linha por jogador (nome, Steam ID, último jogo, patente, aviões...) e os aviões da selecionada (0.3.0); janela de edição (piloto e patente, aviões com variante/nível/XP, desbloqueios, dungeons terminadas, moedas e ingredientes) e remover a conta, com cópia em `server\_backup`. Só com o servidor do launcher parado
 - [ ] 🟡 Aba Store do launcher (22/11): configura tudo do `stores.json` por tela (compras, modo de preço grátis/moeda, desconto geral, desconto/estoque/limite por produto com os preços do jogo, lojas e seções, incluir/excluir). Os preços só podem baixar (o cliente desenha o preço): o desconto de 0 a 100% é o ajuste. Falta testar
 - [ ] 🟡 Dinheiro nas contas (22/11): na aba Accounts, dinheiro inicial das contas novas (`startingCurrencies`) e dinheiro de uma conta que já existe, que fica só na janela "Edit account..." (`inventory.json`, só com o servidor parado; o painel do canto da lista foi removido por ser redundante). Falta testar
 - [ ] 🟡 Retrato por conta (22/11, compilado, falta testar): coluna Portrait na lista de contas, aba Portrait na janela de edição e botão "Reroll portrait" (sorteia com as regras do jogo a partir de `server\data\portraits_config.txt`; só com o servidor parado, cópia em `server\_backup`). O launcher mostra as peças por nome e id, não o desenho: as peças são prefabs da Unity, e desenhá-las exigiria o plugin exportar as imagens (a fazer)
@@ -349,72 +350,70 @@ Doc das dungeons recriadas: `docs/dungeons-190828.md`. Servidor de dungeon: `doc
 - [ ] 🟡 Escolher o arquivo de mapa de cada dungeon: tela "Mapas e dungeons" do launcher (grava no `dungeons.json`). Falta testar
 - [ ] Ver cada mapa na tela do servidor (no launcher, acinzentado)
 - [ ] 🟡 Definir quando cada dungeon fica disponível: "Ativa", "No Nexus", "Vida ×" e "Abre em" na tela "Mapas e dungeons". Falta testar
-- [ ] Mapa do mundo com a posição de cada jogador (no launcher, aba acinzentada)
+- [x] Mapa do mundo com a posição de cada jogador (22/11, aba World map do launcher; dados ao passar o mouse; falta testar com o servidor e o jogo rodando) Testado no jogo em 22/11.
 
 ## 17. Launcher standalone (objetivo final)
 
 - [ ] 🟡 Detectar a Steam e o login: o launcher acha a pasta da Steam pelo registro, avisa se ela está fechada e mostra a conta logada (`ActiveProcess\ActiveUser` e `loginusers.vdf`: nome e Steam ID)
-- [ ] 🟡 Abrir o console da Steam com o comando pronto (0.3.0): botão "Baixar o jogo pela Steam" copia `download_depot 386010 386011 58813776496064724` e abre `steam://open/console`; o jogador cola e aperta Enter (a Steam não deixa mandar o comando de fora). Falta testar
+- [x] Abrir o console da Steam com o comando pronto (0.3.0, testado em 22/11): botão "Baixar o jogo pela Steam" copia `download_depot 386010 386011 58813776496064724` e abre `steam://open/console`; o jogador cola e aperta Enter (a Steam não deixa mandar o comando de fora)
 - [ ] 🟡 Janela de primeira execução (22/11, compilada e aberta no PC, falta o fluxo completo): se o `Steambirds.exe` não está na pasta do jogo, o launcher abre antes da janela principal uma janela com "Download the game with Steam" (o mesmo fluxo da aba Client) ou "Choose the folder where the game is", avisando que a build certa é a 201219.1413 do console da Steam e que a última versão do jogo tem todo o conteúdo removido; "Continue without the game" abre o launcher assim mesmo. `UI\GameSetupForm.cs`
 - [x] Aba Client explica o plugin Quieter (o que corrige e o que se perde sem ele) em texto fixo e em dica (22/11)
-- [ ] 🟡 Detectar quando o download termina (0.3.0): linhas `Depot download complete` / `failed` do `logs\console_log.txt` da Steam e o tamanho da pasta `depot_386011`; no fim ela vira a pasta do jogo. Falta testar
-- [ ] 🟡 Colocar os arquivos necessários para o jogo logar via Steam: o launcher cria o `steam_appid.txt` (386010) na pasta do jogo (0.3.0), mostra a build e instala o plugin no `BepInEx\plugins`. O BepInEx não vem com o launcher, mas o `SteambirdsGameFiles.exe` (20/11) baixa o BepInEx 5.4.23.5 oficial do GitHub (64 ou 32 bits pelo `Steambirds.exe`) e instala junto com o plugin. Falta testar e chamar pelo launcher
+- [x] Detectar quando o download termina (0.3.0, testado em 22/11): linhas `Depot download complete` / `failed` do `logs\console_log.txt` da Steam e o tamanho da pasta `depot_386011`; no fim ela vira a pasta do jogo
+- [ ] 🟡 Colocar os arquivos necessários para o jogo logar via Steam: o launcher cria o `steam_appid.txt` (386010) na pasta do jogo (0.3.0), mostra a build e instala o plugin no `BepInEx\plugins`. O BepInEx não vem com o launcher, mas o `SteambirdsGameFiles.exe` (20/11) baixa o BepInEx 5.4.23.5 oficial do GitHub (64 ou 32 bits pelo `Steambirds.exe`) e instala junto com o plugin (testado em 22/11). Falta chamar pelo launcher
 - [ ] 🟡 Executar o jogo (botão "Jogar" do launcher)
 
 ## 18. Editor de mapas
 
 - [x] Formato de mapa em arquivo (JSON v1): chão desenhado, peças, enfeites, prédios, pontos, áreas, portões, placas (`docs/map-format.md`)
 - [x] Servidor relê o mapa ao mudar, valida os nomes que o roteiro usa e mantém a última versão boa se o arquivo tiver erro
-- [ ] 🟡 Editor visual com os assets do jogo (aba Map editor do launcher, `Launcher\Editor`): chão, muros, entrada, saída, pontos de controle, portões, salas com inimigos e ondas, tipos de unidade, pontos, áreas, linhas, rotas, placas, enfeites e prédios, com desfazer/refazer e tema claro/escuro. Prévias em geometria e cor dos vértices (sem as texturas do jogo); a arte de várias unidades ainda cai em letra. Escrito em 16/11 **sem compilar**: falta compilar e testar
-- [ ] 🟡 Imagens do editor tiradas do próprio jogo (20/11, sem compilar): no modo de exportação (`STEAMBIRDS_EXPORT`, aberto pelo `SteambirdsGameFiles.exe`) o plugin desenha de cima cada peça do `GroundAssetContainer` e cada arte de unidade (`UnitConfig.art`, pool `Planes`) com as malhas, materiais e luz do jogo, grava `ground\*.png`, `units\*.png` e `thumbs.json` (mesmo formato do editor) e fecha o jogo. Substitui o `tools\editor` (que dependia do AssetRipper). Falta testar se as texturas, o tamanho (`half`) e a orientação batem com o jogo
-- [ ] 🟡 Editor (22/11, testado com um programa de teste que abre as telas reais e confere abas, opções, rotação e desenho; falta usar com o mouse): decoração e prédios giram pelo `rot`, as peças de `floor.pieces` passam a ser desenhadas com a rotação do arquivo (anti-horária, relativa ao tile) e os inimigos já giravam; abas da direita mostram só as do objeto selecionado e se selecionam sozinhas (clicar num ponto vazio traz todas); opções da esquerda só as da ferramenta ativa; dicas em todas as opções e campos. A rotação da decoração (`rot` + 45° no canvas, como as unidades) não foi conferida contra o jogo
-- [ ] 🟡 Exportar arquivos que o servidor usa: salvar confere o mapa (entrada, saída, chão, referências) e grava em `server\maps`; com erros só salva como rascunho (`"rascunho": true`). Falta testar
-- [ ] 🟡 Dungeons: o editor abre uma cópia de cada uma das 17 da 190828 (também geradas por script em `ferramentas\dungeons-190828`, com prévia em imagem). Falta testar
+- [x] Editor visual com os assets do jogo (aba Map editor do launcher, `Launcher\Editor`): chão, muros, entrada, saída, pontos de controle, portões, salas com inimigos e ondas, tipos de unidade, pontos, áreas, linhas, rotas, placas, enfeites e prédios, com desfazer/refazer e tema claro/escuro. Prévias em geometria e cor dos vértices (sem as texturas do jogo); a arte de várias unidades ainda cai em letra. Escrito em 16/11, compilado e testado em 22/11
+- [x] Imagens do editor tiradas do próprio jogo (20/11, testado em 22/11): no modo de exportação (`STEAMBIRDS_EXPORT`, aberto pelo `SteambirdsGameFiles.exe`) o plugin desenha de cima cada peça do `GroundAssetContainer` e cada arte de unidade (`UnitConfig.art`, pool `Planes`) com as malhas, materiais e luz do jogo, grava `ground\*.png`, `units\*.png` e `thumbs.json` (mesmo formato do editor) e fecha o jogo. Substitui o `tools\editor` (que dependia do AssetRipper). Texturas, tamanho (`half`) e orientação conferidos com o jogo
+- [ ] 🟡 Editor (22/11, testado com um programa de teste que abre as telas reais e confere abas, opções, rotação e desenho; usado com o mouse em 22/11): decoração e prédios giram pelo `rot`, as peças de `floor.pieces` passam a ser desenhadas com a rotação do arquivo (anti-horária, relativa ao tile) e os inimigos já giravam; abas da direita mostram só as do objeto selecionado e se selecionam sozinhas (clicar num ponto vazio traz todas); opções da esquerda só as da ferramenta ativa; dicas em todas as opções e campos. A rotação da decoração (`rot` + 45° no canvas, como as unidades) não foi conferida contra o jogo
+- [x] Exportar arquivos que o servidor usa (testado em 22/11): salvar confere o mapa (entrada, saída, chão, referências) e grava em `server\maps`; com erros só salva como rascunho (`"rascunho": true`)
+- [x] Dungeons: o editor abre uma cópia de cada uma das 17 da 190828 (também geradas por script em `ferramentas\dungeons-190828`, com prévia em imagem). Testado em 22/11
 - [ ] Mapa global (mundo aberto)
 - [ ] 🟡 Inimigos e encontros por mapa: o servidor de dungeon lê `tipos` e `encontros` de cada mapa (os tipos entram com o prefixo do mapa); no Nexus e no tutorial ainda vale o `enemies.json`
 - [ ] Roteiros de dungeon em arquivo (hoje o roteiro do tutorial está em código)
 - [ ] Coleção de versões de dungeons da comunidade para o host escolher
-- [ ] 🟡 Editor de IA e comportamentos dos inimigos (22/11): aba **Enemy AI** do launcher (`Launcher\EnemyAi`) com lista de arquivos, editor de estados, transições e condições, comportamentos reutilizáveis, validação, novo/duplicar/renomear/apagar (vai para `_backup`), importar e exportar (um arquivo com a IA e os comportamentos que ela usa) e **simulador** (arte, velocidade, giro e armas de qualquer unidade, jogador que segue cliques, gira ou fica parado, multiplicadores do tipo, perda de vida). O simulador roda o mesmo código do servidor (`Shared\EnemyAi`). Ligado ao editor de mapas (campo `ai` em Units > Enemy AI). Falta: usar com o mouse no launcher real, desfazer/refazer, invocar e escudo dentro da IA, muros e salas no simulador
+- [ ] 🟡 Editor de IA e comportamentos dos inimigos (22/11): aba **Enemy AI** do launcher (`Launcher\EnemyAi`) com lista de arquivos, editor de estados, transições e condições, comportamentos reutilizáveis, validação, novo/duplicar/renomear/apagar (vai para `_backup`), importar e exportar (um arquivo com a IA e os comportamentos que ela usa) e **simulador** (arte, velocidade, giro e armas de qualquer unidade, jogador que segue cliques, gira ou fica parado, multiplicadores do tipo, perda de vida). O simulador roda o mesmo código do servidor (`Shared\EnemyAi`). Ligado ao editor de mapas (campo `ai` em Units > Enemy AI). Testado no launcher real em 22/11. Falta: desfazer/refazer, invocar e escudo dentro da IA, muros e salas no simulador
 
 ---
 
 ## Sugestão de ordem para o MVP
 
-0. Compilar o launcher 0.3.0 e o servidor v11 (`Build launcher.ps1`) e testar sozinho: a sua conta Steam é criada em `server\accounts\steam_...` (a conta única antiga não é mais migrada), o nome do jogador aparece no log (`[LOGIN]`), o tutorial e o Nexus continuam iguais.
-1. Testar com um segundo PC (Radmin ou rede local): busca de servidores, Conectar por IP, firewall, duas contas separadas, trocas Nexus ↔ tutorial ↔ dungeon no PC de fora.
-2. Multiplayer de verdade: testar o `PlayerRelay` (avião, tiros, chat) com dois PCs; depois skills dos outros, inimigos e loot compartilhados. Quase todo o resto depende disso.
+0. (Feito em 22/11) Compilar o launcher 0.3.0 e o servidor v11 (`Build launcher.ps1`) e testar sozinho: a sua conta Steam é criada em `server\accounts\steam_...` (a conta única antiga não é mais migrada), o nome do jogador aparece no log (`[LOGIN]`), o tutorial e o Nexus continuam iguais.
+1. (Feito em 22/11) Testar com um segundo PC (Radmin ou rede local): busca de servidores, Conectar por IP, firewall, duas contas separadas, trocas Nexus ↔ tutorial ↔ dungeon no PC de fora.
+2. Multiplayer de verdade: `PlayerRelay` (avião, tiros, chat) testado com dois PCs em 22/11; falta dos outros, inimigos e loot compartilhados. Quase todo o resto depende disso.
 3. Testar a v9: loot no tutorial (drones, caixa com os motores, chefe), equipar o motor, mover para o armazém, reciclar, `/item` e `/loot`.
 4. Testar a v7 no jogo: troca de avião no hangar, patente em tempo real, morte, skills e loadouts.
 5. Testar o servidor de dungeon (v8) com Iron Lair e Bomb Factory, depois ligar as outras no `dungeons.json` uma por uma.
-6. Mundo aberto (`Basic`) com spawns por região e porta-aviões de dungeon.
+6. (Feito e testado no jogo em 22/11) Mundo aberto (`Basic`) com spawns por região e porta-aviões de dungeon.
 7. Lojas: feitas, falta testar no jogo (seção 4, "Lojas e vagas"). Depois quests e missões, conferindo antes se o `configBinary` traz os dados (os mapas de dungeon e a IA vieram vazios em todas as builds; o das lojas veio completo).
 
 ## Apêndice A — Classes (15 na tabela do servidor)
 
-Testada no jogo:
+Testadas no jogo (criação, spawn e itens iniciais; 22/11):
 - [x] walker
-
-Falta testar criação, spawn e itens iniciais:
-- [ ] assault
-- [ ] medic
-- [ ] rapier
-- [ ] tank
-- [ ] olfaithful
-- [ ] duster
-- [ ] support
-- [ ] paladin
-- [ ] wizard
-- [ ] engineer
-- [ ] pirate
-- [ ] siegetank
-- [ ] daggerknight
-- [ ] vampire
+- [x] assault
+- [x] medic
+- [x] rapier
+- [x] tank
+- [x] olfaithful
+- [x] duster
+- [x] support
+- [x] paladin
+- [x] wizard
+- [x] engineer
+- [x] pirate
+- [x] siegetank
+- [x] daggerknight
+- [x] vampire
 
 ## Apêndice B — Terrenos que o cliente conhece (mapinfo)
 
 - [x] Nexus (Rebel City)
 - [x] DungeonTutorialWalker (Training Grounds)
-- [ ] Basic (mundo aberto)
+- [x] Basic (mundo aberto): servido e testado no jogo em 22/11 (`ServerWorld`)
 - [ ] DungeonTutorial
 - [ ] DungeonTutorial2
 - [ ] DungeonTutorialWalker2

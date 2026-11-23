@@ -21,10 +21,11 @@
   // TCP port of the login (the launcher opens the game with OZY_URL=http://<ip>:<httpPort>/ozy).
   "httpPort": 6443,
 
-  // UDP ports of the Nexus, the tutorial and the dungeons.
+  // UDP ports of the Nexus, the tutorial, the dungeons and the open world.
   "nexusPort": 1111,
   "tutorialPort": 1112,
   "dungeonPort": 1113,
+  "worldPort": 1114,
 
   // UDP port of the server search of the launchers (they search on 6444 unless set otherwise).
   "searchPort": 6444

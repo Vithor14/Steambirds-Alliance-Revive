@@ -38,7 +38,7 @@ $logFile          = Join-Path $buildFolder "release.log"
 $releaseFolders   = @("maps", "loot_tables", "ai")
 
 # Files in the root of Server\ that never go into the release (development settings and account files).
-$excludedRootFiles = @("appsettings.Development.json", "account.json", "inventory.json", "acceptances.json")
+$excludedRootFiles = @("appsettings.Development.json", "account.json", "inventory.json", "acceptances.json", "flocks.json")
 
 # Folders of Server\ that are known and never released: build output, game data, accounts, logs, backups.
 $knownPrivateFolders = @("bin", "obj", "Properties", ".vs", "data", "catalog", "accounts", "client-uploads", "logs", "_backup")

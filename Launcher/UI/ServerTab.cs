@@ -4,7 +4,7 @@ namespace SteambirdsLauncher.UI;
 
 // "Server" tab: hosts the server of this PC (what "Run server.ps1" did) for this PC and for players of other PCs,
 // and edits its config files, its network settings (network.json) and the accounts of the players.
-// Features the server does not have yet (world map, map preview...) are shown grayed out until they exist.
+// Features the server does not have yet (map preview...) are shown grayed out until they exist.
 // Folders and files are opened from the Settings tab.
 internal sealed class ServerTab : UserControl
 {
@@ -79,12 +79,11 @@ internal sealed class ServerTab : UserControl
         var mapsPage = Page(L.T("Maps and dungeons"), new MapsPage(tip));
 
         var networkPage = Page(L.T("Network and multiplayer"), new NetworkPage(context));
-        var worldPage = new TabPage(L.T("World map"));
-        ThemedTabControl.MarkNotImplemented(worldPage,
-            L.T("Coming soon: world map with the position of each player. The open world (islands) does not exist in the server yet."));
+        var worldPage = Page(L.T("World map"), new WorldPage(context));
+        var socialPage = Page(L.T("Friends and flocks"), new SocialPage(context));
 
         var pages = new ThemedTabControl { Dock = DockStyle.Fill };
-        pages.TabPages.AddRange(new[] { consolePage, progressionPage, itemsPage, storesPage, difficultyPage, accountsPage, mapsPage, networkPage, worldPage });
+        pages.TabPages.AddRange(new[] { consolePage, progressionPage, itemsPage, storesPage, difficultyPage, accountsPage, mapsPage, networkPage, worldPage, socialPage });
 
         Controls.Add(pages);
         Controls.Add(top);

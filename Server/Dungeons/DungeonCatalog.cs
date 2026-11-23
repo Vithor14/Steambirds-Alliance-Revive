@@ -44,8 +44,8 @@ public static class DungeonCatalog
     public sealed class NexusPortals
     {
         public bool Enabled { get; set; } = true;
-        public UV Start { get; set; } = new UV { U = -36f, V = -42f };
-        public UV Step { get; set; } = new UV { U = 30f, V = 0f };
+        public UV Start { get; set; } = new UV { U = -18f, V = -21f };
+        public UV Step { get; set; } = new UV { U = 15f, V = 0f };
         public float Rot { get; set; }
     }
 
@@ -131,6 +131,11 @@ public static class DungeonCatalog
         }
         Reload();
     }
+
+    // Where the dungeon server is, for the carriers other servers (the open world) put in front of the player.
+    public static IPEndPoint Endpoint => dungeonEndpoint;
+    public static long HostId => dungeonHostId;
+    public static string GameVersion => gameVersion;
 
     public static string FilePath()
     {

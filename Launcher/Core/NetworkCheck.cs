@@ -42,6 +42,7 @@ public static class NetworkCheck
         if (IsUdpBound(ports.NexusPort)) return L.F("UDP port {0} (Nexus)", ports.NexusPort);
         if (IsUdpBound(ports.TutorialPort)) return L.F("UDP port {0} (tutorial)", ports.TutorialPort);
         if (IsUdpBound(ports.DungeonPort)) return L.F("UDP port {0} (dungeon)", ports.DungeonPort);
+        if (IsUdpBound(ports.WorldPort)) return L.F("UDP port {0} (open world)", ports.WorldPort);
         return null;
     }
 

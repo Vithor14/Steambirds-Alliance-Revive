@@ -2,8 +2,8 @@
   "note": "Dungeons this server offers. 'type' = client terrain (name and tier come from the game's Texts/dungeons table); 'map' = file in the maps folder (without .json): change it to use another version of the dungeon. 'enabled' turns it on/off; 'opensAt' (optional, \"yyyy-mm-dd hh:mm\", local time) only opens from that date on; 'inNexus' puts its carrier in the Nexus; 'healthMultiplier' changes the health of all its enemies (difficulty). The file is reloaded when it changes (new connections). Full explanation in maps\\README-dungeons.md.",
   "nexusPortals": {
     "enabled": true,
-    "start": {"u": -36, "v": -42},
-    "step": {"u": 30, "v": 0},
+    "start": {"u": -18, "v": -21},
+    "step": {"u": 15, "v": 0},
     "rot": 0,
     "note": "First carrier at (u, v) of the Nexus map; the others follow every 'step'. It stays outside the city, on the lower side (negative v)."
   },

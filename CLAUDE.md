@@ -46,16 +46,18 @@ Maintained 100% by the community, with some additions and improvements.
 | `docs/enemies.md` | enemy AI protocol, scripted enemies, chat commands |
 | `docs/enemy-ai.md` | Enemy AI editor: AI/behavior files (`Server\ai`), shared core `Shared\EnemyAi`, launcher tab and simulator (English) |
 | `docs/stores.md` | stores: shelves, `ClientReceiveStoreContent` bytes, purchase, slots, `stores.json` (English) |
+| `docs/open-world.md` | open world (`Basic`, port 1114): map generator, regions, enemy spawn sites, carriers, `world.json` (English) |
+| `docs/social.md` | friends, flocks (Flock Hall), whispers, flock chat, teleport and "Join Server", `social.json`, `flocks.json` (English) |
 
 ## Repository layout
 
 - `Server\` — the server (.NET 8: ASP.NET for the HTTP "Ozy" API, Lidgren UDP for "Copper"). Project `SteambirdsServer.csproj`.
-  - Folders by topic: `GameData`, `Progression`, `Items`, `Dungeons`, `Network`, `Planes`, `Skills`, `Compat`.
+  - Folders by topic: `GameData`, `Progression`, `Items`, `Dungeons`, `World`, `Network`, `Planes`, `Skills`, `Compat`.
     Top-level files: `Program*.cs` (`Program.cs` startup and `Main`, `Program.Transfers.cs` server switches and plane spawn,
     `Program.Messages.cs` host messages, `Program.Udp.cs` network loop, `Program.Http.cs` login), `Game.cs` (client messages), `Enemies.cs` (AI, waves),
     `Tutorial.cs` (walker tutorial script), `Maps.cs` (map files), `Accounts.cs`, `PlayerData.cs`, `Ground.cs`, `MapInfo.cs`,
     `Nexus.cs`, `WorldObjects.cs`, `PlaneSpawn.cs`, `CopperReader.cs`, `MessageCatalog.cs`, `MessageLog.cs`.
-  - Host configs: `progression.json`, `items.json`, `enemies.json`, `dungeons.json`, `network.json`.
+  - Host configs: `progression.json`, `items.json`, `enemies.json`, `dungeons.json`, `world.json`, `network.json`.
   - Maps: `maps\*.json` (format: `docs/map-format.md`). Loot: `loot_tables\`.
   - Game data exported by the plugin (gitignored, copied from the game): `data\`. Item catalog written by the server: `catalog\`.
   - Accounts: `accounts\<key>\` (gitignored). Chat messages of the client: `Game.cs`; message IDs: `MessageCatalog.cs`.
@@ -134,7 +136,7 @@ In-game testing is done by the user. When they report a test, read `server-repor
 - Client build **201219.1413**, depot `download_depot 386010 386011 58813776496064724`.
   Game folder: `C:\Program Files (x86)\Steam\steamapps\content\app_386010\depot_386011`.
   Player.log: `%USERPROFILE%\AppData\LocalLow\SpryFox\Steambirds Alliance\Player.log`.
-- Ports (`network.json`): HTTP 6443, Nexus UDP 1111, tutorial 1112, dungeon 1113, server search 6444.
+- Ports (`network.json`): HTTP 6443, Nexus UDP 1111, tutorial 1112, dungeon 1113, open world 1114, server search 6444.
 - The server reads the game's `configBinary` (DarkConfig + LZMA) directly: units, items, XP tables, skills, unlocks,
   buffs, texts. What lived only on the original server (enemy AI, dungeon room layouts, named loot tables, XP-per-kill
   formula, the Rebel City map) is empty in every client build checked and has to be rebuilt.

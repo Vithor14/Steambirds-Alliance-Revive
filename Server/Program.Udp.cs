@@ -58,10 +58,12 @@ public static partial class Program
                                 using (Accounts.UseFor(connection))
                                 {
                                     PlayerRelay.Left(connection);
+                                    SocialHandler.PlayerLeft(connection);
                                     Game.Disconnected(connection, Log);
                                     Enemies.Disconnected(connection, Log);
                                     Tutorial.Disconnected(connection, Log);
                                     DungeonServer.Disconnected(connection, Log);
+                                    WorldServer.Disconnected(connection, Log);
                                     PilotProgression.Disconnected(connection);
                                     LootDrops.Disconnected(connection);
                                 }
@@ -107,6 +109,10 @@ public static partial class Program
                 // Dungeon: rooms, gates, bosses, exit (DungeonServer).
                 if (role == RoleDungeon)
                     DungeonServer.Update(server, Clock.Elapsed.TotalSeconds, Log);
+
+                // Open world: regions, enemies near the players and the dungeon carriers (WorldServer).
+                if (role == RoleWorld)
+                    WorldServer.Update(server, Clock.Elapsed.TotalSeconds, Log);
 
                 // Progression: players near each plane (ClientReceiveReliableStats), once per second.
                 PilotProgression.Update(server, Clock.Elapsed.TotalSeconds);

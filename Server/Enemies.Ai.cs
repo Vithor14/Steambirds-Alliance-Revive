@@ -98,6 +98,9 @@ public static partial class Enemies
         // Turrets and mines of the players.
         UpdateAllies(inst, now, log);
 
+        // Open world: each player is told about the units near them (and only those) before the updates go out.
+        UpdateInterest(inst, now);
+
         if (now - inst.LastSend >= SendInterval)
         {
             inst.LastSend = now;

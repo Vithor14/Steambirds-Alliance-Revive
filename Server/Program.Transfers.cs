@@ -57,6 +57,31 @@ public static partial class Program
             $"({type}, {PlayerSessions.NameOf(connection)}, {bytes} bytes{(plane != null ? $", plane {plane.Class}/{plane.Variant}" : ", no plane")})");
     }
 
+    // Switches the client to the open world server (terrain "Basic"), with the plane.
+    static void SendToWorld(NetServer server, NetConnection connection, string reason)
+    {
+        using Accounts.Scope accountScope = Accounts.UseFor(connection);
+        string? characterId = Game.GetPlaneCharacterId(connection);
+        Accounts.SavedPlane? plane = Accounts.GetPlane(characterId);
+        IPEndPoint destination = PlayerSessions.AddressFor(connection, WorldAddress);
+        string name = WorldSettingsFile.Current.Name;
+
+        var swap = server.CreateMessage();
+        if (plane != null)
+        {
+            PlayerData.WriteClientSwitchToServerWithPlane(swap, destination, HostIdWorld, name, BuildVersion, null,
+                Accounts.AccountId, plane.CharacterId, plane.Class, plane.Variant, plane.Level, plane.Xp);
+        }
+        else
+        {
+            PlayerData.WriteClientSwitchToServer(swap, destination, HostIdWorld, name, BuildVersion);
+        }
+        int bytes = swap.LengthBytes;
+        server.SendMessage(swap, connection, NetDeliveryMethod.ReliableOrdered, 0);
+        Log("WORLD", $"{reason} -> {(plane != null ? "ClientSwitchToServerWithPlane" : "ClientSwitchToServer")} to {destination} " +
+            $"({PlayerSessions.NameOf(connection)}, {bytes} bytes{(plane != null ? $", plane {plane.Class}/{plane.Variant}" : ", no plane")})");
+    }
+
     // Creates the player's plane in the world (SpawnUnitsBatch) and tells the game state, the progression, the enemies and the
     // tutorial. Used by the normal spawn (ServerRequestSpawnPlayerPlane) and by the plane swap in the hangar.
     // position: null = the server's spawn point (tutorial hangar or the Rebel City eagle).
@@ -107,6 +132,10 @@ public static partial class Program
         {
             DungeonServer.SpawnPoint(connection, out spawnX, out spawnY, out spawnRot);
         }
+        else if (role == RoleWorld)
+        {
+            WorldServer.SpawnPoint(connection, out spawnX, out spawnY, out spawnRot);
+        }
         else
         {
             Nexus.SpawnPoint(out spawnX, out spawnY, out spawnRot);
@@ -143,6 +172,11 @@ public static partial class Program
             // Dungeon: the gates spawn and the first room waits for the player (or the progress continues after a fall).
             DungeonServer.PlaneSpawned(server, connection, Clock.Elapsed.TotalSeconds, Log);
         }
+        else if (role == RoleWorld)
+        {
+            // Open world: the carriers and units that already exist, and the name of the region.
+            WorldServer.PlaneSpawned(server, connection, Clock.Elapsed.TotalSeconds, Log);
+        }
         else
         {
             // Nexus: encounters of enemies.json for "nexus" (if any) and the arrival message.
@@ -153,6 +187,8 @@ public static partial class Program
                 Nexus.SendBuildings(server, connection, Clock.Elapsed.TotalSeconds, Log);
                 // Carriers of the dungeons open in dungeons.json (entering takes you to the dungeon server).
                 DungeonCatalog.SendNexusPortals(server, connection, Clock.Elapsed.TotalSeconds, Log);
+                // The portal to the open world (world.json).
+                WorldServer.SendNexusPortal(server, connection, Clock.Elapsed.TotalSeconds, Log);
                 WorldObjects.SendChat(server, connection,
                     $"Welcome to {Nexus.Name}! (Map rebuilt from Open Beta videos; the stores open, but buying does not work yet.)");
                 ServerNetworkSettings network = ServerNetworkSettingsFile.Current;

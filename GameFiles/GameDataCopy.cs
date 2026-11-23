@@ -3,7 +3,7 @@ namespace SteambirdsGameFiles;
 // Copies the game files to the server and to the map editor:
 //   configBinary (the game's configs)              game\Steambirds_Data\StreamingAssets -> server\data
 //   units, actions, map info and portraits data    game\BepInEx (written by the plugin)  -> server\data
-//   ground_assets.txt (names of the floor pieces)  game\BepInEx                          -> editor-assets
+//   ground_assets.txt (names of the floor pieces)  game\BepInEx                          -> editor-assets and server\data (open world)
 //   pictures and thumbs.json                       export folder (drawn by the plugin)   -> editor-assets
 // The server looks in its data folder first (Server\GameDataFiles.cs), so it no longer depends on the game folder.
 internal static class GameDataCopy
@@ -49,6 +49,8 @@ internal static class GameDataCopy
             if (CopyPluginFile(Path.Combine(bepInEx, name), Path.Combine(serverData, name), name, sinceUtc)) copied++;
         }
         if (CopyPluginFile(Path.Combine(bepInEx, GroundAssetsFile), Path.Combine(editorAssets, GroundAssetsFile), GroundAssetsFile, sinceUtc)) copied++;
+        // The open world server also needs the ids of the floor pieces (it draws the world floor itself).
+        if (CopyPluginFile(Path.Combine(bepInEx, GroundAssetsFile), Path.Combine(serverData, GroundAssetsFile), GroundAssetsFile, sinceUtc)) copied++;
         return copied;
     }
 

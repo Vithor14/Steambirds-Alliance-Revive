@@ -22,11 +22,13 @@ public static partial class Program
     private const ushort MsgServerRequestChangePlayerPlane = 15839;  // 0x3DDF: string characterId (swap in the hangar)
     private const ushort MsgSlashCommand = 29486;                    // List<string> pieces (chat command)
     private const byte RoleNexus = 0;              // ServerRole.Nexus
+    private const byte RoleWorld = 1;              // ServerRole.World (the open world, terrain "Basic")
     private const byte RoleDungeon = 2;            // ServerRole.Dungeon
     private const byte RoleTutorial = 3;           // ServerRole.Tutorial
     private const long HostIdNexus = 1;            // RegisteredHost.id of the Nexus (the same peerid of the account)
     private const long HostIdTutorial = 2;         // RegisteredHost.id of the tutorial
     private const long HostIdDungeon = 3;          // RegisteredHost.id of the dungeon server
+    private const long HostIdWorld = 4;            // RegisteredHost.id of the open world server
 
     // Shared state of the running server. Everything here is assigned once in Main, before any thread starts.
     private static readonly object LogLock = new();
@@ -38,11 +40,13 @@ public static partial class Program
     private static int NexusPort;      // Nexus server (login, hangar, EULA)
     private static int TutorialPort;   // tutorial server
     private static int DungeonPort;    // dungeon server (maps\dungeon_*.json, list in dungeons.json)
+    private static int WorldPort;      // open world server (terrain Basic, world.json)
 
     // The server keeps its own addresses as 127.0.0.1; PlayerSessions.AddressFor swaps in the address that each player's game
     // used to reach it (LAN, Radmin, Hamachi, internet) when sending.
     private static IPEndPoint NexusAddress = null!;
     private static IPEndPoint DungeonAddress = null!;
+    private static IPEndPoint WorldAddress = null!;
 
     // Name of the tutorial the client asked for (PlayerClassConfig.basicTutorial): marked as finished together.
     private static string RequestedTutorial = "";
@@ -60,6 +64,7 @@ public static partial class Program
         NexusPort = Ports.Nexus;
         TutorialPort = Ports.Tutorial;
         DungeonPort = Ports.Dungeon;
+        WorldPort = Ports.World;
 
         // Accounts: one per player in accounts\<key>\ (account.json, inventory.json, acceptances.json), loaded at the login.
         Accounts.Load(Log);
@@ -81,6 +86,7 @@ public static partial class Program
 
         NexusAddress = new IPEndPoint(IPAddress.Loopback, NexusPort);
         DungeonAddress = new IPEndPoint(IPAddress.Loopback, DungeonPort);
+        WorldAddress = new IPEndPoint(IPAddress.Loopback, WorldPort);
         RequestedTutorial = Tutorial.DungeonName;
 
         var builder = WebApplication.CreateBuilder(args);
@@ -111,9 +117,23 @@ public static partial class Program
         DungeonServer.ReturnToNexus = (server, connection, reason) => SendToNexus(server, connection, reason);
         DungeonServer.SwitchToDungeon = (server, connection, type, reason) => SendToDungeon(server, connection, type, reason);
 
+        // Open world (World folder): the map is built from world.json when the first player arrives; the links are the way
+        // in (Nexus portal and /world), the carriers that lead to dungeons and the way back.
+        WorldServer.Start(WorldAddress, HostIdWorld, BuildVersion, Log);
+        WorldServer.SwitchToWorld = (server, connection, reason) => SendToWorld(server, connection, reason);
+        WorldServer.SwitchToDungeon = (server, connection, type, reason) => SendToDungeon(server, connection, type, reason);
+        WorldServer.ReturnToNexus = (server, connection, reason) => SendToNexus(server, connection, reason);
+
+        // Social (Social folder): friends, flocks and the way to a friend (social.json, flocks.json, accounts\<key>\social.json).
+        // "Join Server" switches between the Nexus and the open world with the same links.
+        SocialHandler.Start(Log);
+        SocialHandler.SwitchToNexus = (server, connection, reason) => SendToNexus(server, connection, reason);
+        SocialHandler.SwitchToWorld = (server, connection, reason) => SendToWorld(server, connection, reason);
+
         StartUdp(NexusPort, RoleNexus);
         StartUdp(TutorialPort, RoleTutorial);
         StartUdp(DungeonPort, RoleDungeon);
+        StartUdp(WorldPort, RoleWorld);
 
         // Server search of the launchers (local network and VPNs): answers on the UDP port searchPort.
         LanDiscovery.Start(Ports.Search, ServerInfo, Log);
@@ -134,7 +154,7 @@ public static partial class Program
         lock (LogLock) Console.WriteLine($"{DateTime.Now:HH:mm:ss.fff} [{tag}] {text}");
     }
 
-    static string RoleName(byte role) => role == RoleNexus ? "nexus" : role == RoleDungeon ? DungeonServer.Role : "tutorial";
+    static string RoleName(byte role) => role == RoleNexus ? "nexus" : role == RoleDungeon ? DungeonServer.Role : role == RoleWorld ? WorldServer.Role : "tutorial";
 
     // Chat message for every player of this UDP server, except "except".
     static void TellOthers(NetServer server, NetConnection? except, string text)

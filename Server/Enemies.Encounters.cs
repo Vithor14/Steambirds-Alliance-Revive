@@ -16,6 +16,7 @@ public static partial class Enemies
         if (!instances.TryGetValue(peer, out Instance? inst) || !inst.Members.Contains(connection))
         {
             inst = new Instance { Peer = peer, Server = server, Connection = connection, Role = "[" + role + "]", LastTick = now };
+            inst.Filtering = ViewRadiusOf(inst) > 0f;
             inst.Members.Add(connection);
             instances[peer] = inst;
         }

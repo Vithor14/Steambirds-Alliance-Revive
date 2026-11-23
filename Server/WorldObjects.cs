@@ -83,6 +83,37 @@ public static class WorldObjects
             DungeonPortal | PortalOn, dungeonType, (float)now - 20f, (float)now + 1000000f, now, maxPlayers);
     }
 
+    // Dungeon entrance that leaves after a while (Portal flags 1 | 2): the client shows the countdown to "endsAt" (server
+    // clock, like "now") and the carrier closes its doors and goes away at 0. The server removes the entity afterwards.
+    public static void SendTimedDungeonPortal(NetServer server, NetConnection connection, int shortId, float x, float y, float rotation,
+        IPEndPoint destination, long hostId, string hostName, string version, string dungeonType, int maxPlayers, double now, double endsAt)
+    {
+        SendPortal(server, connection, shortId, x, y, rotation, destination, hostId, hostName, version, null,
+            DungeonPortal | PortalOn, dungeonType, (float)now - 20f, (float)endsAt, now, maxPlayers);
+    }
+
+    // Portal to another world server that is not a dungeon (Portal flags 2): the client shows the host's name and (players/max).
+    // "terrain" goes in the dungeon type field (the client builds the tag portal_<terrain> from it: "portal_basic" guides the player).
+    public static void SendWorldPortal(NetServer server, NetConnection connection, int shortId, float x, float y, float rotation,
+        IPEndPoint destination, long hostId, string hostName, string version, string terrain, int maxPlayers, double now)
+    {
+        SendPortal(server, connection, shortId, x, y, rotation, destination, hostId, hostName, version, null,
+            PortalOn, terrain, 0f, 0f, now, maxPlayers);
+    }
+
+    // ReceiveCurrentSubterritoryName(string name): the region the player's plane is over (the client keeps it for its HUD and statistics).
+    public const ushort MsgReceiveCurrentSubterritoryName = 62683;
+
+    public static void SendSubterritoryName(NetServer server, NetConnection connection, string name)
+    {
+        if (connection.Status != NetConnectionStatus.Connected) return;
+
+        NetOutgoingMessage m = server.CreateMessage();
+        m.Write(MsgReceiveCurrentSubterritoryName);
+        m.Write(name);
+        server.SendMessage(m, connection, NetDeliveryMethod.ReliableOrdered, 0);
+    }
+
     // Portal (prefab 11) with Portal.CreateEntOptions: RegisteredHost, flags, dungeon type, power start and power end.
     public static void SendPortal(NetServer server, NetConnection connection, int shortId, float x, float y, float rotation,
         IPEndPoint destination, long hostId, string hostName, string version, string[]? tags, int flags, string dungeonType,

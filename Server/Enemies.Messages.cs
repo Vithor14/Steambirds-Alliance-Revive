@@ -13,6 +13,13 @@ public static partial class Enemies
     // only: a single player that joined later (the others already have these units). resetFlags: false for that case.
     private static void SendSpawns(Instance inst, List<Enemy> added2, double now, NetConnection? only = null)
     {
+        // With an interest radius (open world) nobody is told here: UpdateInterest tells each player the units near them.
+        if (inst.Filtering) return;
+        SendSpawnBatches(inst, added2, now, only);
+    }
+
+    private static void SendSpawnBatches(Instance inst, List<Enemy> added2, double now, NetConnection? only)
+    {
         if (added2.Count == 0) return;
 
         for (int start = 0; start < added2.Count; start += 20)
@@ -64,16 +71,14 @@ public static partial class Enemies
     // UpdateUnitsBatch: list of (shortId, byte 0 = no own time, FieldUpdate) and the batch time at the end.
     private static void SendUpdates(Instance inst, double now)
     {
-        NetOutgoingMessage m = inst.Server.CreateMessage();
-        m.Write(MsgUpdateUnitsBatch);
-        m.WriteVariableUInt32((uint)(inst.Enemies.Count + 1));
+        // What each unit says this time is decided once (the gun signal and the "sent" marks change as it is read) and then
+        // written for every player who knows the unit.
+        var items = new List<UnitUpdate>(inst.Enemies.Count);
         foreach (Enemy enemy in inst.Enemies.Values)
         {
-            m.WriteVariableInt32(enemy.ShortId);
-            m.Write((byte)0);
             bool withHealth = enemy.HealthChanged || now - enemy.LastHealthSent > 2.0;
             bool withEffect = enemy.EffectChanged;
-            WriteFields(m, enemy, withHealth, withEffect, BuildGunSignal(inst, enemy, now));
+            items.Add(new UnitUpdate(enemy, withHealth, withEffect, BuildGunSignal(inst, enemy, now)));
             enemy.EffectChanged = false;
             if (withHealth)
             {
@@ -81,8 +86,36 @@ public static partial class Enemies
                 enemy.LastHealthSent = now;
             }
         }
+
+        if (!inst.Filtering)
+        {
+            WriteUpdateBatch(inst, null, items, now);
+            return;
+        }
+
+        foreach (NetConnection member in inst.Members.ToList())
+        {
+            if (!inst.Known.TryGetValue(member.RemoteUniqueIdentifier, out HashSet<int>? known) || known.Count == 0) continue;
+            List<UnitUpdate> mine = items.Where(u => known.Contains(u.Enemy.ShortId)).ToList();
+            if (mine.Count > 0) WriteUpdateBatch(inst, member, mine, now);
+        }
+    }
+
+    private readonly record struct UnitUpdate(Enemy Enemy, bool WithHealth, bool WithEffect, byte[]? Guns);
+
+    private static void WriteUpdateBatch(Instance inst, NetConnection? only, List<UnitUpdate> items, double now)
+    {
+        NetOutgoingMessage m = inst.Server.CreateMessage();
+        m.Write(MsgUpdateUnitsBatch);
+        m.WriteVariableUInt32((uint)(items.Count + 1));
+        foreach (UnitUpdate item in items)
+        {
+            m.WriteVariableInt32(item.Enemy.ShortId);
+            m.Write((byte)0);
+            WriteFields(m, item.Enemy, item.WithHealth, item.WithEffect, item.Guns);
+        }
         m.Write((float)now);
-        Broadcast(inst, m);
+        Broadcast(inst, m, only);
     }
 
     // FieldUpdateSerializer.Write: mask, then position (x1024), velocity (x1024), rotation (x32), health (x512, fraction).
@@ -123,6 +156,9 @@ public static partial class Enemies
         // several players every client gets the id it knows.
         foreach (NetConnection member in inst.Members.Where(c => c.Status == NetConnectionStatus.Connected).ToList())
         {
+            // A client that was not told about the shooter has no unit to fire from.
+            if (!IsKnownTo(inst, member, enemy)) continue;
+
             int target = 0;
             if (homing)
             {
@@ -162,25 +198,46 @@ public static partial class Enemies
         for (int start = 0; start < dead.Count; start += 30)
         {
             List<Enemy> part = dead.Skip(start).Take(30).ToList();
-            NetOutgoingMessage m = inst.Server.CreateMessage();
-            m.Write(MsgKillUnitsBatch);
-            m.WriteVariableUInt32((uint)(part.Count + 1));
+            if (!inst.Filtering) SendKills(inst, null, part, reason, result, now);
+            else
+            {
+                // Only the players who were told about a unit are told that it is gone.
+                foreach (NetConnection member in inst.Members.ToList())
+                {
+                    if (!inst.Known.TryGetValue(member.RemoteUniqueIdentifier, out HashSet<int>? known)) continue;
+                    List<Enemy> seen = part.Where(e => known.Contains(e.ShortId)).ToList();
+                    if (seen.Count > 0) SendKills(inst, member, seen, reason, result, now);
+                }
+            }
+
             foreach (Enemy enemy in part)
             {
-                m.Write((float)now);
-                m.WriteVariableInt32(enemy.ShortId);
-                m.Write(reason);
-                m.WriteRangedSingle(Math.Clamp(enemy.X, -2000f, 2000f), -2000f, 2000f, 16);
-                m.WriteRangedSingle(Math.Clamp(enemy.Y, -2000f, 2000f), -2000f, 2000f, 16);
-                m.WriteRangedSingle(Math.Clamp(NormalizeAngle(enemy.Rot), -180f, 180f), -180f, 180f, 8);
-                m.Write(result);
                 inst.Enemies.Remove(enemy.ShortId);
+                foreach (HashSet<int> known in inst.Known.Values) known.Remove(enemy.ShortId);
                 if (enemy.Boss) hadBoss = true;
             }
-            Broadcast(inst, m);
         }
 
         if (hadBoss) SendBossCount(inst);
+    }
+
+    // The KillUnitsBatch of up to 30 units, to everybody or only to "only".
+    private static void SendKills(Instance inst, NetConnection? only, List<Enemy> part, byte reason, byte result, double now)
+    {
+        NetOutgoingMessage m = inst.Server.CreateMessage();
+        m.Write(MsgKillUnitsBatch);
+        m.WriteVariableUInt32((uint)(part.Count + 1));
+        foreach (Enemy enemy in part)
+        {
+            m.Write((float)now);
+            m.WriteVariableInt32(enemy.ShortId);
+            m.Write(reason);
+            m.WriteRangedSingle(Math.Clamp(enemy.X, -2000f, 2000f), -2000f, 2000f, 16);
+            m.WriteRangedSingle(Math.Clamp(enemy.Y, -2000f, 2000f), -2000f, 2000f, 16);
+            m.WriteRangedSingle(Math.Clamp(NormalizeAngle(enemy.Rot), -180f, 180f), -180f, 180f, 8);
+            m.Write(result);
+        }
+        Broadcast(inst, m, only);
     }
 
     // ClientSetNumBossesRemaining: the HUD shows how many bosses are left.

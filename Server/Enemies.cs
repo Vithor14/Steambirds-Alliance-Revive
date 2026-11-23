@@ -333,6 +333,11 @@ public static partial class Enemies
         public readonly List<NetConnection> Members = new List<NetConnection>();
         public readonly Dictionary<long, PlayerTrack> Tracks = new Dictionary<long, PlayerTrack>();
 
+        // Interest radius (Enemies.Interest.cs): with Filtering on, each player only knows the units near their plane;
+        // Known holds, per player (peer id), the short ids the client has been told about. Off = everybody knows everything.
+        public bool Filtering;
+        public readonly Dictionary<long, HashSet<int>> Known = new Dictionary<long, HashSet<int>>();
+
         // The player the AI is looking at right now: the nearest live one for each enemy (see FocusNearest).
         public bool HasPlayer;
         public bool PlayerAlive;
