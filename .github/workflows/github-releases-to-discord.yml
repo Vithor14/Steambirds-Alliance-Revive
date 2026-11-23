@@ -5,26 +5,36 @@ name: Releases to Discord
 on:
   release:
     types: [published]
-  # Manual test: Actions tab > "Releases to Discord" > Run workflow
+  # Manual re-send: Actions tab > "Releases to Discord" > Run workflow > type the release tag.
+  # (A text box cannot hold line breaks, so the notes are read from the release itself.)
   workflow_dispatch:
     inputs:
-      release_name:
-        description: "Release title (test only)"
+      tag:
+        description: "Release tag to send again (example: 0.5.0)"
         required: true
-        default: "Test release"
-      release_body:
-        description: "Release notes (test only)"
-        required: true
-        default: "Test message from the workflow."
-      release_html_url:
-        description: "Release URL (test only)"
-        required: false
-        default: "https://github.com/Vithor14/Steambirds-Alliance-Revive/releases"
 
 jobs:
   github-releases-to-discord:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
+      - name: Load release (manual run only)
+        if: github.event_name == 'workflow_dispatch'
+        id: manual
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json name,body,url > release.json
+          {
+            echo "name=$(jq -r '.name' release.json)"
+            echo "url=$(jq -r '.url' release.json)"
+            echo "body<<RELEASE_BODY_EOF"
+            jq -r '.body' release.json
+            echo "RELEASE_BODY_EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: GitHub Releases to Discord
         uses: SethCohen/github-releases-to-discord@v1
         with:
@@ -35,6 +45,7 @@ jobs:
           reduce_headings: true
           # Uncomment to ping the channel on each release:
           # content: "@everyone"
-          release_name: ${{ inputs.release_name }}
-          release_body: ${{ inputs.release_body }}
-          release_html_url: ${{ inputs.release_html_url }}
+          # Only filled on manual runs; on a real release the action reads the release itself.
+          release_name: ${{ steps.manual.outputs.name }}
+          release_body: ${{ steps.manual.outputs.body }}
+          release_html_url: ${{ steps.manual.outputs.url }}
