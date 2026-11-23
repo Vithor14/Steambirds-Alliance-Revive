@@ -60,8 +60,14 @@ internal sealed class SettingsTab : UserControl
         Ui.AddRow(languageTable, Ui.Note(L.T("Launcher language:")), Ui.Flow(language, languageHelp));
         Ui.AddRow(languageTable, null, Ui.Flow(Ui.Button(L.T("Languages folder"), (_, _) => OpenFolderCreating(LauncherPaths.LangFolder))));
 
+        TableLayoutPanel communityTable = Ui.Table(1);
+        communityTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        Ui.AddRow(communityTable, Ui.Wrapping(L.T("Questions, bugs, maps and servers to join: the Steambirds Alliance Revive community is on Discord."), 420, true));
+        Ui.AddRow(communityTable, Ui.Flow(Ui.Button(L.T("Join the Discord"), (_, _) => Ui.OpenUrl(FindForm(), LauncherInfo.DiscordUrl))));
+
         var generalPage = Page(L.T("General"),
-            Columns(Ui.Group(L.T("Appearance"), appearance), Ui.Group(L.T("Language"), languageTable)));
+            Stack(Columns(Ui.Group(L.T("Appearance"), appearance), Ui.Group(L.T("Language"), languageTable)),
+                  Ui.Group(L.T("Community"), communityTable)));
 
         // ------------------------------------------------------------ game: folder and language
         folderBox = new ThemedTextBox { Text = settings.GameFolder, Dock = DockStyle.Fill, Margin = new Padding(3, 4, 3, 3) };

@@ -11,5 +11,8 @@ public static class LauncherInfo
 
     // The ports of the server are in server\network.json (ServerNetworkFile), edited in Server > Network and multiplayer.
 
+    // Invite to the community Discord of the project.
+    public const string DiscordUrl = "https://discord.gg/sNwTk7T4mu";
+
     public static string Version => typeof(LauncherInfo).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
 }

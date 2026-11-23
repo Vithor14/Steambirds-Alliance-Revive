@@ -201,6 +201,19 @@ internal static class Ui
         return MessageBox.Show(owner, text, LauncherInfo.Title, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
     }
 
+    // Opens a web address in the default browser.
+    public static void OpenUrl(IWin32Window? owner, string url)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        }
+        catch (Exception e)
+        {
+            ShowError(owner, L.F("Could not open the link: {0}", e.Message) + "\n" + url);
+        }
+    }
+
     public static void OpenFolder(IWin32Window? owner, string path)
     {
         try

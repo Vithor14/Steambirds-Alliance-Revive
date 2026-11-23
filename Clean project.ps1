@@ -8,7 +8,7 @@
 #   .\Clean project.ps1 -Yes         does not ask (for scripts)
 #
 # Extra switches (off by default, because they remove things you may want to keep):
-#   -IncludeRelease   also removes the Release\ folder (zip and build of "Build server release.ps1")
+#   -IncludeRelease   also removes the Release\ folder (zip and build of "Build launcher release.ps1")
 #   -IncludeLogs      also removes the log files (Launcher\logs, Launcher\dist\logs, Server\logs)
 #   -RenameFolders    renames VersoesAntigas -> OldVersions and decompilado -> decompiled (big folders, only renamed)
 #   -NoPause          does not wait for Enter at the end

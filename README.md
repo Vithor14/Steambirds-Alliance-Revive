@@ -45,8 +45,8 @@ cd C:\Steambirds
 .\"Build launcher.ps1"
 ```
 
-This publishes the server, plugin and launcher into `Launcher\dist`. `.\"Build server release.ps1"` builds the
-standalone server zip. Chat commands are in [Chat commands.md](Chat%20commands.md).
+This publishes the server, plugin and launcher into `Launcher\dist`. `.\"Build launcher release.ps1"` builds the
+zip for GitHub Releases (launcher, server, `SteambirdsGameFiles.exe` and plugin, with no game files). Chat commands are in [Chat commands.md](Chat%20commands.md).
 
 ## Repository
 

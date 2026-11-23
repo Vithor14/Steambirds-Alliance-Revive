@@ -1,20 +1,23 @@
-# Build server release.ps1
-# Builds the server release zip for GitHub Releases, for people who do not want to compile the project:
+# Build launcher release.ps1
+# Builds the zip of the launcher for GitHub Releases: everything a PC that has never run the project needs, and nothing else.
 #
-#   Release\SteambirdsServer-<version>-win-x64.zip
-#     SteambirdsServer\SteambirdsServer.exe       the server (self-contained: nobody needs .NET installed)
-#     SteambirdsServer\SteambirdsGameFiles.exe    takes the game files from the player's own copy of the game
-#     SteambirdsServer\plugin\QuieterPlugin.dll   the plugin SteambirdsGameFiles.exe installs in the game
-#     SteambirdsServer\Start server.cmd, README.md, LICENSE   (README and .cmd come from Packaging\server)
-#     SteambirdsServer\maps\, loot_tables\, ai\ (enemy AI files) and the settings (network.json, progression.json, items.json...)
+#   Release\SteambirdsLauncher-<version>-win-x64.zip
+#     SteambirdsLauncher\SteambirdsLauncher.exe     the launcher (self-contained: nobody needs .NET installed)
+#     SteambirdsLauncher\SteambirdsGameFiles.exe    takes the game files from the player's own copy of the game
+#     SteambirdsLauncher\plugin\QuieterPlugin.dll   the plugin the launcher / SteambirdsGameFiles.exe install in the game
+#     SteambirdsLauncher\lang\                      launcher languages (English is built in)
+#     SteambirdsLauncher\server\SteambirdsServer.exe  the server the launcher starts, next to appsettings.json, its settings
+#                                                    (network.json, progression.json, items.json...), maps\, loot_tables\ and ai\
+#     SteambirdsLauncher\README.md, SteambirdsGameFiles-README.md, LICENSE
 #
-# NO game file goes into the zip: configBinary, the data files of the plugin (units_config.txt...), the item catalog
-# and the map editor pictures belong to the game. Each player gets them with SteambirdsGameFiles.exe. Player accounts,
-# logs and backups stay out too. Before zipping, the script checks the package for those files and stops if it finds one.
+# NO game file goes into the zip: configBinary, the data files of the plugin (units_config.txt...), the item catalog and the
+# map editor pictures (editor-assets) belong to the game. Each player makes them from their own copy with
+# SteambirdsGameFiles.exe. Player accounts, launcher settings, logs and backups stay out too.
+# Before zipping, the script checks the package for those files and stops if it finds one.
 #
-# Usage:  .\"Build server release.ps1"                  (asks the version; Enter = today's date)
-#         .\"Build server release.ps1" -Version 0.4.0
-#         .\"Build server release.ps1" -Version 0.4.0 -NoPause
+# Usage:  .\"Build launcher release.ps1"                       (version = the one in Launcher\SteambirdsLauncher.csproj)
+#         .\"Build launcher release.ps1" -Version 0.5.0
+#         .\"Build launcher release.ps1" -Version 0.5.0 -NoPause
 # Everything shown on screen is also written to Release\build\release.log.
 
 param(
@@ -28,7 +31,7 @@ $serverFolder     = Join-Path $root "Server"
 $pluginFolder     = Join-Path $root "QuieterPlugin"
 $gameFilesFolder  = Join-Path $root "GameFiles"
 $sharedFolder     = Join-Path $root "Shared"
-$packagingFolder  = Join-Path $root "Packaging\server"
+$launcherFolder   = Join-Path $root "Launcher"
 $releaseFolder    = Join-Path $root "Release"
 $buildFolder      = Join-Path $releaseFolder "build"
 $logFile          = Join-Path $buildFolder "release.log"
@@ -77,18 +80,31 @@ function RunDotnet($title, [string[]]$arguments) {
     return $LASTEXITCODE
 }
 
+# Self-contained single-file publish of a project into a folder. Returns the exe path (stops the script on failure).
+function PublishExe($title, $project, $exeName, $output) {
+    if (Test-Path -LiteralPath $output) { Remove-Item -LiteralPath $output -Recurse -Force }
+    $exitCode = RunDotnet $title @(
+        "publish", $project,
+        "-c", "Release", "-r", "win-x64", "--self-contained", "true",
+        "-p:PublishSingleFile=true", "-p:IncludeNativeLibrariesForSelfExtract=true", "-p:EnableCompressionInSingleFile=true",
+        "-p:DebugType=none", "-o", $output)
+    if ($exitCode -ne 0) { Fail "the build of $exeName failed (look for the lines with 'error' above)." }
+    $exe = Join-Path $output $exeName
+    if (-not (Test-Path -LiteralPath $exe)) { Fail "the publish did not create $exe" }
+    return $exe
+}
+
 # ---------------------------------------------------------------- duplicated .cs files (they break the build)
 
 # "Name-1.cs", "Name (1).cs", "Name - Copia.cs", "Name - Copy.cs" next to "Name.cs", and the same file in two
-# folders of one project. Only reported here: "Build launcher.ps1" and "Run server.ps1" offer to move them.
-# Takes several project folders and checks them together (the server also compiles Shared\EnemyAi).
+# folders of one project. Only reported here: "Build launcher.ps1" offers to move them.
 function FindDuplicatedCode([string[]]$projects) {
     $found = @()
     $files = @()
     foreach ($project in $projects) {
         if (-not (Test-Path -LiteralPath $project)) { continue }
         $files += @(Get-ChildItem -LiteralPath $project -Filter "*.cs" -File -Recurse -ErrorAction SilentlyContinue |
-            Where-Object { $_.FullName -notmatch '\\(bin|obj|\.vs)\\' })
+            Where-Object { $_.FullName -notmatch '\\(bin|obj|\.vs|build|dist)\\' })
     }
     foreach ($file in $files) {
         $name = $file.BaseName
@@ -96,8 +112,7 @@ function FindDuplicatedCode([string[]]$projects) {
         if ($withoutSuffix -eq $name) { continue }
         if (Test-Path -LiteralPath (Join-Path $file.DirectoryName ($withoutSuffix + ".cs"))) { $found += $file.FullName }
     }
-    # Same name and same content in two folders: the class is compiled twice. (Same name with different content may be
-    # two different classes, as Build launcher.ps1 also assumes.)
+    # Same name and same content in two folders: the class is compiled twice.
     $groups = @($files | Group-Object Name | Where-Object { $_.Count -gt 1 })
     foreach ($group in $groups) {
         $hashes = @($group.Group | ForEach-Object { (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash } | Select-Object -Unique)
@@ -139,7 +154,7 @@ function FindForbiddenFiles($folder) {
         $relative = $file.FullName.Substring($folder.Length).TrimStart('\')
         $parts = $relative.Split('\')
         $badFolder = @($parts | Select-Object -SkipLast 1 | Where-Object { $forbiddenFolders -contains $_ }).Count -gt 0
-        $badName = ($forbiddenNames -contains $file.Name) -or ($file.Name -like "*_config.txt")
+        $badName = ($forbiddenNames -contains $file.Name) -or ($file.Name -like "*_config.txt") -or ($file.Name -like "*.missing.json")
         $badExtension = $forbiddenExtensions -contains $file.Extension.ToLowerInvariant()
         $badDll = ($file.Extension -ieq ".dll") -and ($relative -ine "plugin\QuieterPlugin.dll")
         if ($badFolder -or $badName -or $badExtension -or $badDll) { $found += $relative }
@@ -149,7 +164,7 @@ function FindForbiddenFiles($folder) {
 
 # ================================================================ start
 
-Say "=== BUILD STEAMBIRDS SERVER RELEASE ===" Cyan
+Say "=== BUILD STEAMBIRDS LAUNCHER RELEASE ===" Cyan
 Say "Date: $(Get-Date -Format 'dd/MM/yyyy HH:mm:ss')"
 Say "Project folder: $root"
 
@@ -158,18 +173,20 @@ if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
 }
 Say "dotnet: $((& dotnet --version 2>&1) -join ' ')"
 
-foreach ($project in @((Join-Path $serverFolder "SteambirdsServer.csproj"), (Join-Path $gameFilesFolder "SteambirdsGameFiles.csproj"), (Join-Path $pluginFolder "QuieterPlugin.csproj"))) {
+$serverProject     = Join-Path $serverFolder "SteambirdsServer.csproj"
+$launcherProject   = Join-Path $launcherFolder "SteambirdsLauncher.csproj"
+$gameFilesProject  = Join-Path $gameFilesFolder "SteambirdsGameFiles.csproj"
+$pluginProject     = Join-Path $pluginFolder "QuieterPlugin.csproj"
+foreach ($project in @($serverProject, $launcherProject, $gameFilesProject, $pluginProject)) {
     if (-not (Test-Path -LiteralPath $project)) { Fail "$project not found" }
 }
-foreach ($file in @("README.md", "Start server.cmd")) {
-    if (-not (Test-Path -LiteralPath (Join-Path $packagingFolder $file))) { Fail "$(Join-Path $packagingFolder $file) not found" }
-}
-# SteambirdsServer.csproj compiles ..\Shared\EnemyAi\*.cs: without the folder the build fails with "type not found" errors.
-if (-not (Test-Path -LiteralPath (Join-Path $sharedFolder "EnemyAi"))) { Fail "Shared\EnemyAi not found in $sharedFolder (the server compiles it)." }
+# The server and the launcher both compile ..\Shared\EnemyAi\*.cs: without the folder the build fails.
+if (-not (Test-Path -LiteralPath (Join-Path $sharedFolder "EnemyAi"))) { Fail "Shared\EnemyAi not found in $sharedFolder (the server and the launcher compile it)." }
 
-# Version of the release (goes in the zip name).
+# Version of the release (goes in the zip name): the launcher's own version unless one is given.
 if (-not $Version) {
-    $defaultVersion = Get-Date -Format "yyyy.MM.dd"
+    $match = [regex]::Match((Get-Content -LiteralPath $launcherProject -Raw), '<Version>([^<]+)</Version>')
+    $defaultVersion = if ($match.Success) { $match.Groups[1].Value.Trim() } else { Get-Date -Format "yyyy.MM.dd" }
     if ($NoPause) { $Version = $defaultVersion }
     else {
         $answer = Read-Host "Release version (Enter = $defaultVersion)"
@@ -177,11 +194,12 @@ if (-not $Version) {
     }
 }
 if ($Version -notmatch '^[0-9A-Za-z._-]+$') { Fail "invalid version '$Version' (use letters, digits, '.', '-' or '_')" }
-$packageName = "SteambirdsServer-$Version-win-x64"
+$packageName = "SteambirdsLauncher-$Version-win-x64"
 Say "Version: $Version"
 
 $duplicates = @()
-$duplicates += @(FindDuplicatedCode @($serverFolder, $sharedFolder))   # the server compiles Shared\EnemyAi too
+$duplicates += @(FindDuplicatedCode @($serverFolder, $sharedFolder))
+$duplicates += @(FindDuplicatedCode @($launcherFolder, $sharedFolder))
 $duplicates += @(FindDuplicatedCode @($gameFilesFolder))
 $duplicates += @(FindDuplicatedCode @($pluginFolder))
 if ($duplicates.Count -gt 0) {
@@ -192,56 +210,46 @@ if ($duplicates.Count -gt 0) {
 }
 
 # ---------------------------------------------------------------- builds
-$serverOutput = Join-Path $buildFolder "server"
-if (Test-Path -LiteralPath $serverOutput) { Remove-Item -LiteralPath $serverOutput -Recurse -Force }
-$exitCode = RunDotnet "Server (SteambirdsServer)" @(
-    "publish", (Join-Path $serverFolder "SteambirdsServer.csproj"),
-    "-c", "Release", "-r", "win-x64", "--self-contained", "true",
-    "-p:PublishSingleFile=true", "-p:IncludeNativeLibrariesForSelfExtract=true", "-p:EnableCompressionInSingleFile=true",
-    "-p:DebugType=none", "-o", $serverOutput)
-if ($exitCode -ne 0) { Fail "the server build failed (look for the lines with 'error' above)." }
-$serverExe = Join-Path $serverOutput "SteambirdsServer.exe"
-if (-not (Test-Path -LiteralPath $serverExe)) { Fail "the server publish did not create $serverExe" }
-
-$gameFilesOutput = Join-Path $buildFolder "gamefiles"
-if (Test-Path -LiteralPath $gameFilesOutput) { Remove-Item -LiteralPath $gameFilesOutput -Recurse -Force }
-$exitCode = RunDotnet "Game files tool (SteambirdsGameFiles)" @(
-    "publish", (Join-Path $gameFilesFolder "SteambirdsGameFiles.csproj"),
-    "-c", "Release", "-r", "win-x64", "--self-contained", "true",
-    "-p:PublishSingleFile=true", "-p:IncludeNativeLibrariesForSelfExtract=true", "-p:EnableCompressionInSingleFile=true",
-    "-p:DebugType=none", "-o", $gameFilesOutput)
-if ($exitCode -ne 0) { Fail "the game files tool build failed (look for the lines with 'error' above)." }
-$gameFilesExe = Join-Path $gameFilesOutput "SteambirdsGameFiles.exe"
-if (-not (Test-Path -LiteralPath $gameFilesExe)) { Fail "the publish did not create $gameFilesExe" }
+$serverExe     = PublishExe "Server (SteambirdsServer)" $serverProject "SteambirdsServer.exe" (Join-Path $buildFolder "server")
+$launcherExe   = PublishExe "Launcher (SteambirdsLauncher)" $launcherProject "SteambirdsLauncher.exe" (Join-Path $buildFolder "launcher")
+$gameFilesExe  = PublishExe "Game files tool (SteambirdsGameFiles)" $gameFilesProject "SteambirdsGameFiles.exe" (Join-Path $buildFolder "gamefiles")
 
 # The plugin must be built now: the game files tool depends on its export mode (GameFilesExport.cs).
 $pluginDll = Join-Path $pluginFolder "bin\Release\net46\QuieterPlugin.dll"
-$pluginStart = Get-Date
-$exitCode = RunDotnet "Plugin (QuieterPlugin)" @("build", (Join-Path $pluginFolder "QuieterPlugin.csproj"), "-c", "Release")
+$exitCode = RunDotnet "Plugin (QuieterPlugin)" @("build", $pluginProject, "-c", "Release")
 if ($exitCode -ne 0) { Fail "the plugin build failed (it needs the game's DLLs in the game folder; see QuieterPlugin.csproj)." }
 if (-not (Test-Path -LiteralPath $pluginDll)) { Fail "the plugin build did not create $pluginDll" }
-if ((Get-Item -LiteralPath $pluginDll).LastWriteTime -lt $pluginStart.AddMinutes(-1)) {
-    Say "  (the plugin was already up to date: $pluginDll)"
-}
 
 # ---------------------------------------------------------------- package folder
 Say ""
 Say "=== Package folder ===" Cyan
 $stageRoot = Join-Path $buildFolder "stage"
-$stage = Join-Path $stageRoot "SteambirdsServer"
+$stage = Join-Path $stageRoot "SteambirdsLauncher"
 if (Test-Path -LiteralPath $stageRoot) { Remove-Item -LiteralPath $stageRoot -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
 
-CopyFileTo $serverExe (Join-Path $stage "SteambirdsServer.exe")
+CopyFileTo $launcherExe (Join-Path $stage "SteambirdsLauncher.exe")
 CopyFileTo $gameFilesExe (Join-Path $stage "SteambirdsGameFiles.exe")
 CopyFileTo $pluginDll (Join-Path $stage "plugin\QuieterPlugin.dll")
-Say "  SteambirdsServer.exe, SteambirdsGameFiles.exe and plugin\QuieterPlugin.dll"
+CopyFileTo $serverExe (Join-Path $stage "server\SteambirdsServer.exe")
+Say "  SteambirdsLauncher.exe, SteambirdsGameFiles.exe, plugin\QuieterPlugin.dll and server\SteambirdsServer.exe"
 
+# Languages (the *.missing.json files are generated by the launcher and never leave the project).
+$langSource = Join-Path $launcherFolder "lang"
+$langCount = 0
+foreach ($file in @(Get-ChildItem -LiteralPath $langSource -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -notlike "*.missing.json" })) {
+    CopyFileTo $file.FullName (Join-Path $stage ("lang\" + $file.Name))
+    $langCount++
+}
+Say "  lang\: $langCount file(s)"
+
+# Server data: the folders and settings the server reads from its own folder.
+$stageServer = Join-Path $stage "server"
 foreach ($name in $releaseFolders) {
     $source = Join-Path $serverFolder $name
     if (-not (Test-Path -LiteralPath $source)) { Say "  WARNING: Server\$name does not exist" Yellow; continue }
-    $count = CopyFolderTo $source (Join-Path $stage $name)
-    Say ("  {0}\: {1} file(s)" -f $name, $count)
+    $count = CopyFolderTo $source (Join-Path $stageServer $name)
+    Say ("  server\{0}\: {1} file(s)" -f $name, $count)
 }
 
 # Data folders without code that are neither released nor known as private: maybe a new folder the server needs.
@@ -254,19 +262,19 @@ foreach ($folder in $unknownFolders) {
 }
 
 $rootFiles = @(Get-ChildItem -LiteralPath $serverFolder -File -Filter "*.json" | Where-Object { $excludedRootFiles -notcontains $_.Name })
-foreach ($file in $rootFiles) { CopyFileTo $file.FullName (Join-Path $stage $file.Name) }
-Say ("  settings: {0}" -f (($rootFiles | ForEach-Object { $_.Name }) -join ", "))
+foreach ($file in $rootFiles) { CopyFileTo $file.FullName (Join-Path $stageServer $file.Name) }
+Say ("  server settings: {0}" -f (($rootFiles | ForEach-Object { $_.Name }) -join ", "))
 
-foreach ($file in @(Get-ChildItem -LiteralPath $packagingFolder -File)) { CopyFileTo $file.FullName (Join-Path $stage $file.Name) }
-$license = Join-Path $root "LICENSE"
-if (Test-Path -LiteralPath $license) { CopyFileTo $license (Join-Path $stage "LICENSE") }
-Say "  README.md, Start server.cmd and LICENSE"
+foreach ($doc in @(@((Join-Path $launcherFolder "README.md"), "README.md"), @((Join-Path $gameFilesFolder "README.md"), "SteambirdsGameFiles-README.md"), @((Join-Path $root "LICENSE"), "LICENSE"))) {
+    if (Test-Path -LiteralPath $doc[0]) { CopyFileTo $doc[0] (Join-Path $stage $doc[1]) }
+}
+Say "  README.md, SteambirdsGameFiles-README.md and LICENSE"
 
 # ---------------------------------------------------------------- no game files, no accounts
 $forbidden = @(FindForbiddenFiles $stage)
 if ($forbidden.Count -gt 0) {
     Say ""
-    Say "Files that must not be published (game data, accounts or logs):" Red
+    Say "Files that must not be published (game data, accounts, settings or logs):" Red
     foreach ($item in $forbidden) { Say "  $item" }
     Fail "the package has files of the game or of players. Remove them from the source folders and run again."
 }
@@ -280,7 +288,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $zipPath = Join-Path $releaseFolder "$packageName.zip"
 if (Test-Path -LiteralPath $zipPath) { Remove-Item -LiteralPath $zipPath -Force }
 try {
-    # includeBaseDirectory: the zip opens into a "SteambirdsServer" folder.
+    # includeBaseDirectory: the zip opens into a "SteambirdsLauncher" folder.
     [System.IO.Compression.ZipFile]::CreateFromDirectory($stage, $zipPath, [System.IO.Compression.CompressionLevel]::Optimal, $true)
 }
 catch {
@@ -295,7 +303,8 @@ $sizeMb = [math]::Round((Get-Item -LiteralPath $zipPath).Length / 1MB, 1)
 Say ""
 Say "Release ready: $zipPath ($sizeMb MB, $script:copiedFiles files)" Green
 Say "  SHA-256: $hash (also in $(Split-Path -Leaf $hashFile))"
-Say "  Publish it in GitHub: Releases > Draft a new release > attach the zip (the README inside explains how to use it)."
+Say "  Publish it in GitHub: Releases > Draft a new release > attach the zip."
+Say "  On a PC without the project: unzip, run SteambirdsGameFiles.exe once (it needs the game installed from Steam), then open SteambirdsLauncher.exe."
 Say "  The zip is in .gitignore (*.zip and /Release/): it never goes in a commit."
 $script:log.Dispose()
 

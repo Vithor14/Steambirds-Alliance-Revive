@@ -1827,5 +1827,11 @@
   "- Bad conditions (cleared:, death:, quest:) and empty terrain.": "- Condições erradas (cleared:, death:, quest:) e terreno vazio.",
   "## Warnings (it works, but look at it)": "## Avisos (funciona, mas vale olhar)",
   "- The entrance or the exit is off the floor, rooms without units, gates that never open, no checkpoints, a unit outside the area of its room.": "- A entrada ou a saída fora do chão, salas sem unidades, portões que nunca abrem, sem pontos de controle, uma unidade fora da área da sala dela.",
-  "- A unit type that uses an AI that is not in the ai folder: the server will use the normal behavior of the type.": "- Um tipo de unidade que usa uma IA que não está na pasta ai: o servidor usará o comportamento normal do tipo."
+  "- A unit type that uses an AI that is not in the ai folder: the server will use the normal behavior of the type.": "- Um tipo de unidade que usa uma IA que não está na pasta ai: o servidor usará o comportamento normal do tipo.",
+  "Community": "Comunidade",
+  "Join the Discord": "Entrar no Discord",
+  "Discord": "Discord",
+  "Questions, bugs, maps and servers to join: the Steambirds Alliance Revive community is on Discord.": "Dúvidas, bugs, mapas e servidores para entrar: a comunidade do Steambirds Alliance Revive está no Discord.",
+  "Opens the invite to the Steambirds Alliance Revive community on Discord.": "Abre o convite para a comunidade do Steambirds Alliance Revive no Discord.",
+  "Could not open the link: {0}": "Não foi possível abrir o link: {0}"
 }

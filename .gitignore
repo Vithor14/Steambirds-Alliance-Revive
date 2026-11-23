@@ -42,7 +42,7 @@ FileList.txt
 /server-report.txt
 /Server/server-report.txt
 
-# Server release zip and its build folder: output of "Build server release.ps1" (goes to GitHub Releases, never to git)
+# Launcher release zip and its build folder: output of "Build launcher release.ps1" (goes to GitHub Releases, never to git)
 /Release/
 
 # Launcher: output of "Build launcher.ps1" (executables, accounts, logs and local settings)

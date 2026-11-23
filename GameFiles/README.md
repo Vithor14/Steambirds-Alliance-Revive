@@ -2,7 +2,7 @@
 
 `SteambirdsGameFiles.exe` takes from the player's **own copy** of Steambirds Alliance the files that cannot be published
 on GitHub (they belong to the game), and puts them where the server and the map editor read them. It ships in the
-server release zip (`Build server release.ps1`) and in the launcher package (`Build launcher.ps1`).
+launcher release zip (`Build launcher release.ps1`) and in the launcher package (`Build launcher.ps1`).
 
 ## What it does
 
