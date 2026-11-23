@@ -15,16 +15,16 @@ internal sealed class AccountEditorForm : Form
     private readonly AccountStore store;
     private readonly GameConfig data;
 
-    private readonly NumericUpDown rank;
-    private readonly NumericUpDown baselineXp;
+    private readonly NumberBox rank;
+    private readonly NumberBox baselineXp;
     private readonly Label pilotXpLabel;
-    private readonly NumericUpDown kills;
-    private readonly NumericUpDown bossKills;
-    private readonly NumericUpDown planesLost;
-    private readonly NumericUpDown highestPlaneLevel;
+    private readonly NumberBox kills;
+    private readonly NumberBox bossKills;
+    private readonly NumberBox planesLost;
+    private readonly NumberBox highestPlaneLevel;
     private readonly DataGridView planesGrid;
     private readonly UnlockChecklist unlocks;
-    private readonly CheckedListBox dungeons;
+    private readonly ChipList dungeons;
     private readonly CurrencyFields currencies;
     private readonly DataGridView ingredientsGrid;
     private readonly int originalRank;
@@ -119,9 +119,10 @@ internal sealed class AccountEditorForm : Form
         var unlocksPage = Page(L.T("Unlocks"), Ui.Wrapping(L.T("Unlock items of the account. The server also adds the ones the plane levels and progression.json give when the player logs in."), 760, gray: true), unlocks);
 
         // ------------------------------------------------------------ dungeons
-        dungeons = new CheckedListBox { CheckOnClick = true, Dock = DockStyle.Fill, BorderStyle = BorderStyle.FixedSingle, IntegralHeight = false };
+        dungeons = new ChipList { Dock = DockStyle.Top };
         List<string> finished = store.FinishedDungeons;
-        foreach (string dungeon in DungeonNames(finished)) dungeons.Items.Add(dungeon, finished.Contains(dungeon, StringComparer.OrdinalIgnoreCase));
+        foreach (string dungeon in DungeonNames(finished))
+            dungeons.Add(new ChipList.Chip(dungeon, dungeon) { Checked = finished.Contains(dungeon, StringComparer.OrdinalIgnoreCase) });
         Label dungeonsHelp = Ui.Wrapping(L.T("Dungeons the account finished (the tutorial is DungeonTutorialWalker). /reset_tutorial in the game chat clears the tutorial too."), 760, gray: true);
         dungeonsHelp.Dock = DockStyle.Top;
         var dungeonsPage = new TabPage(L.T("Dungeons")) { Padding = new Padding(8) };
@@ -199,9 +200,9 @@ internal sealed class AccountEditorForm : Form
         Theme.AttachWindow(this);
     }
 
-    private static NumericUpDown Number(int minimum, int maximum, int value)
+    private static NumberBox Number(int minimum, int maximum, int value)
     {
-        var number = new NumericUpDown
+        var number = new NumberBox
         {
             Minimum = minimum,
             Maximum = maximum,
@@ -429,7 +430,7 @@ internal sealed class AccountEditorForm : Form
             store.SetPlanes(planes);
             store.Portrait = portrait;
             store.Unlocks = unlocks.GetValue();
-            store.FinishedDungeons = dungeons.CheckedItems.Cast<object>().Select(o => o.ToString() ?? "").Where(s => s.Length > 0).ToList();
+            store.FinishedDungeons = dungeons.Chips.Where(c => c.Checked).Select(c => c.Id).ToList();
             if (store.HasInventory)
             {
                 store.Currencies = currencies.GetValue();

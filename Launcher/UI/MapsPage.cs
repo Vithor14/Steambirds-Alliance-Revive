@@ -11,13 +11,13 @@ internal sealed class MapsPage : UserControl
 {
     private readonly DataGridView grid;
     private readonly DataGridViewComboBoxColumn mapColumn;
-    private readonly NumericUpDown maxPlayers;
-    private readonly NumericUpDown autoExit;
+    private readonly NumberBox maxPlayers;
+    private readonly NumberBox autoExit;
     private readonly CheckBox portalsOn;
     private readonly ComboBox entryMode;
     private readonly CheckBox lockBossRooms;
-    private readonly NumericUpDown fireRateScale;
-    private readonly NumericUpDown maxBullets;
+    private readonly NumberBox fireRateScale;
+    private readonly NumberBox maxBullets;
     private readonly Button saveButton;
     private readonly Button undoButton;
     private readonly Label statusLabel;
@@ -37,22 +37,24 @@ internal sealed class MapsPage : UserControl
     public MapsPage(ToolTip tip)
     {
         // ------------------------------------------------------------ fixed maps (not selectable yet)
-        var nexusMap = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 200 };
+        var nexusMap = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 200 };
         nexusMap.Items.Add("nexus");
         nexusMap.SelectedIndex = 0;
-        var tutorialMap = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 200 };
+        var tutorialMap = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 200 };
         tutorialMap.Items.Add("tutorial_walker");
         tutorialMap.SelectedIndex = 0;
         Ui.Disable(nexusMap, tutorialMap);
 
-        TableLayoutPanel fixedTable = Ui.Table(3);
-        Ui.AddRow(fixedTable, Ui.Text(L.T("Nexus (Rebel City):")), nexusMap, Ui.ComingSoon(tip,
-            L.T("The server always uses maps\\nexus.json. Choosing another map file for the Nexus is not implemented yet.")));
-        Ui.AddRow(fixedTable, Ui.Text(L.T("Tutorial (Training Grounds):")), tutorialMap, Ui.ComingSoon(tip,
-            L.T("The server always uses maps\\tutorial_walker.json. Choosing another map file for the tutorial is not implemented yet.")));
+        nexusMap.Margin = new Padding(3, 4, 3, 3);
+        tutorialMap.Margin = new Padding(3, 4, 3, 3);
+        FlowLayoutPanel fixedTable = Ui.WrapFlow(
+            Ui.Note(L.T("Nexus (Rebel City):")), nexusMap, Ui.ComingSoon(tip,
+                L.T("The server always uses maps\\nexus.json. Choosing another map file for the Nexus is not implemented yet.")),
+            Ui.Note(L.T("Tutorial (Training Grounds):")), tutorialMap, Ui.ComingSoon(tip,
+                L.T("The server always uses maps\\tutorial_walker.json. Choosing another map file for the tutorial is not implemented yet.")));
 
         // ------------------------------------------------------------ dungeons
-        saveButton = Ui.Button(L.T("Save"), (_, _) => Save());
+        saveButton = Ui.Primary(L.T("Save"), (_, _) => Save());
         undoButton = Ui.Button(L.T("Undo changes"), (_, _) => Reload());
         saveButton.Enabled = false;
         undoButton.Enabled = false;
@@ -60,30 +62,29 @@ internal sealed class MapsPage : UserControl
         var previewButton = Ui.Button(L.T("View the selected map"));
         Ui.Disable(previewButton);
 
+        // What the table columns mean goes behind a "?" in the toolbar.
+        HelpButton tableHelp = Ui.Help(L.T("Active: the dungeon shows in the Nexus and accepts players. Map file: any .json of the server\\maps folder (the community can make other versions of each dungeon). Health ×: multiplies the health of the dungeon's enemies. Opens at: date and time of this PC as yyyy-mm-dd hh:mm (empty = already open). The server reads dungeons.json again by itself; changes apply to the next entries."),
+            L.T("Dungeons (dungeons.json)"));
         var toolbar = Ui.WrapFlow(saveButton, undoButton, previewButton,
             Ui.ComingSoon(tip, L.T("Viewing each map here on the server screen is not implemented yet.\nOpen a map in the Map editor tab to see it.")),
-            statusLabel);
+            statusLabel, tableHelp);
         toolbar.Dock = DockStyle.Top;
+        toolbar.Padding = new Padding(0, 0, 0, 8);
 
-        maxPlayers = new NumericUpDown { Minimum = 1, Maximum = 100, Width = 70, Margin = new Padding(3, 4, 12, 3) };
-        autoExit = new NumericUpDown { Minimum = 0, Maximum = 3600, Width = 80, Margin = new Padding(3, 4, 3, 3) };
-        portalsOn = new CheckBox { Text = L.T("Dungeon carriers in the Nexus"), AutoSize = true, Margin = new Padding(12, 6, 3, 3) };
+        maxPlayers = new NumberBox { Minimum = 1, Maximum = 100, Width = 90, TextAlign = HorizontalAlignment.Right };
+        autoExit = new NumberBox { Minimum = 0, Maximum = 3600, Width = 90, TextAlign = HorizontalAlignment.Right };
+        portalsOn = new ThemedCheckBox { Text = L.T("Dungeon carriers in the Nexus"), OffText = L.T("Dungeon carriers in the Nexus"), Switch = true };
         maxPlayers.ValueChanged += (_, _) => MarkDirty();
         autoExit.ValueChanged += (_, _) => MarkDirty();
         portalsOn.CheckedChanged += (_, _) => MarkDirty();
-        var generalRow = Ui.WrapFlow(
-            Ui.Text(L.T("Max players per dungeon:")), maxPlayers,
-            Ui.Text(L.T("Automatic exit after the boss (seconds):")), autoExit,
-            portalsOn);
-        generalRow.Dock = DockStyle.Top;
 
         // How players enter dungeons, boss room locks and how hard the enemies shoot (dungeons.json).
-        entryMode = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 330, Margin = new Padding(3, 4, 12, 3) };
+        entryMode = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 330 };
         foreach ((string value, string label) in EntryModes) entryMode.Items.Add(label);
         entryMode.SelectedIndex = 0;
-        lockBossRooms = new CheckBox { Text = L.T("Lock the doors of a boss room behind the player"), AutoSize = true, Margin = new Padding(3, 6, 12, 3) };
-        fireRateScale = new NumericUpDown { Minimum = 0.1m, Maximum = 5m, DecimalPlaces = 2, Increment = 0.1m, Value = 1m, Width = 70, Margin = new Padding(3, 4, 12, 3) };
-        maxBullets = new NumericUpDown { Minimum = 0, Maximum = 200, Width = 70, Value = 10, Margin = new Padding(3, 4, 3, 3) };
+        lockBossRooms = new ThemedCheckBox { Text = L.T("Lock the doors of a boss room behind the player"), OffText = L.T("Lock the doors of a boss room behind the player"), Switch = true };
+        fireRateScale = new NumberBox { Minimum = 0.1m, Maximum = 5m, DecimalPlaces = 2, Increment = 0.1m, Value = 1m, Width = 90, TextAlign = HorizontalAlignment.Right };
+        maxBullets = new NumberBox { Minimum = 0, Maximum = 200, Width = 90, Value = 10, TextAlign = HorizontalAlignment.Right };
         entryMode.SelectedIndexChanged += (_, _) => MarkDirty();
         lockBossRooms.CheckedChanged += (_, _) => MarkDirty();
         fireRateScale.ValueChanged += (_, _) => MarkDirty();
@@ -91,17 +92,22 @@ internal sealed class MapsPage : UserControl
         tip.SetToolTip(entryMode, L.T("both: the carriers outside the city and the Mission Transport (the mega carrier at the end of the main ramp, which lists the dungeons as missions). portals: only the carriers. missionTransport: only the mission list."));
         tip.SetToolTip(maxBullets, L.T("The most bullets per second one dungeon enemy may put out (its guns slow down together until it fits). 0 = no limit. Lower = easier to dodge."));
         tip.SetToolTip(fireRateScale, L.T("Multiplies the fire rate of every dungeon enemy (0.5 = half as fast)."));
-        var entryRow = Ui.WrapFlow(
-            Ui.Text(L.T("How players enter dungeons:")), entryMode,
-            lockBossRooms);
-        entryRow.Dock = DockStyle.Top;
-        var fireRow = Ui.WrapFlow(
-            Ui.Text(L.T("Enemy fire rate ×:")), fireRateScale,
-            Ui.Text(L.T("Max bullets per second per enemy (0 = no limit):")), maxBullets);
-        fireRow.Dock = DockStyle.Top;
 
-        var help = Ui.Wrapping(L.T("Active: the dungeon shows in the Nexus and accepts players. Map file: any .json of the server\\maps folder (the community can make other versions of each dungeon). Health ×: multiplies the health of the dungeon's enemies. Opens at: date and time of this PC as yyyy-mm-dd hh:mm (empty = already open). The server reads dungeons.json again by itself; changes apply to the next entries."), 1000, gray: true);
-        help.Dock = DockStyle.Top;
+        // Every setting is a small "name over field" block; the blocks wrap onto as many rows as the width needs.
+        FlowLayoutPanel settingsFlow = Ui.WrapFlow(
+            Field(L.T("Max players per dungeon:"), maxPlayers),
+            Field(L.T("Automatic exit after the boss (seconds):"), autoExit),
+            Field(L.T("Enemy fire rate ×:"), fireRateScale),
+            Field(L.T("Max bullets per second per enemy (0 = no limit):"), maxBullets),
+            Field(L.T("How players enter dungeons:"), entryMode),
+            Field("", portalsOn),
+            Field("", lockBossRooms));
+        Card nexusCard = Ui.Group(L.T("Nexus and tutorial maps"), fixedTable);
+        var settingsCard = new Card { Title = L.T("Dungeon settings"), Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink };
+        settingsFlow.Dock = DockStyle.Top;
+        settingsCard.Controls.Add(settingsFlow);
+        FitWidth(settingsCard, settingsFlow);
+        FitWidth(nexusCard, fixedTable);
 
         grid = new DataGridView
         {
@@ -146,31 +152,55 @@ internal sealed class MapsPage : UserControl
         grid.CellValueChanged += (_, _) => MarkDirty();
         grid.DataError += (_, e) => e.ThrowException = false;
 
+        // The table fills what is left; the cards and the toolbar sit above it.
         var dungeonsPanel = new Panel { Dock = DockStyle.Fill };
-        dungeonsPanel.Resize += (_, _) => help.MaximumSize = new Size(Math.Max(200, dungeonsPanel.ClientSize.Width - 10), 0);
-        dungeonsPanel.Controls.Add(grid);
-        dungeonsPanel.Controls.Add(help);
-        dungeonsPanel.Controls.Add(fireRow);
-        dungeonsPanel.Controls.Add(entryRow);
-        dungeonsPanel.Controls.Add(generalRow);
+        dungeonsPanel.Controls.Add(Ui.Framed(grid));
+        dungeonsPanel.Controls.Add(settingsCard);
         dungeonsPanel.Controls.Add(toolbar);
-
-        var dungeonsGroup = new GroupBox { Text = L.T("Dungeons (dungeons.json)"), Dock = DockStyle.Fill, Padding = new Padding(8, 6, 8, 6) };
-        dungeonsGroup.Controls.Add(dungeonsPanel);
 
         var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2 };
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
-        root.Controls.Add(Ui.Group(L.T("Nexus and tutorial maps"), fixedTable), 0, 0);
-        root.Controls.Add(dungeonsGroup, 0, 1);
-        Controls.Add(root);
+        root.Controls.Add(nexusCard, 0, 0);
+        root.Controls.Add(dungeonsPanel, 0, 1);
+
+        // In a small window the page scrolls instead of squeezing the table to a few rows.
+        var scroller = new Panel { Dock = DockStyle.Fill, AutoScroll = true, AutoScrollMinSize = new Size(0, 620) };
+        scroller.Controls.Add(root);
+        Controls.Add(scroller);
 
         watchTimer = new System.Windows.Forms.Timer { Interval = 2000 };
         watchTimer.Tick += (_, _) => CheckExternalChanges();
         watchTimer.Start();
 
         Reload();
+    }
+
+    // A wrapping flow inside a card needs to know how wide it may be, or it does not grow taller when it wraps.
+    private static void FitWidth(Card card, FlowLayoutPanel flow)
+    {
+        card.SizeChanged += (_, _) =>
+            flow.MaximumSize = new Size(Math.Max(120, card.ClientSize.Width - card.Padding.Horizontal), 0);
+    }
+
+    // A name over its field.
+    private static Control Field(string name, Control field)
+    {
+        var block = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Margin = new Padding(0, 0, 22, 8) };
+        if (name.Length > 0)
+        {
+            Label label = Ui.Note(name);
+            label.Margin = new Padding(3, 0, 3, 2);
+            block.Controls.Add(label);
+        }
+        else
+        {
+            // A switch has its name in itself; keep it level with the fields next to it.
+            field.Margin = new Padding(3, 22, 3, 3);
+        }
+        block.Controls.Add(field);
+        return block;
     }
 
     public void Reload()

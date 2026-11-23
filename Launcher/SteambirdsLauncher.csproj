@@ -22,6 +22,14 @@
     <DefaultItemExcludes>$(DefaultItemExcludes);build\**;dist\**</DefaultItemExcludes>
   </PropertyGroup>
 
+  <!-- The project's own emblem (Branding\icon.png, our drawing): the icon of the exe and the mark in the header. -->
+  <PropertyGroup>
+    <ApplicationIcon>..\Branding\icon.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\Branding\icon.png" LogicalName="brand-emblem.png" />
+  </ItemGroup>
+
   <!-- Enemy AI core, shared with the server: the AI tab simulator runs the same code the server runs. -->
   <ItemGroup>
     <Compile Include="..\Shared\EnemyAi\*.cs" LinkBase="Shared\EnemyAi" />

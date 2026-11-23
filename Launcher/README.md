@@ -1,16 +1,29 @@
 # Steambirds Alliance Revive — Launcher
 
-Launcher of the project (Portuguese version: `LEIA-ME.md`), with five tabs:
+Launcher of the project (Portuguese version: `LEIA-ME.md`). The header has the five main tabs, grouped by what they are for — **play** (Client, Server), **make** (Map editor, Enemy AI) and, at the right end, **Settings** — and the state of the server and of the game:
 
-- **Client**: downloads the game with Steam, sets the player name, lists the servers (this PC, the local network and VPNs like Radmin and Hamachi, or a typed IP) and opens the game on the chosen server. Its console shows `BepInEx\LogOutput.log` and the Unity `Player.log` while the game runs.
-- **Server**: hosts the server of this PC (what `Run server.ps1` did) for this PC and for players of other PCs, shows its output in a console and edits its settings, its network (name, ports, who can join) and the accounts of the players.
-- **Settings**: theme, launcher language, game folder and language, server search port, and buttons to open folders and files.
+- **Client**: three sub-tabs and a **Play bar** that stays in view.
+  - *Servers*: lists the servers (this PC, the local network and VPNs like Radmin and Hamachi, or a typed IP).
+  - *Game*: the game folder, the Steam state, the Quieter plugin and the player name. *Download the game with Steam* only shows while the game is missing (or is not the build the server was made for).
+  - *Console*: `BepInEx\LogOutput.log` and the Unity `Player.log` while the game runs.
+- **Server**: hosts the server of this PC (what `Run server.ps1` did) for this PC and for players of other PCs. The header has Start / Stop / Restart and the state; a side navigation groups the pages: *Monitor* (Console), *Game rules* (Progression, Items and loot, Enemies and difficulty, Store), *Players* (Accounts, New accounts, Friends and flocks), *World* (Maps and dungeons, World map) and *Connection* (Network and multiplayer).
 - **Map editor**: creates, opens, edits and saves the map files of the server (dungeons, Nexus, tutorial) with the pieces of the game. See `Editor\README.md`.
 - **Enemy AI**: builds the AI of the enemies (states, movement, when to shoot) and its reusable behaviors, each saved as its own `.json` file in `server\ai`, and simulates them with the art and guns of any game unit. See below.
+- **Settings**: four sub-tabs — *General* (theme, launcher language), *Game* (game folder and language), *Server* (report, server search port) and *Folders and files* (buttons to open folders and files).
 
-The launcher opens in **English**. Other languages: *Settings → Appearance → Launcher language* (`lang\README.md` explains how to add one).
+The launcher opens in **English**. Other languages: *Settings → General → Launcher language* (`lang\README.md` explains how to add one).
 
 Features the project does not have yet are **grayed out**, with a *(coming soon)* tag that explains why.
+
+## Look and feel
+
+The look uses the colors of the project branding (`Branding\README.md`): plate black `#151019`, steam yellow `#F8BA24` (the main action of a screen, the selected tab, the "on" state) and ember `#F2622A`. The **dark** theme is the plate; the **light** one is parchment with the same black header. Only the project's own emblem is used (`Branding\icon.png`, compiled into the exe): nothing from the game itself — no icon, picture or font.
+
+- Every main tab, sub-tab and side-navigation page has a small **icon** (`UI\Controls\Icons.cs`) to find it at a glance. They come from the icon font that ships with Windows 10 and 11 (Segoe MDL2 Assets), not from the game; without that font the tabs show only their names.
+- Long explanations are behind a round **?** button (click it): game plugin, language files, what each setting does. The screens keep short labels.
+- Settings pages built from the server's `.json` files show one **tile per setting**, flowing over the whole width (a wide window shows several columns), with a filter box. On/off settings are switches; the unlock items of new accounts are **pills** with a tick (*All* / *None* shortcuts).
+- The header adapts to a narrow window (the state pills shrink to a dot and a word, then the tabs get closer, then only the emblem is left); the minimum window is 1000 × 660.
+- `Ctrl+Tab` goes through the main tabs. Tooltips, scroll bars and the title bar (Windows 11) follow the theme.
 
 ## Building
 
@@ -43,8 +56,8 @@ When the launcher opens and `Steambirds.exe` is not in the game folder, a window
 
 ## Client tab
 
-- **Download the game with Steam**: copies `download_depot 386010 386011 58813776496064724`, opens the Steam console (`steam://open/console`) and follows the download (folder size and the `Depot download complete` / `failed` lines of Steam's `logs\console_log.txt`). When it is done, `steamapps\content\app_386010\depot_386011` becomes the game folder and gets `steam_appid.txt` (386010), so the game logs in with Steam outside the library. The Steam account needs the game in its library. The depot has no BepInEx: without it the game runs without the Quieter plugin.
-- **Quieter plugin**: the row explains what the plugin is (client bug fixes, quieter logs, no telemetry errors) and what happens without it (the game works, with those bugs and noisy logs; a PC that only joins other servers loses nothing else, because the server ships its own data tables in `server\data`).
+- **Download the game with Steam** (*Game* sub-tab, only while the game is missing or is the wrong build): copies `download_depot 386010 386011 58813776496064724`, opens the Steam console (`steam://open/console`) and follows the download (folder size and the `Depot download complete` / `failed` lines of Steam's `logs\console_log.txt`). When it is done, `steamapps\content\app_386010\depot_386011` becomes the game folder and gets `steam_appid.txt` (386010), so the game logs in with Steam outside the library. The Steam account needs the game in its library. The depot has no BepInEx: without it the game runs without the Quieter plugin.
+- **Quieter plugin**: its state (*Installed*, *Update available*, *Not installed*, *BepInEx missing*) and an *Install plugin* / *Update plugin* button. The **?** explains what the plugin is (client bug fixes, quieter logs, no telemetry errors) and what happens without it (the game works, with those bugs and noisy logs; a PC that only joins other servers loses nothing else, because the server ships its own data tables in `server\data`).
 - **Player**: the name the other players see. Empty = the name of the Steam account (read from Steam's `loginusers.vdf`). The **account** on a server is always the Steam account (the Steam ID comes from the login ticket), so changing the name keeps the pilot and the planes. The name goes in the path of `OZY_URL` (`http://<ip>:<port>/n/<name as hex>/ozy`), only for servers that accept it.
 - **Servers**: the first row is **this PC**; below it, the servers found on the local network and on VPNs, and the typed IPs.
   - The search (*Search again*, or every minute with *Search by itself*) sends a UDP packet to port 6444 on every network of the PC: broadcast, the PCs of the ARP table and, on small (home) networks, every address. Radmin VPN and Hamachi are reached by broadcast and the ARP table.
@@ -68,10 +81,12 @@ To use an AI in the game, write `"ai": "<id>"` in a unit type of `enemies.json` 
 
 ## Server tab
 
-- **Start / Stop / Restart**, the state of the server, its name, ports and whether it accepts other PCs.
-- **Console**, **Progression**, **Items and loot**, **Enemies and difficulty**, **Maps and dungeons**: as before (screens built from the server's own `.json` files).
+- **Start / Stop / Restart**, the state of the server, its name, ports and whether it accepts other PCs. The pages are in the side navigation (see the groups above).
+- **Console**, **Progression**, **Items and loot**, **Enemies and difficulty**: screens built from the server's own `.json` files (one tile per setting).
+- **Maps and dungeons**: the dungeon settings and the table of dungeons (`dungeons.json`); the maps of the Nexus and the tutorial are grayed out (the server uses fixed files for now).
 - **Store**: everything of `stores.json`. *General* (purchases on/off, gold and iron or free, discount on every price, pre-release products), *Prices and products* (the 294 products of the game with their price, the host's discount, stock and limit per account, the price the player pays "now", search, category filter and bulk changes on the products shown) and *Shelves* (which stores are open and what each section sells, with a product picker for include / exclude). Prices can only go down (the game draws the price itself): the discount, 0 to 100%, is the dial. Saving keeps the comments of the file and the server reads it again by itself.
-- **Accounts**: the starting state of new accounts (with its own **starting money** panel: gold, iron...), and the **list of accounts** (one per player: name, Steam ID, last played, rank, planes, **portrait**, kills...), with the planes of the selected one. *Edit account...*, *Reroll portrait* and *Remove account* only work while the launcher's server is stopped. The money of an account (and its portrait, planes, unlocks...) is edited in the *Edit account* window; with the server running, give money with `/currency gold 5000` in the game chat. The **portrait** is the set of pieces of the pilot (slot, piece name, id); *Reroll portrait* picks a new one with the game's own rules from `server\data\portraits_config.txt` (the pictures of the pieces are Unity prefabs, so the launcher shows their names, not drawings).
+- **New accounts**: the starting state of new accounts — pilot rank, the unlocked plane classes (pills), ingredients and storage items — with its own **starting money** panel (gold, iron...).
+- **Accounts**: the **list of accounts** (one per player: name, Steam ID, last played, rank, planes, **portrait**, kills...), with the planes of the selected one. *Edit account...*, *Reroll portrait* and *Remove account* only work while the launcher's server is stopped. The money of an account (and its portrait, planes, unlocks...) is edited in the *Edit account* window; with the server running, give money with `/currency gold 5000` in the game chat. The **portrait** is the set of pieces of the pilot (slot, piece name, id); *Reroll portrait* picks a new one with the game's own rules from `server\data\portraits_config.txt` (the pictures of the pieces are Unity prefabs, so the launcher shows their names, not drawings).
 - **Network and multiplayer**: the **addresses to share** with other players (one per network: local network, Radmin VPN, Hamachi...), the **Windows Firewall** rule (*Allow in the Windows Firewall* creates an inbound rule for `server\SteambirdsServer.exe` on every network; Windows asks for administrator permission) and the settings of `network.json`: server name, players of other PCs, server search, maximum players, who can use chat commands (`everyone`, `host`, `none`), welcome message and the **ports** (TCP login, UDP Nexus, tutorial, dungeon and search). Ports and "players of other PCs" change when the server restarts; the server reads the rest again by itself.
 
 ## Playing with other people
@@ -90,6 +105,7 @@ Every player has their own account on the host's PC (pilot, planes, items, finis
 - `Core\GameData\`: reading the game's configBinary (classes, unlocks, currencies, ingredients, XP tables, languages).
 - `Editor\`: the map editor tab (the document, the canvas, the forms and the checks; see `Editor\README.md`).
 - `EnemyAi\`: the Enemy AI tab (`AiTab`, `AiStore`, the brain and behavior editors, `AiSimView`). The AI core itself is `..\Shared\EnemyAi`, compiled into the launcher and the server.
-- `UI\`: the screens — `MainForm`, `ClientTab`, `DepotDownloadForm`, `ServerTab`, `NetworkPage`, `SettingsTab`, `AccountsPage`, `AccountEditorForm`, `MapsPage`, `SettingsPage`, `StorePage` (with `StoreProductsView` and `StoreShelvesView`), `MoneyPanels`, `ConsoleView`, `Theme` and `LauncherContext` (state shared by the tabs, including the server list).
+- `UI\`: the screens — `MainForm`, `ClientTab`, `DepotDownloadForm`, `ServerTab`, `NetworkPage`, `SettingsTab`, `AccountsPage`, `NewAccountsPage`, `AccountEditorForm`, `MapsPage`, `SettingsPage`, `StorePage` (with `StoreProductsView` and `StoreShelvesView`), `MoneyPanels`, `ConsoleView`, `Theme` (palettes, `Theme.P`; `Theme.AttachWindow` colors a window and what is added to it) and `LauncherContext` (state shared by the tabs, including the server list).
+- `UI\Controls\`: the controls the launcher draws itself, all reading `Theme.P` when they paint — `MainNav` (header and main tabs), `NavPages` (side navigation), `ThemedTabControl`, `Card`, `ThemedButton` (`Ui.Button`, `Ui.Primary`, `Ui.Danger`, `Ui.Quiet`), `ThemedTextBox`, `ThemedComboBox`, `NumberBox` (replaces `NumericUpDown`), `ThemedCheckBox` (box or switch), `ThemedListView` (`Ui.Grid`), `ChipList` (the pills), `HelpButton` (the **?**), `StatusPill`, `SectionHeader`, `EllipsisLabel`, `NativeTheme` (dark scroll bars, title bar) and `Dpi`. New screens should use these (and `Ui.*`) instead of the plain WinForms controls, so they follow both themes.
 
 Every text shown on screen goes through `L.T("...")` / `L.F("... {0}", value)`, and its translation goes into `Launcher\lang\pt-BR.json` and `_template.json`.

@@ -144,7 +144,7 @@ internal sealed class ToolButton : Control
         using (var brush = new SolidBrush(back)) e.Graphics.FillRectangle(brush, bounds);
         using (var pen = new Pen(isChecked ? p.Selection : p.Border)) e.Graphics.DrawRectangle(pen, bounds);
 
-        Color fore = !Enabled ? p.Muted : isChecked && Theme.Dark ? Color.White : isChecked ? SystemColors.HighlightText : p.Text;
+        Color fore = !Enabled ? p.Muted : isChecked ? p.SelectionText : p.Text;
         var textBounds = new Rectangle(6, 0, Width - 12, Height);
         TextRenderer.DrawText(e.Graphics, Text, Font, textBounds, fore,
             TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);

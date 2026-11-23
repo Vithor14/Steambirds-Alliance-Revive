@@ -4,26 +4,15 @@ using SteambirdsLauncher.Core.GameData;
 
 namespace SteambirdsLauncher.UI;
 
-// Checklist of unlock items: one line per plane class of the game (its unlock item, like "playerclass_medic"),
-// plus a text field for other unlock items. Used for the starting unlocks and in the account editor.
+// Unlock items as compact pills: one per plane class of the game (its unlock item, like "playerclass_medic"), with
+// "All" and "None" shortcuts, plus a text field for other unlock items. Used for the starting unlocks and in the
+// account editor.
 internal sealed class UnlockChecklist : UserControl
 {
-    private sealed class Entry
-    {
-        public Entry(string id, string display)
-        {
-            Id = id;
-            Display = display;
-        }
-
-        public string Id { get; }
-        public string Display { get; }
-        public override string ToString() => Display;
-    }
-
     private readonly GameConfig data;
-    private readonly CheckedListBox list;
-    private readonly TextBox others;
+    private readonly ChipList chips;
+    private readonly ThemedTextBox others;
+    private readonly Label count;
     private bool loading;
 
     public event Action? Changed;
@@ -31,42 +20,49 @@ internal sealed class UnlockChecklist : UserControl
     public UnlockChecklist(GameConfig data)
     {
         this.data = data;
-        list = new CheckedListBox
-        {
-            CheckOnClick = true,
-            MultiColumn = true,
-            ColumnWidth = 250,
-            IntegralHeight = false,
-            Dock = DockStyle.Top,
-            BorderStyle = BorderStyle.FixedSingle
-        };
+        AutoSize = true;
+        AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        MinimumSize = new Size(300, 0);
+
+        chips = new ChipList { Dock = DockStyle.Top, Margin = Padding.Empty };
         foreach (GameConfig.PlaneClass planeClass in data.Classes)
         {
-            string display = planeClass + " — " + planeClass.UnlockItem + (planeClass.PreRelease ? " " + L.T("(pre-release)") : "");
-            list.Items.Add(new Entry(planeClass.UnlockItem, display));
+            string name = planeClass.Name.Length > 0 ? planeClass.Name : planeClass.Id;
+            if (planeClass.PreRelease) name += " " + L.T("(pre-release)");
+            chips.Add(new ChipList.Chip(planeClass.UnlockItem, name, planeClass.UnlockItem));
         }
-        int rows = Math.Max(1, (int)Math.Ceiling(list.Items.Count / 3.0));
-        list.Height = rows * list.ItemHeight + 6;
-        list.ItemCheck += (_, _) =>
+        chips.Changed += () =>
         {
-            // ItemCheck comes before the check changes: tell the owner after it.
-            if (!loading) BeginInvoke(new Action(() => Changed?.Invoke()));
+            UpdateCount();
+            if (!loading) Changed?.Invoke();
         };
 
-        others = new TextBox { Dock = DockStyle.Top, Margin = new Padding(3) };
+        count = Ui.Note("");
+        count.Margin = new Padding(3, 8, 12, 3);
+        ThemedButton all = Ui.Quiet(L.T("All"), (_, _) => chips.SetAll(true));
+        ThemedButton none = Ui.Quiet(L.T("None"), (_, _) => chips.SetAll(false));
+        FlowLayoutPanel header = Ui.Flow(count, all, none);
+        header.Dock = DockStyle.Top;
+        header.Padding = new Padding(0, 0, 0, 6);
+
+        others = new ThemedTextBox { Dock = DockStyle.Top, Margin = new Padding(3) };
         others.TextChanged += (_, _) =>
         {
             if (!loading) Changed?.Invoke();
         };
         Label othersLabel = Ui.Note(L.T("Other unlock items (separated by commas):"));
         othersLabel.Dock = DockStyle.Top;
+        othersLabel.Padding = new Padding(0, 10, 0, 2);
 
+        // Docked from the bottom to the top: the last control added is the first one at the top.
         Controls.Add(others);
         Controls.Add(othersLabel);
-        Controls.Add(list);
-        Height = list.Height + othersLabel.PreferredHeight + others.PreferredHeight + 16;
-        MinimumSize = new Size(300, Height);
+        Controls.Add(chips);
+        Controls.Add(header);
+        UpdateCount();
     }
+
+    private void UpdateCount() => count.Text = L.F("{0} of {1} unlocked", chips.CheckedCount, chips.Chips.Count);
 
     public void SetValue(IEnumerable<string> values)
     {
@@ -75,13 +71,9 @@ internal sealed class UnlockChecklist : UserControl
         {
             var wanted = new HashSet<string>(values.Where(v => !string.IsNullOrWhiteSpace(v)).Select(v => data.UnlockItemOf(v.Trim())),
                 StringComparer.OrdinalIgnoreCase);
-            for (int i = 0; i < list.Items.Count; i++)
-            {
-                var entry = (Entry)list.Items[i];
-                bool on = wanted.Remove(entry.Id);
-                list.SetItemChecked(i, on);
-            }
+            foreach (ChipList.Chip chip in chips.Chips) chips.SetChecked(chip.Id, wanted.Remove(chip.Id));
             others.Text = string.Join(", ", wanted);
+            UpdateCount();
         }
         finally
         {
@@ -92,9 +84,9 @@ internal sealed class UnlockChecklist : UserControl
     public List<string> GetValue()
     {
         var result = new List<string>();
-        foreach (object item in list.CheckedItems)
+        foreach (ChipList.Chip chip in chips.Chips)
         {
-            if (item is Entry entry && !result.Contains(entry.Id)) result.Add(entry.Id);
+            if (chip.Checked && !result.Contains(chip.Id)) result.Add(chip.Id);
         }
         foreach (string other in others.Text.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
         {
@@ -105,12 +97,13 @@ internal sealed class UnlockChecklist : UserControl
     }
 }
 
+
 // One number field per currency of the game (from the game's store config; "newscrap" is the recycling currency).
 // Used for the starting currencies and in the account editor.
 internal sealed class CurrencyFields : UserControl
 {
     private readonly TableLayoutPanel table;
-    private readonly Dictionary<string, NumericUpDown> fields = new Dictionary<string, NumericUpDown>(StringComparer.Ordinal);
+    private readonly Dictionary<string, NumberBox> fields = new Dictionary<string, NumberBox>(StringComparer.Ordinal);
     private bool loading;
 
     public event Action? Changed;
@@ -133,11 +126,12 @@ internal sealed class CurrencyFields : UserControl
         AutoSizeMode = AutoSizeMode.GrowAndShrink;
     }
 
-    private NumericUpDown AddField(string currency)
+    private NumberBox AddField(string currency)
     {
-        if (fields.TryGetValue(currency, out NumericUpDown? existing)) return existing;
-        var field = new NumericUpDown
+        if (fields.TryGetValue(currency, out NumberBox? existing)) return existing;
+        var field = new NumberBox
         {
+            CommitWhileTyping = true,
             Minimum = 0,
             Maximum = 1_000_000_000,
             Width = 120,
@@ -159,10 +153,10 @@ internal sealed class CurrencyFields : UserControl
         loading = true;
         try
         {
-            foreach (NumericUpDown field in fields.Values) field.Value = 0;
+            foreach (NumberBox field in fields.Values) field.Value = 0;
             foreach (KeyValuePair<string, int> pair in values)
             {
-                NumericUpDown field = AddField(pair.Key);
+                NumberBox field = AddField(pair.Key);
                 field.Value = Math.Clamp(pair.Value, (int)field.Minimum, (int)field.Maximum);
             }
         }
@@ -176,7 +170,7 @@ internal sealed class CurrencyFields : UserControl
     public Dictionary<string, int> GetValue()
     {
         var result = new Dictionary<string, int>(StringComparer.Ordinal);
-        foreach (KeyValuePair<string, NumericUpDown> pair in fields)
+        foreach (KeyValuePair<string, NumberBox> pair in fields)
         {
             int amount = (int)pair.Value.Value;
             if (amount != 0) result[pair.Key] = amount;

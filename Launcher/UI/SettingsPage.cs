@@ -4,7 +4,7 @@ using SteambirdsLauncher.Core;
 
 namespace SteambirdsLauncher.UI;
 
-// Builds a special editor for one key (the unlock checklist, the currency fields). null = use the default editor.
+// Builds a special editor for one key (the unlock chips, the currency fields). null = use the default editor.
 internal delegate SettingEditor? CustomEditorFactory(SettingsSection section, JsoncProperty property);
 
 // Part of a server config file shown on a settings page.
@@ -40,25 +40,46 @@ internal sealed class SettingsSection
     }
 }
 
-// Editor for the server config files (progression.json, items.json, enemies.json). The screen is built from the file
-// itself: every top-level key becomes a field and the comment above it becomes its description, so new settings of
-// the server show up here by themselves. Saving changes only the values that were edited and keeps the comments.
+// Editor for the server config files (progression.json, items.json, enemies.json...). The screen is built from the file
+// itself: every top-level key becomes a tile and the comment above it becomes its "?" note, so new settings of the
+// server show up here by themselves. Saving changes only the values that were edited and keeps the comments.
 // The server reads these files again by itself (about once per second), also while it is running.
+//
+// Tiles flow left to right and fill the width: a wide window shows several columns, a narrow one a single column.
 internal sealed class SettingsPage : UserControl
 {
-    private const int TitleColumnWidth = 330;
+    private const int MinTileWidth96 = 330;
+    private const int Gap96 = 10;
+
+    private sealed class Tile
+    {
+        public Tile(Control control, string search, SettingsSection section, bool fullWidth)
+        {
+            Control = control;
+            Search = search;
+            Section = section;
+            FullWidth = fullWidth;
+        }
+
+        public Control Control { get; }
+        public string Search { get; }
+        public SettingsSection Section { get; }
+        public bool FullWidth { get; }
+    }
 
     private readonly SettingsSection[] sections;
     private readonly ToolTip toolTip;
-    private readonly TableLayoutPanel grid;
+    private readonly FlowLayoutPanel flow;
     private readonly Panel scroller;
-    private readonly Button saveButton;
-    private readonly Button undoButton;
+    private readonly ThemedButton saveButton;
+    private readonly ThemedButton undoButton;
     private readonly Label statusLabel;
-    private readonly Label introLabel;
-    private readonly Control toolbar;
+    private readonly FlowLayoutPanel toolbarLeft;
+    private readonly ThemedTextBox filterBox;
     private readonly List<SettingEditor> editors = new List<SettingEditor>();
-    private readonly List<Label> wrappingLabels = new List<Label>();
+    private readonly List<Tile> tiles = new List<Tile>();
+    private readonly List<(SectionHeader Header, SettingsSection Section)> headers = new List<(SectionHeader, SettingsSection)>();
+    private readonly List<Label> notes = new List<Label>();
     private readonly Dictionary<string, DateTime> loadedStamps = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
     private readonly System.Windows.Forms.Timer watchTimer;
     private bool loading;
@@ -69,37 +90,42 @@ internal sealed class SettingsPage : UserControl
         this.toolTip = toolTip;
         this.sections = sections;
 
-        saveButton = Ui.Button(L.T("Save"), (_, _) => Save());
+        saveButton = Ui.Primary(L.T("Save"), (_, _) => Save());
         saveButton.Enabled = false;
         undoButton = Ui.Button(L.T("Undo changes"), (_, _) => Reload());
         undoButton.Enabled = false;
         statusLabel = Ui.Note("");
 
-        toolbar = Ui.WrapFlow(saveButton, undoButton, statusLabel);
-        toolbar.Dock = DockStyle.Top;
+        toolbarLeft = Ui.Flow(saveButton, undoButton, statusLabel);
+        toolbarLeft.Anchor = AnchorStyles.Left;
 
-        introLabel = Ui.Wrapping(intro, 600, gray: true);
-        introLabel.Dock = DockStyle.Top;
-        introLabel.Padding = new Padding(0, 0, 0, 4);
+        filterBox = new ThemedTextBox { Width = 200, PlaceholderText = L.T("Filter settings..."), Margin = new Padding(3, 5, 3, 3) };
+        filterBox.TextChanged += (_, _) => ApplyFilter();
+        HelpButton help = Ui.Help(intro);
+        FlowLayoutPanel toolbarRight = Ui.Flow(filterBox, help);
+        toolbarRight.Anchor = AnchorStyles.Right;
 
-        grid = new TableLayoutPanel
+        var toolbar = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 2, RowCount = 1, Padding = new Padding(0, 0, 0, 8) };
+        toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        toolbar.Controls.Add(toolbarLeft, 0, 0);
+        toolbar.Controls.Add(toolbarRight, 1, 0);
+
+        flow = new FlowLayoutPanel
         {
-            ColumnCount = 2,
             Dock = DockStyle.Top,
             AutoSize = true,
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
-            Padding = new Padding(0, 0, 8, 8)
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = true,
+            Padding = new Padding(0, 0, 0, 12)
         };
-        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, TitleColumnWidth));
-        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-
         scroller = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
-        scroller.Controls.Add(grid);
-        scroller.Resize += (_, _) => UpdateWrapWidths();
+        scroller.Controls.Add(flow);
+        scroller.Resize += (_, _) => LayoutTiles();
 
-        // Fill first, then the Top controls (WinForms docks the last added control first).
+        // Fill first, then the Top control (WinForms docks the last added control first).
         Controls.Add(scroller);
-        Controls.Add(introLabel);
         Controls.Add(toolbar);
 
         watchTimer = new System.Windows.Forms.Timer { Interval = 2000 };
@@ -114,9 +140,9 @@ internal sealed class SettingsPage : UserControl
     // Extra button in the toolbar, before the status text (for example a shortcut to a folder the settings point to).
     public void AddToolbarButton(string text, EventHandler onClick)
     {
-        Button button = Ui.Button(text, onClick);
-        toolbar.Controls.Add(button);
-        toolbar.Controls.SetChildIndex(button, toolbar.Controls.GetChildIndex(statusLabel));
+        ThemedButton button = Ui.Button(text, onClick);
+        toolbarLeft.Controls.Add(button);
+        toolbarLeft.Controls.SetChildIndex(button, toolbarLeft.Controls.GetChildIndex(statusLabel));
     }
 
     // Reads the files again (drops unsaved edits).
@@ -124,40 +150,41 @@ internal sealed class SettingsPage : UserControl
     {
         loading = true;
         scroller.SuspendLayout();
-        grid.SuspendLayout();
+        flow.SuspendLayout();
         try
         {
-            foreach (Control old in grid.Controls.Cast<Control>().ToList()) old.Dispose();
-            grid.Controls.Clear();
-            grid.RowStyles.Clear();
-            grid.RowCount = 0;
+            foreach (Control old in flow.Controls.Cast<Control>().ToList()) old.Dispose();
+            flow.Controls.Clear();
             editors.Clear();
-            wrappingLabels.Clear();
+            tiles.Clear();
+            headers.Clear();
+            notes.Clear();
             loadedStamps.Clear();
             warnedExternalChange = false;
 
             foreach (SettingsSection section in sections) LoadSection(section);
+            LayoutTiles();
+            ApplyFilter();
         }
         finally
         {
-            grid.ResumeLayout(true);
+            flow.ResumeLayout(true);
             scroller.ResumeLayout(true);
             loading = false;
         }
-        UpdateWrapWidths();
         UpdateButtons();
     }
 
     private void LoadSection(SettingsSection section)
     {
-        Label header = Ui.Bold(section.Title + "  —  " + section.FileName);
-        header.Margin = new Padding(3, 10, 3, 4);
-        Ui.AddRow(grid, header);
-        grid.SetColumnSpan(header, 2);
+        var header = new SectionHeader(section.Title, section.FileName);
+        flow.Controls.Add(header);
+        flow.SetFlowBreak(header, true);
+        headers.Add((header, section));
 
         if (!File.Exists(section.FilePath))
         {
-            AddFullWidthNote(L.F("File not found: {0}. The server creates it with the default values the first time it starts.", section.FilePath));
+            AddNote(L.F("File not found: {0}. The server creates it with the default values the first time it starts.", section.FilePath));
             return;
         }
 
@@ -171,7 +198,7 @@ internal sealed class SettingsPage : UserControl
         }
         catch (Exception e)
         {
-            AddFullWidthNote(L.F("Could not read {0}: {1}. Fix the file (Settings tab, Files) and click Undo changes to read it again.", section.FileName, e.Message));
+            AddNote(L.F("Could not read {0}: {1}. Fix the file (Settings tab, Files) and click Undo changes to read it again.", section.FileName, e.Message));
             return;
         }
 
@@ -185,43 +212,105 @@ internal sealed class SettingsPage : UserControl
                 if (!loading) UpdateButtons();
             };
             editors.Add(editor);
-            AddEditorRows(editor);
+            AddTile(editor);
             shown++;
         }
-        if (shown == 0) AddFullWidthNote(L.T("None of the keys of this part were found in the file."));
+        if (shown == 0) AddNote(L.T("None of the keys of this part were found in the file."));
     }
 
-    private void AddEditorRows(SettingEditor editor)
+    // One setting: its name (and a "?" with the note), and the field under it.
+    private void AddTile(SettingEditor editor)
     {
-        Label title = Ui.Bold(SettingLabels.Title(editor.Key));
-        title.MaximumSize = new Size(TitleColumnWidth - 10, 0);
-        toolTip.SetToolTip(title, L.F("Key \"{0}\" in {1}", editor.Key, editor.Section.FileName));
-        Ui.AddRow(grid, title, editor.Control);
-
+        string titleText = SettingLabels.Title(editor.Key);
         string description = SettingLabels.Description(editor.Key, editor.Property.Comment);
+
+        var card = new Card
+        {
+            ContentPadding = new Padding(12, 10, 12, 12),
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            Margin = new Padding(0, 0, Dpi.Px(this, Gap96), Dpi.Px(this, Gap96))
+        };
+        var layout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            ColumnCount = 2,
+            Margin = Padding.Empty
+        };
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+
+        var title = new Label
+        {
+            Text = titleText,
+            AutoSize = false,
+            AutoEllipsis = true,
+            Dock = DockStyle.Fill,
+            Font = Ui.BoldFont,
+            Height = TextRenderer.MeasureText("Ag", Font).Height + 8,
+            Margin = new Padding(0, 0, 0, 4),
+            TextAlign = ContentAlignment.MiddleLeft
+        };
+        toolTip.SetToolTip(title, L.F("Key \"{0}\" in {1}", editor.Key, editor.Section.FileName));
+        layout.Controls.Add(title, 0, 0);
         if (description.Length > 0)
         {
-            Label text = Ui.Wrapping(description, 600, gray: true);
-            Ui.AddRow(grid, text);
-            grid.SetColumnSpan(text, 2);
-            wrappingLabels.Add(text);
+            HelpButton help = Ui.Help(description, titleText);
+            help.Margin = new Padding(6, 0, 0, 4);
+            layout.Controls.Add(help, 1, 0);
         }
+
+        Control field = editor.Control;
+        field.Margin = Padding.Empty;
+        layout.Controls.Add(field, 0, 1);
+        layout.SetColumnSpan(field, 2);
+        card.Controls.Add(layout);
+
+        flow.Controls.Add(card);
+        string search = (titleText + " " + editor.Key + " " + description).ToLowerInvariant();
+        tiles.Add(new Tile(card, search, editor.Section, editor.FullWidth));
     }
 
-    private void AddFullWidthNote(string text)
+    private void AddNote(string text)
     {
         Label note = Ui.Wrapping(text, 600, gray: false);
         Ui.SetRole(note, TextRole.Warn);
-        Ui.AddRow(grid, note);
-        grid.SetColumnSpan(note, 2);
-        wrappingLabels.Add(note);
+        flow.Controls.Add(note);
+        flow.SetFlowBreak(note, true);
+        notes.Add(note);
     }
 
-    private void UpdateWrapWidths()
+    // Sizes the tiles so that whole columns fill the width.
+    private void LayoutTiles()
     {
-        int width = Math.Max(200, scroller.ClientSize.Width - SystemInformation.VerticalScrollBarWidth - 30);
-        foreach (Label label in wrappingLabels) label.MaximumSize = new Size(width, 0);
-        introLabel.MaximumSize = new Size(Math.Max(200, ClientSize.Width - 20), 0);
+        int gap = Dpi.Px(this, Gap96);
+        int available = Math.Max(Dpi.Px(this, 300), scroller.ClientSize.Width - SystemInformation.VerticalScrollBarWidth - 2);
+        int columns = Math.Max(1, available / (Dpi.Px(this, MinTileWidth96) + gap));
+        int tileWidth = available / columns - gap - 1;
+
+        flow.SuspendLayout();
+        foreach (Tile tile in tiles)
+        {
+            int width = tile.FullWidth ? available - gap - 1 : tileWidth;
+            tile.Control.MinimumSize = new Size(width, 0);
+            tile.Control.MaximumSize = new Size(width, 0);
+        }
+        foreach ((SectionHeader header, _) in headers) header.Width = available - gap;
+        foreach (Label note in notes) note.MaximumSize = new Size(available - gap, 0);
+        flow.ResumeLayout(true);
+    }
+
+    // Shows only the tiles whose name, key or note has the typed text.
+    private void ApplyFilter()
+    {
+        string wanted = filterBox.Text.Trim().ToLowerInvariant();
+        flow.SuspendLayout();
+        foreach (Tile tile in tiles) tile.Control.Visible = wanted.Length == 0 || tile.Search.Contains(wanted);
+        foreach ((SectionHeader header, SettingsSection section) in headers)
+            header.Visible = wanted.Length == 0 || tiles.Any(t => t.Control.Visible && t.Section == section);
+        flow.ResumeLayout(true);
     }
 
     private void UpdateButtons()
@@ -235,7 +324,7 @@ internal sealed class SettingsPage : UserControl
 
     private void Save()
     {
-        // Commits a number typed in a NumericUpDown that still has the focus.
+        // Commits a number typed in a field that still has the focus.
         ValidateChildren();
 
         List<string> errors = editors.Where(e => e.IsChanged).Select(e => e.Validate()).OfType<string>().ToList();
@@ -246,7 +335,7 @@ internal sealed class SettingsPage : UserControl
         }
 
         var warnings = new List<string>();
-        var notes = new List<string>();
+        var savedNotes = new List<string>();
         int files = 0;
         foreach (IGrouping<string, SettingEditor> group in editors.Where(e => e.IsChanged)
                      .GroupBy(e => e.Section.FilePath, StringComparer.OrdinalIgnoreCase))
@@ -262,7 +351,7 @@ internal sealed class SettingsPage : UserControl
                 TextFiles.WriteAtomic(path, result, hasBom);
                 files++;
                 foreach (string? note in group.Select(e => e.Section.SavedNote).Distinct())
-                    if (!string.IsNullOrEmpty(note) && !notes.Contains(note)) notes.Add(note);
+                    if (!string.IsNullOrEmpty(note) && !savedNotes.Contains(note)) savedNotes.Add(note);
                 if (missing.Count > 0)
                     warnings.Add(L.F("{0}: the key(s) {1} are no longer in the file and were not saved.", Path.GetFileName(path), string.Join(", ", missing)));
             }
@@ -274,8 +363,8 @@ internal sealed class SettingsPage : UserControl
         }
 
         Reload();
-        string saved = notes.Count > 0
-            ? L.F("Saved at {0}.", DateTime.Now.ToString("HH:mm:ss")) + " " + string.Join(" ", notes)
+        string saved = savedNotes.Count > 0
+            ? L.F("Saved at {0}.", DateTime.Now.ToString("HH:mm:ss")) + " " + string.Join(" ", savedNotes)
             : L.F("Saved at {0}. The server reads the file again by itself.", DateTime.Now.ToString("HH:mm:ss"));
         Ui.SetStatus(statusLabel, files > 0 ? saved : L.T("Nothing to save."), TextRole.Good);
         if (warnings.Count > 0) Ui.ShowInfo(FindForm(), string.Join("\n", warnings));
@@ -324,11 +413,12 @@ internal sealed class SettingEditor
     private readonly Func<string?> validate;
 
     private SettingEditor(SettingsSection section, JsoncProperty property, Control control,
-        Func<string, string> currentRaw, Func<bool> isChanged, Func<string?> validate)
+        Func<string, string> currentRaw, Func<bool> isChanged, Func<string?> validate, bool fullWidth = false)
     {
         Section = section;
         Property = property;
         Control = control;
+        FullWidth = fullWidth;
         this.currentRaw = currentRaw;
         this.isChanged = isChanged;
         this.validate = validate;
@@ -337,6 +427,9 @@ internal sealed class SettingEditor
     public SettingsSection Section { get; }
     public JsoncProperty Property { get; }
     public Control Control { get; }
+
+    // The tile takes the whole row (lists, JSON text, the unlock chips).
+    public bool FullWidth { get; }
     public string Key => Property.Key;
     public bool IsChanged => isChanged();
 
@@ -352,9 +445,9 @@ internal sealed class SettingEditor
 
     // Editor for a custom control: currentRaw gives the JSON text of the value, isChanged compares with the file.
     public static SettingEditor Custom(SettingsSection section, JsoncProperty property, Control control,
-        Func<string> currentRaw, Func<bool> isChanged)
+        Func<string> currentRaw, Func<bool> isChanged, bool fullWidth = true)
     {
-        return new SettingEditor(section, property, control, _ => currentRaw(), isChanged, () => null);
+        return new SettingEditor(section, property, control, _ => currentRaw(), isChanged, () => null, fullWidth);
     }
 
     public static SettingEditor Create(SettingsSection section, JsoncProperty property)
@@ -371,7 +464,7 @@ internal sealed class SettingEditor
             case JsoncKind.Bool:
             {
                 bool original = property.RawValue.Trim() == "true";
-                var box = new CheckBox { Text = L.T("On"), Checked = original, AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(3, 6, 3, 3) };
+                var box = new ThemedCheckBox { Text = L.T("On"), OffText = L.T("Off"), Switch = true, Checked = original, Anchor = AnchorStyles.Left };
                 var editor = new SettingEditor(section, property, box,
                     _ => JsoncFile.FormatBool(box.Checked),
                     () => box.Checked != original,
@@ -388,16 +481,16 @@ internal sealed class SettingEditor
                 bool asDecimal = raw.Contains('.') || raw.Contains('e') || raw.Contains('E');
                 int dot = raw.IndexOf('.');
                 int decimals = asDecimal ? Math.Clamp(dot >= 0 ? raw.Length - dot - 1 : 2, 2, 4) : 0;
-                var number = new NumericUpDown
+                var number = new NumberBox
                 {
                     Minimum = -1_000_000_000m,
+                    CommitWhileTyping = true,
                     Maximum = 1_000_000_000m,
                     DecimalPlaces = decimals,
                     Increment = asDecimal ? 0.1m : 1m,
-                    Width = 130,
+                    Width = 150,
                     TextAlign = HorizontalAlignment.Right,
-                    Anchor = AnchorStyles.Left,
-                    Margin = new Padding(3, 3, 3, 3)
+                    Anchor = AnchorStyles.Left
                 };
                 number.Value = Math.Clamp(original, number.Minimum, number.Maximum);
                 var editor = new SettingEditor(section, property, number,
@@ -415,14 +508,14 @@ internal sealed class SettingEditor
                 Control input;
                 if (choices != null)
                 {
-                    var combo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDown, Width = 220, Anchor = AnchorStyles.Left };
+                    var combo = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDown, Dock = DockStyle.Fill };
                     combo.Items.AddRange(choices.Cast<object>().ToArray());
                     combo.Text = original;
                     input = combo;
                 }
                 else
                 {
-                    input = new TextBox { Text = original, Width = 300, Anchor = AnchorStyles.Left };
+                    input = new ThemedTextBox { Text = original, Dock = DockStyle.Fill };
                 }
                 var editor = new SettingEditor(section, property, input,
                     _ => JsoncFile.FormatString(input.Text),
@@ -442,7 +535,7 @@ internal sealed class SettingEditor
     {
         string original = Normalize(property.RawValue);
         int lines = original.Split('\n').Length;
-        var box = new TextBox
+        var box = new ThemedTextBox
         {
             Multiline = true,
             AcceptsReturn = true,
@@ -450,9 +543,8 @@ internal sealed class SettingEditor
             WordWrap = false,
             Font = new Font("Consolas", 9f),
             Text = original.Replace("\n", "\r\n"),
-            Height = Math.Clamp(lines * 15 + 12, 28, 200),
-            Dock = DockStyle.Fill,
-            Margin = new Padding(3, 3, 3, 3)
+            Height = Math.Clamp(lines * 16 + 14, 40, 220),
+            Dock = DockStyle.Fill
         };
         var editor = new SettingEditor(section, property, box,
             newline => Normalize(box.Text).Replace("\n", newline),
@@ -468,7 +560,7 @@ internal sealed class SettingEditor
                 {
                     return L.F("\"{0}\": the value is not valid JSON ({1})", title, e.Message);
                 }
-            });
+            }, fullWidth: true);
         box.TextChanged += (_, _) => editor.NotifyChanged();
         return editor;
     }

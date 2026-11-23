@@ -42,16 +42,16 @@ internal sealed class NewMapDialog : Form
         blank = new RadioButton { Text = L.T("An empty dungeon"), AutoSize = true, Checked = startBlank || catalog.Count == 0 };
         fromGame.Enabled = catalog.Count > 0;
 
-        dungeons = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 330 };
+        dungeons = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 330 };
         foreach (DungeonCatalogFile.Dungeon dungeon in catalog) dungeons.Items.Add(DungeonLabel(dungeon));
         if (dungeons.Items.Count > 0) dungeons.SelectedIndex = 0;
 
-        terrains = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 330 };
+        terrains = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 330 };
         foreach (TerritoryInfo info in Territories.Dungeons) terrains.Items.Add(info.Label + "  (" + info.Terrain + ")");
         terrains.SelectedIndex = 0;
 
-        nameBox = new TextBox { Width = 330 };
-        idBox = new TextBox { Width = 330 };
+        nameBox = new ThemedTextBox { Width = 330 };
+        idBox = new ThemedTextBox { Width = 330 };
         hint = Ui.Wrapping("", 420, true);
 
         var table = Ui.Table(2);
@@ -282,7 +282,7 @@ internal sealed class RawJsonDialog : Form
         Label note = Ui.Wrapping(L.T("This is the file as it will be saved. You can change it here: the text is checked when you press Apply, and nothing changes if it is not a valid map."), 780, true);
         note.Dock = DockStyle.Top;
 
-        box = new TextBox
+        box = new ThemedTextBox
         {
             Multiline = true,
             ScrollBars = ScrollBars.Both,

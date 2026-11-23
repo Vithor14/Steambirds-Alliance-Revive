@@ -27,11 +27,11 @@
 | 12 | Troca de servidores | 1 | 1 | 3 |
 | 13 | Áudio, interface e extras | 0 | 1 | 5 |
 | 14 | Código e repositório | 8 | 1 | 0 |
-| 15 | Launcher base — aba Client (objetivo intermediário) | 8 | 0 | 1 |
+| 15 | Launcher base — aba Client (objetivo intermediário) | 8 | 1 | 1 |
 | 16 | Launcher — aba Server | 5 | 8 | 2 |
 | 17 | Launcher standalone (objetivo final) | 3 | 4 | 0 |
 | 18 | Editor de mapas | 6 | 3 | 3 |
-| | **Total** | **79** | **87** | **47** |
+| | **Total** | **79** | **88** | **47** |
 
 Os apêndices (classes, terrenos e chefes) e as observações abaixo ficam fora da conta.
 
@@ -326,6 +326,7 @@ Doc das dungeons recriadas: `docs/dungeons-190828.md`. Servidor de dungeon: `doc
 
 - [x] Scripts PowerShell que sobem o servidor e abrem o jogo (`Run server.ps1`, `Run game.ps1`)
 - [x] Programa de launcher com abas Client, Server e Settings: `Launcher\` (WinForms, .NET 8, `Core\` e `UI\`), montado pelo `Build launcher.ps1` em `Launcher\dist`. Tudo fica na pasta do exe (`launcher.json`, `lang\`, `logs\`, `server\`, `plugin\`). Console do cliente com o `LogOutput.log` e o `Player.log`. Doc em `Launcher\README.md`. A 0.1.0 compilou e rodou no PC em 15/11
+- [ ] 🟡 Visual novo do launcher (23/11, compilado e conferido por screenshots dos dois temas, em inglês e português, na janela mínima; falta uso real): cabeçalho com a marca do projeto e as abas agrupadas (Client, Server | Map editor, Enemy AI | Settings) e o estado do servidor e do jogo; Client em sub-abas (Servers, Game, Console) com a barra PLAY sempre à vista; "Download the game with Steam" só aparece sem o jogo (ou com build diferente); explicações longas atrás do botão "?"; Server com navegação lateral agrupada (Monitor, Game rules, Players, World, Connection) e a página "New accounts" separada de "Accounts", com as naves iniciais em pílulas com ✓; configurações em tiles que enchem a largura, com filtro; Settings em sub-abas (General, Game, Server, Folders and files); paleta do branding do projeto (preto, amarelo, brasa), tema escuro e claro, sem nenhum ícone ou imagem do jogo. Detalhes em `Launcher\README.md`, "Look and feel"
 - [x] Aba Settings (0.2.0, testada em 22/11): tema claro/escuro, pasta do jogo e os botões de abrir pastas, logs e arquivos (jogo, BepInEx, servidor, mapas, backups, configs)
 - [x] Idiomas (0.2.0, testado em 22/11): launcher em inglês por padrão, português em `lang\pt-BR.json`, pasta `lang` com `_template.json` e `README.md` para a comunidade adicionar idiomas (`<código>.missing.json` lista o que falta traduzir); idioma do jogo escolhido no launcher (lista do `Texts/locales` do jogo, passado com `-locale`)
 - [x] Escolher o nome do jogador (0.3.0, testado em 22/11): padrão = nome da conta Steam (`loginusers.vdf`); vai no caminho do `OZY_URL` (`/n/<hex>/ozy`) e o servidor usa no login. A conta continua sendo a da Steam

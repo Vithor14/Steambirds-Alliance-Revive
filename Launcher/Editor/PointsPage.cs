@@ -124,7 +124,7 @@ internal sealed class PointsPage : EditorPage
         Add("Buildings", buildingsPanel);
         Add("Floor pieces", piecesPanel);
 
-        picker = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220, Margin = new Padding(3, 3, 3, 6) };
+        picker = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220, Margin = new Padding(3, 3, 3, 6) };
         foreach (Section section in sections) picker.Items.Add(section.Title);
         picker.SelectedIndexChanged += (_, _) => ShowSection(picker.SelectedIndex);
 

@@ -4,31 +4,40 @@ using SteambirdsLauncher.Core.GameData;
 
 namespace SteambirdsLauncher.UI;
 
-// "Client" tab: the state of the game (and its download with Steam), the player name, the server list (this PC, the
-// servers found on the local network and on VPNs like Radmin and Hamachi, and the ones typed in "Connect by IP"),
-// the Play button, and a console that follows the game logs (BepInEx\LogOutput.log and the Unity Player.log).
+// "Client" tab. Three sub-tabs and a bar that stays in view:
+//  - Servers: the server list (this PC, the servers found on the local network and on VPNs like Radmin and Hamachi,
+//    and the ones typed in "Connect by IP").
+//  - Game: the game install (and its download with Steam, only when it is missing), the Quieter plugin and the
+//    player name.
+//  - Console: the game logs (BepInEx\LogOutput.log and the Unity Player.log).
+//  - Play bar (always visible): where Play joins, the "start the server with the game" option, and the Play button.
 // The game folder and the game language are chosen in the Settings tab.
 internal sealed class ClientTab : UserControl
 {
     private readonly LauncherContext context;
-    private readonly Label folderLabel;
-    private readonly Label gameStatus;
-    private readonly Label languageStatus;
-    private readonly Label steamStatus;
-    private readonly Button openSteamButton;
-    private readonly Label pluginStatus;
-    private readonly Button installPluginButton;
-    private readonly TextBox playerName;
+    private readonly EllipsisLabel folderLabel;
+    private readonly StatusPill gamePill;
+    private readonly Label gameNote;
+    private readonly Label languageLabel;
+    private readonly StatusPill steamPill;
+    private readonly ThemedButton openSteamButton;
+    private readonly StatusPill pluginPill;
+    private readonly Label pluginNote;
+    private readonly ThemedButton installPluginButton;
+    private readonly ThemedButton downloadButton;
+    private readonly Control downloadRow;
+    private readonly ThemedTextBox playerName;
     private readonly Label steamAccountLabel;
-    private readonly ListView servers;
+    private readonly ThemedListView servers;
     private readonly Label searchStatus;
-    private readonly Button searchButton;
-    private readonly TextBox ipBox;
-    private readonly Button connectButton;
-    private readonly Button forgetButton;
+    private readonly ThemedButton searchButton;
+    private readonly ThemedTextBox ipBox;
+    private readonly ThemedButton connectButton;
+    private readonly ThemedButton forgetButton;
     private readonly Label targetLabel;
-    private readonly CheckBox startServerWithGame;
-    private readonly Button playButton;
+    private readonly Label hintLabel;
+    private readonly ThemedCheckBox startServerWithGame;
+    private readonly ThemedButton playButton;
     private Font? boldFont;
     private DateTime nextPluginCheck = DateTime.MinValue;
     private bool launching;
@@ -40,65 +49,98 @@ internal sealed class ClientTab : UserControl
     {
         this.context = context;
         ToolTip tip = context.ToolTip;
+        Padding = new Padding(12, 6, 12, 12);
 
-        // ------------------------------------------------------------ game
-        folderLabel = Ui.Text("");
-        gameStatus = Ui.Text("");
-        languageStatus = Ui.Text("");
-        steamStatus = Ui.Text("");
+        // ------------------------------------------------------------ game page
+        folderLabel = new EllipsisLabel { Dock = DockStyle.Fill };
+        Ui.SetRole(folderLabel, TextRole.Muted);
+        gamePill = new StatusPill();
+        gameNote = Ui.Note("");
+        gameNote.Margin = new Padding(6, 7, 3, 3);
+        languageLabel = Ui.Text("");
+        steamPill = new StatusPill();
         openSteamButton = Ui.Button(L.T("Open Steam"), (_, _) => OpenSteam());
-        pluginStatus = Ui.Text("");
-        installPluginButton = Ui.Button(L.T("Install plugin"), (_, _) => InstallPlugin());
-        var settingsButton = Ui.Button(L.T("Change..."), (_, _) => context.OpenSettingsTab?.Invoke());
+        ThemedButton changeFolder = Ui.Button(L.T("Change..."), (_, _) => context.OpenSettingsTab?.Invoke());
+        ThemedButton changeLanguage = Ui.Button(L.T("Change..."), (_, _) => context.OpenSettingsTab?.Invoke());
 
-        var downloadButton = Ui.Button(L.T("Download the game with Steam"), (_, _) => OpenDownload());
+        downloadButton = Ui.Primary(L.T("Download the game with Steam"), (_, _) => OpenDownload());
         tip.SetToolTip(downloadButton, L.F("Copies the command\n{0}\nopens the Steam console and follows the download.", LauncherInfo.DepotCommand));
+        downloadRow = Ui.Flow(downloadButton);
+        downloadRow.Margin = new Padding(0, 10, 0, 0);
 
-        TableLayoutPanel gameTable = Ui.Table(2);
+        TableLayoutPanel gameTable = Ui.Table(3);
         gameTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         gameTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        Ui.AddRow(gameTable, Ui.Text(L.T("Game folder:")), Ui.Flow(folderLabel, settingsButton));
-        Ui.AddRow(gameTable, Ui.Text(L.T("Status:")), gameStatus);
-        Ui.AddRow(gameTable, Ui.Text(L.T("Game language:")), languageStatus);
-        Ui.AddRow(gameTable, Ui.Text(L.T("Steam:")), Ui.Flow(steamStatus, openSteamButton));
-        Ui.AddRow(gameTable, Ui.Text(L.T("Quieter plugin:")), Ui.Flow(pluginStatus, installPluginButton));
-        Label pluginHelp = Ui.Wrapping(L.T("What it does: a small mod (BepInEx) that runs inside your game. It fixes client bugs (the Flock Hall building invisible in Rebel City, and the death window showing the numbers of the previous death from the second death on), hides the noise of the game logs and turns off the telemetry errors. Without it: the game still opens and you can play, but with those bugs and with a Player.log full of noise. A PC that only joins other people's servers loses nothing else. The server does not need it: its data tables ship in server\\data."), 560, gray: true);
-        Ui.AddRow(gameTable, null, pluginHelp);
-        tip.SetToolTip(pluginStatus, L.T("The Quieter plugin fixes bugs of the game client and hides log noise. Without it the game works, with those bugs."));
-        Ui.AddRow(gameTable, Ui.Text(L.T("Install:")), downloadButton);
+        gameTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        Ui.AddRow(gameTable, Ui.Note(L.T("Game folder:")), folderLabel, changeFolder);
+        Control statusFlow = Ui.Flow(gamePill, gameNote);
+        Ui.AddRow(gameTable, Ui.Note(L.T("Status:")), statusFlow);
+        gameTable.SetColumnSpan(statusFlow, 2);
+        Control steamFlow = Ui.Flow(steamPill, openSteamButton);
+        Ui.AddRow(gameTable, Ui.Note(L.T("Steam:")), steamFlow);
+        gameTable.SetColumnSpan(steamFlow, 2);
+        Ui.AddRow(gameTable, Ui.Note(L.T("Game language:")), languageLabel, changeLanguage);
+        Ui.AddRow(gameTable, null, downloadRow);
+        gameTable.SetColumnSpan(downloadRow, 2);
+        Card gameCard = Ui.Group(L.T("Game"), gameTable);
 
-        // ------------------------------------------------------------ player
-        playerName = new TextBox { Text = context.Settings.PlayerName, Width = 220, MaxLength = 24, Margin = new Padding(3, 4, 3, 3) };
+        // The Quieter plugin: what it is goes behind the "?".
+        pluginPill = new StatusPill();
+        pluginNote = Ui.Note("");
+        installPluginButton = Ui.Button(L.T("Install plugin"), (_, _) => InstallPlugin());
+        HelpButton pluginHelp = Ui.Help(L.T("What it does: a small mod (BepInEx) that runs inside your game. It fixes client bugs (the Flock Hall building invisible in Rebel City, and the death window showing the numbers of the previous death from the second death on), hides the noise of the game logs and turns off the telemetry errors. Without it: the game still opens and you can play, but with those bugs and with a Player.log full of noise. A PC that only joins other people's servers loses nothing else. The server does not need it: its data tables ship in server\\data."),
+            L.T("Quieter plugin"));
+        pluginHelp.Margin = new Padding(8, 5, 3, 3);
+        TableLayoutPanel pluginTable = Ui.Table(1);
+        pluginTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        Ui.AddRow(pluginTable, Ui.WrapFlow(pluginPill, installPluginButton, pluginHelp));
+        Ui.AddRow(pluginTable, pluginNote);
+        pluginNote.Margin = new Padding(3, 0, 3, 3);
+        Card pluginCard = Ui.Group(L.T("Quieter plugin"), pluginTable);
+
+        // The player.
+        playerName = new ThemedTextBox { Text = context.Settings.PlayerName, Width = 240, MaxLength = 24, Margin = new Padding(3, 4, 3, 3) };
         playerName.TextChanged += (_, _) =>
         {
             context.Settings.PlayerName = playerName.Text.Trim();
             context.SaveSettings();
         };
         steamAccountLabel = Ui.Note("");
-        Label nameHelp = Ui.Wrapping(L.T("Empty = the name of your Steam account. Your account on each server is your Steam account: changing the name keeps your pilot and your planes."), 420, gray: true);
-        TableLayoutPanel playerTable = Ui.Table(2);
-        playerTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        steamAccountLabel.Margin = new Padding(3, 0, 3, 3);
+        HelpButton nameHelp = Ui.Help(L.T("Empty = the name of your Steam account. Your account on each server is your Steam account: changing the name keeps your pilot and your planes."),
+            L.T("Player name"));
+        TableLayoutPanel playerTable = Ui.Table(1);
         playerTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        Ui.AddRow(playerTable, Ui.Text(L.T("Player name:")), playerName);
-        Ui.AddRow(playerTable, null, steamAccountLabel);
-        Ui.AddRow(playerTable, null, nameHelp);
+        Ui.AddRow(playerTable, Ui.Flow(Ui.Note(L.T("Player name:")), playerName, nameHelp));
+        Ui.AddRow(playerTable, steamAccountLabel);
+        Card playerCard = Ui.Group(L.T("Player"), playerTable);
 
-        // ------------------------------------------------------------ servers
+        // Game on the left; plugin and player stacked on the right.
+        var rightColumn = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, AutoSize = true, Margin = Padding.Empty };
+        rightColumn.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        Ui.AddRow(rightColumn, pluginCard);
+        Ui.AddRow(rightColumn, playerCard);
+        var gameLayout = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 2, RowCount = 1 };
+        gameLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
+        gameLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
+        gameCard.Margin = new Padding(0, 0, 12, 0);
+        gameLayout.Controls.Add(gameCard, 0, 0);
+        gameLayout.Controls.Add(rightColumn, 1, 0);
+        var gamePage = new TabPage(L.T("Game")) { Padding = new Padding(2, 14, 2, 4), AutoScroll = true };
+        gamePage.Controls.Add(gameLayout);
+
+        // ------------------------------------------------------------ servers page
         servers = Ui.Grid((L.T("Server"), 220), (L.T("Address"), 160), (L.T("Players"), 70), (L.T("Ping (ms)"), 70),
             (L.T("Network"), 110), (L.T("Status"), 330));
-        servers.Dock = DockStyle.None;
-        servers.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top;
-        servers.Height = 150;
         servers.SelectedIndexChanged += (_, _) => OnServerClicked();
         servers.DoubleClick += async (_, _) => await PlayAsync();
 
         searchButton = Ui.Button(L.T("Search again"), async (_, _) => await context.SearchServersAsync());
-        var autoSearch = new CheckBox
+        var autoSearch = new ThemedCheckBox
         {
             Text = L.T("Search by itself"),
             Checked = context.Settings.AutoSearch,
-            AutoSize = true,
-            Margin = new Padding(8, 6, 3, 3)
+            Margin = new Padding(10, 6, 3, 3)
         };
         autoSearch.CheckedChanged += (_, _) =>
         {
@@ -107,8 +149,9 @@ internal sealed class ClientTab : UserControl
         };
         tip.SetToolTip(autoSearch, L.T("Searches the local network and the VPNs (Radmin, Hamachi...) when the launcher opens and every minute while this tab is open."));
         searchStatus = Ui.Note("");
+        searchStatus.Margin = new Padding(6, 6, 3, 3);
 
-        ipBox = new TextBox { Width = 200, PlaceholderText = L.T("e.g. 26.10.20.30 or 26.10.20.30:6443"), Margin = new Padding(3, 4, 3, 3) };
+        ipBox = new ThemedTextBox { Width = 230, PlaceholderText = L.T("e.g. 26.10.20.30 or 26.10.20.30:6443"), Margin = new Padding(3, 4, 3, 3) };
         ipBox.KeyDown += async (_, e) =>
         {
             if (e.KeyCode != Keys.Enter) return;
@@ -116,51 +159,39 @@ internal sealed class ClientTab : UserControl
             await ConnectByIpAsync();
         };
         connectButton = Ui.Button(L.T("Connect"), async (_, _) => await ConnectByIpAsync());
-        forgetButton = Ui.Button(L.T("Remove from list"), (_, _) => ForgetSelected());
+        forgetButton = Ui.Danger(L.T("Remove from list"), (_, _) => ForgetSelected());
         tip.SetToolTip(ipBox, L.T("IP of the server PC (local network, Radmin, Hamachi or internet) and, when it is not 6443, the login port of the server."));
+        HelpButton serversHelp = Ui.Help(L.T("This PC, the servers of the local network and of VPNs like Radmin and Hamachi show up here by themselves. A server that is not found is joined with Connect by IP: type the IP of the server PC and, when it is not 6443, the login port after a colon."),
+            L.T("Servers"));
 
-        TableLayoutPanel serverTable = Ui.Table(1);
-        serverTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        Ui.AddRow(serverTable, Ui.WrapFlow(searchButton, autoSearch, searchStatus));
-        Ui.AddRow(serverTable, servers);
-        Ui.AddRow(serverTable, Ui.Flow(Ui.Text(L.T("Connect by IP:")), ipBox, connectButton, forgetButton));
+        var toolbar = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 2, RowCount = 1, Padding = new Padding(0, 0, 0, 8) };
+        toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        FlowLayoutPanel left = Ui.WrapFlow(searchButton, autoSearch);
+        left.Anchor = AnchorStyles.Left;
+        FlowLayoutPanel right = Ui.Flow(Ui.Note(L.T("Connect by IP:")), ipBox, connectButton, serversHelp);
+        right.Anchor = AnchorStyles.Right;
+        toolbar.Controls.Add(left, 0, 0);
+        toolbar.Controls.Add(right, 1, 0);
 
-        // ------------------------------------------------------------ play
-        targetLabel = Ui.Bold("");
-        targetLabel.Margin = new Padding(3, 14, 12, 3);
-        startServerWithGame = new CheckBox
-        {
-            Text = L.T("Start the server of this PC with the game"),
-            Checked = context.Settings.StartServerWithGame,
-            AutoSize = true,
-            Margin = new Padding(3, 12, 12, 3)
-        };
-        startServerWithGame.CheckedChanged += (_, _) =>
-        {
-            if (updatingCheckbox) return;
-            context.Settings.StartServerWithGame = startServerWithGame.Checked;
-            context.SaveSettings();
-        };
-        tip.SetToolTip(startServerWithGame, L.T("Only for the server of this PC: it turns off by itself while another PC is chosen in the list."));
-        playButton = new Button
-        {
-            Text = L.T("PLAY"),
-            Font = new Font(Control.DefaultFont.FontFamily, 13f, FontStyle.Bold),
-            Size = new Size(190, 46),
-            Margin = new Padding(3, 3, 3, 3),
-            UseVisualStyleBackColor = true
-        };
-        playButton.Click += async (_, _) => await PlayAsync();
-        var playPanel = Ui.Flow(targetLabel, startServerWithGame, playButton);
-        playPanel.Anchor = AnchorStyles.Right | AnchorStyles.Top;
+        var footer = new TableLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, ColumnCount = 2, RowCount = 1, Padding = new Padding(0, 8, 0, 0) };
+        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        searchStatus.Anchor = AnchorStyles.Left;
+        footer.Controls.Add(searchStatus, 0, 0);
+        footer.Controls.Add(forgetButton, 1, 0);
 
-        // ------------------------------------------------------------ console
+        var serversPage = new TabPage(L.T("Servers")) { Padding = new Padding(2, 14, 2, 4) };
+        serversPage.Controls.Add(Ui.Framed(servers));
+        serversPage.Controls.Add(footer);
+        serversPage.Controls.Add(toolbar);
+
+        // ------------------------------------------------------------ console page
         var console = new ConsoleView(context.ClientConsole) { Dock = DockStyle.Fill };
-        var hideNoise = new CheckBox
+        var hideNoise = new ThemedCheckBox
         {
             Text = L.T("Hide noise (HarmonyX IL, missing scripts)"),
             Checked = context.Settings.HideClientLogNoise,
-            AutoSize = true,
             Margin = new Padding(12, 6, 3, 3)
         };
         hideNoise.CheckedChanged += (_, _) =>
@@ -169,27 +200,59 @@ internal sealed class ClientTab : UserControl
             context.SaveSettings();
         };
         console.Toolbar.Controls.Add(hideNoise);
+        var consolePage = new TabPage(L.T("Console")) { Padding = new Padding(2, 14, 2, 4) };
+        consolePage.Controls.Add(Ui.Framed(console));
 
-        // ------------------------------------------------------------ layout
-        var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 4 };
-        root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 55f));
-        root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 45f));
-        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
-        root.Controls.Add(Ui.Group(L.T("Game"), gameTable), 0, 0);
-        root.Controls.Add(Ui.Group(L.T("Player"), playerTable), 1, 0);
-        GroupBox serversGroup = Ui.Group(L.T("Servers (this PC, local network and VPNs like Radmin and Hamachi)"), serverTable);
-        root.Controls.Add(serversGroup, 0, 1);
-        root.SetColumnSpan(serversGroup, 2);
-        root.Controls.Add(playPanel, 0, 2);
-        root.SetColumnSpan(playPanel, 2);
-        GroupBox consoleGroup = Ui.Group(L.T("Client console (game logs)"), console);
-        consoleGroup.AutoSize = false;
-        root.Controls.Add(consoleGroup, 0, 3);
-        root.SetColumnSpan(consoleGroup, 2);
-        Controls.Add(root);
+        var subTabs = new ThemedTabControl { Dock = DockStyle.Fill };
+        subTabs.TabPages.AddRange(new[] { serversPage, gamePage, consolePage });
+        subTabs.SetIcon(serversPage, Icons.Servers);
+        subTabs.SetIcon(gamePage, Icons.Game);
+        subTabs.SetIcon(consolePage, Icons.Console);
+
+        // ------------------------------------------------------------ play bar
+        targetLabel = new Label { AutoSize = true, Font = Theme.Heading(12.5f), Margin = new Padding(3, 0, 3, 0) };
+        hintLabel = Ui.Note("");
+        hintLabel.Margin = new Padding(3, 2, 3, 0);
+        startServerWithGame = new ThemedCheckBox
+        {
+            Text = L.T("Start the server of this PC with the game"),
+            Checked = context.Settings.StartServerWithGame,
+            Anchor = AnchorStyles.Right,
+            Margin = new Padding(3, 3, 22, 3)
+        };
+        startServerWithGame.CheckedChanged += (_, _) =>
+        {
+            if (updatingCheckbox) return;
+            context.Settings.StartServerWithGame = startServerWithGame.Checked;
+            context.SaveSettings();
+        };
+        tip.SetToolTip(startServerWithGame, L.T("Only for the server of this PC: it turns off by itself while another PC is chosen in the list."));
+        playButton = Ui.Primary(L.T("PLAY"));
+        playButton.AutoSize = false;
+        playButton.TextPoints = 14f;
+        playButton.Size = new Size(210, 52);
+        playButton.Margin = new Padding(3);
+        playButton.Anchor = AnchorStyles.Right;
+        playButton.Click += async (_, _) => await PlayAsync();
+
+        var textBlock = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoSize = true, Anchor = AnchorStyles.Left, Margin = Padding.Empty };
+        textBlock.Controls.Add(targetLabel);
+        textBlock.Controls.Add(hintLabel);
+        var bar = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 1 };
+        bar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        bar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        bar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        bar.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        bar.Controls.Add(textBlock, 0, 0);
+        bar.Controls.Add(startServerWithGame, 1, 0);
+        bar.Controls.Add(playButton, 2, 0);
+        var playCard = new Card { Dock = DockStyle.Fill, Margin = Padding.Empty, ContentPadding = new Padding(16, 10, 12, 10) };
+        playCard.Controls.Add(bar);
+        var playHost = new Panel { Dock = DockStyle.Bottom, Height = 94, Padding = new Padding(0, 12, 0, 0) };
+        playHost.Controls.Add(playCard);
+
+        Controls.Add(subTabs);
+        Controls.Add(playHost);
 
         context.GameFolderChanged += OnGameFolderChanged;
         context.GameDataChanged += RefreshStatus;
@@ -213,32 +276,40 @@ internal sealed class ClientTab : UserControl
         bool hasGame = GameInstall.HasGame(folder);
         int? gameId = hasGame ? context.Game.FindRunningId(folder) : null;
 
-        Ui.SetStatus(folderLabel, folder.Length > 0 ? folder : L.T("(not chosen)"), TextRole.Muted);
+        string folderText = folder.Length > 0 ? folder : L.T("(not chosen)");
+        if (folderLabel.Text != folderText)
+        {
+            folderLabel.Text = folderText;
+            context.ToolTip.SetToolTip(folderLabel, folderText);
+        }
+
+        bool wrongBuild = false;
         if (!hasGame)
         {
-            Ui.SetStatus(gameStatus, L.T("Steambirds.exe was not found in this folder. Use \"Download the game with Steam\" below."), TextRole.Bad);
+            gamePill.Set(L.T("Not found"), TextRole.Bad);
+            Ui.SetStatus(gameNote, L.T("Steambirds.exe was not found in this folder. Use \"Download the game with Steam\" below."), TextRole.Muted);
         }
         else
         {
             string build = GameInstall.ReadBuildId(folder);
-            string text = L.F("Steambirds.exe found, build {0}", build.Length > 0 ? build : L.T("unknown"));
-            TextRole role = TextRole.Good;
-            if (build.Length > 0 && build != LauncherInfo.ExpectedGameBuild)
-            {
-                text += " " + L.F("(the server was made for {0})", LauncherInfo.ExpectedGameBuild);
-                role = TextRole.Warn;
-            }
-            if (gameId.HasValue) text += " — " + L.F("game open (process {0})", gameId.Value);
-            Ui.SetStatus(gameStatus, text, role);
+            wrongBuild = build.Length > 0 && build != LauncherInfo.ExpectedGameBuild;
+            gamePill.Set(L.F("Steambirds.exe found, build {0}", build.Length > 0 ? build : L.T("unknown")), wrongBuild ? TextRole.Warn : TextRole.Good);
+            string note = wrongBuild ? L.F("(the server was made for {0})", LauncherInfo.ExpectedGameBuild) : "";
+            if (gameId.HasValue) note += (note.Length > 0 ? " " : "") + L.F("game open (process {0})", gameId.Value);
+            Ui.SetStatus(gameNote, note, TextRole.Muted);
         }
+        // The download is only offered while the game is missing or is not the build the server was made for.
+        bool offerDownload = !hasGame || wrongBuild;
+        if (downloadRow.Visible != offerDownload) downloadRow.Visible = offerDownload;
 
         string locale = context.Settings.GameLocale;
         GameConfig.Locale? chosen = context.GameData.Locales.FirstOrDefault(l => l.Id == locale);
-        Ui.SetStatus(languageStatus, locale.Length == 0 ? L.T("chosen in the game") : (chosen?.ToString() ?? locale), TextRole.Normal);
+        string languageText = locale.Length == 0 ? L.T("chosen in the game") : (chosen?.ToString() ?? locale);
+        if (languageLabel.Text != languageText) languageLabel.Text = languageText;
 
         bool steam = GameProcess.IsSteamRunning();
-        Ui.SetStatus(steamStatus, steam ? L.T("open") : L.T("closed: open Steam and log in before playing"), steam ? TextRole.Good : TextRole.Bad);
-        openSteamButton.Visible = !steam;
+        steamPill.Set(steam ? L.T("open") : L.T("closed: open Steam and log in before playing"), steam ? TextRole.Good : TextRole.Bad);
+        if (openSteamButton.Visible == steam) openSteamButton.Visible = !steam;
 
         SteamAccount? account = SteamAccount.Current();
         string steamText = account == null
@@ -258,12 +329,28 @@ internal sealed class ClientTab : UserControl
         UpdateThisPcRow();
         UpdateTarget();
 
+        // What stops Play, in one line next to it.
+        string hint = "";
+        TextRole hintRole = TextRole.Muted;
+        if (!hasGame)
+        {
+            hint = L.T("Game not found: see the Game tab.");
+            hintRole = TextRole.Bad;
+        }
+        else if (!steam && !gameId.HasValue)
+        {
+            hint = L.T("Steam is closed: open Steam and log in before playing.");
+            hintRole = TextRole.Warn;
+        }
+        Ui.SetStatus(hintLabel, hint, hintRole);
+
         // Search by itself every minute while this tab is on screen.
         if (context.Settings.AutoSearch && Visible && !context.Searching && DateTime.UtcNow - context.LastSearch > TimeSpan.FromSeconds(60))
             _ = context.SearchServersAsync();
 
         playButton.Enabled = !launching && hasGame && !gameId.HasValue;
-        playButton.Text = gameId.HasValue ? L.T("GAME OPEN") : launching ? L.T("OPENING...") : L.T("PLAY");
+        string playText = gameId.HasValue ? L.T("GAME OPEN") : launching ? L.T("OPENING...") : L.T("PLAY");
+        if (playButton.Text != playText) playButton.Text = playText;
         connectButton.Enabled = !connecting;
         searchButton.Enabled = !context.Searching;
     }
@@ -275,30 +362,35 @@ internal sealed class ClientTab : UserControl
         switch (report.State)
         {
             case PluginInfo.Status.NoGame:
-                Ui.SetStatus(pluginStatus, "—", TextRole.Muted);
+                pluginPill.Set("—", TextRole.Muted);
+                Ui.SetStatus(pluginNote, "", TextRole.Muted);
                 installPluginButton.Visible = false;
                 break;
             case PluginInfo.Status.NoBepInEx:
-                Ui.SetStatus(pluginStatus, L.T("BepInEx is not installed in the game (the game runs without the plugin, but without its fixes)"), TextRole.Warn);
+                pluginPill.Set(L.T("BepInEx missing"), TextRole.Warn);
+                Ui.SetStatus(pluginNote, L.T("BepInEx is not installed in the game: it runs without the plugin, but without its fixes."), TextRole.Muted);
                 installPluginButton.Visible = false;
                 break;
             case PluginInfo.Status.NotInstalled:
-                Ui.SetStatus(pluginStatus, report.HasBundled ? L.F("not installed (the launcher has version {0})", bundled)
-                                                             : L.T("not installed (the launcher's plugin folder is empty)"), TextRole.Warn);
+                pluginPill.Set(L.T("Not installed"), TextRole.Warn);
+                Ui.SetStatus(pluginNote, report.HasBundled ? L.F("The launcher has version {0}.", bundled) : L.T("The launcher's plugin folder is empty."), TextRole.Muted);
                 installPluginButton.Text = L.T("Install plugin");
                 installPluginButton.Visible = report.HasBundled;
                 break;
             case PluginInfo.Status.SameAsBundled:
-                Ui.SetStatus(pluginStatus, L.F("installed, version {0} (the same as the launcher's)", VersionOrUnknown(report.InstalledVersion)), TextRole.Good);
+                pluginPill.Set(L.T("Installed"), TextRole.Good);
+                Ui.SetStatus(pluginNote, L.F("Version {0}, the same as the launcher's.", VersionOrUnknown(report.InstalledVersion)), TextRole.Muted);
                 installPluginButton.Visible = false;
                 break;
             case PluginInfo.Status.DifferentFromBundled:
-                Ui.SetStatus(pluginStatus, L.F("installed, version {0}; the launcher has {1}", VersionOrUnknown(report.InstalledVersion), bundled), TextRole.Warn);
+                pluginPill.Set(L.T("Update available"), TextRole.Warn);
+                Ui.SetStatus(pluginNote, L.F("Version {0} installed; the launcher has {1}.", VersionOrUnknown(report.InstalledVersion), bundled), TextRole.Muted);
                 installPluginButton.Text = L.T("Update plugin");
                 installPluginButton.Visible = true;
                 break;
             case PluginInfo.Status.InstalledNoBundle:
-                Ui.SetStatus(pluginStatus, L.F("installed, version {0}", VersionOrUnknown(report.InstalledVersion)), TextRole.Good);
+                pluginPill.Set(L.T("Installed"), TextRole.Good);
+                Ui.SetStatus(pluginNote, L.F("Version {0}.", VersionOrUnknown(report.InstalledVersion)), TextRole.Muted);
                 installPluginButton.Visible = false;
                 break;
         }

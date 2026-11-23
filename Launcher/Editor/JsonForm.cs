@@ -155,7 +155,7 @@ internal sealed class JsonForm : Panel
         {
             case FieldKind.Bool:
             {
-                var box = new CheckBox { Text = L.T(spec.Label), AutoSize = true };
+                var box = new ThemedCheckBox { Text = L.T(spec.Label), AutoSize = true };
                 box.CheckedChanged += (_, _) => CommitBool(spec, box);
                 return box;
             }
@@ -163,7 +163,7 @@ internal sealed class JsonForm : Panel
             case FieldKind.Number:
             {
                 bool whole = spec.Kind == FieldKind.Int;
-                var number = new NumericUpDown
+                var number = new NumberBox
                 {
                     DecimalPlaces = whole ? 0 : 2,
                     Minimum = (decimal)spec.Min,
@@ -180,7 +180,7 @@ internal sealed class JsonForm : Panel
             case FieldKind.Choice:
             case FieldKind.EditableChoice:
             {
-                var combo = new ComboBox
+                var combo = new ThemedComboBox
                 {
                     DropDownStyle = spec.Kind == FieldKind.Choice ? ComboBoxStyle.DropDownList : ComboBoxStyle.DropDown,
                     Dock = DockStyle.Fill,
@@ -199,7 +199,7 @@ internal sealed class JsonForm : Panel
             default:
             {
                 bool multi = spec.Kind is FieldKind.MultiText or FieldKind.Positions;
-                var text = new TextBox
+                var text = new ThemedTextBox
                 {
                     Dock = DockStyle.Fill,
                     Margin = new Padding(3, 2, 3, 2),
@@ -270,7 +270,7 @@ internal sealed class JsonForm : Panel
             case CheckBox box:
                 box.Checked = node == null ? spec.DefaultBool : Json.AsBool(node, spec.DefaultBool);
                 break;
-            case NumericUpDown number:
+            case NumberBox number:
             {
                 double value = node == null ? spec.Default : Json.AsNumber(node, spec.Default);
                 number.Value = (decimal)Math.Clamp(value, spec.Min, spec.Max);
@@ -404,7 +404,7 @@ internal sealed class JsonForm : Panel
         Apply(spec, () => Write(data, spec.Key, JsonValue.Create(box.Checked)!));
     }
 
-    private void CommitNumber(FieldSpec spec, NumericUpDown number)
+    private void CommitNumber(FieldSpec spec, NumberBox number)
     {
         if (loading || Data == null) return;
         JsonObject data = Data;

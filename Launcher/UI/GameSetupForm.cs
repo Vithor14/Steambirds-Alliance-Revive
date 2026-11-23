@@ -31,9 +31,9 @@ internal sealed class GameSetupForm : Form
         Label versionTitle = Ui.Bold(L.T("Not the latest version of the game"));
         Label version = Ui.Wrapping(L.F("This revival needs the build {0}, downloaded from the Steam console with the command below. Do NOT use the latest version of the game that Steam installs from the library: the latest version has all of the game's content removed, and the server and the map editor cannot work with it.", LauncherInfo.ExpectedGameBuild), 590, gray: false);
         Ui.SetRole(version, TextRole.Warn);
-        var command = new TextBox { Text = LauncherInfo.DepotCommand, ReadOnly = true, Width = 420, Margin = new Padding(3, 4, 3, 3) };
+        var command = new ThemedTextBox { Text = LauncherInfo.DepotCommand, ReadOnly = true, Width = 420, Margin = new Padding(3, 4, 3, 3) };
 
-        Button download = Ui.Button(L.T("Download the game with Steam"), (_, _) => Download());
+        Button download = Ui.Primary(L.T("Download the game with Steam"), (_, _) => Download());
         download.AutoSize = true;
         Label downloadNote = Ui.Wrapping(L.T("Opens the Steam console with the command ready to paste and follows the download. Your Steam account needs Steambirds Alliance in its library (the game was free to play)."), 590, gray: true);
 

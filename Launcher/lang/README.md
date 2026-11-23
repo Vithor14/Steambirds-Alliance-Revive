@@ -8,7 +8,7 @@ lang\pt-BR.json    Português (Brasil)
 lang\es-ES.json    (yours?)
 ```
 
-The launcher lists every `*.json` of this folder in **Settings → Appearance → Launcher language**.
+The launcher lists every `*.json` of this folder in **Settings → General → Launcher language**.
 Files starting with `_` (like `_template.json`) and `*.missing.json` files are not languages.
 
 ## Adding a language

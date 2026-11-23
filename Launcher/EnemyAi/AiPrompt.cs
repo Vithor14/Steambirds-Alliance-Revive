@@ -20,9 +20,9 @@ internal static class AiPrompt
             AutoScaleMode = AutoScaleMode.Dpi
         };
         var caption = new Label { Text = label, AutoSize = false, Left = 12, Top = 12, Width = 356, Height = 20 };
-        var box = new TextBox { Text = initial, Left = 12, Top = 36, Width = 356 };
-        var ok = new Button { Text = L.T("OK"), DialogResult = DialogResult.OK, Left = 212, Top = 72, Width = 75 };
-        var cancel = new Button { Text = L.T("Cancel"), DialogResult = DialogResult.Cancel, Left = 293, Top = 72, Width = 75 };
+        var box = new ThemedTextBox { Text = initial, Left = 12, Top = 36, Width = 356 };
+        var ok = new ThemedButton { Text = L.T("OK"), DialogResult = DialogResult.OK, Left = 212, Top = 72, Width = 75 };
+        var cancel = new ThemedButton { Text = L.T("Cancel"), DialogResult = DialogResult.Cancel, Left = 293, Top = 72, Width = 75 };
         form.Controls.AddRange(new Control[] { caption, box, ok, cancel });
         form.AcceptButton = ok;
         form.CancelButton = cancel;

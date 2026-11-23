@@ -21,15 +21,15 @@ internal sealed class AiSimView : Panel
     private readonly Button playButton;
     private readonly ComboBox speedBox;
     private readonly ComboBox playerBox;
-    private readonly NumericUpDown playerSpeed;
-    private readonly NumericUpDown playerRadius;
+    private readonly NumberBox playerSpeed;
+    private readonly NumberBox playerRadius;
     private readonly CheckBox playerVisible;
-    private readonly NumericUpDown drain;
+    private readonly NumberBox drain;
     private readonly CheckBox respawn;
-    private readonly NumericUpDown speedMult;
-    private readonly NumericUpDown turnMult;
-    private readonly NumericUpDown fireMult;
-    private readonly NumericUpDown aimLead;
+    private readonly NumberBox speedMult;
+    private readonly NumberBox turnMult;
+    private readonly NumberBox fireMult;
+    private readonly NumberBox aimLead;
     private readonly CheckBox freeAim;
     private readonly Label status;
     private readonly TextBox log;
@@ -52,7 +52,7 @@ internal sealed class AiSimView : Panel
 
         canvas = new SimCanvas(this) { Dock = DockStyle.Fill };
 
-        unitBox = new ComboBox { DropDownStyle = ComboBoxStyle.DropDown, AutoCompleteMode = AutoCompleteMode.SuggestAppend, AutoCompleteSource = AutoCompleteSource.ListItems, Width = 190 };
+        unitBox = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDown, AutoCompleteMode = AutoCompleteMode.SuggestAppend, AutoCompleteSource = AutoCompleteSource.ListItems, Width = 190 };
         unitBox.SelectionChangeCommitted += (_, _) => UnitChosen();
         unitBox.KeyDown += (_, e) =>
         {
@@ -60,7 +60,7 @@ internal sealed class AiSimView : Panel
             e.SuppressKeyPress = true;
             UnitChosen();
         };
-        armedOnly = new CheckBox { Text = L.T("Armed units only"), AutoSize = true, Checked = true };
+        armedOnly = new ThemedCheckBox { Text = L.T("Armed units only"), AutoSize = true, Checked = true };
         armedOnly.CheckedChanged += (_, _) => FillUnits();
 
         playButton = Ui.Button(L.T("Pause"), (_, _) => TogglePlay());
@@ -72,22 +72,22 @@ internal sealed class AiSimView : Panel
         playerSpeed.ValueChanged += (_, _) => sim.PlayerSpeed = (float)playerSpeed.Value;
         playerRadius = Number(22, 4, 120, 2, 64);
         playerRadius.ValueChanged += (_, _) => sim.CircleRadius = (float)playerRadius.Value;
-        playerVisible = new CheckBox { Text = L.T("Player in sight"), AutoSize = true, Checked = true };
+        playerVisible = new ThemedCheckBox { Text = L.T("Player in sight"), AutoSize = true, Checked = true };
         playerVisible.CheckedChanged += (_, _) => sim.PlayerVisible = playerVisible.Checked;
 
         drain = Number(0, 0, 100, 1, 64);
         drain.ValueChanged += (_, _) => sim.HealthDrainPerSecond = (float)drain.Value / 100f;
         Button hit = Ui.Button(L.T("Hit -25%"), (_, _) => sim.Damage(0.25f));
         Button heal = Ui.Button(L.T("Heal"), (_, _) => sim.Damage(-1f));
-        respawn = new CheckBox { Text = L.T("Comes back after dying"), AutoSize = true, Checked = true };
+        respawn = new ThemedCheckBox { Text = L.T("Comes back after dying"), AutoSize = true, Checked = true };
         respawn.CheckedChanged += (_, _) => sim.AutoRespawn = respawn.Checked;
 
         speedMult = Number(1, 0.1m, 5, 0.1m, 64);
         turnMult = Number(1, 0.1m, 5, 0.1m, 64);
         fireMult = Number(1, 0.1m, 10, 0.1m, 64);
         aimLead = Number(0, 0, 3, 0.1m, 64);
-        freeAim = new CheckBox { Text = L.T("Free aim"), AutoSize = true };
-        foreach (NumericUpDown n in new[] { speedMult, turnMult, fireMult, aimLead }) n.ValueChanged += (_, _) => TuningChanged();
+        freeAim = new ThemedCheckBox { Text = L.T("Free aim"), AutoSize = true };
+        foreach (NumberBox n in new[] { speedMult, turnMult, fireMult, aimLead }) n.ValueChanged += (_, _) => TuningChanged();
         freeAim.CheckedChanged += (_, _) => TuningChanged();
 
         var tip = context.ToolTip;
@@ -112,7 +112,7 @@ internal sealed class AiSimView : Panel
         });
 
         status = new Label { Dock = DockStyle.Bottom, AutoSize = false, Height = 20, TextAlign = ContentAlignment.MiddleLeft };
-        log = new TextBox { Dock = DockStyle.Bottom, Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Height = 96, Font = new Font(FontFamily.GenericMonospace, 8.5f) };
+        log = new ThemedTextBox { Dock = DockStyle.Bottom, Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Height = 96, Font = new Font(FontFamily.GenericMonospace, 8.5f) };
 
         Controls.Add(canvas);
         Controls.Add(status);
@@ -141,15 +141,15 @@ internal sealed class AiSimView : Panel
 
     private static ComboBox Combo(string[] items, int selected, int width)
     {
-        var box = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = width };
+        var box = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = width };
         box.Items.AddRange(items);
         box.SelectedIndex = selected;
         return box;
     }
 
-    private static NumericUpDown Number(decimal value, decimal min, decimal max, decimal step, int width)
+    private static NumberBox Number(decimal value, decimal min, decimal max, decimal step, int width)
     {
-        return new NumericUpDown
+        return new NumberBox
         {
             Minimum = min, Maximum = max, Increment = step, Value = value, Width = width,
             DecimalPlaces = step < 1 ? 1 : 0, Margin = new Padding(3, 4, 3, 3)

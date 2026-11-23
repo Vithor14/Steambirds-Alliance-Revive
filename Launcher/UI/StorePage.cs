@@ -27,7 +27,7 @@ internal sealed class StorePage : UserControl
 
     private CheckBox purchases = null!;
     private ComboBox priceMode = null!;
-    private NumericUpDown discount = null!;
+    private NumberBox discount = null!;
     private CheckBox preRelease = null!;
     private StoreProductsView? productsView;
     private StoreShelvesView? shelvesView;
@@ -137,16 +137,16 @@ internal sealed class StorePage : UserControl
     private Control BuildGeneral()
     {
         loading = true;
-        purchases = new CheckBox { Text = L.T("Purchases enabled"), AutoSize = true, Checked = rules.PurchasesEnabled, Margin = new Padding(3, 6, 3, 3) };
+        purchases = new ThemedCheckBox { Text = L.T("Purchases enabled"), AutoSize = true, Checked = rules.PurchasesEnabled, Margin = new Padding(3, 6, 3, 3) };
         purchases.CheckedChanged += (_, _) => OnGeneralChanged();
 
-        priceMode = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 260, Margin = new Padding(3, 4, 3, 3) };
+        priceMode = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 260, Margin = new Padding(3, 4, 3, 3) };
         priceMode.Items.Add(L.T("The account pays with its gold and iron"));
         priceMode.Items.Add(L.T("Free: every product costs 0"));
         priceMode.SelectedIndex = rules.Free ? 1 : 0;
         priceMode.SelectedIndexChanged += (_, _) => OnGeneralChanged();
 
-        discount = new NumericUpDown
+        discount = new NumberBox
         {
             Minimum = 0,
             Maximum = 100,
@@ -157,7 +157,7 @@ internal sealed class StorePage : UserControl
         };
         discount.ValueChanged += (_, _) => OnGeneralChanged();
 
-        preRelease = new CheckBox { Text = L.T("Sell pre-release products"), AutoSize = true, Checked = rules.ShowPreRelease, Margin = new Padding(3, 6, 3, 3) };
+        preRelease = new ThemedCheckBox { Text = L.T("Sell pre-release products"), AutoSize = true, Checked = rules.ShowPreRelease, Margin = new Padding(3, 6, 3, 3) };
         preRelease.CheckedChanged += (_, _) => OnGeneralChanged();
         discount.Enabled = !rules.Free;
         loading = false;

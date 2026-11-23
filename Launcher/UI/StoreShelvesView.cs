@@ -201,7 +201,7 @@ internal sealed class StoreShelvesView : UserControl
     {
         private readonly GameConfig data;
         private readonly ListBox list = new ListBox { Dock = DockStyle.Fill, SelectionMode = SelectionMode.MultiExtended, IntegralHeight = false };
-        private readonly TextBox search = new TextBox { Dock = DockStyle.Top, PlaceholderText = L.T("Search name, id or tag") };
+        private readonly TextBox search = new ThemedTextBox { Dock = DockStyle.Top, PlaceholderText = L.T("Search name, id or tag") };
 
         public List<string> Chosen { get; } = new List<string>();
 

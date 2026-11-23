@@ -35,13 +35,13 @@ internal sealed class DepotDownloadForm : Form
         Label intro = Ui.Wrapping(L.T("The server was made for the build 201219.1413 of the game, which Steam still downloads from its console. Your Steam account needs Steambirds Alliance in its library (the game was free to play)."), 700, gray: false);
 
         // ------------------------------------------------------------ step 1
-        var command = new TextBox { Text = LauncherInfo.DepotCommand, ReadOnly = true, Width = 420, Margin = new Padding(3, 4, 3, 3) };
+        var command = new ThemedTextBox { Text = LauncherInfo.DepotCommand, ReadOnly = true, Width = 420, Margin = new Padding(3, 4, 3, 3) };
         var copyButton = Ui.Button(L.T("Copy command"), (_, _) => CopyCommand());
 
         // ------------------------------------------------------------ step 2
         steamStatus = Ui.Text("");
         openSteamButton = Ui.Button(L.T("Open Steam"), (_, _) => OpenSteam());
-        var consoleButton = Ui.Button(L.T("Copy and open the Steam console"), (_, _) =>
+        var consoleButton = Ui.Primary(L.T("Copy and open the Steam console"), (_, _) =>
         {
             CopyCommand();
             OpenConsole();
@@ -50,7 +50,7 @@ internal sealed class DepotDownloadForm : Form
         // ------------------------------------------------------------ step 3
         progress = Ui.Bold("");
         consoleLine = Ui.Wrapping("", 700, gray: true);
-        useFolderButton = Ui.Button(L.T("Use this folder"), (_, _) => UseFolder());
+        useFolderButton = Ui.Primary(L.T("Use this folder"), (_, _) => UseFolder());
         useFolderButton.Enabled = false;
 
         TableLayoutPanel steps = Ui.Table(2);

@@ -4,19 +4,19 @@ using SteambirdsLauncher.EnemyAi;
 
 namespace SteambirdsLauncher.UI;
 
-// Main window: Client, Server, Settings and Map editor tabs and a status bar.
+// Main window: a header with the main tabs (Client, Server, Map editor, Enemy AI, Settings) and the state of the server
+// and of the game.
 // Changing the launcher language builds the tabs again; the server, the game and the consoles keep running
 // (they live in LauncherContext).
 internal sealed class MainForm : Form
 {
     private readonly LauncherContext context;
-    private readonly ToolStripStatusLabel serverStatus;
-    private readonly ToolStripStatusLabel gameStatus;
-    private readonly ToolStripStatusLabel folderStatus;
     private readonly System.Windows.Forms.Timer refreshTimer;
     private readonly string? settingsWarning;
     private readonly string? languageWarning;
-    private ThemedTabControl? tabs;
+    private MainNav? nav;
+    private int settingsIndex;
+    private int aiIndex;
     private ClientTab? clientTab;
 
     // The map editor keeps its map (and the undo history) when the launcher builds the tabs again (new language).
@@ -39,7 +39,7 @@ internal sealed class MainForm : Form
         AutoScaleDimensions = new SizeF(96F, 96F);
         AutoScaleMode = AutoScaleMode.Dpi;
         Text = LauncherInfo.Title + "  " + LauncherInfo.Version;
-        MinimumSize = new Size(960, 640);
+        MinimumSize = new Size(1000, 660);
         try
         {
             Icon = Icon.ExtractAssociatedIcon(Environment.ProcessPath ?? Application.ExecutablePath);
@@ -58,17 +58,7 @@ internal sealed class MainForm : Form
             setup.ShowDialog();
         }
         context.LoadGameDataNow();
-        context.OpenSettingsTab = () =>
-        {
-            if (tabs != null && tabs.TabCount > 2) tabs.SelectedIndex = 2;
-        };
-
-        serverStatus = new ToolStripStatusLabel();
-        gameStatus = new ToolStripStatusLabel();
-        folderStatus = new ToolStripStatusLabel { Spring = true, TextAlign = ContentAlignment.MiddleRight, Tag = TextRole.Muted };
-        var statusStrip = new StatusStrip();
-        statusStrip.Items.AddRange(new ToolStripItem[] { serverStatus, new ToolStripSeparator(), gameStatus, folderStatus });
-        Controls.Add(statusStrip);
+        context.OpenSettingsTab = () => nav?.Select(settingsIndex);
 
         BuildTabs(settings.SelectedTab);
         ResumeLayout(false);
@@ -101,34 +91,32 @@ internal sealed class MainForm : Form
     // Builds (or builds again) the tabs in the current language.
     private void BuildTabs(int selected)
     {
-        ThemedTabControl? old = tabs;
+        MainNav? old = nav;
         SuspendLayout();
         try
         {
-            var clientPage = new TabPage(L.T("Client")) { Padding = new Padding(4) };
+            var newNav = new MainNav { Dock = DockStyle.Fill, Version = LauncherInfo.Version };
+
+            // Play and host first, then the two tools for making content, then the settings at the right end.
             clientTab = new ClientTab(context) { Dock = DockStyle.Fill };
-            clientPage.Controls.Add(clientTab);
+            newNav.AddPage(L.T("Client"), clientTab, icon: Icons.Play);
+            newNav.AddPage(L.T("Server"), new ServerTab(context) { Dock = DockStyle.Fill }, icon: Icons.Server);
 
-            var serverPage = new TabPage(L.T("Server")) { Padding = new Padding(4) };
-            serverPage.Controls.Add(new ServerTab(context) { Dock = DockStyle.Fill });
+            // The AI tab is built before the map editor: the editor asks it for the list of AIs.
+            Control ai = BuildAiTab();
+            Control editor = BuildEditor();
+            newNav.AddPage(L.T("Map editor"), editor, MainNav.Side.Left, dividerBefore: true, icon: Icons.MapEditor);
+            newNav.AddPage(L.T("Enemy AI"), ai, icon: Icons.EnemyAi);
+            aiIndex = 3;
 
-            var settingsPage = new TabPage(L.T("Settings")) { Padding = new Padding(4) };
-            settingsPage.Controls.Add(new SettingsTab(context, OnLanguageChanged) { Dock = DockStyle.Fill });
+            newNav.AddPage(L.T("Settings"), new SettingsTab(context, OnLanguageChanged) { Dock = DockStyle.Fill }, MainNav.Side.Right, icon: Icons.Settings);
+            settingsIndex = 4;
+            newNav.Select(selected >= 0 && selected < 5 ? selected : 0);
+            newNav.SetStatus(0, "", "", TextRole.Muted);
 
-            // The AI tab goes first: the map editor asks it for the list of AIs.
-            var aiPage = new TabPage(L.T("Enemy AI")) { Padding = new Padding(2) };
-            aiPage.Controls.Add(BuildAiTab());
-
-            var editorPage = new TabPage(L.T("Map editor")) { Padding = new Padding(2) };
-            editorPage.Controls.Add(BuildEditor());
-
-            var newTabs = new ThemedTabControl { Dock = DockStyle.Fill, Padding = new Point(18, 5) };
-            newTabs.TabPages.AddRange(new[] { clientPage, serverPage, settingsPage, editorPage, aiPage });
-            if (selected >= 0 && selected < 5) newTabs.SelectedIndex = selected;
-
-            Controls.Add(newTabs);
-            newTabs.BringToFront();
-            tabs = newTabs;
+            Controls.Add(newNav);
+            newNav.BringToFront();
+            nav = newNav;
             if (old != null)
             {
                 Controls.Remove(old);
@@ -140,9 +128,7 @@ internal sealed class MainForm : Form
             ResumeLayout(true);
         }
         Text = LauncherInfo.Title + "  " + LauncherInfo.Version;
-        folderStatus.Text = L.F("Launcher folder: {0}", LauncherPaths.BaseFolder);
-        serverStatus.Text = "";
-        gameStatus.Text = "";
+        RefreshStatus();
     }
 
     // The Enemy AI tab. Like the map editor, a failure here only shows in its own tab.
@@ -178,8 +164,8 @@ internal sealed class MainForm : Form
     // Selects the Enemy AI tab (on one AI when its id is given).
     private void OpenAi(string? id)
     {
-        if (tabs == null || tabs.TabCount < 5) return;
-        tabs.SelectedIndex = 4;
+        if (nav == null || nav.PageCount < 5) return;
+        nav.Select(aiIndex);
         if (!string.IsNullOrWhiteSpace(id)) aiTab?.OpenBrain(id);
     }
 
@@ -215,7 +201,7 @@ internal sealed class MainForm : Form
             L.SaveMissing();
             L.Load(context.Settings.Language, out string? error);
             if (error != null) Ui.ShowError(this, error);
-            BuildTabs(2);
+            BuildTabs(settingsIndex);
             context.ClientNotice(L.F("launcher language: {0}", L.Code));
         }));
     }
@@ -223,18 +209,22 @@ internal sealed class MainForm : Form
     private void RefreshStatus()
     {
         clientTab?.RefreshStatus();
+        if (nav == null) return;
 
-        string server = context.Server.State switch
+        // The two pills of the header: the full text, and a short one for a narrow window.
+        (string text, TextRole role) = context.Server.State switch
         {
-            ServerState.Running => L.F("Server: running ({0} connection(s))", context.Server.ConnectionCount),
-            ServerState.Starting => L.T("Server: starting"),
-            ServerState.Stopping => L.T("Server: stopping"),
-            _ => NetworkCheck.AnyServerListening() ? L.T("Server: running outside the launcher") : L.T("Server: stopped")
+            ServerState.Running => (L.F("Server: running ({0} connection(s))", context.Server.ConnectionCount), TextRole.Good),
+            ServerState.Starting => (L.T("Server: starting"), TextRole.Warn),
+            ServerState.Stopping => (L.T("Server: stopping"), TextRole.Warn),
+            _ => NetworkCheck.AnyServerListening()
+                ? (L.T("Server: running outside the launcher"), TextRole.Warn)
+                : (L.T("Server: stopped"), TextRole.Muted)
         };
-        if (serverStatus.Text != server) serverStatus.Text = server;
+        nav.SetStatus(0, text, L.T("Server"), role);
 
-        string game = context.Game.IsRunning(context.GameFolder) ? L.T("Game: open") : L.T("Game: closed");
-        if (gameStatus.Text != game) gameStatus.Text = game;
+        bool gameOpen = context.Game.IsRunning(context.GameFolder);
+        nav.SetStatus(1, gameOpen ? L.T("Game: open") : L.T("Game: closed"), L.T("Game"), gameOpen ? TextRole.Good : TextRole.Muted);
     }
 
     private void RestoreWindow()
@@ -310,7 +300,7 @@ internal sealed class MainForm : Form
         s.WindowY = normal.Y;
         s.WindowWidth = normal.Width;
         s.WindowHeight = normal.Height;
-        s.SelectedTab = tabs?.SelectedIndex ?? 0;
+        s.SelectedTab = nav?.SelectedPage ?? 0;
         context.SaveSettings();
         refreshTimer.Stop();
         L.SaveMissing();

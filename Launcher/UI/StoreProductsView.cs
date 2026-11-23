@@ -28,9 +28,9 @@ internal sealed class StoreProductsView : UserControl
     private readonly TextBox search;
     private readonly ComboBox category;
     private readonly CheckBox onlyRules;
-    private readonly NumericUpDown bulkDiscount;
-    private readonly NumericUpDown bulkStock;
-    private readonly NumericUpDown bulkMax;
+    private readonly NumberBox bulkDiscount;
+    private readonly NumberBox bulkStock;
+    private readonly NumberBox bulkMax;
     private readonly Label count;
     private bool updating;
 
@@ -40,15 +40,15 @@ internal sealed class StoreProductsView : UserControl
         this.rules = rules;
         this.changed = changed;
 
-        search = new TextBox { Width = 180, PlaceholderText = L.T("Search name, id or tag"), Margin = new Padding(3, 4, 3, 3) };
+        search = new ThemedTextBox { Width = 180, PlaceholderText = L.T("Search name, id or tag"), Margin = new Padding(3, 4, 3, 3) };
         search.TextChanged += (_, _) => ApplyFilter();
-        category = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 200, Margin = new Padding(3, 4, 3, 3) };
+        category = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 200, Margin = new Padding(3, 4, 3, 3) };
         category.Items.Add(L.T("All categories"));
         foreach (string name in data.StoreProducts.Select(p => p.Category).Where(c => c.Length > 0).Distinct().OrderBy(c => c, StringComparer.CurrentCultureIgnoreCase))
             category.Items.Add(name);
         category.SelectedIndex = 0;
         category.SelectedIndexChanged += (_, _) => ApplyFilter();
-        onlyRules = new CheckBox { Text = L.T("Only products with rules"), AutoSize = true, Margin = new Padding(8, 6, 3, 3) };
+        onlyRules = new ThemedCheckBox { Text = L.T("Only products with rules"), AutoSize = true, Margin = new Padding(8, 6, 3, 3) };
         onlyRules.CheckedChanged += (_, _) => ApplyFilter();
         count = Ui.Note("");
         var filterRow = Ui.WrapFlow(Ui.Text(L.T("Show:")), search, category, onlyRules, count);
@@ -115,7 +115,7 @@ internal sealed class StoreProductsView : UserControl
         Rebuild();
     }
 
-    private static NumericUpDown Number(int max, int value) => new NumericUpDown
+    private static NumberBox Number(int max, int value) => new NumberBox
     {
         Minimum = 0,
         Maximum = max,

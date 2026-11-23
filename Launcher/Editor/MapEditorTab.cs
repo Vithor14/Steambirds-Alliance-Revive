@@ -240,7 +240,7 @@ internal sealed class MapEditorTab : UserControl
 
         Label groupLabel = Ui.Text(L.T("Group name"));
         panel.Controls.Add(groupLabel);
-        group = new TextBox { Width = 126, Margin = new Padding(3, 0, 3, 3) };
+        group = new ThemedTextBox { Width = 126, Margin = new Padding(3, 0, 3, 3) };
         panel.Controls.Add(group);
         string groupHelp = L.T("Group of points the Group point tool adds to. A new name creates a new group.");
         context.ToolTip.SetToolTip(groupLabel, groupHelp);
@@ -249,7 +249,7 @@ internal sealed class MapEditorTab : UserControl
 
         Label snapLabel = Ui.Text(L.T("Snap (u)"));
         panel.Controls.Add(snapLabel);
-        snap = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 126, Margin = new Padding(3, 0, 3, 3) };
+        snap = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 126, Margin = new Padding(3, 0, 3, 3) };
         snap.Items.AddRange(new object[] { L.T("Off"), "0.25", "0.5", "1", "3" });
         snap.SelectedIndex = 2;
         string snapHelp = L.T("Placing and moving objects rounds their position to this step, in map units (u). Off = free position. A tile is 12 u.");
@@ -257,8 +257,8 @@ internal sealed class MapEditorTab : UserControl
         context.ToolTip.SetToolTip(snap, snapHelp);
         optionControls["snap"] = new Control[] { snapLabel, snap };
 
-        var rectangle = new CheckBox { Text = L.T("Rectangle"), AutoSize = true, Margin = new Padding(3, 6, 3, 0) };
-        var wallTile = new CheckBox { Text = L.T("Walls by tile"), AutoSize = true, Margin = new Padding(3, 0, 3, 0) };
+        var rectangle = new ThemedCheckBox { Text = L.T("Rectangle"), AutoSize = true, Margin = new Padding(3, 6, 3, 0) };
+        var wallTile = new ThemedCheckBox { Text = L.T("Walls by tile"), AutoSize = true, Margin = new Padding(3, 0, 3, 0) };
         context.ToolTip.SetToolTip(rectangle, L.T("Floor and Walls tools: drag a rectangle instead of painting cell by cell."));
         context.ToolTip.SetToolTip(wallTile, L.T("Walls tool: one click closes the whole tile edge (4 cells)."));
         rectangle.CheckedChanged += (_, _) => canvas.RectangleMode = rectangle.Checked;
@@ -292,7 +292,7 @@ internal sealed class MapEditorTab : UserControl
     {
         label = Ui.Text(L.T(caption));
         panel.Controls.Add(label);
-        var box = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 126, Margin = new Padding(3, 0, 3, 3), DropDownWidth = 260 };
+        var box = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 126, Margin = new Padding(3, 0, 3, 3), DropDownWidth = 260 };
         panel.Controls.Add(box);
         context.ToolTip.SetToolTip(label, L.T(help));
         context.ToolTip.SetToolTip(box, L.T(help));

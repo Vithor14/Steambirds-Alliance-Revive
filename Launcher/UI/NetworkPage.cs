@@ -40,13 +40,12 @@ internal sealed class NetworkPage : UserControl
         TableLayoutPanel join = Ui.Table(2);
         join.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         join.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        Ui.AddRow(join, Ui.Text(L.T("Other players:")), acceptState);
-        Ui.AddRow(join, Ui.Text(L.T("Addresses to share:")), addresses);
-        Ui.AddRow(join, Ui.Text(L.T("Firewall:")), Ui.Flow(firewallState, firewallButton));
-        Label help = Ui.Wrapping(L.T("Players on the same local network or VPN (Radmin VPN, Hamachi, ZeroTier...) see this server in the list of their launcher, or type the address above in \"Connect by IP\". On the internet, forward in the router the login port (TCP) and the Nexus, tutorial and dungeon ports (UDP) to this PC, and share your public IP."), 900, gray: true);
-        Ui.AddRow(join, help);
-        join.SetColumnSpan(help, 2);
-        GroupBox joinGroup = Ui.Group(L.T("How other players join"), join);
+        HelpButton joinHelp = Ui.Help(L.T("Players on the same local network or VPN (Radmin VPN, Hamachi, ZeroTier...) see this server in the list of their launcher, or type the address above in \"Connect by IP\". On the internet, forward in the router the login port (TCP) and the Nexus, tutorial and dungeon ports (UDP) to this PC, and share your public IP."),
+            L.T("How other players join"));
+        Ui.AddRow(join, Ui.Note(L.T("Other players:")), Ui.Flow(acceptState, joinHelp));
+        Ui.AddRow(join, Ui.Note(L.T("Addresses to share:")), addresses);
+        Ui.AddRow(join, Ui.Note(L.T("Firewall:")), Ui.Flow(firewallState, firewallButton));
+        Card joinGroup = Ui.Group(L.T("How other players join"), join);
         joinGroup.Dock = DockStyle.Top;
 
         // ------------------------------------------------------------ network.json

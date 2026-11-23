@@ -48,8 +48,8 @@ internal sealed class ConsoleView : UserControl
             Margin = new Padding(0),
             Padding = new Padding(0, 0, 0, 2)
         };
-        autoScroll = new CheckBox { Text = L.T("Auto-scroll"), Checked = true, AutoSize = true, Margin = new Padding(3, 6, 12, 3) };
-        filterBox = new TextBox { Width = 220, PlaceholderText = L.T("Filter lines..."), Margin = new Padding(3, 4, 3, 3) };
+        autoScroll = new ThemedCheckBox { Text = L.T("Auto-scroll"), Checked = true, AutoSize = true, Margin = new Padding(3, 6, 12, 3) };
+        filterBox = new ThemedTextBox { Width = 220, PlaceholderText = L.T("Filter lines..."), Margin = new Padding(3, 4, 3, 3) };
         Toolbar.Controls.Add(autoScroll);
         Toolbar.Controls.Add(Ui.Text(L.T("Filter:")));
         Toolbar.Controls.Add(filterBox);
@@ -105,7 +105,7 @@ internal sealed class ConsoleView : UserControl
     public void AddInfoToggle(bool initial, ToolTip tip, Action<bool> changed)
     {
         showInfo = initial;
-        var toggle = new CheckBox { Text = L.T("Show player actions (info)"), Checked = initial, AutoSize = true, Margin = new Padding(12, 6, 3, 3) };
+        var toggle = new ThemedCheckBox { Text = L.T("Show player actions (info)"), Checked = initial, AutoSize = true, Margin = new Padding(12, 6, 3, 3) };
         tip.SetToolTip(toggle, L.T("Off: the console shows warnings, errors and the events of the server (players connecting and leaving, dungeons, portals, deaths). On: also every skill, shot and game message of the players. The log file always has everything."));
         toggle.CheckedChanged += (_, _) =>
         {

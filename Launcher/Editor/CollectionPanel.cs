@@ -58,7 +58,7 @@ internal sealed class CollectionPanel : Panel
 
         if (source.NamedByKey)
         {
-            nameBox = new TextBox { Width = 150, Margin = new Padding(3, 4, 3, 3) };
+            nameBox = new ThemedTextBox { Width = 150, Margin = new Padding(3, 4, 3, 3) };
             nameBox.KeyDown += (_, e) =>
             {
                 if (e.KeyCode != Keys.Enter) return;

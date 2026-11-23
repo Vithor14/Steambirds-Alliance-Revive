@@ -97,7 +97,7 @@ internal sealed class AiTab : Panel
         brainEditor.Edited += OnEdited;
         behaviorEditor.Edited += OnEdited;
 
-        problems = new TextBox
+        problems = new ThemedTextBox
         {
             Dock = DockStyle.Bottom, Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical,
             Height = 70, Font = new Font(FontFamily.GenericMonospace, 8.5f)

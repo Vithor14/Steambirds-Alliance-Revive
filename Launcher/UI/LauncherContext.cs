@@ -24,6 +24,7 @@ internal sealed class LauncherContext : IDisposable
     {
         Owner = owner;
         Settings = settings;
+        Theme.StyleToolTip(ToolTip);
 
         Server.LineReceived += (line, fromStdErr) =>
         {

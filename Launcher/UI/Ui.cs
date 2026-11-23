@@ -14,10 +14,13 @@ internal static class Ui
         Margin = new Padding(3, 7, 3, 3)
     };
 
+    // One shared bold font (a new Font per label would leak GDI objects every time a page is rebuilt).
+    public static Font BoldFont { get; } = new Font(Control.DefaultFont, FontStyle.Bold);
+
     public static Label Bold(string text)
     {
         Label label = Text(text);
-        label.Font = new Font(Control.DefaultFont, FontStyle.Bold);
+        label.Font = BoldFont;
         return label;
     }
 
@@ -53,19 +56,32 @@ internal static class Ui
         if (label.ForeColor != color) SetRole(label, role);
     }
 
-    public static Button Button(string text, EventHandler? onClick = null)
+    public static ThemedButton Button(string text, EventHandler? onClick = null, ButtonKind kind = ButtonKind.Normal)
     {
-        var button = new Button
-        {
-            Text = text,
-            AutoSize = true,
-            AutoSizeMode = AutoSizeMode.GrowAndShrink,
-            Padding = new Padding(6, 1, 6, 1),
-            Margin = new Padding(3),
-            UseVisualStyleBackColor = true
-        };
+        var button = new ThemedButton { Text = text, Kind = kind };
         if (onClick != null) button.Click += onClick;
         return button;
+    }
+
+    // The main action of a screen (steam yellow).
+    public static ThemedButton Primary(string text, EventHandler? onClick = null) => Button(text, onClick, ButtonKind.Primary);
+
+    // A destructive action (red text).
+    public static ThemedButton Danger(string text, EventHandler? onClick = null) => Button(text, onClick, ButtonKind.Danger);
+
+    // Small action with no plate until the mouse is over it.
+    public static ThemedButton Quiet(string text, EventHandler? onClick = null) => Button(text, onClick, ButtonKind.Quiet);
+
+    // Round "?" that opens a longer explanation.
+    public static HelpButton Help(string text, string? title = null) => new HelpButton(text, title);
+
+    // Label of a section inside a screen (bigger than a note, smaller than a card title).
+    public static Label Heading(string text)
+    {
+        Label label = Text(text);
+        label.Font = Theme.Heading(10.5f);
+        label.Margin = new Padding(3, 10, 3, 4);
+        return label;
     }
 
     // Gray "(coming soon)" tag for a feature that is not implemented in the project yet. Disabled controls do not
@@ -134,49 +150,37 @@ internal static class Ui
         return row;
     }
 
-    public static GroupBox Group(string title, Control content)
+    // A titled plate for a group of related controls (replaces the old GroupBox).
+    public static Card Group(string title, Control content)
     {
-        var group = new GroupBox
+        var card = new Card
         {
-            Text = title,
+            Title = title,
             Dock = DockStyle.Fill,
             AutoSize = true,
-            AutoSizeMode = AutoSizeMode.GrowAndShrink,
-            Padding = new Padding(8, 6, 8, 6),
-            Margin = new Padding(4)
+            AutoSizeMode = AutoSizeMode.GrowAndShrink
         };
-        content.Dock = DockStyle.Fill;
-        group.Controls.Add(content);
-        return group;
+        // At the top, at its own height: when the card is taller (it shares a row with a taller one) the rows of a
+        // table inside do not stretch.
+        content.Dock = DockStyle.Top;
+        card.Controls.Add(content);
+        return card;
     }
 
-    // Read-only list with columns. The header is drawn by the launcher so it follows the theme.
-    public static ListView Grid(params (string Title, int Width)[] columns)
+    // A thin rounded frame around a list or any control that has no border of its own.
+    public static Card Framed(Control content)
     {
-        var list = new ListView
-        {
-            View = View.Details,
-            FullRowSelect = true,
-            GridLines = true,
-            HeaderStyle = ColumnHeaderStyle.Nonclickable,
-            MultiSelect = false,
-            HideSelection = false,
-            Dock = DockStyle.Fill,
-            OwnerDraw = true
-        };
+        var card = new Card { ContentPadding = new Padding(4), Dock = DockStyle.Fill, Margin = Padding.Empty };
+        content.Dock = DockStyle.Fill;
+        card.Controls.Add(content);
+        return card;
+    }
+
+    // Read-only list with columns. The last column stretches to the right edge.
+    public static ThemedListView Grid(params (string Title, int Width)[] columns)
+    {
+        var list = new ThemedListView { Dock = DockStyle.Fill };
         foreach ((string title, int width) in columns) list.Columns.Add(title, width);
-        list.DrawColumnHeader += (_, e) =>
-        {
-            Theme.Palette p = Theme.P;
-            using (var back = new SolidBrush(p.Header)) e.Graphics.FillRectangle(back, e.Bounds);
-            using (var border = new Pen(p.Border)) e.Graphics.DrawRectangle(border, e.Bounds.X, e.Bounds.Y, e.Bounds.Width - 1, e.Bounds.Height - 1);
-            Rectangle text = e.Bounds;
-            text.Inflate(-4, 0);
-            TextRenderer.DrawText(e.Graphics, e.Header?.Text ?? "", list.Font, text, p.Text,
-                TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
-        };
-        list.DrawItem += (_, e) => e.DrawDefault = true;
-        list.DrawSubItem += (_, e) => e.DrawDefault = true;
         return list;
     }
 

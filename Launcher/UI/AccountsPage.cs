@@ -1,27 +1,23 @@
 using System.Globalization;
-using System.Text.Json;
 using SteambirdsLauncher.Core;
 
 namespace SteambirdsLauncher.UI;
 
-// "Accounts" page of the Server tab.
-//  - Starting state of new accounts: keys of progression.json and items.json the server already uses
-//    (unlocks as a checklist, currencies as one field each).
-//  - The accounts of this server: one per player (Steam account), in server\accounts\<key>\ (account.json +
-//    inventory.json). Each one can be
-//    edited (in its own window) or removed while the server is stopped.
+// "Accounts" page of the Server tab: the accounts of this server, one per player (Steam account), in
+// server\accounts\<key>\ (account.json + inventory.json). Each one can be edited (in its own window), get a new
+// portrait or be removed while the server is stopped. The starting state of NEW accounts is on its own page
+// (NewAccountsPage).
 internal sealed class AccountsPage : UserControl
 {
     private readonly LauncherContext context;
-    private readonly SettingsPage newAccounts;
-    private readonly ListView summary;
-    private readonly ListView planes;
+    private readonly ThemedListView summary;
+    private readonly ThemedListView planes;
     private readonly Label accountStatus;
     private readonly Label serverNote;
-    private readonly Button editButton;
-    private readonly Button removeButton;
-    private readonly Button folderButton;
-    private readonly Button rerollButton;
+    private readonly ThemedButton editButton;
+    private readonly ThemedButton removeButton;
+    private readonly ThemedButton folderButton;
+    private readonly ThemedButton rerollButton;
     private readonly PortraitParts portraitParts = PortraitParts.Load();
     private readonly System.Windows.Forms.Timer watchTimer;
     private List<AccountStore.Summary> accounts = new List<AccountStore.Summary>();
@@ -30,32 +26,17 @@ internal sealed class AccountsPage : UserControl
     public AccountsPage(LauncherContext context)
     {
         this.context = context;
-        ToolTip tip = context.ToolTip;
-
-        var pilotSection = new SettingsSection(L.T("Pilot"), "progression.json", SettingsSection.Only("startingPilotLevel", "startingUnlocks"));
-        pilotSection.CustomEditors["startingUnlocks"] = UnlockEditor;
-        // The starting money has its own panel at the right (StartingMoneyPanel).
-        var itemsSection = new SettingsSection(L.T("Ingredients and items"), "items.json",
-            SettingsSection.Only("startingIngredients", "startingStorageItems"));
-        newAccounts = new SettingsPage(tip,
-            L.T("Used for new accounts: the first time a player (Steam account) joins this server. The other progression and item settings are in the Progression and Items and loot tabs."),
-            pilotSection, itemsSection)
-        {
-            Dock = DockStyle.Fill
-        };
 
         summary = Ui.Grid((L.T("Player"), 170), (L.T("Steam ID"), 140), (L.T("Last played"), 120), (L.T("Pilot rank"), 80),
             (L.T("Planes"), 60), (L.T("Portrait"), 150), (L.T("Kills"), 60), (L.T("Bosses"), 60), (L.T("Planes lost"), 90), (L.T("Unlocks"), 70),
             (L.T("Finished dungeons"), 300));
-        summary.Dock = DockStyle.Top;
-        summary.Height = 130;
         summary.SelectedIndexChanged += (_, _) => ShowSelected();
         summary.DoubleClick += (_, _) => EditAccount();
         planes = Ui.Grid((L.T("Plane"), 160), (L.T("Variant"), 100), (L.T("Level"), 60), (L.T("XP"), 80), (L.T("Plane id"), 230));
 
         accountStatus = Ui.Note("");
-        editButton = Ui.Button(L.T("Edit account..."), (_, _) => EditAccount());
-        removeButton = Ui.Button(L.T("Remove account"), (_, _) => RemoveAccount());
+        editButton = Ui.Primary(L.T("Edit account..."), (_, _) => EditAccount());
+        removeButton = Ui.Danger(L.T("Remove account"), (_, _) => RemoveAccount());
         rerollButton = Ui.Button(L.T("Reroll portrait"), (_, _) => RerollPortrait());
         folderButton = Ui.Button(L.T("Accounts folder"), (_, _) =>
         {
@@ -63,103 +44,41 @@ internal sealed class AccountsPage : UserControl
             Ui.OpenFolder(FindForm(), AccountStore.AccountsFolder);
         });
 
-        var buttons = Ui.WrapFlow(
-            Ui.Button(L.T("Refresh"), (_, _) => LoadAccounts(force: true)),
-            editButton, rerollButton, removeButton, folderButton,
+        FlowLayoutPanel buttons = Ui.WrapFlow(
+            editButton, rerollButton, removeButton,
+            Ui.Button(L.T("Refresh"), (_, _) => LoadAccounts(force: true)), folderButton,
             accountStatus);
         buttons.Dock = DockStyle.Top;
 
         serverNote = Ui.Wrapping("", 900, gray: false);
         serverNote.Dock = DockStyle.Top;
+        Resize += (_, _) => serverNote.MaximumSize = new Size(Math.Max(200, ClientSize.Width - 10), 0);
+
+        Label planesTitle = Ui.Heading(L.T("Planes of the selected account"));
+        planesTitle.Dock = DockStyle.Top;
+
+        // Two lists share the height: the accounts above, the planes of the selected one below.
+        var lists = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3 };
+        lists.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        lists.RowStyles.Add(new RowStyle(SizeType.Percent, 52f));
+        lists.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        lists.RowStyles.Add(new RowStyle(SizeType.Percent, 48f));
+        lists.Controls.Add(Ui.Framed(summary), 0, 0);
+        lists.Controls.Add(planesTitle, 0, 1);
+        lists.Controls.Add(Ui.Framed(planes), 0, 2);
 
         // Fill first; the Top controls added later end up above it, the last one at the very top.
-        Label planesTitle = Ui.Bold(L.T("Planes of the selected account"));
-        planesTitle.Dock = DockStyle.Top;
-        planesTitle.Padding = new Padding(0, 6, 0, 2);
-        var accountsPanel = new Panel { Dock = DockStyle.Fill };
-        accountsPanel.Resize += (_, _) => serverNote.MaximumSize = new Size(Math.Max(200, accountsPanel.ClientSize.Width - 10), 0);
-        accountsPanel.Controls.Add(planes);
-        accountsPanel.Controls.Add(planesTitle);
-        accountsPanel.Controls.Add(summary);
-        accountsPanel.Controls.Add(serverNote);
-        accountsPanel.Controls.Add(buttons);
-
-        var accountsGroup = new GroupBox { Text = L.T("Accounts of this server"), Dock = DockStyle.Fill, Padding = new Padding(8, 6, 8, 6) };
-        accountsGroup.Controls.Add(accountsPanel);
-        var newAccountsGroup = new GroupBox { Text = L.T("Starting state of new accounts"), Dock = DockStyle.Fill, Padding = new Padding(8, 6, 8, 6) };
-        newAccountsGroup.Controls.Add(newAccounts);
-        var startingMoneyGroup = new GroupBox { Text = L.T("Starting money of new accounts"), Dock = DockStyle.Fill, Padding = new Padding(8, 6, 8, 6) };
-        startingMoneyGroup.Controls.Add(new StartingMoneyPanel(context) { Dock = DockStyle.Fill });
-        var topRow = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1 };
-        topRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        topRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 360f));
-        topRow.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
-        topRow.Controls.Add(newAccountsGroup, 0, 0);
-        topRow.Controls.Add(startingMoneyGroup, 1, 0);
-
-        var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2 };
-        root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        root.RowStyles.Add(new RowStyle(SizeType.Percent, 38f));
-        root.RowStyles.Add(new RowStyle(SizeType.Percent, 62f));
-        root.Controls.Add(topRow, 0, 0);
-        root.Controls.Add(accountsGroup, 0, 1);
-        Controls.Add(root);
+        Controls.Add(lists);
+        Controls.Add(serverNote);
+        Controls.Add(buttons);
 
         context.ServerStateChanged += UpdateButtons;
-        context.GameDataChanged += OnGameDataChanged;
 
         watchTimer = new System.Windows.Forms.Timer { Interval = 2000 };
         watchTimer.Tick += (_, _) => LoadAccounts(force: false);
         watchTimer.Start();
         LoadAccounts(force: true);
     }
-
-    // ------------------------------------------------------------------ editors of the starting state
-
-    private SettingEditor? UnlockEditor(SettingsSection section, JsoncProperty property)
-    {
-        List<string>? values = ReadStringArray(property.RawValue);
-        if (values == null) return null;
-        var checklist = new UnlockChecklist(context.GameData) { Dock = DockStyle.Fill };
-        checklist.SetValue(values);
-        List<string> baseline = checklist.GetValue();
-        SettingEditor editor = SettingEditor.Custom(section, property, checklist,
-            () => ToJsonArray(checklist.GetValue()),
-            () => !SameItems(checklist.GetValue(), baseline));
-        checklist.Changed += editor.NotifyChanged;
-        return editor;
-    }
-
-    private void OnGameDataChanged()
-    {
-        // The lists of classes and currencies come from the game: rebuild the editors (unless there are edits).
-        if (!newAccounts.HasUnsavedChanges) newAccounts.Reload();
-    }
-
-    private static List<string>? ReadStringArray(string raw)
-    {
-        try
-        {
-            using JsonDocument document = JsonDocument.Parse(raw, JsoncFile.ParseOptions);
-            if (document.RootElement.ValueKind != JsonValueKind.Array) return null;
-            var result = new List<string>();
-            foreach (JsonElement item in document.RootElement.EnumerateArray())
-            {
-                if (item.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(item.GetString())) result.Add(item.GetString()!);
-            }
-            return result;
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
-    }
-
-    private static string ToJsonArray(List<string> values) =>
-        values.Count == 0 ? "[]" : "[ " + string.Join(", ", values.Select(JsoncFile.FormatString)) + " ]";
-
-    private static bool SameItems(List<string> a, List<string> b) =>
-        a.Count == b.Count && a.All(x => b.Contains(x, StringComparer.OrdinalIgnoreCase));
 
     // ------------------------------------------------------------------ the accounts
 
@@ -339,7 +258,6 @@ internal sealed class AccountsPage : UserControl
         if (disposing)
         {
             context.ServerStateChanged -= UpdateButtons;
-            context.GameDataChanged -= OnGameDataChanged;
             watchTimer.Stop();
             watchTimer.Dispose();
         }
