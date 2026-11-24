@@ -24,7 +24,7 @@ internal sealed class WorldPage : UserControl
 
         var settings = new SettingsPage(tip,
             L.T("Settings of the open world (world.json). The server reads the file by itself: if nobody is in the world, the new map is built at once (see the Map tab); " +
-                "with players inside it starts when the world is empty. Enemies, carriers and the spawn point are in the file itself (Settings tab, Files)."),
+                "with players inside it starts when the world is empty. How enemies spawn and which enemies live in each biome are in the Enemies tab; carriers and the spawn point are in the file itself (Settings tab, Files)."),
             new SettingsSection(L.T("Open world"), "world.json",
                 SettingsSection.Only("enabled", "name", "maxPlayers", "layout", "sizeScale", "seed", "pregenerate", "biomeScale", "landFraction", "edgeWall", "edgeMargin"))
             {
@@ -33,6 +33,7 @@ internal sealed class WorldPage : UserControl
 
         var tabs = new ThemedTabControl { Dock = DockStyle.Fill };
         tabs.TabPages.Add(TabOf(L.T("Map"), new WorldMapPage(context)));
+        tabs.TabPages.Add(TabOf(L.T("Enemies"), new WorldEnemiesPage(context)));
         tabs.TabPages.Add(TabOf(L.T("World settings"), settings));
 
         // Fill first, then the Top control.

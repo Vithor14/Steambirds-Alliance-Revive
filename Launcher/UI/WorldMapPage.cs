@@ -1,4 +1,5 @@
 using SteambirdsLauncher.Core;
+using SteambirdsLauncher.Editor;
 
 namespace SteambirdsLauncher.UI;
 
@@ -22,9 +23,30 @@ internal sealed class WorldMapPage : UserControl
     private string playersSignature = "";
     private string carriersSignature = "";
 
+    // The live data while somebody is in the world and the server keeps it fresh (null otherwise): a boss or a carrier can only be
+    // asked for then, because the server creates them for the players who are in the world.
+    private WorldLiveData? freshLive;
+    private readonly Label actionStatus;
+    private readonly System.Windows.Forms.Timer answerClock;
+    private string? pendingId;
+    private DateTime pendingUntil;
+    private string pendingText = "";
+
     public WorldMapPage(LauncherContext context)
     {
         this.context = context;
+
+        var spawnDungeon = Ui.Button(L.T("Spawn dungeon") + " ▾", null);
+        spawnDungeon.Click += (_, _) => ShowDungeonMenu(spawnDungeon, null);
+        context.ToolTip.SetToolTip(spawnDungeon, L.T("Opens a dungeon carrier at a random place of the open world. To choose the place, right click the map."));
+        actionStatus = Ui.Note(L.T("Right click the map to spawn the boss of that biome or a dungeon carrier there."));
+        FlowLayoutPanel actions = Ui.WrapFlow(spawnDungeon, actionStatus);
+        actions.Dock = DockStyle.Top;
+        actionStatus.Margin = new Padding(8, 7, 3, 3);
+        view.MapRightClicked += OnMapRightClicked;
+
+        answerClock = new System.Windows.Forms.Timer { Interval = 300 };
+        answerClock.Tick += (_, _) => CheckAnswer();
 
         status = Ui.Note("");
         status.Dock = DockStyle.Top;
@@ -71,6 +93,7 @@ internal sealed class WorldMapPage : UserControl
 
         Controls.Add(view);
         Controls.Add(side);
+        Controls.Add(actions);
         Controls.Add(status);
 
         clock = new System.Windows.Forms.Timer { Interval = 1000 };
@@ -107,6 +130,7 @@ internal sealed class WorldMapPage : UserControl
         TimeSpan? age = live?.Age;
         bool serverUp = context.Server.State == ServerState.Running || NetworkCheck.AnyServerListening();
         bool fresh = serverUp && live != null && live.Active && age.HasValue && age.Value.TotalSeconds < 8;
+        freshLive = fresh ? live : null;
         if (!fresh)
         {
             if (!serverUp)
@@ -231,12 +255,167 @@ internal sealed class WorldMapPage : UserControl
         carriers.EndUpdate();
     }
 
+    // ------------------------------------------------------------------ asking the server (boss, dungeon carrier)
+
+    // Right click on the map: the boss of the biome under the mouse, or a dungeon carrier there.
+    private void OnMapRightClicked(PointF world, Point screen)
+    {
+        WorldMapData.LegendEntry? entry = view.EntryAt(world.X, world.Y);
+        bool land = entry != null && entry.Base != "water" && entry.Base != "canyon";
+        string where = world.X.ToString("0") + ", " + world.Y.ToString("0");
+        string zone = entry == null ? "" : entry.Zone.Length > 0 ? entry.Zone : entry.Name;
+
+        var menu = new ContextMenuStrip { Renderer = new EditorRenderer() };
+        var header = new ToolStripMenuItem(zone.Length > 0 ? where + "  -  " + zone : where) { Enabled = false };
+        menu.Items.Add(header);
+        menu.Items.Add(new ToolStripSeparator());
+
+        var bossItem = new ToolStripMenuItem(L.T("Spawn boss here")) { Enabled = land };
+        if (land)
+        {
+            List<(string Name, int Parts, bool Default)> bosses = BossesOf(entry!.Name);
+            if (bosses.Count == 0)
+            {
+                bossItem.DropDownItems.Add(new ToolStripMenuItem(L.T("The game has no boss for this biome")) { Enabled = false });
+            }
+            foreach ((string name, int parts, bool isDefault) in bosses)
+            {
+                string label = parts > 0 ? L.F("{0} (+{1} parts)", name, parts) : name;
+                if (isDefault) label += "  " + L.T("(biome's boss)");
+                string captured = name;
+                var item = new ToolStripMenuItem(label);
+                item.Click += (_, _) => Ask("boss", world, null, L.F("Boss {0} at {1}", captured, where), captured);
+                bossItem.DropDownItems.Add(item);
+            }
+        }
+        menu.Items.Add(bossItem);
+
+        var dungeonItem = new ToolStripMenuItem(L.T("Spawn dungeon carrier here")) { Enabled = land };
+        FillDungeonItems(dungeonItem.DropDownItems, world);
+        menu.Items.Add(dungeonItem);
+
+        view.Mark(world);
+        menu.Closed += (_, _) => view.Mark(null);
+        menu.Show(view, screen);
+    }
+
+    // The button "Spawn dungeon": the list of dungeons of dungeons.json, a carrier at a random place.
+    private void ShowDungeonMenu(Control anchor, PointF? world)
+    {
+        var menu = new ContextMenuStrip { Renderer = new EditorRenderer() };
+        FillDungeonItems(menu.Items, world);
+        menu.Show(anchor, new Point(0, anchor.Height));
+    }
+
+    private void FillDungeonItems(ToolStripItemCollection items, PointF? world)
+    {
+        List<DungeonCatalogFile.Dungeon> dungeons;
+        try
+        {
+            dungeons = DungeonCatalogFile.Exists ? DungeonCatalogFile.Load().Dungeons.Where(d => d.Active).ToList() : new List<DungeonCatalogFile.Dungeon>();
+        }
+        catch (Exception)
+        {
+            dungeons = new List<DungeonCatalogFile.Dungeon>();
+        }
+        if (dungeons.Count == 0)
+        {
+            items.Add(new ToolStripMenuItem(L.T("No dungeon is turned on in dungeons.json")) { Enabled = false });
+            return;
+        }
+        foreach (DungeonCatalogFile.Dungeon dungeon in dungeons)
+        {
+            string label = dungeon.Name.Length > 0 ? dungeon.Name : dungeon.Type;
+            DungeonCatalogFile.Dungeon captured = dungeon;
+            var item = new ToolStripMenuItem(label);
+            item.Click += (_, _) => Ask("carrier", world, captured.Type, L.F("Dungeon carrier of {0}", label));
+            items.Add(item);
+        }
+    }
+
+    // The bosses of a biome (tile name) with how many parts and minions come with each; the biome's own boss (what the host chose in the
+    // Enemies tab, or the game's) is marked.
+    private static List<(string Name, int Parts, bool Default)> BossesOf(string regionKey)
+    {
+        var result = new List<(string, int, bool)>();
+        try
+        {
+            string chosen = WorldEnemyFiles.LoadEdits().TryGetValue(regionKey, out WorldEnemyRegion? edit) ? edit.Boss : "";
+            WorldEnemyRegion? game = WorldEnemyFiles.LoadDefaults(out _)?.FirstOrDefault(r => r.Key.Equals(regionKey, StringComparison.OrdinalIgnoreCase));
+            if (game == null) return result;
+            string own = chosen.Length > 0 ? chosen : game.Boss;
+            foreach (WorldBossGroup boss in game.Bosses)
+                result.Add((boss.Name, boss.Parts.Count, boss.Name.Equals(own, StringComparison.OrdinalIgnoreCase)));
+            // A unit the host typed that is not one of the game's bosses comes alone.
+            if (own.Length > 0 && !result.Any(b => b.Item3)) result.Insert(0, (own, 0, true));
+        }
+        catch (Exception)
+        {
+            // No list: the menu says there is no boss.
+        }
+        return result;
+    }
+
+    // Writes the request for the server and waits for its answer (shown in the line next to the button).
+    private void Ask(string action, PointF? world, string? dungeon, string what, string? boss = null)
+    {
+        bool serverUp = context.Server.State == ServerState.Running || NetworkCheck.AnyServerListening();
+        if (!serverUp)
+        {
+            Ui.SetStatus(actionStatus, L.T("The server is not running."), TextRole.Warn);
+            return;
+        }
+        if (freshLive == null || freshLive.Players.Count == 0)
+        {
+            Ui.SetStatus(actionStatus, L.T("Nobody is in the open world. The server creates bosses and carriers for the players who are in it: go in first."), TextRole.Warn);
+            return;
+        }
+        try
+        {
+            if (pendingId != null) WorldRequests.Withdraw(pendingId);
+            pendingId = WorldRequests.Send(action, world?.X, world?.Y, dungeon, boss);
+            pendingText = what;
+            pendingUntil = DateTime.Now.AddSeconds(6);
+            Ui.SetStatus(actionStatus, L.T("Asking the server..."), TextRole.Muted);
+            answerClock.Start();
+        }
+        catch (Exception e)
+        {
+            Ui.SetStatus(actionStatus, L.F("Could not ask the server: {0}", e.Message), TextRole.Bad);
+        }
+    }
+
+    private void CheckAnswer()
+    {
+        if (pendingId == null)
+        {
+            answerClock.Stop();
+            return;
+        }
+        WorldRequests.Result? result = WorldRequests.ReadResult(pendingId);
+        if (result != null)
+        {
+            Ui.SetStatus(actionStatus, result.Message, result.Ok ? TextRole.Good : TextRole.Warn);
+            pendingId = null;
+            answerClock.Stop();
+        }
+        else if (DateTime.Now > pendingUntil)
+        {
+            WorldRequests.Withdraw(pendingId);
+            Ui.SetStatus(actionStatus, L.T("The server did not answer. Is it running the open world?"), TextRole.Warn);
+            pendingId = null;
+            answerClock.Stop();
+        }
+    }
+
     protected override void Dispose(bool disposing)
     {
         if (disposing)
         {
             clock.Stop();
             clock.Dispose();
+            answerClock.Stop();
+            answerClock.Dispose();
         }
         base.Dispose(disposing);
     }

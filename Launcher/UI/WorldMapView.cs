@@ -162,6 +162,35 @@ internal sealed class WorldMapView : Control
         Invalidate();
     }
 
+    // Right click on the map (a point inside the world): the page opens its menu there (spawn a boss, a dungeon carrier).
+    public event Action<PointF, Point>? MapRightClicked;
+
+    // A cross where the menu was opened, until the menu closes (null = none).
+    private PointF? marked;
+
+    public void Mark(PointF? world)
+    {
+        marked = world;
+        Invalidate();
+    }
+
+    // The legend entry (region, water or canyon) under a world position; null outside the world.
+    public WorldMapData.LegendEntry? EntryAt(float x, float y)
+    {
+        if (map == null) return null;
+        int code = map.CodeAt(x, y);
+        return code >= 0 && code < map.Legend.Count ? map.Legend[code] : null;
+    }
+
+    protected override void OnMouseUp(MouseEventArgs e)
+    {
+        base.OnMouseUp(e);
+        if (e.Button != MouseButtons.Right || map == null) return;
+        PointF world = ToWorld(e.Location, MapRect());
+        if (world.X * world.X + world.Y * world.Y > map.Radius * map.Radius) return;
+        MapRightClicked?.Invoke(world, e.Location);
+    }
+
     protected override void OnMouseDown(MouseEventArgs e)
     {
         base.OnMouseDown(e);
@@ -237,6 +266,18 @@ internal sealed class WorldMapView : Control
         {
             foreach (WorldLiveData.CarrierInfo carrier in live.Carriers) DrawCarrier(g, carrier, rect);
             foreach (WorldLiveData.PlayerInfo player in live.Players) DrawPlayer(g, player, rect);
+        }
+
+        if (marked.HasValue)
+        {
+            PointF at = ToScreen(marked.Value.X, marked.Value.Y, rect);
+            using var shadow = new Pen(Color.FromArgb(220, 0, 0, 0), 4f);
+            using var cross = new Pen(Color.FromArgb(255, 242, 98, 42), 2f);
+            foreach (Pen pen in new[] { shadow, cross })
+            {
+                g.DrawLine(pen, at.X - 7, at.Y - 7, at.X + 7, at.Y + 7);
+                g.DrawLine(pen, at.X - 7, at.Y + 7, at.X + 7, at.Y - 7);
+            }
         }
 
         if (mouse.X >= 0) DrawHover(g, rect, palette);

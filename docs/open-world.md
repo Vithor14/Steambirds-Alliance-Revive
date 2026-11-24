@@ -54,7 +54,8 @@ The client has the data structures (`WorldLayout`, `GroundAssetContainer`, `Terr
 
 - The game's units are filed by region: `Units/01 - Beach`, `11/12/13` lowlands, `21/22/23` midlands, `31/32/33` highlands, `41`
   mountains, `51` highmountains. The first digit is the band and the second the variant (`lowlands2` -> `12`). `GRP<n>_x` +
-  `GRP<n>_xleader` are a group, `SLO<n>_x` a solo enemy, `BOS` setpiece bosses (not placed yet). Helpers of other units
+  `GRP<n>_xleader` are a group, `SLO<n>_x` a solo enemy, `BOS` bosses and their parts (a boss is created only when the host asks, see
+  "Lists, bosses and requests" below). Helpers of other units
   (controllers, grenades, clones, exploders...) are left out by name.
 - A region has "spawn sites" on a jittered grid (`siteSpacingTiles`). A player within `spawnRadius` makes the site create one
   group (a leader and followers, or one solo) of the region's pool, asleep: it wakes when a player is within `wakeRadius`, or on a hit.
@@ -147,3 +148,43 @@ launcher starts.
   maximum players, how it is generated, size, seed, build in advance, island size and land fraction for the random layout, edge wall).
   The nested keys (enemies, carriers, spawn point, Nexus portal) stay in the file (Settings tab, Files). **Reroll world** writes a new random
   seed in `world.json`; the server rebuilds the standby world within a second and the Map tab shows it. With players inside it asks first.
+
+## Lists, bosses and requests (24/11)
+
+Launcher: Server > World map > **Enemies** tab. Server: `World\WorldEnemyLists.cs`, `WorldEnemyPools.cs`, `WorldServer.Requests.cs`.
+
+- **Numbers.** The tab edits `world.json` > `enemies` in place (`JsoncFile.ApplyChangesIn`: the comments stay, a key the object lacks is added):
+  `spawnRadius`, `despawnRadius`, `wakeRadius`, `viewRadius`, `maxAlive`, `siteSpacingTiles`, `groupSizeMax`, `respawnScale`,
+  `healthMultiplier` and `enabled`. The server rereads them every second (`siteSpacingTiles` only matters when the world is built).
+  `tierOffset` is in the file but nothing reads it yet, so the tab does not show it.
+- **Lists per biome.** `world-enemies.json` (written by the launcher, gitignored, reread when it changes) holds what the host changed:
+  `regions.<tile name>` (`beach`, `lowlands`, `lowlands2`...) with `groups` and `boss`. A group is `{ "name", "solo", "leaders", "members" }`:
+  a leader and its followers, or `solo: true` (a spawn site creates one enemy of `members`). A region with `groups` in the file uses
+  them instead of the game's groups; a region that is not in the file keeps the game's (`WorldEnemyPools.For` / `DefaultsFor`). Units
+  that are not in the catalog, walls, player planes and the `enemies.skip` of `world.json` are ignored. A site picks the group when it
+  spawns, so a change reaches new spawns only; groups already on the map stay until they die. Regions with no enemies keep their sites
+  (the host may fill them later) and look again every 20 s.
+- **Game's lists.** The server writes `world-enemy-defaults.json` (gitignored) every time it builds the pools: per region the zone name,
+  tier, the game's groups and the boss choices. The launcher reads it to show what is default and to go back to it.
+- **Bosses.** The `BOS<n>` units of a folder (`Units/<code> - .../BOS<n>_<unit>`) with the same number are one boss with its parts and
+  minions (`WorldEnemyPools.BossGroup`): Gargantua with its fists and laser, Clockboss with its hands and twelve numbers, the train with
+  its cars, the Hypnotist with its minion and pet... The boss is the strongest unit of the group that is not a part (by name: hands, fists,
+  numbers, shell, minions...); the rest come with it, except the death model, what it fires or drops (mines, missiles, chests, grenades),
+  clones and the controllers/masters of the original scripts, and the invisible units (the claws of the Berserker are attack boxes).
+  A region offers the bosses of its folder, the strongest first, except Egyptian Dig (`pharaoh`), Noble Estates (`hypnotist`) and Imperial
+  Palace (`notra`) first, which `PreferredBoss` sets; the first is the biome's boss. The host picks another (any unit of the game, which
+  then comes alone if it is not a boss of the game) per region in the tab (`regions.<tile>.boss`). Reconstruction: no original boss AI: the
+  boss is the unit with the `chase` behavior (type `world/boss/<unit>`) and each part or minion another one with `chase` too
+  (`world/part/<unit>`), all replaceable in `enemies.json` like the others. The server writes the groups with their parts in
+  `world-enemy-defaults.json` (`bosses`).
+- **Requests from the launcher.** Right click on the map (a cross marks the point): *Spawn boss here* (submenu with the bosses of the biome
+  under the mouse, each with how many parts come along, the biome's boss marked) and *Spawn dungeon carrier here* (submenu with the active
+  dungeons of `dungeons.json`); the *Spawn dungeon* button creates a carrier at a random place. The
+  launcher writes `world-requests\<id>.json` (`{ id, action: boss|carrier, x, y, dungeon, boss }`); the world server reads the folder twice per
+  second, does it, deletes the file and writes the answer to `world-request-result.json` (`{ id, ok, message }`), which the launcher shows. The
+  boss appears awake at the point (or at the closest free land within 36 units) and its parts and minions on a ring of 9 to 15 units around
+  it, all in one group `boss:<id>` (up to 30 parts); the carrier stays `carriers.lifetimeSeconds` next to
+  the point (ignores `maxAtOnce`; a closed dungeon is refused). It needs a player in the open world: the server creates enemies and
+  carriers on a player's connection, so with nobody inside (or only the world built in advance) the answer says so.
+- Tested: building, the server writing the lists and bosses of the 12 regions, the refusal with nobody in the world, and the edit of
+  `world.json`. Not tested in the game: the boss and the carrier appearing, the tab with real clicks.

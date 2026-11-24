@@ -108,6 +108,49 @@ public static class JsoncFile
         return result;
     }
 
+    // Same as ApplyChanges for the keys inside a top-level object ("enemies": { ... }). A key the object does not have yet is
+    // added at its end. "missing" lists what could not be done (the object itself is not in the file).
+    public static string ApplyChangesIn(string text, string objectKey, IReadOnlyDictionary<string, string> rawValues, out List<string> missing)
+    {
+        JsoncProperty? parent = ReadTopLevel(text)
+            .FirstOrDefault(p => p.Kind == JsoncKind.Object && string.Equals(p.Key, objectKey, StringComparison.OrdinalIgnoreCase));
+        if (parent == null)
+        {
+            missing = rawValues.Keys.ToList();
+            return text;
+        }
+
+        string inner = ApplyChanges(parent.RawValue, rawValues, out List<string> absent);
+        if (absent.Count > 0) inner = AddKeys(inner, absent.Select(k => (k, rawValues[k])).ToList());
+        missing = new List<string>();
+
+        string result = text.Substring(0, parent.ValueStart) + inner + text.Substring(parent.ValueEnd);
+        using (JsonDocument.Parse(result, ParseOptions))
+        {
+            // Throws if the result is not valid JSON.
+        }
+        return result;
+    }
+
+    // Adds "key": value pairs at the end of an object (text of the object, from { to }).
+    private static string AddKeys(string objectText, List<(string Key, string Raw)> pairs)
+    {
+        List<JsoncProperty> properties = ReadTopLevel(objectText);
+        var added = new StringBuilder();
+        foreach ((string key, string raw) in pairs)
+        {
+            if (added.Length > 0 || properties.Count > 0) added.Append(',');
+            added.Append("\n    ").Append(FormatString(key)).Append(": ").Append(raw);
+        }
+        if (properties.Count == 0)
+        {
+            int open = objectText.IndexOf('{');
+            return objectText.Substring(0, open + 1) + added + "\n  " + objectText.Substring(open + 1).TrimStart();
+        }
+        int at = properties[properties.Count - 1].ValueEnd;
+        return objectText.Substring(0, at) + added + objectText.Substring(at);
+    }
+
     // ------------------------------------------------------------------ value formatting
 
     public static string FormatBool(bool value) => value ? "true" : "false";

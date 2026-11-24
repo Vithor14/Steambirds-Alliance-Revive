@@ -60,4 +60,8 @@ FileList.txt
 # Server: files the open world writes for the launcher's World map page
 /Server/world-map.json
 /Server/world-live.json
+/Server/world-enemy-defaults.json
+/Server/world-enemies.json
+/Server/world-requests/
+/Server/world-request-result.json
 /Server/*.tmp

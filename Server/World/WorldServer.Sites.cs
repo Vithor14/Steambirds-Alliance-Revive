@@ -42,7 +42,7 @@ public static partial class WorldServer
                 float dx = x - map.SpawnX, dy = y - map.SpawnY;
                 if (dx * dx + dy * dy < clearRadius * clearRadius) continue;
                 if (!map.IsOpenLand(x, y, 6f)) continue;
-                if (WorldEnemyPools.For(region).Count == 0) continue;
+                // A region with no enemies still gets its sites: the host may add enemies to its list (world-enemies.json) later.
                 s.Sites.Add(new Site { Index = s.Sites.Count, X = x, Y = y, Region = region });
             }
         }
@@ -145,7 +145,8 @@ public static partial class WorldServer
         List<WorldEnemyPools.Family> pool = WorldEnemyPools.For(site.Region);
         if (pool.Count == 0)
         {
-            site.ReadyAt = now + 600.0;
+            // The list of the region is empty (the host may fill it, world-enemies.json): look again in a while.
+            site.ReadyAt = now + 20.0;
             return 0;
         }
         WorldEnemyPools.Family family = pool[random.Next(pool.Count)];

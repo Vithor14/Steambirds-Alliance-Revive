@@ -274,6 +274,8 @@ public static partial class WorldServer
                 nextStandbyTry = now + 15.0;
                 log("WORLD", "the world could not be prepared in advance: " + e.GetType().Name + ": " + e.Message);
             }
+            // What the host asks for from the launcher's map (a boss here, a dungeon carrier).
+            ProcessRequests(server, now, log);
             Session? s = session;
             if (s == null || s.Server != server || s.Pregenerated) return;
             // The edge wall is checked ten times per second, faster than the rest of the world.

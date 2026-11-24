@@ -35,12 +35,13 @@ public static partial class WorldServer
         if (!settings.Enabled || players.Count == 0 || now < s.NextCarrierAt || s.Carriers.Count >= settings.MaxAtOnce) return;
         s.NextCarrierAt = now + settings.EverySeconds;
         Carrier? made = CreateCarrier(s, settings, null, now, log);
-        if (made != null) Chat(s, "A dungeon carrier appeared in the open world: " + made.Entry.Label + ". " + Direction(s, made, players));
+        if (made != null) Chat(s, "A dungeon carrier appeared in the open world: " + made.Entry.Label + ". " + Direction(made.X, made.Y, players));
     }
 
     // One carrier of an open dungeon (a given one, or at random among those without a carrier). Null if there is no room or dungeon.
+    // "at": next to that point (the host's request from the launcher's map) instead of a random place.
     private static Carrier? CreateCarrier(Session s, WorldSettings.CarrierSettings settings, DungeonCatalog.Entry? wanted, double now,
-        Action<string, string> log)
+        Action<string, string> log, (float X, float Y)? at = null)
     {
         DateTime clock = DateTime.Now;
         DungeonCatalog.Entry? entry = wanted;
@@ -53,7 +54,15 @@ public static partial class WorldServer
             entry = free[random.Next(free.Count)];
         }
 
-        if (!FindCarrierPlace(s, settings, out float x, out float y)) return null;
+        float x, y;
+        if (at.HasValue)
+        {
+            if (!FindOpenNear(s.Map!, at.Value.X, at.Value.Y, 14f, 60f, out x, out y)) return null;
+        }
+        else if (!FindCarrierPlace(s, settings, out x, out y))
+        {
+            return null;
+        }
         var carrier = new Carrier
         {
             Id = WorldObjects.NewShortId(),
@@ -102,11 +111,11 @@ public static partial class WorldServer
     }
 
     // "It is to the north-east, about 300 units away" (from the first player).
-    private static string Direction(Session s, Carrier carrier, List<(NetConnection Connection, float X, float Y)> players)
+    private static string Direction(float targetX, float targetY, List<(NetConnection Connection, float X, float Y)> players)
     {
         if (players.Count == 0) return "";
         (NetConnection _, float px, float py) = players[0];
-        float dx = carrier.X - px, dy = carrier.Y - py;
+        float dx = targetX - px, dy = targetY - py;
         float distance = MathF.Sqrt(dx * dx + dy * dy);
         string[] names = { "north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west" };
         double heading = Math.Atan2(dx, dy) * 180.0 / Math.PI;
