@@ -1,0 +1,20 @@
+{
+  "format": 1,
+  "id": "generic_fixed",
+  "name": "Generic: Fixed cannon",
+  "author": "Steambirds Revive",
+  "description": "Does not move or turn; its guns fire straight out of their mouths without aiming (the built-in \"fixed\" flight).",
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "fixed"
+      },
+      "fire": {
+        "enabled": true
+      }
+    }
+  ]
+}

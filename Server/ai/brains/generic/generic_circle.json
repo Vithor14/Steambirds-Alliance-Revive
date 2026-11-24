@@ -1,0 +1,20 @@
+{
+  "format": 1,
+  "id": "generic_circle",
+  "name": "Generic: Circle",
+  "author": "Steambirds Revive",
+  "description": "Goes around the player at the unit type's preferredDistance, shooting (the built-in \"circle\" flight).",
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      }
+    }
+  ]
+}

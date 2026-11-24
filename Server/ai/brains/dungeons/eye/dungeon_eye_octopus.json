@@ -1,0 +1,67 @@
+{
+  "format": 1,
+  "id": "dungeon_eye_octopus",
+  "name": "Cyclopus (phases)",
+  "author": "Steambirds Revive",
+  "description": "The phases of Cyclopus as an AI: each phase starts when the health goes under its limit. Made from the old \"phases\" of the unit type (dungeon_eye.json).",
+  "units": ["octopus"],
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "transitions": [
+        {
+          "to": "phase1",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.66
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase1",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "octopuslaser2",
+      "summonCount": 2,
+      "transitions": [
+        {
+          "to": "phase2",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.33
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase2",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "octopuslaser3",
+      "summonCount": 2
+    }
+  ]
+}

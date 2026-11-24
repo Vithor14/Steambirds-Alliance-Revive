@@ -17,7 +17,7 @@ Referência técnica do sistema de inimigos, conferida no código decompilado (b
 - Convenção de ângulo: 0 = +Y, 90 = +X; direção = (sin r, cos r). `maxTurnRate` em graus/s.
 
 ## IA em arquivos (22/11)
-As IAs e os comportamentos também podem vir de arquivos (`Server\ai\`), feitos e simulados na aba Enemy AI do launcher; um tipo usa `"ai": "<id>"` (também em `phases`). Detalhes em `docs/enemy-ai.md`; formato em `Server\ai\README.md`.
+As IAs e os comportamentos também podem vir de arquivos (`Server\ai\`), feitos e simulados na aba Enemy AI do launcher; um tipo usa `"ai": "<id>"`. Detalhes em `docs/enemy-ai.md`; formato em `Server\ai\README.md`.
 
 ## Raio de visão (23/11)
 No mundo aberto cada cliente só recebe os inimigos dentro de `enemies.viewRadius` (`Enemies.Interest.cs`; padrão 90, 0 desliga), então o radar não aponta para inimigos distantes. Dungeons e tutorial mandam tudo. Ver `docs/open-world.md`.

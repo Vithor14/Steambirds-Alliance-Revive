@@ -13,6 +13,15 @@ public struct AiSense
     public float Dt;
     // Time of the last damage the unit took (negative = never).
     public double LastHitAt;
+    // How many of the units this one summoned are still alive.
+    public int SummonsAlive;
+}
+
+// A summon the AI asks for: the caller creates "Count" units of the type near the summoner.
+public sealed class AiSummonOrder
+{
+    public string Type = "";
+    public int Count;
 }
 
 // What the AI decided this tick. The caller turns toward (TargetX, TargetY), speeds toward TargetVel (AiMotion.Steer) and
@@ -36,6 +45,21 @@ public sealed class AiOutput
     // The state changed this tick: PreviousState is the one it came from.
     public bool Entered;
     public AiCompiledState? PreviousState;
+    // Every state entered this tick, in order (more than one when transitions chain: a big hit that crosses two health limits).
+    // The caller applies the "on enter" parts of each (message, bark, look, homing bullets).
+    public readonly List<AiCompiledState> EnteredStates = new List<AiCompiledState>();
+
+    // The state asks for the unit's built-in flight (mode "builtin"): Builtin is its name ("" = the unit type's own).
+    public bool UseBuiltin;
+    public string Builtin = "";
+    public float SpeedMult = 1f;
+
+    // The shield of the state is up now (ShieldEffect = the look while it lasts, "" = the default one).
+    public bool ShieldOn;
+    public string ShieldEffect = "";
+
+    // Units to summon this tick (empty most of the time).
+    public readonly List<AiSummonOrder> Summons = new List<AiSummonOrder>();
 }
 
 // The running AI of one unit: the state it is in and what it needs to remember. Create one per unit.
@@ -54,6 +78,10 @@ public sealed class AiRuntime
     private double nextPatrol;
     private bool needPatrol = true;
 
+    // summons and shield of the current state
+    private double nextSummonAt = double.MaxValue;
+    private double shieldUntil;
+
     // 1 clockwise, -1 counter-clockwise (when the move does not say).
     private readonly float defaultSpin;
 
@@ -70,16 +98,26 @@ public sealed class AiRuntime
     public AiCompiledState State => Brain.States[stateIndex];
     public double StateTime(double now) => now - enteredAt;
 
+    // The number a condition of the current state is waiting for (the random time of a timeInState with a max was rolled when the
+    // state started). 0 when there is no such condition.
+    public float Rolled(int transition, int condition)
+    {
+        if (transition < 0 || transition >= rolled.Length || condition < 0 || condition >= rolled[transition].Length) return 0f;
+        return rolled[transition][condition];
+    }
+
     public AiOutput Step(in AiSense s)
     {
         AiOutput o = Out;
         o.Entered = false;
         o.PreviousState = null;
+        o.EnteredStates.Clear();
+        o.Summons.Clear();
 
         if (!started)
         {
             started = true;
-            Enter(Brain.Initial, s.Now);
+            Enter(Brain.Initial, s);
             o.Entered = true;
         }
 
@@ -99,7 +137,7 @@ public sealed class AiRuntime
             }
             if (next < 0) break;
             if (!o.Entered) o.PreviousState = state;
-            Enter(next, s.Now);
+            Enter(next, s);
             o.Entered = true;
         }
 
@@ -107,13 +145,27 @@ public sealed class AiRuntime
         return o;
     }
 
-    private void Enter(int index, double now)
+    private void Enter(int index, in AiSense s)
     {
+        double now = s.Now;
         stateIndex = index;
         enteredAt = now;
         needPatrol = true;
 
         AiCompiledState state = Brain.States[index];
+        Out.EnteredStates.Add(state);
+
+        // Shield: for a number of seconds, or for as long as the state lasts.
+        shieldUntil = !state.Shield ? 0.0 : state.ShieldSeconds > 0f ? now + state.ShieldSeconds : double.MaxValue;
+
+        // Summons: at once when the state starts (no limit check against "max" when it is 0), then every "every" seconds.
+        nextSummonAt = double.MaxValue;
+        if (state.SummonType.Length > 0)
+        {
+            if (state.SummonMax <= 0 || s.SummonsAlive < state.SummonMax) Out.Summons.Add(new AiSummonOrder { Type = state.SummonType, Count = state.SummonCount });
+            if (state.SummonEvery > 0f) nextSummonAt = now + state.SummonEvery;
+        }
+
         rolled = new float[state.Transitions.Length][];
         for (int t = 0; t < state.Transitions.Length; t++)
         {
@@ -162,6 +214,9 @@ public sealed class AiRuntime
                 result = s.HasTarget &&
                     Math.Abs(AiMath.AngleDifference(s.Rot, AiMath.Heading(s.X, s.Y, s.TargetX, s.TargetY))) <= value;
                 break;
+            case "summonsAtMost":
+                result = s.SummonsAlive <= value;
+                break;
             case "chance":
                 // Probability per second, whatever the tick length.
                 result = rng.NextDouble() < 1.0 - Math.Exp(-Math.Max(0f, value) * Math.Max(0f, s.Dt));
@@ -184,6 +239,19 @@ public sealed class AiRuntime
 
         o.State = state;
         o.Hold = false;
+        o.UseBuiltin = false;
+        o.Builtin = "";
+        o.SpeedMult = 1f;
+
+        // Periodic summons of the state.
+        if (state.SummonType.Length > 0 && state.SummonEvery > 0f && s.Now >= nextSummonAt)
+        {
+            nextSummonAt = s.Now + state.SummonEvery;
+            if (state.SummonMax <= 0 || s.SummonsAlive < state.SummonMax)
+                o.Summons.Add(new AiSummonOrder { Type = state.SummonType, Count = state.SummonCount });
+        }
+        o.ShieldOn = s.Now < shieldUntil;
+        o.ShieldEffect = state.ShieldEffect;
 
         float top = Math.Max(0f, s.VelMax);
         float speed = Math.Max(0f, m.Speed);
@@ -296,6 +364,16 @@ public sealed class AiRuntime
                 o.TargetVel = top * speed;
                 break;
             }
+
+            case "builtin":
+                // The server flies it with its own code (Enemies.Think); the values below only say where to look.
+                o.UseBuiltin = true;
+                o.Builtin = (m.Builtin ?? "").Trim().ToLowerInvariant();
+                o.SpeedMult = m.SpeedMult > 0f ? m.SpeedMult : 1f;
+                o.TargetX = s.HasTarget ? s.TargetX : forwardX;
+                o.TargetY = s.HasTarget ? s.TargetY : forwardY;
+                o.TargetVel = top * 0.7f * o.SpeedMult;
+                break;
 
             default: // "hold" is what a broken state falls back to
                 o.Hold = true;

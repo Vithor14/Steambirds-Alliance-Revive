@@ -18,7 +18,6 @@ public static partial class Enemies
             type.Template ??= "auto:weak";
             type.Behavior = NormalizeBehavior(type.Behavior);
             type.Guns ??= new List<int>();
-            type.Phases = (type.Phases ?? new List<BossPhase>()).Where(f => f != null).OrderByDescending(f => f.BelowHealth).ToList();
             defaultTypes[key] = type;
         }
     }
@@ -147,6 +146,15 @@ public static partial class Enemies
             if (enemy.ShieldUntil > 0) return;   // the shield effect stays until the shield ends
             enemy.EffectId = enemy.BaseEffect;
             enemy.EffectChanged = true;
+        }
+    }
+
+    // True (once) if the unit went off by itself on a player (a bomb or a mine) instead of being shot or removed.
+    public static bool TakeSelfDestruct(NetConnection connection, int shortId)
+    {
+        lock (Game.Lock)
+        {
+            return instances.TryGetValue(connection.RemoteUniqueIdentifier, out Instance? inst) && inst.SelfDestructed.Remove(shortId);
         }
     }
 

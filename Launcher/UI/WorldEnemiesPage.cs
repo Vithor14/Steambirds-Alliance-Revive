@@ -1,4 +1,5 @@
 using System.Globalization;
+using SteambirdsAi;
 using SteambirdsLauncher.Core;
 using SteambirdsLauncher.Editor;
 
@@ -55,6 +56,12 @@ internal sealed class WorldEnemiesPage : UserControl
     private readonly ThemedButton removeGroupButton;
     private readonly ThemedButton renameGroupButton;
     private readonly ThemedButton resetButton;
+    private readonly ThemedComboBox aiBox;
+    private readonly ThemedButton aiEditButton;
+    private readonly Label aiNote;
+    private AiLibrary aiLibrary = new AiLibrary();
+    private string aiSignature = "";
+    private bool fillingAi;
     private readonly ThemedButton saveLists;
     private readonly ThemedButton undoLists;
     private List<WorldEnemyRegion> defaults = new List<WorldEnemyRegion>();
@@ -172,7 +179,7 @@ internal sealed class WorldEnemiesPage : UserControl
         listStatus = Ui.Wrapping("", 640, gray: true);
         listStatus.Dock = DockStyle.Top;
 
-        list = Ui.Grid((L.T("Group"), 210), (L.T("Role"), 90), (L.T("Enemy"), 170), (L.T("Tier"), 45), (L.T("Health"), 70));
+        list = Ui.Grid((L.T("Group"), 180), (L.T("Role"), 80), (L.T("Enemy"), 150), (L.T("AI"), 180), (L.T("Tier"), 45), (L.T("Health"), 70));
         list.MultiSelect = true;
         list.SelectedIndexChanged += (_, _) => UpdateListButtons();
         list.KeyDown += (_, e) =>
@@ -182,6 +189,16 @@ internal sealed class WorldEnemiesPage : UserControl
             RemoveSelected();
         };
 
+        aiBox = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 300, Enabled = false };
+        aiBox.SelectedIndexChanged += (_, _) => AiPicked();
+        tip.SetToolTip(aiBox, L.T("The AI the selected enemies run in this biome. The list shows the AIs made for the enemy first, then the generic ones (the AI tab edits them)."));
+        aiEditButton = Ui.Button(L.T("Load unit in the AI editor"), (_, _) => LoadInAiEditor());
+        tip.SetToolTip(aiEditButton, L.T("Goes to the Enemy AI tab with this enemy and its AI loaded, ready to edit and test."));
+        aiNote = Ui.Wrapping("", 640, gray: true);
+        FlowLayoutPanel aiRow = Ui.WrapFlow(Ui.Text(L.T("AI of the selected enemy:")), aiBox, aiEditButton);
+        aiRow.Dock = DockStyle.Bottom;
+        aiNote.Dock = DockStyle.Bottom;
+
         addButton = Ui.Button(L.T("Add enemy..."), (_, _) => AddEnemies());
         removeButton = Ui.Button(L.T("Remove"), (_, _) => RemoveSelected());
         removeGroupButton = Ui.Button(L.T("Remove group"), (_, _) => RemoveGroup());
@@ -189,7 +206,7 @@ internal sealed class WorldEnemiesPage : UserControl
         resetButton = Ui.Button(L.T("Back to the game's list"), (_, _) => ResetRegion());
         tip.SetToolTip(addButton, L.T("Adds units of the game to a group of this biome, or to a new group."));
         tip.SetToolTip(removeButton, L.T("Takes the selected enemies out of the list of this biome (Delete)."));
-        tip.SetToolTip(resetButton, L.T("Drops what you changed in this biome (the groups and the boss): it goes back to the game's own list."));
+        tip.SetToolTip(resetButton, L.T("Drops what you changed in this biome (the groups, the boss and the AIs): it goes back to the game's own list."));
         FlowLayoutPanel editButtons = Ui.WrapFlow(addButton, removeButton, removeGroupButton, renameGroupButton, resetButton);
         editButtons.Dock = DockStyle.Bottom;
 
@@ -199,13 +216,15 @@ internal sealed class WorldEnemiesPage : UserControl
         saveButtons.Dock = DockStyle.Bottom;
 
         hint = Ui.Wrapping(L.T("Each spawn site of a biome picks one of these groups at random: a leader with followers, or one enemy of a solo group. " +
-                               "The enemies are the game's units with the default AI; to change how one fights use the Enemy AI tab."), 640, gray: true);
+                               "The enemies are the game's units with the generic chase AI; pick another AI for an enemy below (one made for it, or a generic one) and edit AIs in the Enemy AI tab."), 640, gray: true);
         hint.Dock = DockStyle.Bottom;
 
         var listsBody = new Panel { Dock = DockStyle.Fill };
         // Fill first, then the others (WinForms docks the last added control first).
         listsBody.Controls.Add(Ui.Framed(list));
         listsBody.Controls.Add(hint);
+        listsBody.Controls.Add(aiNote);
+        listsBody.Controls.Add(aiRow);
         listsBody.Controls.Add(saveButtons);
         listsBody.Controls.Add(editButtons);
         listsBody.Controls.Add(listStatus);
@@ -465,6 +484,7 @@ internal sealed class WorldEnemiesPage : UserControl
         var item = new ListViewItem(groupName) { Tag = (group, leader, name) };
         item.SubItems.Add(role);
         item.SubItems.Add(enemy.Length > 0 ? enemy : L.T("(empty group)"));
+        item.SubItems.Add(enemy.Length > 0 ? AiLabel(enemy) : "");
         item.SubItems.Add(unit != null ? unit.Tier.ToString() : "");
         item.SubItems.Add(unit != null ? unit.MaxHealth.ToString("0") : "");
         list.Items.Add(item);
@@ -480,6 +500,7 @@ internal sealed class WorldEnemiesPage : UserControl
 
     private void UpdateListButtons()
     {
+        UpdateAiBox();
         bool has = Current != null;
         addButton.Enabled = has;
         bool anySelected = list.SelectedItems.Count > 0;
@@ -617,13 +638,153 @@ internal sealed class WorldEnemiesPage : UserControl
         Fill();
     }
 
+    // ------------------------------------------------------------------ the AI of each enemy
+
+    // The AI an enemy runs in the biome now: the host's choice, or the default of the open world.
+    private string AiOf(WorldEnemyRegion region, string unit)
+    {
+        Dictionary<string, string>? chosen = EditOf(region)?.Ai;
+        if (chosen != null)
+        {
+            foreach (KeyValuePair<string, string> pair in chosen)
+            {
+                if (pair.Key.Equals(unit, StringComparison.OrdinalIgnoreCase) && pair.Value.Length > 0) return pair.Value;
+            }
+        }
+        return WorldEnemyFiles.DefaultAi;
+    }
+
+    private string AiLabel(string unit)
+    {
+        WorldEnemyRegion? region = Current;
+        if (region == null) return "";
+        string id = AiOf(region, unit);
+        return id.Equals(WorldEnemyFiles.DefaultAi, StringComparison.OrdinalIgnoreCase) ? id + " (" + L.T("default") + ")" : id;
+    }
+
+    private sealed class AiChoice
+    {
+        public AiChoice(string id, string text)
+        {
+            Id = id;
+            Text = text;
+        }
+
+        public string Id { get; }
+        public string Text { get; }
+        public override string ToString() => Text;
+    }
+
+    // The AI files of the server, read again when one changes.
+    private AiLibrary Library()
+    {
+        string folder = LauncherPaths.AiFolder;
+        string signature = AiLibrary.Signature(folder);
+        if (signature != aiSignature)
+        {
+            aiLibrary = AiLibrary.Load(folder);
+            aiSignature = signature;
+        }
+        return aiLibrary;
+    }
+
+    private List<string> SelectedUnits()
+    {
+        return SelectedRows().Select(r => r.Name).Where(n => n.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    // The box lists the AIs that fit every selected enemy: the ones made for them first, then the generic ones.
+    private void UpdateAiBox()
+    {
+        WorldEnemyRegion? region = Current;
+        List<string> units = region == null ? new List<string>() : SelectedUnits();
+        fillingAi = true;
+        try
+        {
+            aiBox.Items.Clear();
+            aiBox.Enabled = false;
+            aiEditButton.Enabled = false;
+            aiNote.Text = "";
+            if (region == null || units.Count == 0) return;
+
+            AiLibrary library = Library();
+            List<List<(string Id, bool Specific)>> perUnit = units.Select(u => library.ApplicableTo(new[] { u })).ToList();
+            List<(string Id, bool Specific)> fit = perUnit[0]
+                .Where(a => perUnit.All(l => l.Any(b => b.Id.Equals(a.Id, StringComparison.OrdinalIgnoreCase))))
+                .Select(a => (a.Id, perUnit.All(l => l.Any(b => b.Id.Equals(a.Id, StringComparison.OrdinalIgnoreCase) && b.Specific))))
+                .OrderByDescending(a => a.Item2).ToList();
+
+            List<string> currents = units.Select(u => AiOf(region, u)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            string? current = currents.Count == 1 ? currents[0] : null;
+            if (current != null && !fit.Any(a => a.Id.Equals(current, StringComparison.OrdinalIgnoreCase)))
+                aiBox.Items.Add(new AiChoice(current, L.F("{0}  (not made for this unit)", current)));
+            foreach ((string id, bool specific) in fit)
+                aiBox.Items.Add(new AiChoice(id, specific ? L.F("{0}  (made for this unit)", id) : id));
+
+            int index = current == null ? -1 : aiBox.Items.Cast<AiChoice>().ToList().FindIndex(c => c.Id.Equals(current, StringComparison.OrdinalIgnoreCase));
+            aiBox.SelectedIndex = index;
+            aiBox.Enabled = true;
+            aiEditButton.Enabled = EnemyAiEditors.Available && units.Count == 1;
+            if (units.Count > 1)
+                aiNote.Text = L.T("Several enemies are selected: only the AIs that fit all of them are listed.");
+        }
+        finally
+        {
+            fillingAi = false;
+        }
+    }
+
+    private void AiPicked()
+    {
+        if (fillingAi || aiBox.SelectedItem is not AiChoice choice) return;
+        WorldEnemyRegion? region = Current;
+        if (region == null) return;
+        List<string> units = SelectedUnits();
+        if (units.Count == 0) return;
+
+        WorldEnemyRegion? edit = EditOf(region);
+        if (edit == null)
+        {
+            edit = new WorldEnemyRegion { Key = region.Key };
+            edits[region.Key] = edit;
+        }
+        edit.Ai ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        bool changed = false;
+        foreach (string unit in units)
+        {
+            string before = AiOf(region, unit);
+            if (before.Equals(choice.Id, StringComparison.OrdinalIgnoreCase)) continue;
+            // The default is not written: the biome keeps following the default AI of the open world.
+            if (choice.Id.Equals(WorldEnemyFiles.DefaultAi, StringComparison.OrdinalIgnoreCase)) edit.Ai.Remove(unit);
+            else edit.Ai[unit] = choice.Id;
+            changed = true;
+        }
+        if (changed) MarkDirty();
+    }
+
+    private void LoadInAiEditor()
+    {
+        WorldEnemyRegion? region = Current;
+        IEnemyAiEditor? editor = EnemyAiEditors.Current;
+        List<string> units = SelectedUnits();
+        if (region == null || editor == null || units.Count != 1) return;
+        var type = new System.Text.Json.Nodes.JsonObject
+        {
+            ["name"] = units[0],
+            ["template"] = units[0],
+            [EnemyAiEditors.AiField] = AiOf(region, units[0])
+        };
+        editor.Edit(FindForm()!, "world/" + units[0], type, () => { }, () => { });
+    }
+
     private void SaveLists()
     {
         try
         {
             BossEdited();
             // A region with nothing changed (no groups of its own, the game's boss) is not written.
-            foreach (string key in edits.Where(p => p.Value.Groups == null && string.IsNullOrWhiteSpace(p.Value.Boss)).Select(p => p.Key).ToList())
+            foreach (string key in edits.Where(p => p.Value.Groups == null && string.IsNullOrWhiteSpace(p.Value.Boss) &&
+                         (p.Value.Ai == null || p.Value.Ai.Count == 0)).Select(p => p.Key).ToList())
                 edits.Remove(key);
             WorldEnemyFiles.SaveEdits(edits);
             listsDirty = false;

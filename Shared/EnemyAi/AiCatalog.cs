@@ -22,6 +22,11 @@ public static class AiCatalog
     public const int FormatVersion = 1;
     public const string BehaviorsFolder = "behaviors";
     public const string BrainsFolder = "brains";
+    // Inside brains\: generic\ (AIs that work for any unit), world\ (AIs of open-world units) and dungeons\<name>\ (one folder
+    // per dungeon; the tutorial is a dungeon too). Every brain file name (without the folder) is its id and must be unique.
+    public const string GenericFolder = "generic";
+    public const string WorldFolder = "world";
+    public const string DungeonsFolder = "dungeons";
     public const string PackageKind = "steambirds-ai-package";
 
     public static readonly AiOption[] MoveModes =
@@ -39,8 +44,13 @@ public static class AiCatalog
         new AiOption("flee", "Run away",
             "Flies away from the player. Uses: speed."),
         new AiOption("home", "Go back home",
-            "Flies to the place where the unit was born and circles there. Uses: speed.")
+            "Flies to the place where the unit was born and circles there. Uses: speed."),
+        new AiOption("builtin", "Built-in flight",
+            "Runs one of the server's built-in flights (the \"behavior\" of the unit type, or the one named in \"builtin\": chase, circle, charge, turret, route, kamikaze, patrol, escort). Uses: builtin, speedMult. In the simulator it is only an approximation.")
     };
+
+    // The built-in flights a state can ask for (the behaviors of the server).
+    public static readonly string[] BuiltinFlights = { "chase", "circle", "charge", "turret", "route", "kamikaze", "patrol", "escort", "fixed", "idle", "mine" };
 
     public static readonly AiOption[] ConditionTypes =
     {
@@ -57,6 +67,8 @@ public static class AiCatalog
         new AiOption("healthAbove", "Health above (0-1)", "True when the health fraction is at or over the value."),
         new AiOption("recentlyHit", "Was hit in the last (s)", "True when the unit took damage in the last value seconds."),
         new AiOption("facingTarget", "Facing the player (degrees)", "True when the player is inside this angle in front of the unit."),
+        new AiOption("summonsAtMost", "Own summons alive at most",
+            "True when the units this unit summoned that are still alive number at most this value (0 = all of them are dead)."),
         new AiOption("chance", "Chance per second (0-1)", "Every second the transition happens with this probability (0.5 = about once every two seconds).")
     };
 
@@ -65,6 +77,17 @@ public static class AiCatalog
     public static bool IsConditionType(string? id) => ConditionTypes.Any(o => string.Equals(o.Id, id, StringComparison.Ordinal));
 
     // File name and id of a brain or behavior: lowercase letters, digits and "_".
+    // The id an "ai" field means: the id itself, or the file name at the end of a path inside brains\ ("generic/generic_chase",
+    // "dungeons\arena\dungeon_arena_swarmboss"). The file name is the id, whatever folder the file is in.
+    public static string IdOfReference(string? reference)
+    {
+        string text = (reference ?? "").Trim();
+        int cut = Math.Max(text.LastIndexOf('/'), text.LastIndexOf('\\'));
+        if (cut >= 0) text = text.Substring(cut + 1);
+        if (text.EndsWith(".json", StringComparison.OrdinalIgnoreCase)) text = text.Substring(0, text.Length - 5);
+        return text.Trim();
+    }
+
     public static string CleanId(string? text)
     {
         var chars = new List<char>();

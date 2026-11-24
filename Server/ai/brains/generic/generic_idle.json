@@ -1,0 +1,20 @@
+{
+  "format": 1,
+  "id": "generic_idle",
+  "name": "Generic: Idle",
+  "author": "Steambirds Revive",
+  "description": "Does nothing: no moving, turning or shooting. For walls, crates and wrecks (the built-in \"idle\" flight).",
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "idle"
+      },
+      "fire": {
+        "enabled": false
+      }
+    }
+  ]
+}

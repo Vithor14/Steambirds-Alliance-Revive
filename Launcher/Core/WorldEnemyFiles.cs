@@ -44,6 +44,8 @@ public sealed class WorldEnemyRegion
     // The bosses of the biome with their parts (the server writes it in world-enemy-defaults.json).
     public List<WorldBossGroup> Bosses { get; set; } = new List<WorldBossGroup>();
     public List<WorldEnemyGroup>? Groups { get; set; }
+    // The AI file each unit of the biome runs (unit name -> AI id). A unit that is not in it runs the default AI of the open world.
+    public Dictionary<string, string>? Ai { get; set; }
 }
 
 public sealed class WorldEnemyFiles
@@ -109,7 +111,11 @@ public sealed class WorldEnemyFiles
     {
         public string Boss { get; set; } = "";
         public List<WorldEnemyGroup>? Groups { get; set; }
+        public Dictionary<string, string>? Ai { get; set; }
     }
+
+    // The AI every open-world unit runs unless one is picked for it (Server\World\WorldEnemyLists.DefaultAi).
+    public const string DefaultAi = "generic_chase";
 
     private sealed class EditsFile
     {
@@ -127,7 +133,7 @@ public sealed class WorldEnemyFiles
         foreach (KeyValuePair<string, EditRegion> pair in file.Regions)
         {
             if (pair.Value == null) continue;
-            result[pair.Key] = new WorldEnemyRegion { Key = pair.Key, Boss = pair.Value.Boss ?? "", Groups = pair.Value.Groups };
+            result[pair.Key] = new WorldEnemyRegion { Key = pair.Key, Boss = pair.Value.Boss ?? "", Groups = pair.Value.Groups, Ai = pair.Value.Ai };
         }
         return result;
     }
@@ -141,7 +147,12 @@ public sealed class WorldEnemyFiles
                    "of that region; a region that is not listed keeps them. See docs/open-world.md."
         };
         foreach (KeyValuePair<string, WorldEnemyRegion> pair in edits)
-            file.Regions[pair.Key] = new EditRegion { Boss = pair.Value.Boss, Groups = pair.Value.Groups };
+            file.Regions[pair.Key] = new EditRegion
+            {
+                Boss = pair.Value.Boss,
+                Groups = pair.Value.Groups,
+                Ai = pair.Value.Ai != null && pair.Value.Ai.Count > 0 ? pair.Value.Ai : null
+            };
         TextFiles.WriteAtomic(EditsPath, JsonSerializer.Serialize(file, Options), false);
     }
 }

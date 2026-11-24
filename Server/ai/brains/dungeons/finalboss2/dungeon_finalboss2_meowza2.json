@@ -1,0 +1,229 @@
+{
+  "format": 1,
+  "id": "dungeon_finalboss2_meowza2",
+  "name": "Godleader Meowza (phases)",
+  "author": "Steambirds Revive",
+  "description": "The phases of Godleader Meowza as an AI: each phase starts when the health goes under its limit. Made from the old \"phases\" of the unit type (dungeon_finalboss2.json).",
+  "units": ["meowza2"],
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "transitions": [
+        {
+          "to": "phase1",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.9
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase1",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "meowza2_frost_1",
+      "summonCount": 2,
+      "transitions": [
+        {
+          "to": "phase2",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase2",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "meowza2_firering",
+      "summonCount": 1,
+      "transitions": [
+        {
+          "to": "phase3",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase3",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "meowza2_orochi_2",
+      "summonCount": 2,
+      "transitions": [
+        {
+          "to": "phase4",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase4",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "meowza2_lasereye",
+      "summonCount": 4,
+      "transitions": [
+        {
+          "to": "phase5",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase5",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "meowza2_lightningspiral",
+      "summonCount": 2,
+      "transitions": [
+        {
+          "to": "phase6",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase6",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "meowza2_claw_2",
+      "summonCount": 2,
+      "transitions": [
+        {
+          "to": "phase7",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase7",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "meowza2_infinity_2",
+      "summonCount": 1,
+      "transitions": [
+        {
+          "to": "phase8",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase8",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "meowza2_hunter",
+      "summonCount": 3,
+      "message": "Meowzaghasts!",
+      "transitions": [
+        {
+          "to": "phase9",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase9",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "meowza2_nuke",
+      "summonCount": 1
+    }
+  ]
+}

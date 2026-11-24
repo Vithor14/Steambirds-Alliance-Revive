@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 // holds what the host changed; a region that is not in the file keeps the game's lists. For a region in the file:
 //   "groups": the groups of enemies a spawn site of the region picks from. Each group has "leaders" and "members" (a group of one
 //             leader and followers) or "solo": true (one enemy of "members" alone). When "groups" is missing the game's groups stay.
+//   "ai":     {unit: AI id}: the AI file (Serverirains) each unit of the region runs; a unit that is not in it runs generic_chase.
 //   "boss":   the unit that "spawn boss here" (the launcher's map menu) creates in the region. Empty = the default boss of the region.
 // The server also writes world-enemy-defaults.json (the game's lists, the boss choices and the zone names) so the launcher can show
 // what is default, add to it and go back to it. The key of a region is the tile name of the map: beach, lowlands, lowlands2...
@@ -29,7 +30,12 @@ public static class WorldEnemyLists
     {
         public string Boss { get; set; } = "";
         public List<GroupEntry>? Groups { get; set; }
+        // The AI of each unit of the region (by the game's unit name). Missing = the default AI of the open world.
+        public Dictionary<string, string>? Ai { get; set; }
     }
+
+    // The AI every open-world unit runs unless the host picked another one.
+    public const string DefaultAi = "generic_chase";
 
     public sealed class FileContent
     {
@@ -84,6 +90,14 @@ public static class WorldEnemyLists
         return Current.Regions.TryGetValue(regionName, out RegionEntry? entry) ? entry : null;
     }
 
+    // The AI a unit of a region runs: the one the host picked for it in that region, or the default.
+    public static string AiFor(string regionName, string unit)
+    {
+        Dictionary<string, string>? choices = Of(regionName)?.Ai;
+        if (choices != null && choices.TryGetValue(unit, out string? id) && !string.IsNullOrWhiteSpace(id)) return id.Trim();
+        return DefaultAi;
+    }
+
     private static void ReloadIfChanged()
     {
         try
@@ -105,6 +119,9 @@ public static class WorldEnemyLists
             foreach (RegionEntry entry in read.Regions.Values.Where(e => e != null))
             {
                 entry.Boss = (entry.Boss ?? "").Trim();
+                if (entry.Ai != null)
+                    entry.Ai = new Dictionary<string, string>(entry.Ai.Where(p => !string.IsNullOrWhiteSpace(p.Key) && !string.IsNullOrWhiteSpace(p.Value))
+                        .ToDictionary(p => p.Key.Trim(), p => p.Value.Trim(), StringComparer.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
                 if (entry.Groups == null) continue;
                 entry.Groups.RemoveAll(g => g == null);
                 foreach (GroupEntry group in entry.Groups)

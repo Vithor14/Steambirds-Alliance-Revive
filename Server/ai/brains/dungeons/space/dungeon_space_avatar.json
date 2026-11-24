@@ -1,0 +1,115 @@
+{
+  "format": 1,
+  "id": "dungeon_space_avatar",
+  "name": "Doomsday Mechanism (phases)",
+  "author": "Steambirds Revive",
+  "description": "The phases of Doomsday Mechanism as an AI: each phase starts when the health goes under its limit. Made from the old \"phases\" of the unit type (dungeon_space.json).",
+  "units": ["avatar"],
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "transitions": [
+        {
+          "to": "phase1",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase1",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "avatarnova1",
+      "summonCount": 1,
+      "message": "Omega decolando!",
+      "transitions": [
+        {
+          "to": "phase2",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase2",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "avatarbattlemech",
+      "summonCount": 2,
+      "transitions": [
+        {
+          "to": "phase3",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase3",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "avatarbattlemechshieldbomb",
+      "summonCount": 4,
+      "transitions": [
+        {
+          "to": "phase4",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.25
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase4",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "avatarbattlemech3",
+      "summonCount": 2,
+      "message": "Mammoth-2 em campo!"
+    }
+  ]
+}

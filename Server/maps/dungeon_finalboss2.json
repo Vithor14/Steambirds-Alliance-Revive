@@ -136,7 +136,6 @@
       "name": "Godleader Meowza",
       "template": "meowza2",
       "boss": true,
-      "behavior": "turret",
       "aggroRadius": 60,
       "firstShotDelay": 2.0,
       "onDeath": "meowza2DEATH",
@@ -147,78 +146,31 @@
         "onDeath2": "meowza2_death2",
         "silence": "meowza2_silence_short"
       },
-      "phases": [
-        {
-          "belowHealth": 0.9,
-          "summon": "meowza2_frost_1",
-          "summonCount": 2
-        },
-        {
-          "belowHealth": 0.8,
-          "summon": "meowza2_firering",
-          "summonCount": 1
-        },
-        {
-          "belowHealth": 0.7,
-          "summon": "meowza2_orochi_2",
-          "summonCount": 2
-        },
-        {
-          "belowHealth": 0.6,
-          "summon": "meowza2_lasereye",
-          "summonCount": 4
-        },
-        {
-          "belowHealth": 0.5,
-          "summon": "meowza2_lightningspiral",
-          "summonCount": 2
-        },
-        {
-          "belowHealth": 0.4,
-          "summon": "meowza2_claw_2",
-          "summonCount": 2
-        },
-        {
-          "belowHealth": 0.3,
-          "summon": "meowza2_infinity_2",
-          "summonCount": 1
-        },
-        {
-          "belowHealth": 0.2,
-          "summon": "meowza2_hunter",
-          "summonCount": 3,
-          "message": "Meowzaghasts!"
-        },
-        {
-          "belowHealth": 0.1,
-          "summon": "meowza2_nuke",
-          "summonCount": 1
-        }
-      ]
+      "ai": "dungeon_finalboss2_meowza2"
     },
     "9star2": {
       "name": "9star2",
       "template": "9star2",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "meowza2DEATH": {
       "name": "meowza2DEATH",
       "template": "meowza2DEATH",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "meowza2_claw_2": {
       "name": "Godleader Meowza",
       "template": "meowza2_claw_2",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 2.0,
       "aggroRadius": 30
     },
     "meowza2_firering": {
       "name": "Godleader Meowza",
       "template": "meowza2_firering",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 6,
       "aggroRadius": 30,
       "invulnerable": true
@@ -226,40 +178,40 @@
     "meowza2_frost_1": {
       "name": "Godleader Meowza",
       "template": "meowza2_frost_1",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 6,
       "aggroRadius": 30
     },
     "meowza2_hunter": {
       "name": "Meowzaghast",
       "template": "meowza2_hunter",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 6,
       "aggroRadius": 30
     },
     "meowza2_infinity_2": {
       "name": "Godleader Meowza",
       "template": "meowza2_infinity_2",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "meowza2_lasereye": {
       "name": "Godleader Meowza",
       "template": "meowza2_lasereye",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "meowza2_lightningspiral": {
       "name": "Godleader Meowza",
       "template": "meowza2_lightningspiral",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "meowza2_nuke": {
       "name": "Godleader Meowza",
       "template": "meowza2_nuke",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28,
       "invulnerable": true
@@ -267,31 +219,31 @@
     "meowza2_orochi_2": {
       "name": "Godleader Meowza",
       "template": "meowza2_orochi_2",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "meowza2_turret_E": {
       "name": "Godleader Defense Grid",
       "template": "meowza2_turret_E",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "meowza2_turret_N": {
       "name": "Godleader Defense Grid",
       "template": "meowza2_turret_N",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "meowza2_turret_S": {
       "name": "Godleader Defense Grid",
       "template": "meowza2_turret_S",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "meowza2_turret_W": {
       "name": "Godleader Defense Grid",
       "template": "meowza2_turret_W",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     }
   },

@@ -16,6 +16,9 @@ internal sealed class AiBehaviorEditor : Panel
     private readonly Label usedBy;
     private AiDoc? doc;
 
+    // False in the window of an embedded behavior: the list of AIs that use a file does not apply to it.
+    public bool ShowUsedBy { get; set; } = true;
+
     public AiBehaviorEditor(AiStore store)
     {
         this.store = store;
@@ -26,17 +29,24 @@ internal sealed class AiBehaviorEditor : Panel
         modeHelp = Ui.Wrapping("", 420, true);
         usedBy = Ui.Wrapping("", 420, true);
 
+        // The name, author and description are on their own tab, so the values get the whole height.
         var table = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, Padding = new Padding(0) };
         table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        table.RowStyles.Add(new RowStyle(SizeType.Absolute, 130));
         table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         table.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        table.Controls.Add(info, 0, 0);
-        table.Controls.Add(modeHelp, 0, 1);
-        table.Controls.Add(values, 0, 2);
-        table.Controls.Add(usedBy, 0, 3);
-        Controls.Add(table);
+        table.Controls.Add(modeHelp, 0, 0);
+        table.Controls.Add(values, 0, 1);
+        table.Controls.Add(usedBy, 0, 2);
+
+        var tabs = new ThemedTabControl { Dock = DockStyle.Fill, Padding = new Point(8, 3) };
+        var behaviorPage = new TabPage(L.T("Behavior")) { Padding = new Padding(2) };
+        behaviorPage.Controls.Add(table);
+        var infoPage = new TabPage(L.T("Info")) { Padding = new Padding(2) };
+        infoPage.Controls.Add(info);
+        tabs.TabPages.Add(behaviorPage);
+        tabs.TabPages.Add(infoPage);
+        Controls.Add(tabs);
     }
 
     public event Action? Edited;
@@ -61,6 +71,11 @@ internal sealed class AiBehaviorEditor : Panel
         string mode = Json.Str(Json.ObjOrNull(doc.Root, "move"), "mode");
         AiOption? option = AiCatalog.MoveModes.FirstOrDefault(o => o.Id == mode);
         modeHelp.Text = option == null ? "" : L.T(option.Label) + ": " + L.T(option.Help);
+        if (!ShowUsedBy)
+        {
+            usedBy.Text = "";
+            return;
+        }
         List<string> brains = store.UsedBy(doc).ToList();
         usedBy.Text = brains.Count == 0
             ? L.T("No AI uses this behavior yet.")

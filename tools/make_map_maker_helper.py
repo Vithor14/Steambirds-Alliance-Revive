@@ -283,7 +283,7 @@ def make_enemies(normal, bosses):
             u, v, row = grid.place(i)
             pid = "e%04d" % len(points)
             points[pid] = {"u": u, "v": v, "rot": 135}
-            types[name] = {"name": name, "template": name, "behavior": "chase"}
+            types[name] = {"name": name, "template": name, "ai": "generic_chase"}
             spawns.append({"name": pid, "type": name, "point": pid, "area": "all", "asleep": True, "wakeRadius": 0})
             signs.append({"key": name, "u": u, "v": round(v - 6, 1), "radius": grid.pitch * 0.55, "rot": 0})
             spots.append((u - grid.pitch / 2, v - 8))

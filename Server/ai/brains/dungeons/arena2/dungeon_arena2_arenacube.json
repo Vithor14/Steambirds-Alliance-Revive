@@ -1,0 +1,113 @@
+{
+  "format": 1,
+  "id": "dungeon_arena2_arenacube",
+  "name": "Dark Sphinx (phases)",
+  "author": "Steambirds Revive",
+  "description": "The phases of Dark Sphinx as an AI: each phase starts when the health goes under its limit. Made from the old \"phases\" of the unit type (dungeon_arena2.json).",
+  "units": ["arenacube"],
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "transitions": [
+        {
+          "to": "phase1",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.75
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase1",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "arenacubebiglaserwall",
+      "summonCount": 1,
+      "transitions": [
+        {
+          "to": "phase2",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase2",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "arenacubemini",
+      "summonCount": 2,
+      "transitions": [
+        {
+          "to": "phase3",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase3",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "arenacubebiglaserwall2",
+      "summonCount": 1,
+      "transitions": [
+        {
+          "to": "phase4",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.15
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase4",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "arenacubetendril",
+      "summonCount": 3
+    }
+  ]
+}

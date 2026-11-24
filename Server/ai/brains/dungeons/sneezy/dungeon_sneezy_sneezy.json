@@ -1,0 +1,54 @@
+{
+  "format": 1,
+  "id": "dungeon_sneezy_sneezy",
+  "name": "SN-Z (phases)",
+  "author": "Steambirds Revive",
+  "description": "The phases of SN-Z as an AI: each phase starts when the health goes under its limit. Made from the old \"phases\" of the unit type (dungeon_sneezy.json).",
+  "units": ["sneezy"],
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "route"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "transitions": [
+        {
+          "to": "phase1",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase1",
+      "move": {
+        "mode": "builtin",
+        "builtin": "route"
+      },
+      "fire": {
+        "enabled": true,
+        "guns": [
+          0,
+          1,
+          2,
+          16,
+          17,
+          18
+        ]
+      },
+      "message": "SN-Z is shielded and fires at you!",
+      "shield": true,
+      "shieldSeconds": 8,
+      "homing": "off"
+    }
+  ]
+}

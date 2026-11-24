@@ -22,6 +22,9 @@ internal sealed class AiDoc
     public JsonObject Root { get; }
     public bool Dirty { get; set; }
 
+    // The folder of the file inside brains\ (or behaviors\), with "/": "generic", "world", "dungeons/arena"; "" = loose in it.
+    public string Origin { get; set; } = "";
+
     // The file is not in the folder yet.
     public bool IsNew { get; set; }
 
@@ -51,7 +54,23 @@ internal sealed class AiStore
     public string BehaviorsFolder => AiLibrary.BehaviorsPath(Folder);
     public string BrainsFolder => AiLibrary.BrainsPath(Folder);
 
-    public string PathOf(AiDoc doc) => System.IO.Path.Combine(doc.Kind == AiKind.Brain ? BrainsFolder : BehaviorsFolder, doc.Id + ".json");
+    public string PathOf(AiDoc doc)
+    {
+        string root = doc.Kind == AiKind.Brain ? BrainsFolder : BehaviorsFolder;
+        string folder = doc.Origin.Length == 0 ? root : System.IO.Path.Combine(root, doc.Origin.Replace('/', System.IO.Path.DirectorySeparatorChar));
+        return System.IO.Path.Combine(folder, doc.Id + ".json");
+    }
+
+    // Checks a folder typed by the user ("generic", "world", "dungeons/<name>") and cleans it. null = not allowed.
+    public static string? NormalizeOrigin(string text)
+    {
+        string[] parts = text.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries).Select(AiCatalog.CleanId).ToArray();
+        if (parts.Length == 0 || parts.Any(p => p.Length == 0)) return null;
+        bool simple = parts[0] == AiCatalog.GenericFolder || parts[0] == AiCatalog.WorldFolder;
+        if (simple && parts.Length == 1) return parts[0];
+        if (parts[0] == AiCatalog.DungeonsFolder && parts.Length == 2) return parts[0] + "/" + parts[1];
+        return null;
+    }
 
     public IEnumerable<AiDoc> Brains => docs.Where(d => d.Kind == AiKind.Brain).OrderBy(d => d.Id, StringComparer.OrdinalIgnoreCase);
     public IEnumerable<AiDoc> Behaviors => docs.Where(d => d.Kind == AiKind.Behavior).OrderBy(d => d.Id, StringComparer.OrdinalIgnoreCase);
@@ -59,7 +78,8 @@ internal sealed class AiStore
 
     public AiDoc? Find(AiKind kind, string id)
     {
-        return docs.FirstOrDefault(d => d.Kind == kind && string.Equals(d.Id, id, StringComparison.OrdinalIgnoreCase));
+        string wanted = AiCatalog.IdOfReference(id);
+        return docs.FirstOrDefault(d => d.Kind == kind && string.Equals(d.Id, wanted, StringComparison.OrdinalIgnoreCase));
     }
 
     public void RaiseChanged() => Changed?.Invoke();
@@ -73,6 +93,12 @@ internal sealed class AiStore
         docs.Clear();
         Read(AiKind.Behavior, BehaviorsFolder);
         Read(AiKind.Brain, BrainsFolder);
+        foreach (AiDoc dup in docs.Where(d => d.LoadError == null && docs.Any(o => o != d && o.Kind == d.Kind && o.LoadError == null &&
+                     string.Equals(o.Id, d.Id, StringComparison.OrdinalIgnoreCase) && docs.IndexOf(o) < docs.IndexOf(d))).ToList())
+        {
+            // Two files with the same id (in different folders): the server uses the first one and ignores this one.
+            dup.LoadError = L.F("Another file already has the id \"{0}\" (in another folder): the server ignores this one.", dup.Id);
+        }
         foreach (AiDoc doc in keep)
         {
             docs.RemoveAll(d => d.Kind == doc.Kind && string.Equals(d.Id, doc.Id, StringComparison.OrdinalIgnoreCase));
@@ -84,7 +110,7 @@ internal sealed class AiStore
     private void Read(AiKind kind, string folder)
     {
         if (!Directory.Exists(folder)) return;
-        foreach (string path in Directory.EnumerateFiles(folder, "*.json").OrderBy(p => p, StringComparer.OrdinalIgnoreCase))
+        foreach (string path in Directory.EnumerateFiles(folder, "*.json", SearchOption.AllDirectories).OrderBy(p => AiLibrary.OriginOf(folder, p).Length == 0 ? 1 : 0).ThenBy(p => p, StringComparer.OrdinalIgnoreCase))
         {
             string id = AiCatalog.CleanId(System.IO.Path.GetFileNameWithoutExtension(path));
             if (id.Length == 0) continue;
@@ -93,11 +119,11 @@ internal sealed class AiStore
                 JsonNode? node = JsonNode.Parse(TextFiles.ReadShared(path), null,
                     new System.Text.Json.JsonDocumentOptions { CommentHandling = System.Text.Json.JsonCommentHandling.Skip, AllowTrailingCommas = true });
                 if (node is not JsonObject root) throw new System.Text.Json.JsonException("not a JSON object");
-                docs.Add(new AiDoc(kind, id, root));
+                docs.Add(new AiDoc(kind, id, root) { Origin = AiLibrary.OriginOf(folder, path) });
             }
             catch (Exception e)
             {
-                docs.Add(new AiDoc(kind, id, new JsonObject()) { LoadError = e.Message });
+                docs.Add(new AiDoc(kind, id, new JsonObject()) { LoadError = e.Message, Origin = AiLibrary.OriginOf(folder, path) });
             }
         }
     }
@@ -134,12 +160,35 @@ internal sealed class AiStore
         return candidate;
     }
 
-    public AiDoc Add(AiKind kind, string wantedId, JsonObject root, bool save)
+    // Embedded behaviors are named "<id of the AI>_<name>": when the AI gets another id (rename, copy, import) they follow it.
+    public static void RetagEmbedded(JsonObject brainRoot, string oldId, string newId)
+    {
+        if (oldId.Length == 0 || string.Equals(oldId, newId, StringComparison.Ordinal)) return;
+        string oldPrefix = oldId + "_";
+        var renamed = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (JsonObject behavior in Json.Objects(Json.ArrOrNull(brainRoot, "behaviors")))
+        {
+            string id = Json.Str(behavior, "id");
+            if (!id.StartsWith(oldPrefix, StringComparison.OrdinalIgnoreCase)) continue;
+            string changed = newId + "_" + id.Substring(oldPrefix.Length);
+            behavior["id"] = changed;
+            renamed[id] = changed;
+        }
+        if (renamed.Count == 0) return;
+        foreach (JsonObject state in Json.Objects(Json.ArrOrNull(brainRoot, "states")))
+        {
+            if (renamed.TryGetValue(Json.Str(state, "behavior"), out string? now)) state["behavior"] = now;
+        }
+    }
+
+    // origin: the folder of the file inside brains\ ("generic", "world", "dungeons/<name>"). null = generic for an AI, none for a behavior.
+    public AiDoc Add(AiKind kind, string wantedId, JsonObject root, bool save, string? origin = null)
     {
         string id = UniqueId(kind, wantedId);
+        if (kind == AiKind.Brain) RetagEmbedded(root, Json.Str(root, "id"), id);
         root["format"] = AiCatalog.FormatVersion;
         root["id"] = id;
-        var doc = new AiDoc(kind, id, root) { IsNew = true, Dirty = true };
+        var doc = new AiDoc(kind, id, root) { IsNew = true, Dirty = true, Origin = origin ?? (kind == AiKind.Brain ? AiCatalog.GenericFolder : "") };
         docs.Add(doc);
         if (save) Save(doc);
         else Changed?.Invoke();
@@ -151,7 +200,33 @@ internal sealed class AiStore
         var copy = (JsonObject)source.Root.DeepClone();
         string name = Json.Str(copy, "name");
         copy["name"] = (name.Length > 0 ? name : source.Id) + " (copy)";
-        return Add(source.Kind, source.Id + "_copy", copy, false);
+        return Add(source.Kind, source.Id + "_copy", copy, false, source.Origin);
+    }
+
+    // Moves the file to another folder of brains\ (generic, world, dungeons/<name>); the id stays.
+    public void Move(AiDoc doc, string origin)
+    {
+        if (string.Equals(doc.Origin, origin, StringComparison.Ordinal)) return;
+        string oldPath = PathOf(doc);
+        bool onDisk = File.Exists(oldPath) && !doc.IsNew;
+        string previous = doc.Origin;
+        doc.Origin = origin;
+        try
+        {
+            if (onDisk)
+            {
+                string newPath = PathOf(doc);
+                Directory.CreateDirectory(System.IO.Path.GetDirectoryName(newPath)!);
+                if (File.Exists(newPath)) throw new IOException(L.F("There is already a file called \"{0}\" in that folder.", doc.Id));
+                File.Move(oldPath, newPath);
+            }
+        }
+        catch
+        {
+            doc.Origin = previous;
+            throw;
+        }
+        Changed?.Invoke();
     }
 
     // New id; the behaviors a renamed behavior was used by are updated (those brains become unsaved changes).
@@ -167,6 +242,7 @@ internal sealed class AiStore
         bool onDisk = File.Exists(oldPath) && !doc.IsNew;
         doc.Id = id;
         doc.Root["id"] = id;
+        if (doc.Kind == AiKind.Brain) RetagEmbedded(doc.Root, oldId, id);
         if (onDisk)
         {
             // The file moves now; the id written inside it follows with the next save.
@@ -255,6 +331,25 @@ internal sealed class AiStore
         }
     }
 
+    // The AIs a game unit can use: first the ones made for it (their "units" list has it), then the generic ones (folder generic);
+    // each group by id. An AI that is neither is not offered to the unit.
+    public List<string> ApplicableBrainIds(IEnumerable<string> unitNames) => ApplicableBrains(unitNames).Select(b => b.Id).ToList();
+
+    // The same with a flag: true = made for the unit (listed in its "units"), false = generic.
+    public List<(string Id, bool Specific)> ApplicableBrains(IEnumerable<string> unitNames)
+    {
+        string[] names = unitNames.ToArray();
+        var specific = new List<string>();
+        var generic = new List<string>();
+        foreach (AiDoc doc in Brains.Where(d => d.LoadError == null))
+        {
+            bool isGeneric = string.Equals(doc.Origin, AiCatalog.GenericFolder, StringComparison.OrdinalIgnoreCase);
+            if (isGeneric) generic.Add(doc.Id);
+            else if (AiLibrary.Applies(false, Json.Strings(doc.Root["units"]), names)) specific.Add(doc.Id);
+        }
+        return specific.Select(id => (id, true)).Concat(generic.Select(id => (id, false))).ToList();
+    }
+
     // Brains that use a behavior.
     public IEnumerable<string> UsedBy(AiDoc behavior)
     {
@@ -297,13 +392,14 @@ internal sealed class AiStore
 
     // Adds what a shared file holds. A file whose id already exists gets a new id (nothing of yours is overwritten);
     // the states of imported brains that used a renamed behavior follow it. Returns the documents that were added.
-    public List<AiDoc> Import(AiPackage.Contents contents)
+    // save false: the files only exist in the launcher (marked as unsaved) until the user saves them.
+    public List<AiDoc> Import(AiPackage.Contents contents, bool save = true)
     {
         var added = new List<AiDoc>();
         var renamedBehaviors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach ((string id, JsonObject root) in contents.Behaviors)
         {
-            AiDoc doc = Add(AiKind.Behavior, id, (JsonObject)root.DeepClone(), true);
+            AiDoc doc = Add(AiKind.Behavior, id, (JsonObject)root.DeepClone(), save);
             if (!string.Equals(doc.Id, AiCatalog.CleanId(id), StringComparison.Ordinal)) renamedBehaviors[AiCatalog.CleanId(id)] = doc.Id;
             added.Add(doc);
         }
@@ -315,7 +411,7 @@ internal sealed class AiStore
                 string used = Json.Str(state, "behavior");
                 if (used.Length > 0 && renamedBehaviors.TryGetValue(AiCatalog.CleanId(used), out string? mapped)) state["behavior"] = mapped;
             }
-            added.Add(Add(AiKind.Brain, id, clone, true));
+            added.Add(Add(AiKind.Brain, id, clone, save));
         }
         return added;
     }

@@ -311,8 +311,6 @@ internal static class MapValidator
                     CheckTypeRef(where, Json.Str(chest, "reward"), L.T("DPS chest reward"));
                     CheckTypeRef(where, Json.Str(chest, "fail"), L.T("DPS chest failure"));
                 }
-                foreach (JsonObject phase in Json.Objects(Json.ArrOrNull(type, "phases")))
-                    CheckTypeRef(where, Json.Str(phase, "summon"), L.T("Phase summon"));
 
                 // The enemy AI editor (when there is one) checks the "ai" of the type.
                 IEnemyAiEditor? ai = EnemyAiEditors.Current;

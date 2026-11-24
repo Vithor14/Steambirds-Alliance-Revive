@@ -108,7 +108,6 @@
       "name": "SN-Z",
       "template": "sneezy",
       "boss": true,
-      "behavior": "route",
       "route": "ring",
       "speedMultiplier": 1.6,
       "firstShotDelay": 2.0,
@@ -129,49 +128,32 @@
         "max": 3,
         "countsForRoomClear": false
       },
-      "phases": [
-        {
-          "belowHealth": 0.5,
-          "shieldSeconds": 8,
-          "visualEffect": "tankShield",
-          "guns": [
-            0,
-            1,
-            2,
-            16,
-            17,
-            18
-          ],
-          "homingBullets": false,
-          "fireRateMultiplier": 1.0,
-          "message": "SN-Z is shielded and fires at you!"
-        }
-      ],
+      "ai": "dungeon_sneezy_sneezy",
       "note": "Circles the ring on the 'ring' route forever. Base: gun 5 (mainphase1_2, slow sprinkler), not homing. Mines every 7 s (max 3). Below 50% health: 8 s shield and the aimed guns 0-2 and 16-18 (limited by maxBulletsPerSecond of dungeons.json). Guns of the SN-Z: 0-2 machine guns, 3/6/13/15 dud, 4-5 mainphase1, 7-12 mainphase2, 14 mainphase3, 16-18 mainphase4, 19-21 finalattack."
     },
     "sneezyDEATH": {
       "name": "SN-Z",
       "template": "sneezyDEATH",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "sneezybomb": {
       "name": "SN-Z Mine",
       "template": "sneezybomb",
-      "behavior": "mine",
+      "ai": "generic_mine",
       "aggroRadius": 0,
       "contactRadius": 7,
       "visualEffect": "detectionZone_1",
       "guns": [
         99
       ],
-      "onDeath": "sneezyblast",
-      "note": "Mine dropped by SN-Z: stays where it fell, does not shoot, and shows its trigger area in red (visualEffect detectionZone_1..3 = ring size; keep it matching contactRadius). It goes off, releasing 'sneezyblast', when a player gets within contactRadius (or when it is shot)."
+      "onContact": "sneezyblast",
+      "note": "Mine dropped by SN-Z: stays where it fell, does nothing and shows its trigger area in red (visualEffect detectionZone_1..3 = ring size; keep it matching contactRadius). It arms itself once no player is inside that area, and then goes off by itself, releasing 'sneezyblast' (the ring of shots), when a player flies into it. Shot down from outside it just disappears (no onDeath)."
     },
     "sneezyblast": {
       "name": "SN-Z Blast",
       "template": "bombbossexploderBIG",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "invulnerable": true,
       "aggroRadius": 0,
       "firstShotDelay": 0.0,

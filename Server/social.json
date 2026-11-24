@@ -1,0 +1,42 @@
+// Friends, flocks (guilds) and teleports to other players. Reloaded when it changes. Where a number says 0 or -1, the game's own
+// value is used (its "guilds" config).
+{
+  // false: the friend list stays empty.
+  "friendsEnabled": true,
+  "maxFriends": 100,
+
+  // false: no flocks on this server.
+  "flocksEnabled": true,
+
+  // true (the game's rule): creating a flock takes one founder token (create_flock_token) from the plane's cargo. The Flock Hall only
+  // shows the create page to a player who carries one: give it with /item create_flock_token, or put it in the starting items.
+  "requireFounderToken": true,
+
+  // 0 = the game's value: 60 members per flock, 3 flocks per player.
+  "maxMembers": 0,
+  "maxFlocksPerPlayer": 0,
+
+  // Who joined 5 flocks has to wait 86400 s between two joins (-1 = the game's values; rejoinSeconds 0 = no limit).
+  "rejoinSeconds": -1,
+  "rejoinAfterJoins": -1,
+
+  // A member muted by 5 other members is banned from the flock (-1 = the game's value, 0 = never).
+  "autoBanMutes": -1,
+
+  // Seconds without playing before a member shows as inactive in the roster (-1 = 7 days).
+  "inactiveSeconds": -1,
+
+  // Safe trade between two players (player menu > Trade, or /trade NAME). tradeTaxes false = no fee.
+  "tradeEnabled": true,
+  "tradeTaxes": true,
+
+  // The game's own teleport to a player on the same server (radar, friend list, /tp NAME) in the open world.
+  "toPlayersInWorld": true,
+
+  // 'Join Server' in the friend list and in the flock roster: go to the Nexus or to the open world where a friend or flockmate is.
+  "joinPlayerServers": true,
+
+  // The plane is born close to that friend (instead of at the spawn point) and this many units away from the friend.
+  "spawnNearTarget": true,
+  "arrivalDistance": 14
+}

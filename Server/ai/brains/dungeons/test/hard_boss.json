@@ -1,0 +1,93 @@
+{
+  "format": 1,
+  "id": "hard_boss",
+  "name": "Dreadnought (phases)",
+  "author": "Steambirds Revive",
+  "description": "The phases of Dreadnought as an AI: each phase starts when the health goes under its limit. Made from the old \"phases\" of the unit type (enemies.json).",
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "transitions": [
+        {
+          "to": "phase1",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.75
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase1",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "gunner",
+      "summonCount": 2,
+      "message": "Enemy reinforcements!",
+      "transitions": [
+        {
+          "to": "phase2",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase2",
+      "move": {
+        "mode": "builtin",
+        "builtin": "charge",
+        "speedMult": 1.3
+      },
+      "fire": {
+        "enabled": true
+      },
+      "message": "The dreadnought sped up!",
+      "transitions": [
+        {
+          "to": "phase3",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase3",
+      "move": {
+        "mode": "builtin",
+        "builtin": "charge",
+        "speedMult": 1.3
+      },
+      "fire": {
+        "enabled": true,
+        "rateMult": 1.8
+      },
+      "summon": "hunter",
+      "summonCount": 2,
+      "message": "Last stand!"
+    }
+  ]
+}

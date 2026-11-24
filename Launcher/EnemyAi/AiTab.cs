@@ -27,13 +27,18 @@ internal sealed class AiTab : Panel
     private readonly Dictionary<AiDoc, TreeNode> nodes = new Dictionary<AiDoc, TreeNode>();
     private readonly ToolStripMenuItem duplicateItem;
     private readonly ToolStripMenuItem renameItem;
+    private readonly ToolStripMenuItem moveItem;
     private readonly ToolStripMenuItem deleteItem;
     private readonly ToolStripMenuItem saveItem;
     private readonly ToolStripMenuItem saveAllItem;
     private readonly ToolStripMenuItem revertItem;
     private readonly ToolStripMenuItem exportItem;
     private readonly MenuStrip menu;
-    private readonly ComboBox unitBox;
+    private readonly Button unitButton;
+    private readonly ComboBox aiBox;
+    private readonly Button loadOtherButton;
+    private List<AiUnitGroup> unitGroups = new List<AiUnitGroup>();
+    private bool fillingAiBox;
     private readonly CheckBox armedOnly;
     private readonly Label banner;
     private readonly Button backButton;
@@ -67,32 +72,29 @@ internal sealed class AiTab : Panel
         revertItem = Item(L.T("Revert"), Revert);
         duplicateItem = Item(L.T("Duplicate"), DuplicateCurrent);
         renameItem = Item(L.T("Rename..."), RenameCurrent);
+        moveItem = Item(L.T("Move to folder..."), MoveCurrent);
         deleteItem = Item(L.T("Delete"), DeleteCurrent);
         exportItem = Item(L.T("Export..."), ExportCurrent);
         exportItem.ToolTipText = L.T("Writes one file with this AI and the behaviors it uses, to send to someone else (Import... reads it).");
         menu = BuildMenu();
 
         // ---- the unit: what the simulator runs and what the editor is allowed to edit
-        unitBox = new ThemedComboBox
-        {
-            DropDownStyle = ComboBoxStyle.DropDown, AutoCompleteMode = AutoCompleteMode.SuggestAppend,
-            AutoCompleteSource = AutoCompleteSource.ListItems, Width = 400
-        };
-        unitBox.SelectionChangeCommitted += (_, _) => UnitChosen();
-        unitBox.KeyDown += (_, e) =>
-        {
-            if (e.KeyCode != Keys.Enter) return;
-            e.SuppressKeyPress = true;
-            UnitChosen();
-        };
+        unitButton = Ui.Button("", (_, _) => OpenUnitPicker());
+        unitButton.Width = 400;
+        unitButton.TextAlign = ContentAlignment.MiddleLeft;
+        aiBox = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 330 };
+        aiBox.SelectedIndexChanged += (_, _) => AiBoxChosen();
+        loadOtherButton = Ui.Button(L.T("Load another AI..."), (_, _) => ShowLoadOtherMenu());
         armedOnly = new ThemedCheckBox { Text = L.T("Armed units only"), AutoSize = true, Checked = true };
         armedOnly.CheckedChanged += (_, _) => FillUnits(true);
         backButton = Ui.Button(L.T("Back to the unit's AI"), (_, _) => BackToOwn());
         banner = Ui.Wrapping("", 800, false);
-        context.ToolTip.SetToolTip(unitBox, L.T("The unit the simulator flies. \"type:\" entries are the enemy types of enemies.json, with the AI the server really gives them; the other entries are plain game units (no AI of their own, good to try any AI on)."));
+        context.ToolTip.SetToolTip(unitButton, L.T("The unit the simulator flies. Click to pick one: the list is sorted by where the unit lives (a dungeon, a biome of the open world, generic, or no origin) and each entry runs the AI that place gives it. Units written in a different color have no AI."));
+        context.ToolTip.SetToolTip(aiBox, L.T("The AIs that fit this unit: the ones made for it first, then the generic ones. Picking one loads it on the unit to edit and test; \"Back to the unit's AI\" returns to the AI the unit really runs."));
+        context.ToolTip.SetToolTip(loadOtherButton, L.T("Loads an AI that is not made for this unit, or a file from anywhere on this computer, on the unit."));
         context.ToolTip.SetToolTip(backButton, L.T("Stops testing the loaded file on this unit and goes back to the AI the unit really uses."));
         var unitBar = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = true, Padding = new Padding(0, 4, 0, 0) };
-        unitBar.Controls.AddRange(new Control[] { Ui.Flow(Ui.Bold(L.T("Unit")), unitBox), armedOnly, backButton, banner });
+        unitBar.Controls.AddRange(new Control[] { Ui.Flow(Ui.Bold(L.T("Unit")), unitButton), Ui.Flow(Ui.Bold(L.T("AI")), aiBox), loadOtherButton, armedOnly, backButton, banner });
         unitBar.SetFlowBreak(backButton, true);
 
         // ---- left: the files
@@ -107,6 +109,31 @@ internal sealed class AiTab : Panel
             picked = e.Node?.Tag as AiDoc;
             UpdateHint();
             UpdateButtons();
+        };
+        // Right click on a file: the same actions as the Edit menu, where the file is.
+        tree.NodeMouseClick += (_, e) =>
+        {
+            if (e.Button != MouseButtons.Right || e.Node?.Tag is not AiDoc) return;
+            tree.SelectedNode = e.Node;
+            ShowFileMenu(e.Location);
+        };
+        // Right click on a file: duplicate or delete it (the same actions as the Edit menu, on the file under the mouse).
+        var treeMenu = new ContextMenuStrip { Renderer = new EditorRenderer() };
+        var menuDuplicate = new ToolStripMenuItem(L.T("Duplicate"));
+        menuDuplicate.Click += (_, _) => DuplicateCurrent();
+        var menuDelete = new ToolStripMenuItem(L.T("Delete"));
+        menuDelete.Click += (_, _) => DeleteCurrent();
+        treeMenu.Items.Add(menuDuplicate);
+        treeMenu.Items.Add(menuDelete);
+        tree.NodeMouseClick += (_, e) =>
+        {
+            if (e.Button != MouseButtons.Right || e.Node?.Tag is not AiDoc doc) return;
+            tree.SelectedNode = e.Node;
+            picked = doc;
+            UpdateHint();
+            UpdateButtons();
+            menuDuplicate.Enabled = doc.LoadError == null;
+            treeMenu.Show(tree, e.Location);
         };
         tree.NodeMouseDoubleClick += (_, e) =>
         {
@@ -153,6 +180,7 @@ internal sealed class AiTab : Panel
 
         // ---- right: the simulator
         simView = new AiSimView(context);
+        simView.RunningStateChanged += id => brainEditor.SetRunningState(id);
 
         inner = new SplitContainer { Dock = DockStyle.Fill, SplitterWidth = 5 };
         inner.Panel1.Controls.Add(middle);
@@ -207,6 +235,7 @@ internal sealed class AiTab : Panel
         var edit = new ToolStripMenuItem(L.T("Edit"));
         edit.DropDownItems.Add(duplicateItem);
         edit.DropDownItems.Add(renameItem);
+        edit.DropDownItems.Add(moveItem);
         edit.DropDownItems.Add(deleteItem);
 
         var help = new ToolStripMenuItem(L.T("Help"));
@@ -248,7 +277,7 @@ internal sealed class AiTab : Panel
         return base.ProcessCmdKey(ref message, keyData);
     }
 
-    // The map editor's "Open in the AI editor": the unit type goes into the simulator with its game unit, its speed, fire
+    // The map editor's "Load unit in the AI editor": the unit type goes into the simulator with its game unit, its speed, fire
     // rate and aim values, and its AI opens in the editor. Without an AI the unit is ready for one to be loaded on it.
     public void OpenType(string typeName, JsonObject type)
     {
@@ -327,9 +356,13 @@ internal sealed class AiTab : Panel
             nodes.Clear();
             brainsNode.Nodes.Clear();
             behaviorsNode.Nodes.Clear();
-            foreach (AiDoc doc in store.Brains) AddNode(brainsNode, doc);
+            var folders = new Dictionary<string, TreeNode>(StringComparer.OrdinalIgnoreCase);
+            // The folders every server has show even when empty, so it is clear where an AI can live.
+            foreach (string standard in new[] { AiCatalog.GenericFolder, AiCatalog.WorldFolder, AiCatalog.DungeonsFolder })
+                FolderNode(folders, standard);
+            foreach (AiDoc doc in store.Brains) AddNode(FolderNode(folders, doc.Origin), doc);
             foreach (AiDoc doc in store.Behaviors) AddNode(behaviorsNode, doc);
-            brainsNode.Expand();
+            brainsNode.ExpandAll();
             behaviorsNode.Expand();
             if (keep != null && nodes.TryGetValue(keep, out TreeNode? node)) tree.SelectedNode = node;
         }
@@ -338,6 +371,20 @@ internal sealed class AiTab : Panel
             refreshing = false;
         }
         UpdateButtons();
+    }
+
+    // The tree node of a folder inside brains\ ("dungeons/arena" is "arena" inside "dungeons"); "" is the AIs node itself.
+    private TreeNode FolderNode(Dictionary<string, TreeNode> folders, string origin)
+    {
+        if (origin.Length == 0) return brainsNode;
+        if (folders.TryGetValue(origin, out TreeNode? known)) return known;
+        int cut = origin.LastIndexOf('/');
+        TreeNode parent = cut < 0 ? brainsNode : FolderNode(folders, origin.Substring(0, cut));
+        var node = new TreeNode(origin.Substring(cut + 1)) { ForeColor = Theme.ColorOf(TextRole.Muted) };
+        node.ToolTipText = L.T("Folder inside server\ai\brains");
+        parent.Nodes.Add(node);
+        folders[origin] = node;
+        return node;
     }
 
     private void AddNode(TreeNode parent, AiDoc doc)
@@ -369,17 +416,13 @@ internal sealed class AiTab : Panel
     private void FillUnits(bool keepState, string? force = null)
     {
         string wanted = force ?? choice?.Label ?? lastChoiceLabel;
-        List<AiUnitChoice> list = AiUnits.Build(LauncherPaths.ServerFolder, armedOnly.Checked, mapChoice == null ? null : new[] { mapChoice });
+        unitGroups = AiUnitOrigins.Build(LauncherPaths.ServerFolder, armedOnly.Checked, mapChoice);
+        List<AiUnitChoice> list = unitGroups.SelectMany(g => g.AllUnits()).ToList();
         building = true;
         try
         {
             byLabel.Clear();
-            unitBox.Items.Clear();
-            foreach (AiUnitChoice c in list)
-            {
-                if (!byLabel.TryAdd(c.Label, c)) continue;
-                unitBox.Items.Add(c.Label);
-            }
+            foreach (AiUnitChoice c in list) byLabel.TryAdd(c.Label, c);
         }
         finally
         {
@@ -402,14 +445,17 @@ internal sealed class AiTab : Panel
         return list.FirstOrDefault(c => !c.IsType && middle != null && c.UnitName == middle.Name) ?? list.FirstOrDefault(c => !c.IsType);
     }
 
-    private void UnitChosen()
+    // True when the unit's own AI file exists (a unit written in another color in the picker has none).
+    private bool HasAiFile(AiUnitChoice unit) => unit.OwnAi.Length > 0 && store.Find(AiKind.Brain, unit.OwnAi) != null;
+
+    private void OpenUnitPicker()
     {
         if (building) return;
-        // From the list the chosen item is the answer (the text box may still show the old one); after Enter, the typed text.
-        string text = unitBox.SelectedItem?.ToString() ?? unitBox.Text.Trim();
-        if (!byLabel.ContainsKey(unitBox.Text.Trim()) || unitBox.DroppedDown) unitBox.Text = text;
-        if (!byLabel.TryGetValue(unitBox.Text.Trim(), out AiUnitChoice? chosen)) return;
-        ApplyChoice(chosen, false);
+        using var picker = new AiUnitPicker(unitGroups, HasAiFile, choice?.Label ?? "")
+        {
+            Location = unitButton.PointToScreen(new Point(0, unitButton.Height))
+        };
+        if (picker.ShowDialog(this) == DialogResult.OK && picker.Chosen != null) ApplyChoice(picker.Chosen, false);
     }
 
     // Puts a unit in the simulator. What was loaded on the previous unit goes away (an unsaved file stays unsaved in the list).
@@ -420,7 +466,7 @@ internal sealed class AiTab : Panel
         building = true;
         try
         {
-            unitBox.Text = unit?.Label ?? "";
+            unitButton.Text = unit == null ? "" : unit.Label;
         }
         finally
         {
@@ -500,7 +546,135 @@ internal sealed class AiTab : Panel
         UpdateBanner(own);
         UpdateHint();
         UpdateButtons();
+        UpdateAiBox();
         Simulate();
+    }
+
+    // ------------------------------------------------------------------ the AI of the unit
+
+    private sealed class AiPick
+    {
+        public AiPick(string id, string text)
+        {
+            Id = id;
+            Text = text;
+        }
+
+        public string Id { get; }
+        public string Text { get; }
+        public override string ToString() => Text;
+    }
+
+    // The AIs that fit the unit in the simulator: the ones made for it, then the generic ones. The AI that runs now is selected.
+    private void UpdateAiBox()
+    {
+        fillingAiBox = true;
+        try
+        {
+            aiBox.Items.Clear();
+            loadOtherButton.Enabled = choice != null;
+            aiBox.Enabled = choice != null;
+            if (choice == null) return;
+            string own = OwnDoc()?.Id ?? "";
+            string now = current != null && current.Kind == AiKind.Brain ? current.Id : "";
+            var names = new List<string>();
+            if (choice.UnitName.Length > 0) names.Add(choice.UnitName);
+            List<(string Id, bool Specific)> fit = store.ApplicableBrains(names);
+            if (now.Length > 0 && !fit.Any(f => f.Id.Equals(now, StringComparison.OrdinalIgnoreCase)))
+                aiBox.Items.Add(new AiPick(now, L.F("{0}  (not made for this unit)", now)));
+            foreach ((string id, bool specific) in fit)
+            {
+                string text = id;
+                if (id.Equals(own, StringComparison.OrdinalIgnoreCase)) text = L.F("{0}  (the unit's AI)", id);
+                else if (specific) text = L.F("{0}  (made for this unit)", id);
+                aiBox.Items.Add(new AiPick(id, text));
+            }
+            int index = now.Length == 0 ? -1 : aiBox.Items.Cast<AiPick>().ToList().FindIndex(p => p.Id.Equals(now, StringComparison.OrdinalIgnoreCase));
+            aiBox.SelectedIndex = index;
+        }
+        finally
+        {
+            fillingAiBox = false;
+        }
+    }
+
+    private void AiBoxChosen()
+    {
+        if (fillingAiBox || aiBox.SelectedItem is not AiPick pick) return;
+        AiDoc? doc = store.Find(AiKind.Brain, pick.Id);
+        if (doc == null || doc.LoadError != null) return;
+        SelectNode(doc);
+        LoadPicked();
+    }
+
+    // The menu of a file of the list (right click): load it on the unit, duplicate it, delete it.
+    private void ShowFileMenu(Point at)
+    {
+        if (picked == null) return;
+        var menu = new ContextMenuStrip { Renderer = new EditorRenderer() };
+        bool ok = picked.LoadError == null;
+        ToolStripMenuItem load = Item(L.T("Load on the unit"), LoadPicked);
+        load.Enabled = ok && !ReferenceEquals(picked, current);
+        ToolStripMenuItem duplicate = Item(L.T("Duplicate"), DuplicateCurrent);
+        duplicate.Enabled = ok;
+        menu.Items.Add(load);
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(duplicate);
+        menu.Items.Add(Item(L.T("Delete"), DeleteCurrent));
+        menu.Show(tree, at);
+    }
+
+    // "Load another AI...": any AI of the folders (also the ones made for other units), or a file from anywhere on the computer.
+    private void ShowLoadOtherMenu()
+    {
+        var menu = new ContextMenuStrip { Renderer = new EditorRenderer() };
+        foreach (IGrouping<string, AiDoc> folder in store.Brains.Where(d => d.LoadError == null)
+                     .GroupBy(d => d.Origin.Length == 0 ? L.T("(no folder)") : d.Origin).OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            var sub = new ToolStripMenuItem(folder.Key);
+            foreach (AiDoc doc in folder.OrderBy(d => d.Id, StringComparer.OrdinalIgnoreCase))
+            {
+                AiDoc captured = doc;
+                var item = new ToolStripMenuItem(doc.Id);
+                item.Click += (_, _) =>
+                {
+                    SelectNode(captured);
+                    LoadPicked();
+                };
+                sub.DropDownItems.Add(item);
+            }
+            menu.Items.Add(sub);
+        }
+        menu.Items.Add(new ToolStripSeparator());
+        var file = new ToolStripMenuItem(L.T("A file on this computer..."));
+        file.Click += (_, _) => LoadAiFromFile();
+        menu.Items.Add(file);
+        menu.Show(loadOtherButton, new Point(0, loadOtherButton.Height));
+    }
+
+    private void LoadAiFromFile()
+    {
+        using var dialog = new OpenFileDialog { Title = L.T("Load an AI file"), Filter = L.T("AI files") + " (*.json)|*.json|" + L.T("All files") + "|*.*" };
+        if (dialog.ShowDialog(this) != DialogResult.OK) return;
+        try
+        {
+            AiPackage.Contents contents = AiStore.ReadShared(dialog.FileName);
+            if (contents.Brains.Count == 0)
+            {
+                Ui.ShowError(this, L.T("That file has no AI in it (only behaviors, or something else)."));
+                return;
+            }
+            // The file goes into the list as new, unsaved files (nothing is written to the ai folder until you save them).
+            List<AiDoc> added = store.Import(contents, false);
+            AiDoc? brain = added.FirstOrDefault(d => d.Kind == AiKind.Brain);
+            if (brain == null) return;
+            SelectNode(brain);
+            LoadPicked();
+        }
+        catch (Exception e) when (e is System.Text.Json.JsonException || e is IOException || e is UnauthorizedAccessException)
+        {
+            Ui.ShowError(this, L.F("Could not read the file: {0}", e.Message));
+        }
     }
 
     private void UpdateBanner(AiDoc? own)
@@ -563,6 +737,7 @@ internal sealed class AiTab : Panel
         bool editing = current != null && current.LoadError == null;
         duplicateItem.Enabled = pickedOk;
         renameItem.Enabled = has;
+        moveItem.Enabled = has && picked!.Kind == AiKind.Brain;
         deleteItem.Enabled = has;
         exportItem.Enabled = pickedOk;
         loadButton.Enabled = pickedOk && !ReferenceEquals(picked, current);
@@ -636,7 +811,8 @@ internal sealed class AiTab : Panel
     private IEnumerable<string> TypesUsing(AiDoc doc)
     {
         if (doc.Kind != AiKind.Brain) return Enumerable.Empty<string>();
-        return byLabel.Values.Where(c => c.IsType && string.Equals(c.OwnAi, doc.Id, StringComparison.OrdinalIgnoreCase)).Select(c => c.TypeId).ToList();
+        return byLabel.Values.Where(c => c.IsType && c.Label.StartsWith(L.T("type") + ":", StringComparison.Ordinal) &&
+                                         string.Equals(c.OwnAi, doc.Id, StringComparison.OrdinalIgnoreCase)).Select(c => c.TypeId).ToList();
     }
 
     private void RenameCurrent()
@@ -654,6 +830,29 @@ internal sealed class AiTab : Panel
             Rebind();
         }
         catch (Exception e) when (e is InvalidOperationException || e is IOException)
+        {
+            Ui.ShowError(this, e.Message);
+        }
+    }
+
+    private void MoveCurrent()
+    {
+        if (picked == null || picked.Kind != AiKind.Brain) return;
+        string? typed = AiPrompt.Ask(this, L.T("Move to folder"),
+            L.T("Folder: generic, world or dungeons/<name> (the tutorial is a dungeon):"), picked.Origin.Length > 0 ? picked.Origin : AiCatalog.GenericFolder);
+        if (string.IsNullOrWhiteSpace(typed)) return;
+        string? origin = AiStore.NormalizeOrigin(typed);
+        if (origin == null)
+        {
+            Ui.ShowError(this, L.T("Use generic, world, or dungeons/<name> (for example dungeons/arena)."));
+            return;
+        }
+        try
+        {
+            store.Move(picked, origin);
+            SelectNode(picked);
+        }
+        catch (IOException e)
         {
             Ui.ShowError(this, e.Message);
         }
@@ -825,6 +1024,8 @@ internal sealed class AiEditorBridge : IEnemyAiEditor
     public string DisplayName => L.T("Enemy AI");
 
     public IEnumerable<string> BrainIds() => store.Brains.Select(b => b.Id).ToList();
+
+    public IEnumerable<string> ApplicableBrainIds(IEnumerable<string> unitNames) => store.ApplicableBrainIds(unitNames);
 
     public void Edit(IWin32Window owner, string typeName, JsonObject unitType, Action beforeChange, Action afterChange)
     {

@@ -161,7 +161,7 @@ public static partial class WorldServer
         int created = 0;
         foreach (string template in templates)
         {
-            string key = EnsureType(template, settings);
+            string key = EnsureType(template, settings, site.Region.Name);
             float x = site.X, y = site.Y;
             if (created > 0)
             {
@@ -200,16 +200,18 @@ public static partial class WorldServer
         return created;
     }
 
-    // The enemy type of a template in the world: the game's unit with the default AI (chase), free to roam. A type with the same
-    // key in enemies.json ("world/<template>") replaces it, so the host or the Enemy AI tab can give it its own behavior.
-    private static string EnsureType(string template, WorldSettings.EnemySettings settings)
+    // The enemy type of a template in the world: the game's unit with the default AI (generic_chase), free to roam. A type with the same
+    // key in enemies.json ("world/<template>") replaces it, so the host or the Enemy AI tab can give it its own AI.
+    private static string EnsureType(string template, WorldSettings.EnemySettings settings, string regionName)
     {
-        string key = "world/" + template;
+        // The AI the host picked for this unit in this biome (world-enemies.json). A unit with its own AI is a type of its own.
+        string ai = WorldEnemyLists.AiFor(regionName, template);
+        string key = "world/" + template + (ai.Equals(WorldEnemyLists.DefaultAi, StringComparison.OrdinalIgnoreCase) ? "" : "~" + ai);
         Enemies.RegisterDefaultType(key, new Enemies.EnemyType
         {
             Name = template,
             Template = template,
-            Behavior = "chase",
+            Ai = ai,
             FreeRoam = true,
             HealthMultiplier = settings.HealthMultiplier
         });

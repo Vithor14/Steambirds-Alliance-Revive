@@ -32,6 +32,11 @@ public sealed class AiMove
     public int Spin { get; set; }
     // hold: turns to look at the player.
     public bool Face { get; set; } = true;
+    // builtin: which built-in flight of the server runs (chase, circle, charge, turret, route, kamikaze, patrol, escort).
+    // Empty = the "behavior" of the unit type.
+    public string Builtin { get; set; } = "";
+    // builtin: multiplier of the unit's own speed (1 = as the type says; 1.2 = a fifth faster).
+    public float SpeedMult { get; set; } = 1f;
 }
 
 public sealed class AiFire
@@ -95,6 +100,29 @@ public sealed class AiStateFile
     public string? Message { get; set; }
     // Speech bubble (a bark key of the client) when the state starts.
     public string? Bark { get; set; }
+
+    // Summons units of this type (a type of enemies.json or of the map the unit is in) when the state starts...
+    public string? Summon { get; set; }
+    public int SummonCount { get; set; } = 1;
+    // ...and again every this many seconds while the state lasts (0 = only when it starts).
+    public float SummonEvery { get; set; }
+    // No new summons while this many of its own summons are alive (0 = no limit).
+    public int SummonMax { get; set; }
+
+    // The unit ignores damage in this state: for ShieldSeconds, or the whole state when it is 0.
+    public bool Shield { get; set; }
+    public float ShieldSeconds { get; set; }
+    // Visual effect (a statefulEffects name) shown while the shield lasts. Empty = "tankShield".
+    public string? ShieldEffect { get; set; }
+
+    // Visual effect (a statefulEffects name) the unit shows from this state on. Empty = keeps the one it has.
+    public string? Effect { get; set; }
+    // Turns the homing bullets "on" or "off" from this state on (empty = keeps what the unit has).
+    public string? Homing { get; set; }
+
+    // Where the state is drawn in the launcher's graph view (editor only, the server ignores it).
+    public float? GraphX { get; set; }
+    public float? GraphY { get; set; }
     // Checked in order, every tick: the first one whose conditions are all true wins.
     public List<AiTransition>? Transitions { get; set; }
 }
@@ -107,6 +135,12 @@ public sealed class AiBrainFile
     public string Author { get; set; } = "";
     public string Description { get; set; } = "";
     public string Initial { get; set; } = "";
+    // The units this AI was made for: names of game units (the "template" of a unit type, e.g. "swarmboss"). Used to offer the AI
+    // only to those units. Ignored in airains\generic: an AI there works for any unit.
+    public List<string>? Units { get; set; }
+    // Behaviors that live inside this AI file: only its own states can pick them (a state's "behavior" is looked up here first,
+    // then in aiehaviors). An embedded behavior has an "id" like a behavior file does.
+    public List<AiBehaviorFile>? Behaviors { get; set; }
     public List<AiStateFile>? States { get; set; }
 }
 

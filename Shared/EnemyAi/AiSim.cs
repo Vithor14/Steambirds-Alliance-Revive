@@ -50,6 +50,8 @@ public sealed class AiSimTuning
     public float ShotRange;
     public float FirstShotDelay = 1.5f;
     public bool FreeAim;
+    // The "behavior" of the unit type (what a builtin move with no name runs on the server).
+    public string Builtin = "chase";
 }
 
 public enum AiPlayerMode
@@ -122,6 +124,16 @@ public sealed class AiSim
     public float HealthDrainPerSecond;
     private double lastHitAt = -1;
 
+    // The units this one summoned (the simulator does not fly them: they only count, and fall after MinionLife seconds or when
+    // KillMinions is called), and whether the shield of the state is up.
+    public const float MinionLife = 12f;
+    private readonly List<double> minionDeaths = new List<double>();
+    public bool Shielded { get; private set; }
+    public int MinionsAlive => minionDeaths.Count;
+    public int TotalSummoned { get; private set; }
+    public string VisualEffect { get; private set; } = "";
+    public bool Homing { get; private set; }
+
     // ---- world
     public double Time { get; private set; }
     public int PlayerHits { get; private set; }
@@ -130,6 +142,28 @@ public sealed class AiSim
     public IReadOnlyList<string> Events => events;
     public AiOutput? Last => runtime?.Out;
     public string StateId => runtime == null ? "" : runtime.State.Id;
+    public AiCompiledState? CurrentState => runtime?.State;
+    public float RolledValue(int transition, int condition) => runtime == null ? 0f : runtime.Rolled(transition, condition);
+
+    // How far a gun reaches now (the state's range, the unit type's, or the gun's own).
+    public float WeaponRange(AiGunStats m)
+    {
+        AiOutput? o = Last;
+        return o != null && o.Range > 0f ? o.Range : (Tuning.ShotRange > 0f ? Tuning.ShotRange : AiGunAim.Range(m.Speed, m.Duration, m.Range));
+    }
+
+    // The guns the current state lets fire (all of the unit's guns with damage when the state does not pick some).
+    public IEnumerable<AiGunStats> ActiveGuns()
+    {
+        AiOutput? o = Last;
+        if (o == null || !o.FireEnabled) yield break;
+        foreach (AiGunStats m in Unit.Guns)
+        {
+            if (m.Damage <= 0f) continue;
+            if (o.Guns.Length > 0 && Array.IndexOf(o.Guns, m.Index) < 0) continue;
+            yield return m;
+        }
+    }
     public double StateTime => runtime == null ? 0 : runtime.StateTime(Time);
 
     public event Action<string>? EventAdded;
@@ -142,6 +176,11 @@ public sealed class AiSim
         ShotsFired = 0;
         Bullets.Clear();
         events.Clear();
+        minionDeaths.Clear();
+        TotalSummoned = 0;
+        Shielded = false;
+        VisualEffect = "";
+        Homing = false;
         respawnAt = -1;
         PlayerAlive = true;
 
@@ -207,9 +246,23 @@ public sealed class AiSim
         Reset();
     }
 
+    // Removes the units the AI summoned (to test "own summons alive" conditions).
+    public void KillMinions()
+    {
+        if (minionDeaths.Count == 0) return;
+        Log(minionDeaths.Count + " summoned unit(s) destroyed");
+        minionDeaths.Clear();
+    }
+
     public void Damage(float fraction)
     {
         if (Dead) return;
+        // A shield ignores damage (the drain of the simulator and the Hit button too), as the server does.
+        if (Shielded && fraction > 0f)
+        {
+            if (fraction >= 0.02f) Log("hit ignored: shield");
+            return;
+        }
         Health = Math.Clamp(Health - MaxHealth * fraction, 0f, MaxHealth);
         if (fraction > 0f) lastHitAt = Time;
         if (Health <= 0f) Die(false);
@@ -296,6 +349,8 @@ public sealed class AiSim
         float velMin = Math.Min(Unit.VelMin * speedMult, velMax);
         float maxTurn = (Unit.Turn > 1f ? Unit.Turn : 120f) * Math.Max(0.01f, Tuning.TurnMult);
 
+        minionDeaths.RemoveAll(t => t <= Time);
+
         AiOutput? o = null;
         if (runtime != null)
         {
@@ -304,27 +359,80 @@ public sealed class AiSim
                 X = X, Y = Y, Rot = Rot, Vel = Vel, VelMin = velMin, VelMax = velMax,
                 HomeX = HomeX, HomeY = HomeY, HealthFraction = Health / MaxHealth,
                 HasTarget = hasTarget, TargetX = PlayerX, TargetY = PlayerY, TargetVX = PlayerVX, TargetVY = PlayerVY,
-                Now = Time, Dt = dt, LastHitAt = lastHitAt
+                Now = Time, Dt = dt, LastHitAt = lastHitAt, SummonsAlive = minionDeaths.Count
             };
             o = runtime.Step(sense);
             if (o.Entered)
             {
                 Log((o.PreviousState == null ? "state \"" : "state \"" + o.PreviousState.Id + "\" -> \"") + o.State.Id + "\"" +
                     (o.State.BehaviorId.Length > 0 ? "  (behavior " + o.State.BehaviorId + ")" : ""));
-                if (o.State.Message.Length > 0) Log("message: " + o.State.Message);
-                if (o.State.Bark.Length > 0) Log("bark: " + o.State.Bark);
+                foreach (AiCompiledState entered in o.EnteredStates)
+                {
+                    if (entered.Message.Length > 0) Log("message: " + entered.Message);
+                    if (entered.Bark.Length > 0) Log("bark: " + entered.Bark);
+                    if (entered.Effect.Length > 0) VisualEffect = entered.Effect;
+                    if (entered.Homing.HasValue) Homing = entered.Homing.Value;
+                }
+            }
+            foreach (AiSummonOrder order in o.Summons)
+            {
+                for (int i = 0; i < order.Count; i++) minionDeaths.Add(Time + MinionLife);
+                TotalSummoned += order.Count;
+                Log("summons " + order.Count + " x " + order.Type);
+            }
+            if (o.ShieldOn != Shielded)
+            {
+                Shielded = o.ShieldOn;
+                Log(Shielded ? "shield up" + (o.ShieldEffect.Length > 0 ? " (" + o.ShieldEffect + ")" : "") : "shield down");
             }
             if (o.Explode)
             {
                 Die(true);
                 return;
             }
+            if (o.UseBuiltin) ApproximateBuiltin(o, velMax, hasTarget);
         }
 
         if (o != null)
             AiMotion.Steer(ref X, ref Y, ref Rot, ref Vel, o.TargetX, o.TargetY, o.TargetVel, velMin, velMax, maxTurn, o.Hold, dt);
 
         Fire(o, hasTarget);
+    }
+
+    // The server's built-in flights are not in the shared core: the simulator only draws something close, so a state that
+    // uses one can still be tried (circle and chase orbit, charge goes straight at the player, turrets stand still).
+    private void ApproximateBuiltin(AiOutput o, float velMax, bool hasTarget)
+    {
+        string flight = o.Builtin.Length > 0 ? o.Builtin : Tuning.Builtin;
+        o.Hold = false;
+        switch (flight)
+        {
+            case "turret":
+            case "fixed":
+            case "idle":
+            case "mine":
+                o.Hold = true;
+                o.TargetVel = 0f;
+                break;
+            case "charge":
+            case "kamikaze":
+                o.TargetVel = velMax * o.SpeedMult;
+                break;
+            case "circle":
+            case "chase":
+            default:
+            {
+                if (hasTarget)
+                {
+                    float heading = AiMath.Heading(PlayerX, PlayerY, X, Y);
+                    float a = (heading + (flight == "circle" ? 75f : 30f)) * AiMath.Rad;
+                    o.TargetX = PlayerX + MathF.Sin(a) * 12f;
+                    o.TargetY = PlayerY + MathF.Cos(a) * 12f;
+                }
+                o.TargetVel = velMax * 0.75f * o.SpeedMult;
+                break;
+            }
+        }
     }
 
     // Same rules as Enemies.Fire of the server: burst of shots at the fire rate, then the reload.

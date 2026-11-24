@@ -73,7 +73,6 @@ internal static class MapRefactor
                 ReplaceIfEqual(chest, "reward", oldName, newName);
                 ReplaceIfEqual(chest, "fail", oldName, newName);
             }
-            foreach (JsonObject phase in Json.Objects(Json.ArrOrNull(type, "phases"))) ReplaceIfEqual(phase, "summon", oldName, newName);
         }
 
         RewriteConditions(root, "death", oldName, newName);

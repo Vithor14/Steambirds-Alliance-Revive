@@ -160,33 +160,16 @@
       "name": "Commodus",
       "template": "swarmboss",
       "boss": true,
-      "behavior": "turret",
       "aggroRadius": 120,
       "firstShotDelay": 2.0,
       "onDeath": "swarmbossDEATH",
-      "phases": [
-        {
-          "belowHealth": 0.7,
-          "summon": "swarmbossswarm",
-          "summonCount": 6
-        },
-        {
-          "belowHealth": 0.4,
-          "summon": "swarmbossswarm",
-          "summonCount": 8
-        },
-        {
-          "belowHealth": 0.15,
-          "summon": "swarmbosstrap",
-          "summonCount": 2
-        }
-      ],
+      "ai": "dungeon_arena_swarmboss",
       "shotRange": 45
     },
     "arenadungeontreasureBIG": {
       "name": "Big Treasure",
       "template": "arenadungeontreasureBIG",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "health": 1750,
       "dpsChest": {
         "seconds": 25,
@@ -197,52 +180,52 @@
     "arena2_destructiblewall1": {
       "name": "Wall",
       "template": "arena2_destructiblewall1",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "arenaangel": {
       "name": "Chariot",
       "template": "arenaangel",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "arenacloud": {
       "name": "Smog Beast",
       "template": "arenacloud",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "arenacloudleader": {
       "name": "Smog Beast",
       "template": "arenacloudleader",
-      "behavior": "circle",
+      "ai": "generic_circle",
       "preferredDistance": 2.0,
       "aggroRadius": 32
     },
     "arenadungeontreasure": {
       "name": "Treasure",
       "template": "arenadungeontreasure",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "opensAfterHitSeconds": 1.5
     },
     "arenadungeontreasureBIG_reward": {
       "name": "Big Treasure",
       "template": "arenadungeontreasureBIG_reward",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "opensAfterHitSeconds": 1.5
     },
     "arenalasereye": {
       "name": "Heckler",
       "template": "arenalasereye",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "arenasniper": {
       "name": "Malicious Acolyte",
       "template": "arenasniper",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28,
       "aimLead": 1.0
@@ -250,52 +233,52 @@
     "arenaswarm": {
       "name": "Frenzied Mob",
       "template": "arenaswarm",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "arenatackler": {
       "name": "Exotic Rhino",
       "template": "arenatackler",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "arenatetra": {
       "name": "Bruiser",
       "template": "arenatetra",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "arenawhaleshark": {
       "name": "Frenzied Shark",
       "template": "arenawhaleshark",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "bonusswarm": {
       "name": "Bonus Pinata",
       "template": "bonusswarm",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "swarmbossDEATH": {
       "name": "Commodus",
       "template": "swarmbossDEATH",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "swarmbossswarm": {
       "name": "Commodus Mob",
       "template": "swarmbossswarm",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "swarmbosstrap": {
       "name": "swarmbosstrap",
       "template": "swarmbosstrap",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 6,
       "aggroRadius": 30
     }

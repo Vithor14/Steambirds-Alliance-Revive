@@ -1,0 +1,45 @@
+{
+  "format": 1,
+  "id": "dungeon_rescue_escorttrain1",
+  "name": "Stone Worm (phases)",
+  "author": "Steambirds Revive",
+  "description": "The phases of Stone Worm as an AI: each phase starts when the health goes under its limit. Made from the old \"phases\" of the unit type (dungeon_rescue.json).",
+  "units": ["escorttrain1"],
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "transitions": [
+        {
+          "to": "phase1",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.9
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase1",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "escorttrain2",
+      "summonCount": 4,
+      "message": "Stone Worm!"
+    }
+  ]
+}

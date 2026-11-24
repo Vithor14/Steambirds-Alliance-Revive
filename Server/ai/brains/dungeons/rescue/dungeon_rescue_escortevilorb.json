@@ -1,0 +1,67 @@
+{
+  "format": 1,
+  "id": "dungeon_rescue_escortevilorb",
+  "name": "Buried Guardian (phases)",
+  "author": "Steambirds Revive",
+  "description": "The phases of Buried Guardian as an AI: each phase starts when the health goes under its limit. Made from the old \"phases\" of the unit type (dungeon_rescue.json).",
+  "units": ["escortevilorb"],
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "transitions": [
+        {
+          "to": "phase1",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase1",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "escortgrunt3_noxp",
+      "summonCount": 3,
+      "transitions": [
+        {
+          "to": "phase2",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase2",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "escortturretmissile",
+      "summonCount": 4
+    }
+  ]
+}

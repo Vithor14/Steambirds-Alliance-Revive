@@ -35,7 +35,7 @@ public static partial class DungeonServer
 
         bool counts = !neverCounts && !extras.ExcludeFromRoomClear &&
             (forceRoomGroup || (t.Team == 2 && !t.Invulnerable && t.OpensAfterHitSeconds <= 0f && extras.DpsChest == null &&
-            !string.Equals(t.Behavior, "idle", StringComparison.OrdinalIgnoreCase)));
+            !string.Equals(Enemies.TypeFlight(t), "idle", StringComparison.OrdinalIgnoreCase)));
         string group = counts ? room.Group : room.Extra;
 
         int id = Enemies.CreateFromScript(s.Server, s.Connection, Role, s.Data.Key(type), x, y, rotation, group, room.Area,
@@ -110,18 +110,6 @@ public static partial class DungeonServer
 
         bool asleep = Enemies.IsAsleep(s.Connection, t.Id);
 
-        // Boss phase line: once, when the health passes the first phase.
-        if (!t.PhaseBarked && !asleep && extras.Barks != null && extras.Barks.ContainsKey("phase"))
-        {
-            Enemies.EnemyType? type = Enemies.GetEnemyType(s.Data.Key(t.Type));
-            float first = type?.Phases?.Count > 0 ? type.Phases.Max(f => f.BelowHealth) : 0.5f;
-            if (Enemies.GetHealth(s.Connection, t.Id, out float health) && health <= first)
-            {
-                t.PhaseBarked = true;
-                Bark(s, t.Id, t.Type, "phase");
-            }
-        }
-
         // Periodic summons while awake.
         DungeonMapData.PeriodicSummon? summon = extras.PeriodicSummon;
         if (summon != null && !asleep && now >= t.NextSummonAt && s.Data.HasType(summon.Type))
@@ -190,13 +178,15 @@ public static partial class DungeonServer
 
         // Wreck or reward where it died, with the last line.
         int barkOn = t.Id;
-        if (extras.OnDeath.Length > 0 && data.HasType(extras.OnDeath))
+        bool wentOff = Enemies.TakeSelfDestruct(s.Connection, t.Id);
+        string leaves = wentOff && extras.OnContact.Length > 0 ? extras.OnContact : extras.OnDeath;
+        if (leaves.Length > 0 && data.HasType(leaves))
         {
-            int id = Spawn(s, extras.OnDeath, t.X, t.Y, float.NaN, t.Room, false, false, 0, now, log);
+            int id = Spawn(s, leaves, t.X, t.Y, float.NaN, t.Room, false, false, 0, now, log);
             if (id != 0)
             {
                 barkOn = id;
-                if (extras.OnDeath.EndsWith("DEATH", StringComparison.OrdinalIgnoreCase))
+                if (leaves.EndsWith("DEATH", StringComparison.OrdinalIgnoreCase))
                 {
                     int wreck = id;
                     Schedule(s, now + WreckSeconds, "wreck", time =>

@@ -191,7 +191,7 @@ public static partial class Enemies
             Y = y,
             HomeX = x,
             HomeY = y,
-            Behavior = NormalizeBehavior(type.Behavior),
+            Behavior = TypeFlight(type),
             SpawnedAt = now,
             OrbitDirection = rng.Next(2) == 0 ? -1f : 1f,
             PatrolX = x,
@@ -203,7 +203,7 @@ public static partial class Enemies
             Homing = type.HomingBullets
         };
 
-        enemy.Ai = AttachBrain(key, type.Ai, log);
+        enemy.Ai = AttachBrain(key, EffectiveAi(type), log);
 
         // Spawns facing the player.
         enemy.Rot =inst.HasPlayer ? Heading(x, y, inst.PlayerX, inst.PlayerY) : (float)(rng.NextDouble() * 360.0 - 180.0);
@@ -273,81 +273,6 @@ public static partial class Enemies
     {
         Ground.ToGrid(x, y, out float a, out float b);
         return area.Contains(a, b, margin / Ground.CellSize);
-    }
-
-    // Boss phases: each phase enters once, in order, when health drops below its limit.
-    private static void ApplyPhases(Instance inst, Enemy enemy, double now, Action<string, string> log)
-    {
-        List<BossPhase> phases = enemy.Type.Phases;
-        if (phases == null || phases.Count == 0) return;
-
-        float fraction = enemy.Health / enemy.MaxHp;
-        while (enemy.PhasesApplied < phases.Count && fraction <= phases[enemy.PhasesApplied].BelowHealth)
-        {
-            BossPhase phase = phases[enemy.PhasesApplied];
-            enemy.PhasesApplied++;
-
-            if (!string.IsNullOrWhiteSpace(phase.Behavior)) enemy.Behavior = NormalizeBehavior(phase.Behavior);
-            if (!string.IsNullOrWhiteSpace(phase.Ai)) enemy.Ai = AttachBrain(enemy.TypeKey, phase.Ai, log) ?? enemy.Ai;
-            if (phase.HomingBullets.HasValue) enemy.Homing = phase.HomingBullets.Value;
-            if (phase.SpeedMultiplier > 0f) enemy.PhaseSpeedMult = phase.SpeedMultiplier;
-            if (phase.FireRateMultiplier > 0f) enemy.PhaseFireRateMult = phase.FireRateMultiplier;
-            if (phase.Guns != null && phase.Guns.Count > 0) enemy.ActiveGuns = new List<int>(phase.Guns);
-            if (phase.ShieldSeconds > 0f)
-            {
-                // Shield: no damage for a while, with a visual effect on the unit (removed in UpdateInstance).
-                enemy.ShieldUntil = now + phase.ShieldSeconds;
-                short effect = MonoHash.StatefulEffectId(string.IsNullOrWhiteSpace(phase.VisualEffect) ? "tankShield" : phase.VisualEffect);
-                if (effect != enemy.EffectId)
-                {
-                    enemy.EffectId = effect;
-                    enemy.EffectChanged = true;
-                }
-            }
-            else if (!string.IsNullOrWhiteSpace(phase.VisualEffect))
-            {
-                // Phase without shield but with a new look: it stays until the end of the fight.
-                enemy.BaseEffect = MonoHash.StatefulEffectId(phase.VisualEffect);
-                enemy.EffectId = enemy.BaseEffect;
-                enemy.EffectChanged = true;
-            }
-
-            var summoned = new List<Enemy>();
-            if (!string.IsNullOrWhiteSpace(phase.Summon) && phase.SummonCount > 0)
-            {
-                EnemyType? type = GetEnemyType(phase.Summon);
-                if (type != null)
-                {
-                    int count = Math.Clamp(phase.SummonCount, 1, 10);
-                    for (int i = 0; i < count; i++)
-                    {
-                        float a = (enemy.Rot + 180f + (i - (count - 1) * 0.5f) * 40f) * Rad;
-                        float x = enemy.X + MathF.Sin(a) * 5f;
-                        float y = enemy.Y + MathF.Cos(a) * 5f;
-                        ConfineTo(enemy.Area, false, ref x, ref y, DestMargin);
-                        Enemy? fresh = CreateEnemy(inst, phase.Summon, type, x, y, enemy.FromWave, now, log);
-                        if (fresh == null) continue;
-                        // The reinforcements stay in the group and in the boss room (the script counts them all together).
-                        fresh.Group = enemy.Group;
-                        fresh.Area = enemy.Area;
-                        summoned.Add(fresh);
-                    }
-                    SendSpawns(inst, summoned, now);
-                }
-                else
-                {
-                    log("ENEMY", "phase of the boss '" + enemy.TypeKey + "' summons the type '" + phase.Summon + "', which does not exist");
-                }
-            }
-
-            log("ENEMY", inst.Role + " " + Describe(enemy) + " entered phase " + enemy.PhasesApplied + " (health " +
-                Num(fraction * 100f) + "%): behavior " + enemy.Behavior + ", speed x" + Num(enemy.PhaseSpeedMult) +
-                ", fire rate x" + Num(enemy.PhaseFireRateMult) + (summoned.Count > 0 ? ", summoned " + summoned.Count : "") +
-                (phase.ShieldSeconds > 0f ? ", shield for " + Num(phase.ShieldSeconds) + "s" : "") +
-                (phase.Guns != null && phase.Guns.Count > 0 ? ", guns [" + string.Join(",", phase.Guns) + "]" : ""));
-            if (!string.IsNullOrWhiteSpace(phase.Message)) Warn(inst, phase.Message);
-            if (!string.IsNullOrWhiteSpace(phase.Bark)) Speak(inst, enemy, phase.Bark);
-        }
     }
 
 }

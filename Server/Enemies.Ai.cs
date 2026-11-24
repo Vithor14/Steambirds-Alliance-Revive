@@ -81,17 +81,24 @@ public static partial class Enemies
             Fire(inst, enemy, now);
 
             // Bombs ("kamikaze") and mines ("mine"): a player inside the contact radius blows them up (no XP, no loot: the
-            // bomb used itself). A mine only arms itself when its spawn time is over.
-            if (enemy.Ai == null && (enemy.Behavior == "kamikaze" || (enemy.Behavior == "mine" && now >= enemy.ActiveAt)) &&
+            // bomb used itself). A mine does nothing until it is armed: that happens once no player is inside its radius.
+            if ((enemy.Ai == null || enemy.Ai.Out.UseBuiltin) && (enemy.Behavior == "kamikaze" || enemy.Behavior == "mine") &&
                 !enemy.Asleep && enemy.Aggro && inst.HasPlayer && inst.PlayerAlive &&
-                Distance(enemy.X, enemy.Y, inst.PlayerX, inst.PlayerY) <= Math.Max(0.5f, enemy.Type.ContactRadius))
-                (exploded ??= new List<Enemy>()).Add(enemy);
+                (enemy.Behavior == "kamikaze" || now >= enemy.ActiveAt))
+            {
+                float reach = Math.Max(0.5f, enemy.Type.ContactRadius);
+                bool inside = Distance(enemy.X, enemy.Y, inst.PlayerX, inst.PlayerY) <= reach;
+                if (enemy.Behavior == "mine" && !inside) enemy.Armed = true;
+                if (inside && (enemy.Behavior == "kamikaze" || enemy.Armed)) (exploded ??= new List<Enemy>()).Add(enemy);
+            }
             // The same, for an AI file: a state with "contact.explodeRadius" or "selfDestruct" asks for it.
             else if (enemy.Ai != null && !enemy.Asleep && now >= enemy.ActiveAt && enemy.Ai.Out.Explode)
                 (exploded ??= new List<Enemy>()).Add(enemy);
         }
         if (exploded != null)
         {
+            if (inst.SelfDestructed.Count > 500) inst.SelfDestructed.Clear();
+            foreach (Enemy enemy in exploded) inst.SelfDestructed.Add(enemy.ShortId);
             Remove(inst, exploded, ReasonDestroyedByDamage, ResultDamage, now);
             foreach (Enemy enemy in exploded)
                 log("ENEMY", inst.Role + " " + Describe(enemy) + " exploded on the player at (" + Num(enemy.X) + ", " + Num(enemy.Y) + ")");
@@ -247,8 +254,10 @@ public static partial class Enemies
             WakeGroupInternal(inst, enemy, now);
         }
 
-        // A unit with an AI file: the AI decides when it fights (aggroRadius does not apply).
-        if (enemy.Ai != null) enemy.Aggro = validTarget;
+        // A unit with an AI file: the AI decides when it fights (aggroRadius does not apply), unless the state flies the unit
+        // with a built-in flight: then the unit type's aggroRadius decides, as it does without an AI.
+        bool builtinState = enemy.Ai != null && enemy.Ai.Out.UseBuiltin;
+        if (enemy.Ai != null && !builtinState) enemy.Aggro = validTarget;
         else if (!validTarget) enemy.Aggro = false;
         else if (!enemy.Aggro && (enemy.Type.AggroRadius <= 0f || dist <= enemy.Type.AggroRadius)) enemy.Aggro = true;
 
@@ -259,22 +268,45 @@ public static partial class Enemies
             return;
         }
 
-        float velMax = enemy.VelMax * enemy.PhaseSpeedMult;
-        float velMin = Math.Min(enemy.VelMin * enemy.PhaseSpeedMult, velMax);
-        string mode = enemy.Behavior == "escort" ? "escort" : (enemy.Aggro ? enemy.Behavior : "patrol");
-        if (enemy.Ai != null) mode = "brain";
-        else if (enemy.Behavior == "route" && enemy.Type.RoutePoints is { Count: > 1 }) mode = "route";
-        else if (velMax <= 0.05f) mode = "turret";
+        float velMax = enemy.VelMax;
+        float velMin = Math.Min(enemy.VelMin, velMax);
+        string mode = FlightMode(enemy, enemy.Behavior, velMax);
         float preferred = Math.Max(2f, enemy.Type.PreferredDistance);
 
-        float targetX;
-        float targetY;
-        float targetVel;
+        float targetX = 0f;
+        float targetY = 0f;
+        float targetVel = 0f;
         bool brainHold = false;
+        if (enemy.Ai != null)
+        {
+            // The AI picks the destination itself ("brain"), or hands the flight to one of the built-in ones below.
+            AiOutput brain = BrainStep(inst, enemy, now, dt, velMin, velMax, validTarget, log);
+            if (brain.UseBuiltin)
+            {
+                string flight = brain.Builtin.Length > 0 ? NormalizeBehavior(brain.Builtin) : enemy.Behavior;
+                velMax *= brain.SpeedMult;
+                velMin = Math.Min(velMin * brain.SpeedMult, velMax);
+                if (flight is "fixed" or "mine" or "idle")
+                {
+                    // Walls, crates, wrecks and fixed cannons do not move or turn.
+                    enemy.Vel = 0f;
+                    return;
+                }
+                mode = FlightMode(enemy, flight, velMax);
+            }
+            else
+            {
+                mode = "brain";
+                targetX = brain.TargetX;
+                targetY = brain.TargetY;
+                targetVel = brain.TargetVel;
+                brainHold = brain.Hold;
+            }
+        }
+
         switch (mode)
         {
             case "brain":
-                BrainThink(inst, enemy, now, dt, velMin, velMax, validTarget, log, out targetX, out targetY, out targetVel, out brainHold);
                 break;
 
             case "turret":
@@ -433,6 +465,15 @@ public static partial class Enemies
         enemy.Y = Math.Clamp(enemy.Y, arena.CenterY - hard, arena.CenterY + hard);
     }
 
+    // Which flight code a behavior name runs: away from the player a unit patrols; a route needs its points; a unit that
+    // cannot move stands like a turret.
+    private static string FlightMode(Enemy enemy, string behavior, float velMax)
+    {
+        if (behavior == "route" && enemy.Type.RoutePoints is { Count: > 1 }) return "route";
+        if (velMax <= 0.05f) return "turret";
+        return behavior == "escort" ? "escort" : (enemy.Aggro ? behavior : "patrol");
+    }
+
     // Next point of the unit's route: starts at the nearest one and goes on to the next each time it gets close.
     private static void RouteTarget(Enemy enemy, out float x, out float y)
     {
@@ -476,7 +517,7 @@ public static partial class Enemies
         if (enemy.Team != EnemyTeam || enemy.Behavior == "idle") return;
         if (now < enemy.ActiveAt + Math.Max(0f, enemy.Type.FirstShotDelay)) return;
         bool canAim = enemy.Aggro && inst.HasPlayer && inst.PlayerAlive;
-        float fireRateMult = Positive(enemy.Type.FireRateMultiplier) * enemy.PhaseFireRateMult;
+        float fireRateMult = Positive(enemy.Type.FireRateMultiplier);
 
         // An AI file decides, state by state, whether the unit shoots, with which guns, how fast, how far and how it aims.
         AiOutput? brain = enemy.Ai?.Out;
@@ -511,7 +552,7 @@ public static partial class Enemies
             if (dist > range) continue;
 
             float gunRotation;
-            if (enemy.Behavior == "fixed" && enemy.Ai == null)
+            if (IsFixedGun(enemy))
             {
                 // Fixed cannon: the burst goes straight out of the gun's mouth, without looking for the player.
                 gunRotation = m.Angle;

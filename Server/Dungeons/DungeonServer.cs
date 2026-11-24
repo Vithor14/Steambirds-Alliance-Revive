@@ -14,7 +14,7 @@ using Info = MapInfo;
 //    terrains that have no ClientMapInfo in the client);
 //  - destroyable walls ("isWall" units) as gates: barricades the player shoots, locked doors that open by a condition
 //    ("opensWhen": room cleared, unit type dead) and doors that close behind the player in boss rooms;
-//  - rooms whose enemies wait in place until the player comes in, waves, minibosses and bosses with phases (weapons,
+//  - rooms whose enemies wait in place until the player comes in, waves, minibosses and bosses with AI phases (weapons,
 //    shields with a visual effect, summons), periodic summons, bosses that come back (sequences: Phoenix eggs,
 //    Giant Egg -> Poison God), wrecks ("*DEATH" units) and boss barks (ClientShowUnitChat);
 //  - treasure chests and the DPS chest (Big Treasure);
@@ -109,7 +109,6 @@ public static partial class DungeonServer
         public int SummonedBy;
         public string SequenceRoot = "";
         public int SequenceIndex = -1;
-        public bool PhaseBarked;
         public bool Gone;
         public bool Removed;            // taken away by the dungeon itself (not a death)
         public bool ChainQueued;        // already set to go off by a chain reaction

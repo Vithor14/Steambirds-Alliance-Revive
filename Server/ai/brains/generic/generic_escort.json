@@ -1,0 +1,20 @@
+{
+  "format": 1,
+  "id": "generic_escort",
+  "name": "Generic: Escort",
+  "author": "Steambirds Revive",
+  "description": "Follows the player as an ally (the built-in \"escort\" flight).",
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "escort"
+      },
+      "fire": {
+        "enabled": true
+      }
+    }
+  ]
+}

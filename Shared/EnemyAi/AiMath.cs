@@ -135,6 +135,29 @@ public static class AiGunAim
         return true;
     }
 
+    // How far, to each side of the direction the mount points, the player can be for the mount to fire (the same limits as TryAim).
+    // 180 or more = all around.
+    public static float FiringHalfWidth(int mode, float arc, bool freeAim)
+    {
+        float halfArc = arc > 0.5f ? arc * 0.5f : 30f;
+        switch (mode)
+        {
+            case 5:
+            case 6:
+                return 180f;
+            case 3:
+                return halfArc + 30f;
+            case 1:
+            case 2:
+                return halfArc + 20f;
+            case 7:
+                return arc >= 359f ? 180f : 60f;
+        }
+        if (freeAim || arc >= 359f) return 180f;
+        if (arc > 0.5f) return halfArc + 5f;
+        return 35f;
+    }
+
     // Name and one-line explanation of a FireMode of the game (the numbers of units_config.txt).
     public static string ModeName(int mode) => mode switch
     {

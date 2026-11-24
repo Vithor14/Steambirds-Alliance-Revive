@@ -46,6 +46,14 @@ internal static class AiFields
         {
             DefaultBool = true, Help = "hold: the unit turns to look at the player (a turret)."
         };
+        yield return new FieldSpec("move.builtin", "Built-in flight (builtin)", FieldKind.Choice)
+        {
+            Choices = () => AiCatalog.BuiltinFlights,
+            AllowEmpty = true,
+            Help = "builtin: which flight of the server runs. Empty = the \"behavior\" of the unit type."
+        };
+        yield return Number("move.speedMult", "Speed multiplier (builtin)", 1, 0.1, 5, 0.1,
+            "builtin: multiplies the speed of the unit (1.2 = a fifth faster than the unit type says).");
 
         yield return FieldSpec.Header("Weapons");
         yield return new FieldSpec("fire.enabled", "Shoots", FieldKind.Bool) { DefaultBool = true, Help = "Off = the unit does not shoot in this state." };
@@ -66,9 +74,50 @@ internal static class AiFields
             "The unit blows up (no XP, no loot) when the player gets this close. 0 = never.");
     }
 
+    // What a state does besides moving and shooting: summons, shield and look. These belong to the state, not to a behavior file.
+    public static IEnumerable<FieldSpec> Effects(Func<IEnumerable<string>> typeNames)
+    {
+        yield return FieldSpec.Header("Summons");
+        yield return new FieldSpec("summon", "Summons (unit type)", FieldKind.EditableChoice)
+        {
+            Choices = typeNames,
+            Help = "Unit type this unit calls when the state starts: a type of enemies.json or of the map the unit is in. Empty = no summons."
+        };
+        yield return new FieldSpec("summonCount", "Amount each time", FieldKind.Int) { Min = 1, Max = 10, Default = 1, Help = "How many units appear each time (1 to 10)." };
+        yield return Number("summonEvery", "Again every (s)", 0, 0, 600, 0.5, "0 = only when the state starts. Otherwise it summons again every this many seconds while the state lasts.");
+        yield return new FieldSpec("summonMax", "At most alive", FieldKind.Int)
+        {
+            Min = 0, Max = 100, Help = "No new summons while this many of its own summons are alive. 0 = no limit."
+        };
+
+        yield return FieldSpec.Header("Shield");
+        yield return new FieldSpec("shield", "Shield", FieldKind.Bool) { Help = "The unit ignores all damage while the shield is up." };
+        yield return Number("shieldSeconds", "Shield lasts (s)", 0, 0, 600, 0.5, "0 = the whole time the unit is in this state.");
+        yield return new FieldSpec("shieldEffect", "Shield look (effect)", FieldKind.Text)
+        {
+            Help = "Name of a client effect (statefulEffects) shown while the shield is up. Empty = tankShield."
+        };
+
+        yield return FieldSpec.Header("Look and weapons");
+        yield return new FieldSpec("effect", "Visual effect from here on", FieldKind.Text)
+        {
+            Help = "Name of a client effect (statefulEffects, e.g. detectionZone_1) the unit shows from this state on. Empty = keeps the one it has."
+        };
+        yield return new FieldSpec("homing", "Homing bullets", FieldKind.Choice)
+        {
+            Choices = () => new[] { "on", "off" },
+            AllowEmpty = true,
+            Help = "on / off: turns the homing bullets on or off from this state on. Empty = keeps what the unit has."
+        };
+    }
+
     public static IEnumerable<FieldSpec> BrainInfo(Func<IEnumerable<string>> stateIds)
     {
         foreach (FieldSpec spec in Info()) yield return spec;
+        yield return new FieldSpec("units", "Made for (units)", FieldKind.StringList)
+        {
+            Help = "Names of the game units this AI was made for (the \"template\" of the unit type, such as swarmboss). The AI is offered only to them. Ignored for an AI in the generic folder: it works for any unit."
+        };
         yield return new FieldSpec("initial", "First state", FieldKind.Choice)
         {
             Choices = stateIds,
@@ -84,7 +133,7 @@ internal static class AiFields
         {
             Choices = behaviorIds,
             AllowEmpty = true,
-            Help = "A behavior file the state acts like. Empty = the state has its own values (the \"Own values\" tab)."
+            Help = "The behavior the state acts like: one that lives inside this AI (made with \"New behavior...\") or a file of the behaviors folder. Empty = the state has its own values (the \"Behavior values\" tab)."
         };
         yield return new FieldSpec("selfDestruct", "Blows up when it starts", FieldKind.Bool)
         {
@@ -131,9 +180,10 @@ internal static class AiFields
     {
         string id = Json.Str(state, "id", "?");
         string behavior = Json.Str(state, "behavior");
-        string what = behavior.Length > 0 ? behavior : L.T("own values") + ": " + Json.Str(Json.ObjOrNull(state, "move"), "mode", "?");
+        string what = behavior.Length > 0 ? behavior : L.T("behavior values") + ": " + Json.Str(Json.ObjOrNull(state, "move"), "mode", "?");
         int transitions = Json.ArrOrNull(state, "transitions")?.Count ?? 0;
-        return id + "   [" + what + "]   " + transitions + " " + L.T("transition(s)");
+        string extras = (Json.Str(state, "summon").Length > 0 ? "  +" + L.T("summons") : "") + (Json.Bool(state, "shield") ? "  +" + L.T("shield") : "");
+        return id + "   [" + what + "]" + extras + "   " + transitions + " " + L.T("transition(s)");
     }
 
     public static string DescribeTransition(JsonObject transition)

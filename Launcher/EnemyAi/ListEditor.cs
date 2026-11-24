@@ -68,6 +68,22 @@ internal sealed class ListEditor : Panel
 
     public void Unbind() => Bind(null, null);
 
+    // Selects the item whose "id" is this (the states list, when a node of the graph is clicked).
+    public void SelectById(string id)
+    {
+        if (array == null) return;
+        int at = 0;
+        foreach (JsonObject item in Json.Objects(array))
+        {
+            if (Json.Str(item, "id") == id)
+            {
+                if (list.SelectedIndex != at) list.SelectedIndex = at;
+                return;
+            }
+            at++;
+        }
+    }
+
     // The text of the lines again (a value changed).
     public void RefreshText()
     {

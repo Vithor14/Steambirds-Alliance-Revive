@@ -29,6 +29,16 @@ public sealed class AiCompiledState
     public bool SelfDestruct;
     public string Message = "";
     public string Bark = "";
+    // Summons (SummonType empty = none), shield, look and homing bullets of the state (see AiStateFile).
+    public string SummonType = "";
+    public int SummonCount = 1;
+    public float SummonEvery;
+    public int SummonMax;
+    public bool Shield;
+    public float ShieldSeconds;
+    public string ShieldEffect = "";
+    public string Effect = "";
+    public bool? Homing;
     public AiCompiledTransition[] Transitions = Array.Empty<AiCompiledTransition>();
 }
 
@@ -44,6 +54,8 @@ public sealed class AiBrain
     public string Id = "";
     public string Name = "";
     public int Initial;
+    // Some state summons units or a condition counts them: the caller must fill AiSense.SummonsAlive.
+    public bool NeedsSummonCount;
     public AiCompiledState[] States = Array.Empty<AiCompiledState>();
 
     public int IndexOf(string stateId)
@@ -61,6 +73,8 @@ public sealed class AiLibrary
     public readonly Dictionary<string, AiBehaviorFile> Behaviors = new Dictionary<string, AiBehaviorFile>(StringComparer.OrdinalIgnoreCase);
     public readonly Dictionary<string, AiBrainFile> BrainFiles = new Dictionary<string, AiBrainFile>(StringComparer.OrdinalIgnoreCase);
     public readonly Dictionary<string, AiBrain> Brains = new Dictionary<string, AiBrain>(StringComparer.OrdinalIgnoreCase);
+    // Where each brain file is: id -> folder inside brains\ ("generic", "world", "dungeons/arena"; "" = loose in brains\).
+    public readonly Dictionary<string, string> BrainOrigins = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     public readonly List<AiProblem> Problems = new List<AiProblem>();
 
     public string Folder { get; private set; } = "";
@@ -68,12 +82,59 @@ public sealed class AiLibrary
     public AiBrain? Get(string? id)
     {
         if (string.IsNullOrWhiteSpace(id)) return null;
-        return Brains.TryGetValue(id.Trim(), out AiBrain? brain) ? brain : null;
+        return Brains.TryGetValue(AiCatalog.IdOfReference(id), out AiBrain? brain) ? brain : null;
     }
 
     public static string BehaviorsPath(string folder) => Path.Combine(folder, AiCatalog.BehaviorsFolder);
 
     public static string BrainsPath(string folder) => Path.Combine(folder, AiCatalog.BrainsFolder);
+
+    // The folder of a brain file inside brains\, with "/" as the separator ("generic", "dungeons/arena"; "" = loose in brains\).
+    public static string OriginOf(string brainsFolder, string filePath)
+    {
+        string? dir = Path.GetDirectoryName(Path.GetFullPath(filePath));
+        string root = Path.GetFullPath(brainsFolder);
+        if (dir == null || string.Equals(dir.TrimEnd('\\', '/'), root.TrimEnd('\\', '/'), StringComparison.OrdinalIgnoreCase)) return "";
+        string relative = Path.GetRelativePath(root, dir);
+        return relative.Replace('\\', '/');
+    }
+
+    // generic = the AI works for any unit (it lives in brains\generic).
+    public static bool IsGenericOrigin(string origin) => string.Equals(origin, AiCatalog.GenericFolder, StringComparison.OrdinalIgnoreCase);
+
+    // The AI may be given to this unit (the game's unit name): generic AIs fit any unit; the others fit the units they list.
+    public bool Applies(string id, string unit)
+    {
+        if (!BrainFiles.TryGetValue(id, out AiBrainFile? file)) return false;
+        bool generic = BrainOrigins.TryGetValue(id, out string? origin) && IsGenericOrigin(origin);
+        return Applies(generic, file.Units, new[] { unit });
+    }
+
+    // The rule on its own (the launcher also uses it on files it has open): a generic AI fits any unit; the others fit the units they
+    // list. unitNames are the options of one unit type ("a|b" = a or b).
+    public static bool Applies(bool generic, IEnumerable<string>? madeFor, IEnumerable<string> unitNames)
+    {
+        if (generic) return true;
+        if (madeFor == null) return false;
+        return madeFor.Any(u => unitNames.Any(n => string.Equals((u ?? "").Trim(), (n ?? "").Trim(), StringComparison.OrdinalIgnoreCase)));
+    }
+
+    // The AIs a unit can use: first the ones made for it (not generic), then the generic ones; each group by id.
+    public List<(string Id, bool Specific)> ApplicableTo(IEnumerable<string> unitNames)
+    {
+        string[] names = unitNames.ToArray();
+        var specific = new List<string>();
+        var generic = new List<string>();
+        foreach (KeyValuePair<string, AiBrainFile> pair in BrainFiles)
+        {
+            bool isGeneric = BrainOrigins.TryGetValue(pair.Key, out string? origin) && IsGenericOrigin(origin);
+            if (isGeneric) generic.Add(pair.Key);
+            else if (Applies(false, pair.Value.Units, names)) specific.Add(pair.Key);
+        }
+        specific.Sort(StringComparer.OrdinalIgnoreCase);
+        generic.Sort(StringComparer.OrdinalIgnoreCase);
+        return specific.Select(id => (id, true)).Concat(generic.Select(id => (id, false))).ToList();
+    }
 
     // Changes when a file is added, removed or saved: the server compares it every few seconds.
     public static string Signature(string folder)
@@ -85,7 +146,7 @@ public sealed class AiLibrary
             foreach (string sub in new[] { BehaviorsPath(folder), BrainsPath(folder) })
             {
                 if (!Directory.Exists(sub)) continue;
-                foreach (string file in Directory.EnumerateFiles(sub, "*.json"))
+                foreach (string file in Directory.EnumerateFiles(sub, "*.json", SearchOption.AllDirectories))
                 {
                     count++;
                     sum += File.GetLastWriteTimeUtc(file).Ticks / 10000 + new FileInfo(file).Length;
@@ -114,22 +175,32 @@ public sealed class AiLibrary
             }
             catch (Exception e) when (e is JsonException || e is IOException || e is UnauthorizedAccessException)
             {
-                library.Problems.Add(new AiProblem(true, "behaviors\\" + Path.GetFileName(path), e.Message));
+                library.Problems.Add(new AiProblem(true, "behaviors\\" + Path.GetRelativePath(BehaviorsPath(folder), path), e.Message));
             }
         }
 
-        foreach (string path in Files(BrainsPath(folder)))
+        // Files in the folders (generic, world, dungeons) come first: a loose file left in brains\ by the old layout loses to them.
+        string brainsRoot = Path.GetFullPath(BrainsPath(folder));
+        foreach (string path in Files(BrainsPath(folder)).OrderBy(f =>
+                     string.Equals(Path.GetDirectoryName(Path.GetFullPath(f)), brainsRoot, StringComparison.OrdinalIgnoreCase) ? 1 : 0))
         {
             string id = AiCatalog.CleanId(Path.GetFileNameWithoutExtension(path));
             try
             {
                 AiBrainFile file = AiJson.ParseBrain(ReadShared(path));
                 CheckFileId(library, path, id, file.Id);
+                if (library.BrainFiles.ContainsKey(id))
+                {
+                    library.Problems.Add(new AiProblem(OriginOf(BrainsPath(folder), path).Length > 0, "brains\\" + Path.GetRelativePath(BrainsPath(folder), path),
+                        "another AI file already has the id \"" + id + "\" (in " + library.BrainOrigins[id] + "): this one is ignored"));
+                    continue;
+                }
                 library.BrainFiles[id] = file;
+                library.BrainOrigins[id] = OriginOf(BrainsPath(folder), path);
             }
             catch (Exception e) when (e is JsonException || e is IOException || e is UnauthorizedAccessException)
             {
-                library.Problems.Add(new AiProblem(true, "brains\\" + Path.GetFileName(path), e.Message));
+                library.Problems.Add(new AiProblem(true, "brains\\" + Path.GetRelativePath(BrainsPath(folder), path), e.Message));
             }
         }
 
@@ -149,10 +220,11 @@ public sealed class AiLibrary
         return Behaviors.TryGetValue((id ?? "").Trim(), out AiBehaviorFile? file) ? file : null;
     }
 
+    // Every .json of the folder and of the folders inside it (brains are sorted into generic\, world\ and dungeons\<name>\).
     private static IEnumerable<string> Files(string folder)
     {
         if (!Directory.Exists(folder)) return Array.Empty<string>();
-        return Directory.EnumerateFiles(folder, "*.json").OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToList();
+        return Directory.EnumerateFiles(folder, "*.json", SearchOption.AllDirectories).OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToList();
     }
 
     private static string ReadShared(string path)
@@ -189,6 +261,10 @@ public sealed class AiLibrary
         if (move.Speed < 0f) problems.Add(new AiProblem(false, where, "negative speed"));
         if (string.Equals(move.Mode, "orbit", StringComparison.Ordinal) && move.Distance <= 0f)
             problems.Add(new AiProblem(false, where, "orbit with distance 0 or less"));
+        if (string.Equals(move.Mode, "builtin", StringComparison.Ordinal) && !string.IsNullOrWhiteSpace(move.Builtin) &&
+            !AiCatalog.BuiltinFlights.Contains((move.Builtin ?? "").Trim().ToLowerInvariant()))
+            problems.Add(new AiProblem(true, where, "unknown built-in flight \"" + move.Builtin + "\""));
+        if (move.SpeedMult <= 0f) problems.Add(new AiProblem(false, where, "speedMult 0 or less"));
     }
 
     private static void CheckFire(List<AiProblem> problems, string where, AiFire? fire)
@@ -216,6 +292,20 @@ public sealed class AiLibrary
             else if (!ids.Add(state.Id)) problems.Add(new AiProblem(true, where, "two states are called \"" + state.Id + "\""));
         }
 
+        // Behaviors embedded in the file: only this AI's states see them, and they win over a behavior file with the same id.
+        var embedded = new Dictionary<string, AiBehaviorFile>(StringComparer.OrdinalIgnoreCase);
+        foreach (AiBehaviorFile own in (file.Behaviors ?? new List<AiBehaviorFile>()).Where(b => b != null))
+        {
+            string ownId = AiCatalog.CleanId(own.Id ?? "");
+            if (ownId.Length == 0) problems.Add(new AiProblem(true, where, "an embedded behavior has no id"));
+            else if (behaviors(ownId) != null)
+                problems.Add(new AiProblem(true, where, "the embedded behavior \"" + ownId + "\" has the id of a file of the behaviors folder: name it \"" + id + "_<name>\""));
+            else if (!embedded.TryAdd(ownId, own)) problems.Add(new AiProblem(true, where, "two embedded behaviors are called \"" + ownId + "\""));
+            else problems.AddRange(CheckBehavior(id + "/" + ownId, own));
+        }
+        Func<string, AiBehaviorFile?> sharedBehaviors = behaviors;
+        behaviors = name => embedded.TryGetValue(AiCatalog.CleanId(name), out AiBehaviorFile? hit) ? hit : sharedBehaviors(name);
+
         var brain = new AiBrain { Id = id, Name = string.IsNullOrWhiteSpace(file.Name) ? id : file.Name };
         brain.States = new AiCompiledState[states.Count];
         for (int i = 0; i < states.Count; i++)
@@ -228,8 +318,20 @@ public sealed class AiLibrary
                 BehaviorId = s.Behavior ?? "",
                 SelfDestruct = s.SelfDestruct,
                 Message = s.Message ?? "",
-                Bark = s.Bark ?? ""
+                Bark = s.Bark ?? "",
+                SummonType = (s.Summon ?? "").Trim(),
+                SummonCount = Math.Clamp(s.SummonCount, 1, 10),
+                SummonEvery = Math.Max(0f, s.SummonEvery),
+                SummonMax = Math.Max(0, s.SummonMax),
+                Shield = s.Shield,
+                ShieldSeconds = Math.Max(0f, s.ShieldSeconds),
+                ShieldEffect = (s.ShieldEffect ?? "").Trim(),
+                Effect = (s.Effect ?? "").Trim(),
+                Homing = string.Equals(s.Homing?.Trim(), "on", StringComparison.OrdinalIgnoreCase) ? true
+                    : string.Equals(s.Homing?.Trim(), "off", StringComparison.OrdinalIgnoreCase) ? false : null
             };
+            if (s.SummonCount > 10) problems.Add(new AiProblem(false, stateWhere, "summons at most 10 units at a time: 10 are used"));
+            if (run.SummonEvery > 0f && run.SummonEvery < 0.5f) run.SummonEvery = 0.5f;
 
             AiMove? move = s.Move;
             AiFire? fire = s.Fire;
@@ -291,6 +393,7 @@ public sealed class AiLibrary
             brain.States[i].Transitions = list.ToArray();
         }
 
+        brain.NeedsSummonCount = brain.States.Any(st => st.SummonType.Length > 0 || st.Transitions.Any(tr => tr.When.Any(c => c.Type == "summonsAtMost")));
         brain.Initial = brain.IndexOf(file.Initial ?? "");
         if (brain.Initial < 0)
         {

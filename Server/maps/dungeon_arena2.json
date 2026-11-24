@@ -158,165 +158,143 @@
       "name": "Dark Sphinx",
       "template": "arenacube",
       "boss": true,
-      "behavior": "turret",
       "aggroRadius": 60,
       "firstShotDelay": 2.0,
       "onDeath": "arenacubeDEATH",
-      "phases": [
-        {
-          "belowHealth": 0.75,
-          "summon": "arenacubebiglaserwall",
-          "summonCount": 1
-        },
-        {
-          "belowHealth": 0.5,
-          "summon": "arenacubemini",
-          "summonCount": 2
-        },
-        {
-          "belowHealth": 0.3,
-          "summon": "arenacubebiglaserwall2",
-          "summonCount": 1
-        },
-        {
-          "belowHealth": 0.15,
-          "summon": "arenacubetendril",
-          "summonCount": 3
-        }
-      ]
+      "ai": "dungeon_arena2_arenacube"
     },
     "arena2_destructiblewall1": {
       "name": "Wall",
       "template": "arena2_destructiblewall1",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "arena2_destructiblewall3": {
       "name": "arena2_destructiblewall3",
       "template": "arena2_destructiblewall3",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "arena2ballnchain": {
       "name": "Chains",
       "template": "arena2ballnchain",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "arena2beehex": {
       "name": "Hornet",
       "template": "arena2beehex",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 3.3,
       "aggroRadius": 28
     },
     "arena2lasereye": {
       "name": "Laser X",
       "template": "arena2lasereye",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 4.5,
       "aggroRadius": 28
     },
     "arena2spotter": {
       "name": "Death Wish",
       "template": "arena2spotter",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "arena2stardog": {
       "name": "Underdog",
       "template": "arena2stardog",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "arena2tripod": {
       "name": "Corpse Pulveriser",
       "template": "arena2tripod",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "arena2tripodminionmaster": {
       "name": "Hex",
       "template": "arena2tripodminionmaster",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "arena2warper": {
       "name": "Smoke Ninja",
       "template": "arena2warper",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "arenacubeDEATH": {
       "name": "Dark Sphinx",
       "template": "arenacubeDEATH",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "arenacubebiglaserwall": {
       "name": "Dark Sphinx",
       "template": "arenacubebiglaserwall",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 4.5,
       "aggroRadius": 28
     },
     "arenacubebiglaserwall2": {
       "name": "Dark Sphinx",
       "template": "arenacubebiglaserwall2",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 4.5,
       "aggroRadius": 28
     },
     "arenacubelasercross": {
       "name": "Laser X 2",
       "template": "arenacubelasercross",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "arenacubemini": {
       "name": "Arena Bomber",
       "template": "arenacubemini",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "arenacubenode": {
       "name": "Sphinx Cannon",
       "template": "arenacubenode",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "arenacubespiral": {
       "name": "Riddle",
       "template": "arenacubespiral",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 2.0,
       "aggroRadius": 30
     },
     "arenacubetendril": {
       "name": "Riddle",
       "template": "arenacubetendril",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 2.0,
       "aggroRadius": 30
     },
     "arenacubetendrilrandom": {
       "name": "Riddle",
       "template": "arenacubetendrilrandom",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 2.0,
       "aggroRadius": 30
     },
     "beartrap": {
       "name": "Dark Sphinx",
       "template": "beartrap",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "bonusswarm": {
       "name": "Bonus Pinata",
       "template": "bonusswarm",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     }

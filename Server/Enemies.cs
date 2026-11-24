@@ -4,7 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Lidgren.Network;
 
-// Enemies of the server: AI, waves (encounters), bosses with phases and chat commands.
+// Enemies of the server: AI, waves (encounters), bosses with AI phases and chat commands.
 //
 // How the client treats an enemy (checked in the decompiled code):
 //  - the enemy spawns with SpawnUnitsBatch: GenericUnit prefab (9), the UnitConfig's templateHash, aiTeam (2) team
@@ -23,7 +23,7 @@ using Lidgren.Network;
 //  - BepInEx\units_config.txt, written by the Steambirds Quieter plugin 1.14.0 or newer: name, hash,
 //    health, speed, turn and guns of each UnitConfig. Without it the server does not know the templateHash
 //    (Mono's string.GetHashCode, which .NET 8 does not reproduce).
-//  - enemies.json, in the server folder: enemy types, bosses with phases and encounters (waves).
+//  - enemies.json, in the server folder: enemy types and encounters (waves).
 //    Without the file only the types registered in the code apply (the tutorial's).
 //
 // Chat commands in the game (the client sends them as SlashCommand): /enemies shows the list.
@@ -35,9 +35,9 @@ using Lidgren.Network;
 // follows the player or goes to a destination). "team": 1 puts the unit on the player's side (ally).
 // "invulnerable" ignores damage; "opensAfterHitSeconds" makes a chest open after the first hit.
 //
-// Dungeons (Dungeons\DungeonServer.cs): boss phases can also give a shield ("shieldSeconds": no damage for a while)
-// and a visual effect ("visualEffect": a configBinary "statefulEffects" name, sent in FieldUpdate EFFECTSTATE1 with
-// the id MonoHash.StatefulEffectId). The dungeon server also uses the one-unit calls (GetHealth, RemoveUnit,
+// Dungeons (Dungeons\DungeonServer.cs): the states of an AI file can give a shield ("shield": no damage for a while)
+// and a visual effect ("effect": a configBinary "statefulEffects" name, sent in FieldUpdate EFFECTSTATE1 with
+// the id MonoHash.StatefulEffectId), and summon units (Enemies.Brains.cs). The dungeon server also uses the one-unit calls (GetHealth, RemoveUnit,
 // SetUnitInvulnerable, SetVisualEffect, IsAsleep).
 public static partial class Enemies
 {
@@ -92,7 +92,6 @@ public static partial class Enemies
         [JsonIgnore]
         public List<(float X, float Y)>? RoutePoints { get; set; }
         public List<int> Guns { get; set; } = new List<int>();
-        public List<BossPhase> Phases { get; set; } = new List<BossPhase>();
 
         // Team of the unit: 2 = enemy (Team.aiTeam), 1 = the player's ally (Team.greenTeam).
         public int Team { get; set; } = 2;
@@ -126,30 +125,6 @@ public static partial class Enemies
         {
             writer.WriteStringValue(value);
         }
-    }
-
-    public sealed class BossPhase
-    {
-        public float BelowHealth { get; set; } = 0.5f;
-        public string Behavior { get; set; } = "";
-        // Changes the AI of the boss when the phase starts (an AI file id). Empty = keeps the one it has.
-        [JsonConverter(typeof(AiReferenceConverter))]
-        public string Ai { get; set; } = "";
-        public float SpeedMultiplier { get; set; }
-        public float FireRateMultiplier { get; set; }
-        public List<int>? Guns { get; set; }
-        public string Summon { get; set; } = "";
-        public int SummonCount { get; set; }
-        public string Message { get; set; } = "";
-        // Speech of the phase: a key of the game's texts (ClientShowUnitChat speech bubble on the boss), like the barks of the dungeons.
-        public string Bark { get; set; } = "";
-        // Shield when the phase starts: the unit ignores damage for this many seconds (0 = no shield).
-        // Same idea as the "toggle_safety" states of the SN-Z in build 190426 (StartEffect "Shielded" for 10 s).
-        public float ShieldSeconds { get; set; }
-        // Turns the homing bullets on or off from this phase on (empty = keeps what the unit has).
-        public bool? HomingBullets { get; set; }
-        // Visual effect while the shield lasts (statefulEffects name). Empty with a shield = "tankShield".
-        public string VisualEffect { get; set; } = "";
     }
 
     public sealed class EncounterConfig
@@ -267,12 +242,12 @@ public static partial class Enemies
         public double LastDamagedAt = -1;
         // Health actually taken from this enemy by each player (peer id), for the after-fight "your damage: X%".
         public readonly Dictionary<long, float> DamageBy = new Dictionary<long, float>();
-        public float PhaseSpeedMult = 1f;
-        public float PhaseFireRateMult = 1f;
+        // Mount indexes the type allows (empty = all). An AI state can narrow it with fire.guns.
         public List<int> ActiveGuns = new List<int>();
         public readonly List<GunState> Guns = new List<GunState>();
-        public int PhasesApplied;
         public bool Homing;
+        // The unit that summoned this one (an AI state with "summon"): counted by the "summonsAtMost" condition.
+        public Enemy? Summoner;
         // Next point of the route (behavior "route").
         public int RouteIndex = -1;
 
@@ -304,10 +279,13 @@ public static partial class Enemies
         public bool HealthChanged = true;
         public double LastHealthSent;
 
-        // Shield of a boss phase (EscudoSegundos): no damage until this time.
+        // Shield of an AI state: no damage until this time (the AI renews it every tick while the shield is up).
         public double ShieldUntil;
         // Visual effect (FieldUpdate EFFECTSTATE1): current id, the id outside shields and "send it again".
         public short EffectId;
+        // Behavior "mine": false while dormant. It arms itself once no player is inside its contact radius, so a mine
+        // that is dropped on top of a player (or a player that spawns on it) does not go off by itself.
+        public bool Armed;
         public short BaseEffect;
         public bool EffectChanged;
 
@@ -327,6 +305,8 @@ public static partial class Enemies
     private sealed class Instance
     {
         public long Peer;
+        // Units that went off on a player (bombs, mines) and whose death the dungeon server has not read yet.
+        public readonly HashSet<int> SelfDestructed = new HashSet<int>();
         public NetServer Server = null!;
         public NetConnection Connection = null!;
         public string Role = "";
@@ -621,7 +601,6 @@ public static partial class Enemies
                 return "enemy " + Describe(enemy) + " DESTROYED";
             }
 
-            ApplyPhases(inst, enemy, now, log);
             return "enemy " + Describe(enemy) + " health " + Num(enemy.Health) + "/" + Num(enemy.MaxHp);
         }
     }

@@ -1,0 +1,20 @@
+{
+  "format": 1,
+  "id": "generic_kamikaze",
+  "name": "Generic: Kamikaze",
+  "author": "Steambirds Revive",
+  "description": "Flies at the player (a little ahead of where the plane is going) at 60% of its top speed and blows up when it touches it: the unit type's contactRadius says how close (the built-in \"kamikaze\" flight; no XP, no loot).",
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "kamikaze"
+      },
+      "fire": {
+        "enabled": true
+      }
+    }
+  ]
+}

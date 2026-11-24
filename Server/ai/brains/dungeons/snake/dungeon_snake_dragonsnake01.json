@@ -1,0 +1,115 @@
+{
+  "format": 1,
+  "id": "dungeon_snake_dragonsnake01",
+  "name": "Poison God (phases)",
+  "author": "Steambirds Revive",
+  "description": "The phases of Poison God as an AI: each phase starts when the health goes under its limit. Made from the old \"phases\" of the unit type (dungeon_snake.json).",
+  "units": ["dragonsnake01"],
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "transitions": [
+        {
+          "to": "phase1",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase1",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "dragonsnake02",
+      "summonCount": 2,
+      "message": "Poison God Engines!",
+      "bark": "dragonsnake01_1",
+      "transitions": [
+        {
+          "to": "phase2",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.55
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase2",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "dragonsnakeminion01",
+      "summonCount": 4,
+      "transitions": [
+        {
+          "to": "phase3",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.35
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase3",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "dragonsnake03_big",
+      "summonCount": 2,
+      "transitions": [
+        {
+          "to": "phase4",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.15
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase4",
+      "move": {
+        "mode": "builtin",
+        "builtin": "charge"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "dragonsnakeminion02",
+      "summonCount": 6
+    }
+  ]
+}

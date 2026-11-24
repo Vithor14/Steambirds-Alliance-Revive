@@ -336,18 +336,17 @@
       "name": "Bast Statue",
       "template": "bansheeleader5",
       "miniboss": true,
-      "behavior": "turret",
       "aggroRadius": 45,
       "firstShotDelay": 1.5,
+      "ai": "dungeon_temple_bansheeleader5",
       "barks": {
-        "onWake": "bansheeleader5_0",
-        "phase": "bansheeleader5_1"
+        "onWake": "bansheeleader5_0"
       }
     },
     "bansheeleader5treasureroom": {
       "name": "Bast Statue",
       "template": "bansheeleader5treasureroom",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "opensAfterHitSeconds": 1.5,
       "barks": {
         "onWake": "bansheeleader5treasureroom_0"
@@ -357,109 +356,85 @@
       "name": "High Priestess Tiffany",
       "template": "smokeboss",
       "boss": true,
-      "behavior": "turret",
       "aggroRadius": 60,
       "firstShotDelay": 2.0,
       "onDeath": "smokebossDEATH",
       "barks": {
         "onWake": "smokeboss_0",
-        "phase": "smokeboss_1",
         "curse": "smokeboss_curse",
         "summon": "smokeboss_feed",
         "onDeath": "smokebossDEATH"
       },
-      "phases": [
-        {
-          "belowHealth": 0.8,
-          "summon": "smokebossswarm",
-          "summonCount": 4,
-          "message": "Shades!"
-        },
-        {
-          "belowHealth": 0.6,
-          "summon": "temple_droneBIG",
-          "summonCount": 2
-        },
-        {
-          "belowHealth": 0.4,
-          "summon": "smokebossswarm",
-          "summonCount": 6
-        },
-        {
-          "belowHealth": 0.2,
-          "summon": "temple_fireball",
-          "summonCount": 2
-        }
-      ]
+      "ai": "dungeon_temple_smokeboss"
     },
     "bansheefake": {
       "name": "Bast Statue",
       "template": "bansheefake",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 6,
       "aggroRadius": 30
     },
     "bansheesacrifice": {
       "name": "Sacrificial Cultist",
       "template": "bansheesacrifice",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "duoguard": {
       "name": "Bast Guardian",
       "template": "duoguard",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 3.0,
       "aggroRadius": 28
     },
     "smokebossDEATH": {
       "name": "High Priestess Tiffany",
       "template": "smokebossDEATH",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "smokebossswarm": {
       "name": "Shade",
       "template": "smokebossswarm",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "temple_altar": {
       "name": "Altar of Bast",
       "template": "temple_altar",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "temple_banishee": {
       "name": "Banishee",
       "template": "temple_banishee",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "temple_cultist": {
       "name": "Bishop",
       "template": "temple_cultist",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 3.3,
       "aggroRadius": 28
     },
     "temple_cultistBIG": {
       "name": "High Priestess Tiffany",
       "template": "temple_cultistBIG",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "temple_droneBIG": {
       "name": "Godly Drone",
       "template": "temple_droneBIG",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "temple_fireball": {
       "name": "Fire Ball",
       "template": "temple_fireball",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28,
       "invulnerable": true
@@ -467,84 +442,84 @@
     "temple_spawner_tower_visible": {
       "name": "temple_spawner_tower_visible",
       "template": "temple_spawner_tower_visible",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "temple_trooper": {
       "name": "Priest",
       "template": "temple_trooper",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "templedrone": {
       "name": "Temple Drone",
       "template": "templedrone",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 4.1,
       "aggroRadius": 28
     },
     "templedungeondestroyablewall": {
       "name": "Wall",
       "template": "templedungeondestroyablewall",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "templedungeondestroyablewallstrong": {
       "name": "Wall",
       "template": "templedungeondestroyablewallstrong",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "templedungeontreasure": {
       "name": "Treasure",
       "template": "templedungeontreasure",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "opensAfterHitSeconds": 1.5
     },
     "templemonk": {
       "name": "Maw Guardian",
       "template": "templemonk",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "templemonk2": {
       "name": "Claw Guardian",
       "template": "templemonk2",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "trooper": {
       "name": "Cultist",
       "template": "trooper",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "trooperleader": {
       "name": "Cultist Dropship",
       "template": "trooperleader",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "turret": {
       "name": "Altar of Death",
       "template": "turret",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "warpmine": {
       "name": "Templar",
       "template": "warpmine",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "warpmine2": {
       "name": "Moon Templar",
       "template": "warpmine2",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "warpmineleader": {
       "name": "Templar",
       "template": "warpmineleader",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     }
   },

@@ -169,7 +169,7 @@ internal sealed class MainForm : Form
         if (!string.IsNullOrWhiteSpace(id)) aiTab?.OpenBrain(id);
     }
 
-    // "Open in the AI editor" of the map editor: the Enemy AI tab with this unit type of the map already in the simulator
+    // "Load unit in the AI editor" of the map editor: the Enemy AI tab with this unit type of the map already in the simulator
     // (an empty name just goes to the tab).
     private void OpenAiForType(string typeName, System.Text.Json.Nodes.JsonObject type)
     {

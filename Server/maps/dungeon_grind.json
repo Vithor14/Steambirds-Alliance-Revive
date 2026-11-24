@@ -364,26 +364,18 @@
       "name": "N.A.N.A.",
       "template": "cloudleaderbig",
       "miniboss": true,
-      "behavior": "circle",
       "aggroRadius": 45,
       "firstShotDelay": 1.5,
       "preferredDistance": 2.0,
       "barks": {
         "onWake": "cloudleaderbig"
       },
-      "phases": [
-        {
-          "belowHealth": 0.5,
-          "summon": "cloudleaderbigminion",
-          "summonCount": 3
-        }
-      ]
+      "ai": "dungeon_grind_cloudleaderbig"
     },
     "summonermaster": {
       "name": "Dr. Geckelston",
       "template": "summonermaster",
       "boss": true,
-      "behavior": "circle",
       "aggroRadius": 60,
       "firstShotDelay": 2.0,
       "preferredDistance": 7.7,
@@ -392,81 +384,54 @@
         "onWake": "summonermaster",
         "onDeath": "summonermasterDEATH"
       },
-      "phases": [
-        {
-          "belowHealth": 0.8,
-          "summon": "summoner",
-          "summonCount": 1
-        },
-        {
-          "belowHealth": 0.6,
-          "summon": "summonercentipede01",
-          "summonCount": 1
-        },
-        {
-          "belowHealth": 0.45,
-          "summon": "summoner2",
-          "summonCount": 1
-        },
-        {
-          "belowHealth": 0.3,
-          "summon": "summonerzombie28days",
-          "summonCount": 2
-        },
-        {
-          "belowHealth": 0.15,
-          "summon": "summonerzombiefinal",
-          "summonCount": 2,
-          "message": "Geckel-Clones!"
-        }
-      ]
+      "ai": "dungeon_grind_summonermaster"
     },
     "cloud": {
       "name": "Nanny",
       "template": "cloud",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "cloudleader": {
       "name": "Nanny",
       "template": "cloudleader",
-      "behavior": "circle",
+      "ai": "generic_circle",
       "preferredDistance": 2.0,
       "aggroRadius": 32
     },
     "cloudleaderbigminion": {
       "name": "N.A.N.A.",
       "template": "cloudleaderbigminion",
-      "behavior": "circle",
+      "ai": "generic_circle",
       "preferredDistance": 2.0,
       "aggroRadius": 32
     },
     "doc": {
       "name": "doc",
       "template": "doc",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 3.8,
       "aggroRadius": 28
     },
     "dochatcher": {
       "name": "Blood Nurse",
       "template": "dochatcher",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "docmini": {
       "name": "Nurse",
       "template": "docmini",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "electricbeltA_start_6": {
       "name": "electricbeltA_start_6",
       "template": "electricbeltA_start_6",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30,
       "invulnerable": true,
       "note": "Electric belt: 1 hp and no hit radius in the client, it cannot be shot; it is a hazard, not an enemy (does not count to clear the room)."
@@ -474,7 +439,7 @@
     "electricbeltB_start_6": {
       "name": "electricbeltB_start_6",
       "template": "electricbeltB_start_6",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30,
       "invulnerable": true,
       "note": "Electric belt: 1 hp and no hit radius in the client, it cannot be shot; it is a hazard, not an enemy (does not count to clear the room)."
@@ -482,145 +447,145 @@
     "evo": {
       "name": "Orphan",
       "template": "evo",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.8,
       "aggroRadius": 28
     },
     "evo2": {
       "name": "Enraged Orphan",
       "template": "evo2",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "evo3": {
       "name": "Monstrous Orphan",
       "template": "evo3",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "evohatcher": {
       "name": "Unstable Womb",
       "template": "evohatcher",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "grindhousedungeondestroyablewall": {
       "name": "grindhousedungeondestroyablewall",
       "template": "grindhousedungeondestroyablewall",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "grindhousedungeondestroyablewallstrong": {
       "name": "grindhousedungeondestroyablewallstrong",
       "template": "grindhousedungeondestroyablewallstrong",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "grindhousedungeontreasure": {
       "name": "Treasure",
       "template": "grindhousedungeontreasure",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "opensAfterHitSeconds": 1.5
     },
     "raildocA": {
       "name": "Blood Nurse",
       "template": "raildocA",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "raildocAmini": {
       "name": "Nurse",
       "template": "raildocAmini",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "raildoc_patient": {
       "name": "Patient",
       "template": "raildoc_patient",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "spiral": {
       "name": "Orderly",
       "template": "spiral",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 3.0,
       "aggroRadius": 28
     },
     "summoner": {
       "name": "Breeder Class I",
       "template": "summoner",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 4.5,
       "aggroRadius": 28
     },
     "summoner2": {
       "name": "Breeder Class II",
       "template": "summoner2",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 4.5,
       "aggroRadius": 28
     },
     "summonercentipede01": {
       "name": "The Conjoined",
       "template": "summonercentipede01",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "summonerhunter": {
       "name": "Flesh Disposal",
       "template": "summonerhunter",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "summonermasterDEATH": {
       "name": "Dr. Geckelston",
       "template": "summonermasterDEATH",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "summonersquirrel": {
       "name": "Sticky Fledgling",
       "template": "summonersquirrel",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 3.3,
       "aggroRadius": 28
     },
     "summonerzombie28days": {
       "name": "Edmund No. 6",
       "template": "summonerzombie28days",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "summonerzombiefinal": {
       "name": "Geckel-Clone",
       "template": "summonerzombiefinal",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "teslaclone": {
       "name": "Shock Doc",
       "template": "teslaclone",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "zombiehatcher": {
       "name": "Radiant Womb",
       "template": "zombiehatcher",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "zombieshatcherzombie": {
       "name": "zombieshatcherzombie",
       "template": "zombieshatcherzombie",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28,
       "fireRateMultiplier": 0.5

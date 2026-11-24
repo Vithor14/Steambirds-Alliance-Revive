@@ -186,7 +186,7 @@
       "name": "Golden Kai",
       "template": "kaiju3B",
       "boss": true,
-      "behavior": "circle",
+      "ai": "generic_circle",
       "aggroRadius": 60,
       "firstShotDelay": 2.0,
       "preferredDistance": 7.5,
@@ -200,7 +200,7 @@
       "name": "Golden Jinn",
       "template": "raijin3B",
       "boss": true,
-      "behavior": "circle",
+      "ai": "generic_circle",
       "aggroRadius": 60,
       "firstShotDelay": 2.0,
       "onDeath": "raijin3BDEATH",
@@ -213,7 +213,7 @@
       "name": "Golden Rei",
       "template": "thunderboss3B",
       "boss": true,
-      "behavior": "circle",
+      "ai": "generic_circle",
       "aggroRadius": 60,
       "firstShotDelay": 2.0,
       "onDeath": "thunderboss3BDEATH",
@@ -225,59 +225,59 @@
     "3brothers_portalmaker": {
       "name": "3brothers_portalmaker",
       "template": "3brothers_portalmaker",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "3brosportalally": {
       "name": "3brosportalally",
       "template": "3brosportalally",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "3brothers_gate": {
       "name": "3brothers_gate",
       "template": "3brothers_gate",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "3brothers_reward": {
       "name": "Treasure",
       "template": "3brothers_reward",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "opensAfterHitSeconds": 1.5
     },
     "3brothersdungeondestroyablewall": {
       "name": "3brothersdungeondestroyablewall",
       "template": "3brothersdungeondestroyablewall",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "duelist_3Bclone": {
       "name": "Duelist Protector",
       "template": "duelist_3Bclone",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "hallwayturretS": {
       "name": "hallwayturretS",
       "template": "hallwayturretS",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "kaiju3BDEATH": {
       "name": "Golden Kai",
       "template": "kaiju3BDEATH",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "raijin3BDEATH": {
       "name": "Golden Jinn",
       "template": "raijin3BDEATH",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "thunderboss3BDEATH": {
       "name": "Golden Rei",
       "template": "thunderboss3BDEATH",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     }
   },

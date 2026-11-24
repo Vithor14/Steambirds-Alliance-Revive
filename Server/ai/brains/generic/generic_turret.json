@@ -1,0 +1,20 @@
+{
+  "format": 1,
+  "id": "generic_turret",
+  "name": "Generic: Turret",
+  "author": "Steambirds Revive",
+  "description": "Does not move; turns to look at the player and shoots (the built-in \"turret\" flight).",
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      }
+    }
+  ]
+}

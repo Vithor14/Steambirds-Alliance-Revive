@@ -453,7 +453,7 @@
     "escortmission": {
       "name": "ALLY: Tunneling Drill",
       "template": "escortmission",
-      "behavior": "patrol",
+      "ai": "generic_patrol",
       "preferredDistance": 7,
       "aggroRadius": 28,
       "team": 1,
@@ -472,7 +472,7 @@
     "escorthealdrone": {
       "name": "ALLY: Repair Drone",
       "template": "escorthealdrone",
-      "behavior": "escort",
+      "ai": "generic_escort",
       "preferredDistance": 7,
       "aggroRadius": 28,
       "team": 1,
@@ -486,216 +486,189 @@
     "escortgoliath": {
       "name": "Deep Leviathan",
       "template": "escortgoliath",
-      "behavior": "charge",
       "preferredDistance": 6,
       "aggroRadius": 30,
       "miniboss": true,
       "note": "Deep Leviathan",
-      "phases": [
-        {
-          "belowHealth": 0.5,
-          "summon": "escortgoliathmissile",
-          "summonCount": 3
-        }
-      ]
+      "ai": "dungeon_rescue_escortgoliath"
     },
     "escorttrain1": {
       "name": "Stone Worm",
       "template": "escorttrain1",
       "miniboss": true,
-      "behavior": "circle",
       "aggroRadius": 45,
       "firstShotDelay": 1.5,
       "preferredDistance": 4.5,
-      "phases": [
-        {
-          "belowHealth": 0.9,
-          "summon": "escorttrain2",
-          "summonCount": 4,
-          "message": "Stone Worm!"
-        }
-      ]
+      "ai": "dungeon_rescue_escorttrain1"
     },
     "escortevilorb": {
       "name": "Buried Guardian",
       "template": "escortevilorb",
       "boss": true,
-      "behavior": "circle",
       "aggroRadius": 60,
       "firstShotDelay": 2.0,
       "onDeath": "escortevilorbDEATH",
       "barks": {
         "onDeath": "escortevilorbDEATH"
       },
-      "phases": [
-        {
-          "belowHealth": 0.6,
-          "summon": "escortgrunt3_noxp",
-          "summonCount": 3
-        },
-        {
-          "belowHealth": 0.3,
-          "summon": "escortturretmissile",
-          "summonCount": 4
-        }
-      ]
+      "ai": "dungeon_rescue_escortevilorb"
     },
     "escort_milestone1": {
       "name": "escort_milestone1",
       "template": "escort_milestone1",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "escort_milestone2": {
       "name": "escort_milestone2",
       "template": "escort_milestone2",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "escort_milestone3": {
       "name": "escort_milestone3",
       "template": "escort_milestone3",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "escort_wallgate": {
       "name": "Vault Door",
       "template": "escort_wallgate",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "escortbomb": {
       "name": "Magnet Bomb",
       "template": "escortbomb",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 6,
       "aggroRadius": 30
     },
     "escortdungeondestroyablewall": {
       "name": "Stone Wall",
       "template": "escortdungeondestroyablewall",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "escortdungeontreasure": {
       "name": "Abandoned Supplies",
       "template": "escortdungeontreasure",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "opensAfterHitSeconds": 1.5
     },
     "escortdungeontreasure2": {
       "name": "Ancient Supplies",
       "template": "escortdungeontreasure2",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "opensAfterHitSeconds": 1.5
     },
     "escortdungeontreasure3": {
       "name": "Legendary Supplies",
       "template": "escortdungeontreasure3",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "opensAfterHitSeconds": 1.5
     },
     "escortevilorbDEATH": {
       "name": "escortevilorbDEATH",
       "template": "escortevilorbDEATH",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "escortexit": {
       "name": "Exit",
       "template": "escortexit",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "escortgoliathmissile": {
       "name": "escortgoliathmissile",
       "template": "escortgoliathmissile",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 6,
       "aggroRadius": 30
     },
     "escortgrunt1": {
       "name": "Rust Borer",
       "template": "escortgrunt1",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "escortgrunt2": {
       "name": "Stone Crawler",
       "template": "escortgrunt2",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 4.5,
       "aggroRadius": 28
     },
     "escortgrunt2fat": {
       "name": "Stone Soldier",
       "template": "escortgrunt2fat",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 4.5,
       "aggroRadius": 28
     },
     "escortgrunt3": {
       "name": "Stone Elite",
       "template": "escortgrunt3",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 4.4,
       "aggroRadius": 28
     },
     "escortgrunt3_noxp": {
       "name": "Stone Elite",
       "template": "escortgrunt3_noxp",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 4.4,
       "aggroRadius": 28
     },
     "escortmissionDEATH": {
       "name": "ALLY: Tunneling Drill",
       "template": "escortmissionDEATH",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "escortmission_poop": {
       "name": "escortmission_poop",
       "template": "escortmission_poop",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "escortspotter1": {
       "name": "War Relic",
       "template": "escortspotter1",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "escortspotter2": {
       "name": "Super Relic",
       "template": "escortspotter2",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "escorttrain2": {
       "name": "Stone Worm Segment",
       "template": "escorttrain2",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 4.4,
       "aggroRadius": 28
     },
     "escortturret": {
       "name": "Ancient Turret",
       "template": "escortturret",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 6,
       "aggroRadius": 30
     },
     "escortturretmissile": {
       "name": "Missile",
       "template": "escortturretmissile",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "escortturretstrong": {
       "name": "Large Ancient Turret",
       "template": "escortturretstrong",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 6,
       "aggroRadius": 30
     }

@@ -358,14 +358,14 @@
     "firebarrel": {
       "name": "Flame Probe Cache",
       "template": "firebarrel",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "onDeath": "firebarrelboom",
       "note": "Barril visivel. Ao ser destruido solta o anel de balas (firebarrelboom)."
     },
     "firebarrelboom": {
       "name": "Flame Probe Cache",
       "template": "firebarrelboom",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 0,
       "firstShotDelay": 0.0,
       "shotRange": 999,
@@ -377,18 +377,17 @@
       "name": "Converted Prisoner",
       "template": "flamebatleader",
       "miniboss": true,
-      "behavior": "circle",
       "aggroRadius": 45,
       "firstShotDelay": 1.5,
+      "ai": "dungeon_fire_flamebatleader",
       "barks": {
-        "onWake": "flamebatleader_0",
-        "phase": "flamebatleader_1"
+        "onWake": "flamebatleader_0"
       }
     },
     "phoenix": {
       "name": "Traitor Phoenix",
       "template": "phoenix",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 3.0,
       "aggroRadius": 28,
       "barks": {
@@ -405,7 +404,7 @@
     "phoenix2": {
       "name": "Phoenix Egg",
       "template": "phoenix2",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30,
       "barks": {
         "onWake": "phoenix2"
@@ -415,7 +414,7 @@
     "phoenix3": {
       "name": "Traitor Phoenix",
       "template": "phoenix3",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28,
       "barks": {
@@ -425,7 +424,7 @@
     "phoenix4": {
       "name": "Phoenix Egg",
       "template": "phoenix4",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30,
       "barks": {
         "onWake": "phoenix4"
@@ -436,7 +435,7 @@
       "name": "Traitor Phoenix",
       "template": "phoenix5",
       "boss": true,
-      "behavior": "circle",
+      "ai": "generic_circle",
       "aggroRadius": 60,
       "firstShotDelay": 2.0,
       "onDeath": "phoenixDEATH",
@@ -448,144 +447,144 @@
     "curleader": {
       "name": "Fire Strafer",
       "template": "curleader",
-      "behavior": "circle",
+      "ai": "generic_circle",
       "preferredDistance": 9,
       "aggroRadius": 32
     },
     "dronette": {
       "name": "Augmentation Therapist",
       "template": "dronette",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "firedungeontreasure": {
       "name": "Treasure",
       "template": "firedungeontreasure",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "opensAfterHitSeconds": 1.5
     },
     "fireeyecorner": {
       "name": "Flame Thrower",
       "template": "fireeyecorner",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30,
       "invulnerable": true
     },
     "fireeyerotate": {
       "name": "fireeyerotate",
       "template": "fireeyerotate",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30,
       "invulnerable": true
     },
     "firesprinkler": {
       "name": "Furnace",
       "template": "firesprinkler",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "flamebat": {
       "name": "Mad prisoner",
       "template": "flamebat",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "heatventA": {
       "name": "heatventA",
       "template": "heatventA",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "heatventB": {
       "name": "heatventB",
       "template": "heatventB",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "heatventC": {
       "name": "heatventC",
       "template": "heatventC",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "heatventD": {
       "name": "heatventD",
       "template": "heatventD",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "lavapillar": {
       "name": "Lava",
       "template": "lavapillar",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "phoenixDEATH": {
       "name": "Traitor Phoenix",
       "template": "phoenixDEATH",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "prisoncage": {
       "name": "Cage",
       "template": "prisoncage",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "prisondestroyablewall": {
       "name": "Wall",
       "template": "prisondestroyablewall",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "prisonescapee": {
       "name": "Prisoner",
       "template": "prisonescapee",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 6,
       "aggroRadius": 30
     },
     "prisonsniper": {
       "name": "Sniper Tower",
       "template": "prisonsniper",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "riotguard": {
       "name": "MaxSec Guard",
       "template": "riotguard",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "riotguardleader": {
       "name": "MaxSec Guard",
       "template": "riotguardleader",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "riotguardshield": {
       "name": "MaxSec Guard",
       "template": "riotguardshield",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30,
       "invulnerable": true
     },
     "scavenger": {
       "name": "Fire Guard",
       "template": "scavenger",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "scavengerclose": {
       "name": "Fire Guard",
       "template": "scavengerclose",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "scavengerleader": {
       "name": "Prison Klaxon",
       "template": "scavengerleader",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     }
   },

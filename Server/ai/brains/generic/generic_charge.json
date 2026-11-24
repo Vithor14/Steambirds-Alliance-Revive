@@ -1,0 +1,20 @@
+{
+  "format": 1,
+  "id": "generic_charge",
+  "name": "Generic: Charge",
+  "author": "Steambirds Revive",
+  "description": "Dives at the player, passes through, turns and dives again (the built-in \"charge\" flight).",
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "charge"
+      },
+      "fire": {
+        "enabled": true
+      }
+    }
+  ]
+}

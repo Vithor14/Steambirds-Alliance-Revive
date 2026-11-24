@@ -326,251 +326,222 @@
       "name": "Husky Gang Leader",
       "template": "huskyleader",
       "miniboss": true,
-      "behavior": "circle",
       "aggroRadius": 45,
       "firstShotDelay": 1.5,
+      "ai": "dungeon_ice_huskyleader",
       "barks": {
-        "onWake": "huskyleader_0",
-        "phase": "huskyleader_3"
+        "onWake": "huskyleader_0"
       }
     },
     "iceboss": {
       "name": "The Frozen Horror",
       "template": "iceboss",
       "boss": true,
-      "behavior": "turret",
       "aggroRadius": 60,
       "firstShotDelay": 2.0,
       "onDeath": "icebossDEATH",
       "barks": {
         "onWake": "iceboss_0",
-        "phase": "iceboss_1",
         "onDeath": "icebossDEATH"
       },
-      "phases": [
-        {
-          "belowHealth": 0.8,
-          "summon": "icebossfrostmissile",
-          "summonCount": 2
-        },
-        {
-          "belowHealth": 0.6,
-          "summon": "icebosshailstorm",
-          "summonCount": 1
-        },
-        {
-          "belowHealth": 0.45,
-          "summon": "icebosssnakeleader",
-          "summonCount": 2
-        },
-        {
-          "belowHealth": 0.3,
-          "summon": "icebossicestorm",
-          "summonCount": 1
-        },
-        {
-          "belowHealth": 0.15,
-          "summon": "icebosssnowflake",
-          "summonCount": 3
-        }
-      ]
+      "ai": "dungeon_ice_iceboss"
     },
     "blizzard": {
       "name": "Blizzard",
       "template": "blizzard",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "blizzardcore": {
       "name": "Blizzard Generator",
       "template": "blizzardcore",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "blizzardiciclesmaster": {
       "name": "Ice Node",
       "template": "blizzardiciclesmaster",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "frostgiant": {
       "name": "Frost Giant",
       "template": "frostgiant",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.2,
       "aggroRadius": 28
     },
     "frostgiant_noxp": {
       "name": "Frost Giant",
       "template": "frostgiant_noxp",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.2,
       "aggroRadius": 28
     },
     "hedgeleader2": {
       "name": "Ice Fountain",
       "template": "hedgeleader2",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "hedgeminion2": {
       "name": "Ice Fountain",
       "template": "hedgeminion2",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 6,
       "aggroRadius": 30
     },
     "husky": {
       "name": "Husky",
       "template": "husky",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.2,
       "aggroRadius": 28
     },
     "huskyfreezing": {
       "name": "Husky",
       "template": "huskyfreezing",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "huskyfreezingminion": {
       "name": "Husky",
       "template": "huskyfreezingminion",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "icebossDEATH": {
       "name": "The Frozen Horror",
       "template": "icebossDEATH",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "icebossfrostmissile": {
       "name": "The Frozen Horror",
       "template": "icebossfrostmissile",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "icebosshailstorm": {
       "name": "icebosshailstorm",
       "template": "icebosshailstorm",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "icebossicestorm": {
       "name": "icebossicestorm",
       "template": "icebossicestorm",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "icebossnode1": {
       "name": "icebossnode1",
       "template": "icebossnode1",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "icebossnode2": {
       "name": "icebossnode2",
       "template": "icebossnode2",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "icebossnode3": {
       "name": "icebossnode3",
       "template": "icebossnode3",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "icebossnode4": {
       "name": "icebossnode4",
       "template": "icebossnode4",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "icebossnode5": {
       "name": "icebossnode5",
       "template": "icebossnode5",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "icebossnode6": {
       "name": "icebossnode6",
       "template": "icebossnode6",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "icebosssnakeleader": {
       "name": "Fresh Frost Serpent Hatchling",
       "template": "icebosssnakeleader",
-      "behavior": "circle",
+      "ai": "generic_circle",
       "preferredDistance": 3.7,
       "aggroRadius": 32
     },
     "icebosssnowflake": {
       "name": "The Frozen Horror",
       "template": "icebosssnowflake",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "icecrystalA": {
       "name": "icecrystalA",
       "template": "icecrystalA",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "icecrystalB": {
       "name": "icecrystalB",
       "template": "icecrystalB",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "icedungeondestroyablewall": {
       "name": "Wall",
       "template": "icedungeondestroyablewall",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "icedungeontreasure": {
       "name": "Treasure",
       "template": "icedungeontreasure",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "opensAfterHitSeconds": 1.5
     },
     "icesnake": {
       "name": "Frost Serpent Hatchling",
       "template": "icesnake",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "icesnakeegg": {
       "name": "Frost Serpent Hatchling",
       "template": "icesnakeegg",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "icesnakeleader": {
       "name": "Frost Serpent Hatchling",
       "template": "icesnakeleader",
-      "behavior": "circle",
+      "ai": "generic_circle",
       "preferredDistance": 5.0,
       "aggroRadius": 32
     },
     "mountaingrunt": {
       "name": "Mini Cryosect",
       "template": "mountaingrunt",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 4.0,
       "aggroRadius": 28
     },
     "mountaingruntleader": {
       "name": "Cryosect",
       "template": "mountaingruntleader",
-      "behavior": "circle",
+      "ai": "generic_circle",
       "preferredDistance": 4.0,
       "aggroRadius": 32
     },
     "mountainhunter": {
       "name": "Snow Banshee",
       "template": "mountainhunter",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 4.0,
       "aggroRadius": 28
     }

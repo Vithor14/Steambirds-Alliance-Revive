@@ -1,0 +1,163 @@
+{
+  "format": 1,
+  "id": "dungeon_finalboss_meowza",
+  "name": "Godleader Meowza (phases)",
+  "author": "Steambirds Revive",
+  "description": "The phases of Godleader Meowza as an AI: each phase starts when the health goes under its limit. Made from the old \"phases\" of the unit type (dungeon_finalboss.json).",
+  "units": ["meowza"],
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "transitions": [
+        {
+          "to": "phase1",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.85
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase1",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "meowzaB1m",
+      "summonCount": 4,
+      "bark": "BOS1_meowzaB0",
+      "transitions": [
+        {
+          "to": "phase2",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase2",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "meowzaB2m",
+      "summonCount": 3,
+      "transitions": [
+        {
+          "to": "phase3",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.55
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase3",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "meowzaC1m1",
+      "summonCount": 4,
+      "bark": "BOS1_meowzaC0",
+      "transitions": [
+        {
+          "to": "phase4",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase4",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "meowzaC2m",
+      "summonCount": 3,
+      "transitions": [
+        {
+          "to": "phase5",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.25
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase5",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "meowzanuke1m1",
+      "summonCount": 1,
+      "bark": "BOS1_meowzanuke",
+      "transitions": [
+        {
+          "to": "phase6",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.12
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase6",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "meowzaD2m",
+      "summonCount": 4,
+      "bark": "BOS1_meowzaD0"
+    }
+  ]
+}

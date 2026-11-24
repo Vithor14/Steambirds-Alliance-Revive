@@ -5,51 +5,44 @@ using SteambirdsLauncher.UI;
 namespace SteambirdsLauncher.Editor;
 
 // "Unit types" page: the enemies of the map ("types"). A type is a game unit (template) plus the changes this map makes:
-// behavior, health, weapons, phases, what it summons, what it leaves when it dies...
+// behavior, health, weapons, AI, what it summons, what it leaves when it dies... (Boss phases, shields and summons by
+// health are states of an AI file now: the Enemy AI tab.)
 internal sealed class UnitTypesPage : EditorPage
 {
     private readonly CollectionPanel types;
     private readonly JsonForm combatForm;
     private readonly JsonForm deathForm;
-    private readonly CollectionPanel phases;
     private readonly JsonForm aiForm;
     private readonly Button aiButton;
     private readonly Label aiState;
     private readonly ThemedTabControl inner;
-    private readonly TabPage phasesPage;
 
     public UnitTypesPage(EditorContext context) : base(context)
     {
         combatForm = new JsonForm(CombatFields(), Session.Checkpoint, TabFieldChanged);
         deathForm = new JsonForm(DeathFields(), Session.Checkpoint, TabFieldChanged);
 
-        phases = new CollectionPanel(Session,
-            new PhaseSource(
-                () => Json.ArrOrNull(CurrentType, "phases"),
-                () => CurrentType == null ? null : Json.Arr(CurrentType, "phases")),
-            PhaseFields(), "", listHeight: 70);
-
         aiState = Ui.Wrapping("", 400, true);
-        aiButton = Ui.Primary(L.T("Open in the AI editor"), (_, _) => EditAi());
+        aiButton = Ui.Primary(L.T("Load unit in the AI editor"), (_, _) => EditAi());
         Context.Tip.SetToolTip(aiButton, L.T("Goes to the Enemy AI tab with this unit type loaded in the simulator (its game unit, speed, fire rate and AI), ready to edit."));
         aiForm = new JsonForm(AiFieldSpecs(), Session.Checkpoint, TabFieldChanged);
+        // One field in a row of its own: a scroll bar here would only be in the way.
+        aiForm.AutoScroll = false;
         TabPage aiPage = BuildAiPage();
 
         TabPage combatPage = new TabPage(L.T("Combat")) { Padding = new Padding(2) };
         combatPage.Controls.Add(combatForm);
         TabPage deathPage = new TabPage(L.T("Death and summons")) { Padding = new Padding(2) };
         deathPage.Controls.Add(deathForm);
-        phasesPage = new TabPage(L.T("Phases")) { Padding = new Padding(2) };
-        phasesPage.Controls.Add(phases);
 
         inner = new ThemedTabControl { Dock = DockStyle.Fill, Padding = new Point(8, 3) };
-        inner.TabPages.AddRange(new[] { combatPage, aiPage, deathPage, phasesPage });
+        inner.TabPages.AddRange(new[] { combatPage, aiPage, deathPage });
 
         types = new CollectionPanel(Session,
             new ObjectDictionarySource(
                 () => Json.ObjOrNull(Document.Root, "types"),
                 () => Json.Obj(Document.Root, "types"),
-                name => new JsonObject { ["name"] = name, ["template"] = "", ["behavior"] = "chase" },
+                name => new JsonObject { ["name"] = name, ["template"] = "", [EnemyAiEditors.AiField] = EnemyAiEditors.DefaultAi },
                 (oldName, newName) => MapRefactor.Rename(Document, NameKind.UnitType, oldName, newName)),
             GeneralFields(), "unit", listHeight: 110, extra: inner, formHeight: 150,
             picture: item => Context.PictureOfType(item.Key));
@@ -59,12 +52,9 @@ internal sealed class UnitTypesPage : EditorPage
             combatForm.Bind(item?.Data);
             deathForm.Bind(item?.Data);
             aiForm.Bind(item?.Data);
-            phases.Reload();
-            phases.Enabled = item != null;
             UpdateAiState();
         };
         types.ListChanged += () => Canvas.Invalidate();
-        phases.ListChanged += () => Canvas.Invalidate();
 
         Controls.Add(types);
         Reload();
@@ -105,7 +95,7 @@ internal sealed class UnitTypesPage : EditorPage
         table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        table.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+        table.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
         table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         table.Controls.Add(title, 0, 0);
@@ -121,8 +111,8 @@ internal sealed class UnitTypesPage : EditorPage
     {
         yield return new FieldSpec(EnemyAiEditors.AiField, "AI (file)", FieldKind.EditableChoice)
         {
-            Choices = () => EnemyAiEditors.Current?.BrainIds() ?? Enumerable.Empty<string>(),
-            Help = "Id of an AI file of the server's ai\\brains folder. Empty = no AI: the unit keeps the built-in behavior the map already has."
+            Choices = () => EnemyAiEditors.Current?.ApplicableBrainIds(EnemyAiEditors.UnitNamesOf(CurrentType)) ?? Enumerable.Empty<string>(),
+            Help = "Id of an AI file of the server's ai\\brains folder. The list shows the AIs made for this unit first, then the generic ones; you can also type another id. Empty = the unit gets the generic chase AI."
         };
     }
 
@@ -244,27 +234,6 @@ internal sealed class UnitTypesPage : EditorPage
 
         yield return FieldSpec.Header("Speech (client bark keys)");
         yield return new FieldSpec("barks.onWake", "When it wakes up", FieldKind.Text) { Help = "Key of the speech line (client bark table) the unit says when it wakes up." };
-        yield return new FieldSpec("barks.phase", "When the phase changes", FieldKind.Text) { Help = "Key of the speech line the unit says when it changes phase." };
         yield return new FieldSpec("barks.onDeath", "When it dies", FieldKind.Text) { Help = "Key of the speech line the unit says when it dies." };
-    }
-
-    private IEnumerable<FieldSpec> PhaseFields()
-    {
-        yield return new FieldSpec("belowHealth", "Below health (0-1)", FieldKind.OptionalNumber)
-        {
-            Help = "0.66 = the phase starts when the health goes under 66%."
-        };
-        yield return new FieldSpec("ai", "AI (file)", FieldKind.EditableChoice)
-        {
-            Choices = () => EnemyAiEditors.Current?.BrainIds() ?? Enumerable.Empty<string>(),
-            Help = "AI file (Enemy AI tab) the boss switches to when the phase starts. Empty = it keeps the AI it had."
-        };
-        yield return Number("speedMultiplier", "Speed multiplier", "Multiplies the speed of the unit (2 = twice as fast).");
-        yield return Number("fireRateMultiplier", "Fire rate multiplier", "Multiplies how often the unit shoots (2 = twice as often).");
-        yield return new FieldSpec("summon", "Summons", FieldKind.EditableChoice) { Choices = Context.TypeNames, Picture = Context.PictureOfType, Help = "Unit type summoned when the phase starts." };
-        yield return Number("summonCount", "Amount summoned", "How many units are summoned when the phase starts.");
-        yield return new FieldSpec("message", "Message", FieldKind.Text) { Help = "Chat message shown when the phase starts." };
-        yield return Number("shieldSeconds", "Shield (s)", "The boss takes no damage for this long.");
-        yield return new FieldSpec("visualEffect", "Visual effect", FieldKind.Text) { Help = "Name of a client effect (statefulEffects) shown during this phase." };
     }
 }

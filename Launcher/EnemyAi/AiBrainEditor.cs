@@ -14,7 +14,11 @@ internal sealed class AiBrainEditor : Panel
     private readonly ListEditor statesList;
     private readonly JsonForm stateForm;
     private readonly JsonForm ownForm;
+    private readonly JsonForm effectsForm;
+    private readonly AiGraphView graph;
     private readonly Label behaviorInfo;
+    private readonly Button newBehaviorButton;
+    private readonly Button editBehaviorButton;
     private readonly Label ownNote;
     private readonly ListEditor transitions;
     private readonly JsonForm toForm;
@@ -37,12 +41,22 @@ internal sealed class AiBrainEditor : Panel
 
         stateForm = new JsonForm(AiFields.State(BehaviorIds), () => { }, OnStateField);
         behaviorInfo = Ui.Wrapping("", 420, true);
+        newBehaviorButton = Ui.Button(L.T("New behavior..."), (_, _) => NewBehavior());
+        editBehaviorButton = Ui.Button(L.T("Edit behavior..."), (_, _) => EditBehavior());
         ownForm = new JsonForm(AiFields.Behavior(), () => { }, _ =>
         {
             statesList.RefreshText();
             Changed();
         });
-        ownNote = Ui.Wrapping(L.T("These values are used when the state has no behavior file (the \"Behavior (file)\" field of the State tab is empty)."), 420, true);
+        effectsForm = new JsonForm(AiFields.Effects(AiUnits.TypeNames), () => { }, _ =>
+        {
+            statesList.RefreshText();
+            Changed();
+        });
+        graph = new AiGraphView();
+        graph.StateChosen += id => statesList.SelectById(id);
+        graph.Edited += () => Edited?.Invoke();
+        ownNote = Ui.Wrapping(L.T("These are the values of the state's own behavior: how it moves, shoots and what happens on contact. They are used (and editable here) while no behavior is picked in the \"Behavior (file)\" field of the State tab. To change a behavior you picked, use \"Edit behavior...\" (one inside this AI) or its file in the list on the left."), 420, true);
 
         transitions = new ListEditor(() => AiFields.NewTransition(DefaultTarget()), AiFields.DescribeTransition, 100);
         transitions.SelectionChanged += OnTransitionSelected;
@@ -88,22 +102,36 @@ internal sealed class AiBrainEditor : Panel
         var detail = new ThemedTabControl { Dock = DockStyle.Fill, Padding = new Point(8, 3) };
         detail.TabPages.Add(StatePage());
         detail.TabPages.Add(OwnPage());
+        detail.TabPages.Add(EffectsPage());
         detail.TabPages.Add(TransitionsPage());
 
         var table = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, Padding = new Padding(0) };
         table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        table.RowStyles.Add(new RowStyle(SizeType.Absolute, 168));
         table.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
         table.RowStyles.Add(new RowStyle(SizeType.Absolute, 116));
         table.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        table.Controls.Add(info, 0, 0);
-        table.Controls.Add(Ui.Bold(L.T("States")), 0, 1);
-        table.Controls.Add(statesList, 0, 2);
-        table.Controls.Add(detail, 0, 3);
-        Controls.Add(table);
+        table.Controls.Add(Ui.Bold(L.T("States")), 0, 0);
+        table.Controls.Add(statesList, 0, 1);
+        table.Controls.Add(detail, 0, 2);
+
+        // The list of states with their transitions is what opens by default; the graph is an extra way to see the same AI.
+        var views = new ThemedTabControl { Dock = DockStyle.Fill, Padding = new Point(8, 3) };
+        var listPage = new TabPage(L.T("States and transitions")) { Padding = new Padding(2) };
+        listPage.Controls.Add(table);
+        var graphPage = new TabPage(L.T("Graph")) { Padding = new Padding(2) };
+        graphPage.Controls.Add(graph);
+        var infoPage = new TabPage(L.T("Info")) { Padding = new Padding(2) };
+        infoPage.Controls.Add(info);
+        views.TabPages.Add(listPage);
+        views.TabPages.Add(graphPage);
+        views.TabPages.Add(infoPage);
+        Controls.Add(views);
     }
 
     public event Action? Edited;
+
+    // The state the simulator is running now, so the graph can show it ("" = none).
+    public void SetRunningState(string id) => graph.SetRunningState(id);
 
     // ------------------------------------------------------------------ pages
 
@@ -113,22 +141,37 @@ internal sealed class AiBrainEditor : Panel
         var table = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1 };
         table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         table.RowStyles.Add(new RowStyle(SizeType.Absolute, 150));
+        table.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
         table.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         table.Controls.Add(stateForm, 0, 0);
-        table.Controls.Add(behaviorInfo, 0, 1);
+        table.Controls.Add(Ui.WrapFlow(newBehaviorButton, editBehaviorButton), 0, 1);
+        table.Controls.Add(behaviorInfo, 0, 2);
         page.Controls.Add(table);
         return page;
     }
 
     private TabPage OwnPage()
     {
-        var page = new TabPage(L.T("Own values")) { Padding = new Padding(2) };
+        var page = new TabPage(L.T("Behavior values")) { Padding = new Padding(2) };
         var table = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1 };
         table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         table.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         table.Controls.Add(ownNote, 0, 0);
         table.Controls.Add(ownForm, 0, 1);
+        page.Controls.Add(table);
+        return page;
+    }
+
+    private TabPage EffectsPage()
+    {
+        var page = new TabPage(L.T("Summons and shield")) { Padding = new Padding(2) };
+        var table = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1 };
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        table.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        table.Controls.Add(Ui.Wrapping(L.T("What the unit does when it is in this state, besides moving and shooting. Summons and the shield belong to the state, not to a behavior file."), 420, true), 0, 0);
+        table.Controls.Add(effectsForm, 0, 1);
         page.Controls.Add(table);
         return page;
     }
@@ -166,6 +209,8 @@ internal sealed class AiBrainEditor : Panel
         doc = document;
         info.Bind(document.Root);
         statesList.Bind(Json.ArrOrNull(document.Root, "states"), () => Json.Arr(document.Root, "states"));
+        graph.Bind(document.Root);
+        graph.SelectState(stateId);
     }
 
     private IEnumerable<string> StateIds()
@@ -173,9 +218,123 @@ internal sealed class AiBrainEditor : Panel
         return doc == null ? Enumerable.Empty<string>() : Json.Objects(Json.ArrOrNull(doc.Root, "states")).Select(s => Json.Str(s, "id")).Where(s => s.Length > 0).ToList();
     }
 
+    // An embedded behavior is named "<id of the AI>_<name>", so it can never have the id of a behavior file (the prefix goes away when
+    // it is saved in the behaviors folder).
+    private string EmbeddedPrefix => (doc == null ? "" : doc.Id) + "_";
+
+    private string WithoutPrefix(string id)
+    {
+        return id.StartsWith(EmbeddedPrefix, StringComparison.OrdinalIgnoreCase) && id.Length > EmbeddedPrefix.Length ? id.Substring(EmbeddedPrefix.Length) : id;
+    }
+
+    // The behaviors a state can pick: the ones inside this AI first, then the files of the behaviors folder.
     private IEnumerable<string> BehaviorIds()
     {
-        return store.Behaviors.Select(b => b.Id).ToList();
+        List<string> ids = EmbeddedIds().ToList();
+        foreach (AiDoc file in store.Behaviors)
+        {
+            if (!ids.Contains(file.Id, StringComparer.OrdinalIgnoreCase)) ids.Add(file.Id);
+        }
+        return ids;
+    }
+
+    private IEnumerable<string> EmbeddedIds()
+    {
+        return doc == null ? Enumerable.Empty<string>() : Json.Objects(Json.ArrOrNull(doc.Root, "behaviors")).Select(b => Json.Str(b, "id")).Where(i => i.Length > 0).ToList();
+    }
+
+    // The behavior of this AI with that id (null when the id is a file of the behaviors folder, or nothing).
+    private JsonObject? EmbeddedOf(string id)
+    {
+        if (doc == null || id.Length == 0) return null;
+        return Json.Objects(Json.ArrOrNull(doc.Root, "behaviors")).FirstOrDefault(b => string.Equals(Json.Str(b, "id"), id, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private string UniqueBehaviorId(string wanted)
+    {
+        string name = AiCatalog.CleanId(wanted);
+        if (name.Length == 0) name = "new_behavior";
+        string id = EmbeddedPrefix + name;
+        string candidate = id;
+        for (int n = 2; EmbeddedOf(candidate) != null || store.Find(AiKind.Behavior, candidate) != null; n++) candidate = id + "_" + n;
+        return candidate;
+    }
+
+    // "New behavior...": asks for a name and opens a window with only that behavior. It can stay inside this AI or be saved in the
+    // behaviors folder; either way the state that was selected uses it.
+    private void NewBehavior()
+    {
+        if (doc == null || state == null) return;
+        string? name = AiPrompt.Ask(FindForm()!, L.T("New behavior"), L.T("Name (the file name is made from it):"), L.T("My behavior"));
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        string id = UniqueBehaviorId(name);
+        JsonObject root = AiFields.NewBehavior(name);
+        root["format"] = AiCatalog.FormatVersion;
+        root["id"] = id;
+        using var window = new AiBehaviorWindow(store, new AiDoc(AiKind.Behavior, id, root), true);
+        window.ShowDialog(FindForm());
+        if (window.Result == AiBehaviorResult.Cancel) return;
+
+        try
+        {
+            if (window.Result == AiBehaviorResult.Shared)
+            {
+                // In the behaviors folder it is a behavior of everybody: it goes by its name, without the name of this AI.
+                AiDoc saved = store.Add(AiKind.Behavior, WithoutPrefix(id), root, true);
+                state["behavior"] = saved.Id;
+            }
+            else
+            {
+                Json.Arr(doc.Root, "behaviors").Add(root);
+                state["behavior"] = id;
+            }
+        }
+        catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+        {
+            Ui.ShowError(this, L.F("Could not save the file: {0}", e.Message));
+            return;
+        }
+        AfterBehaviorChange();
+    }
+
+    // "Edit behavior...": the behavior of this AI that the state uses, in its own window.
+    private void EditBehavior()
+    {
+        if (doc == null || state == null) return;
+        string id = Json.Str(state, "behavior");
+        JsonObject? embedded = EmbeddedOf(id);
+        if (embedded == null) return;
+
+        using var window = new AiBehaviorWindow(store, new AiDoc(AiKind.Behavior, id, embedded), false);
+        window.ShowDialog(FindForm());
+        if (window.Result == AiBehaviorResult.Shared)
+        {
+            try
+            {
+                Json.Arr(doc.Root, "behaviors").Remove(embedded);
+                AiDoc saved = store.Add(AiKind.Behavior, WithoutPrefix(id), embedded, true);
+                // Every state of this AI that used it now uses the file.
+                foreach (JsonObject other in Json.Objects(Json.ArrOrNull(doc.Root, "states")))
+                {
+                    if (string.Equals(Json.Str(other, "behavior"), id, StringComparison.OrdinalIgnoreCase)) other["behavior"] = saved.Id;
+                }
+            }
+            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+            {
+                Ui.ShowError(this, L.F("Could not save the file: {0}", e.Message));
+            }
+        }
+        if (window.Edited || window.Result == AiBehaviorResult.Shared) AfterBehaviorChange();
+    }
+
+    private void AfterBehaviorChange()
+    {
+        stateForm.Bind(state);
+        UpdateOwnEnabled();
+        ShowBehaviorInfo();
+        statesList.RefreshText();
+        Changed();
     }
 
     private string DefaultTarget()
@@ -190,6 +349,8 @@ internal sealed class AiBrainEditor : Panel
         stateId = Json.Str(selected, "id");
         stateForm.Bind(selected);
         ownForm.Bind(selected);
+        effectsForm.Bind(selected);
+        graph.SelectState(stateId);
         UpdateOwnEnabled();
         transitions.Bind(Json.ArrOrNull(selected, "transitions"), selected == null ? null : () => Json.Arr(selected, "transitions"));
         ShowBehaviorInfo();
@@ -248,6 +409,8 @@ internal sealed class AiBrainEditor : Panel
 
     private void ShowBehaviorInfo()
     {
+        newBehaviorButton.Enabled = state != null;
+        editBehaviorButton.Enabled = state != null && EmbeddedOf(Json.Str(state, "behavior")) != null;
         if (state == null)
         {
             behaviorInfo.Text = "";
@@ -256,7 +419,14 @@ internal sealed class AiBrainEditor : Panel
         string id = Json.Str(state, "behavior");
         if (id.Length == 0)
         {
-            behaviorInfo.Text = L.T("This state uses its own values (Own values tab).");
+            behaviorInfo.Text = L.T("This state has its own behavior (Behavior values tab).");
+            return;
+        }
+        JsonObject? embedded = EmbeddedOf(id);
+        if (embedded != null)
+        {
+            string embeddedMode = Json.Str(Json.ObjOrNull(embedded, "move"), "mode");
+            behaviorInfo.Text = L.T("Inside this AI") + ": " + (Json.Str(embedded, "name").Length > 0 ? Json.Str(embedded, "name") : id) + "  (" + embeddedMode + ")\n" + Json.Str(embedded, "description");
             return;
         }
         AiDoc? behavior = store.Find(AiKind.Behavior, id);
@@ -278,6 +448,7 @@ internal sealed class AiBrainEditor : Panel
 
     private void Changed()
     {
+        graph.RedrawFromFile();
         Edited?.Invoke();
     }
 }

@@ -46,7 +46,7 @@ public static partial class Enemies
         bool awake = enemy.Aggro && inst.HasPlayer && inst.PlayerAlive && enemy.Behavior != "idle";
 
         // Guns that aim: follow the player while inside the arc.
-        if (m.Mode == 0 && awake && !(enemy.Behavior == "fixed" && enemy.Ai == null))
+        if (m.Mode == 0 && awake && !IsFixedGun(enemy))
         {
             float relative = AngleDifference(enemy.Rot, Heading(enemy.X, enemy.Y, inst.PlayerX, inst.PlayerY));
             float turn = gun.Turn;

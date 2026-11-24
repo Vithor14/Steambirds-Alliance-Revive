@@ -1,0 +1,44 @@
+{
+  "format": 1,
+  "id": "dungeon_rescue_escortgoliath",
+  "name": "Deep Leviathan (phases)",
+  "author": "Steambirds Revive",
+  "description": "The phases of Deep Leviathan as an AI: each phase starts when the health goes under its limit. Made from the old \"phases\" of the unit type (dungeon_rescue.json).",
+  "units": ["escortgoliath"],
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "charge"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "transitions": [
+        {
+          "to": "phase1",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase1",
+      "move": {
+        "mode": "builtin",
+        "builtin": "charge"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "escortgoliathmissile",
+      "summonCount": 3
+    }
+  ]
+}

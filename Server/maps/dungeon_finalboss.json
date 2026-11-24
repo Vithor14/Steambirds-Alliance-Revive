@@ -196,7 +196,7 @@
     "meowzablocker": {
       "name": "The Viceroy",
       "template": "meowzablocker",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30,
       "invulnerable": true,
       "barks": {
@@ -208,7 +208,7 @@
     "meowza_playerkicker": {
       "name": "Banishee",
       "template": "meowza_playerkicker",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "preferredDistance": 7,
       "aggroRadius": 28,
       "invulnerable": true,
@@ -221,7 +221,6 @@
       "name": "Godleader Meowza",
       "template": "meowza",
       "boss": true,
-      "behavior": "circle",
       "aggroRadius": 60,
       "firstShotDelay": 2.0,
       "onDeath": "meowzaDEATH",
@@ -235,136 +234,101 @@
         "nuke": "BOS1_meowzanuke",
         "onDeath": "BOS1_meowzaDEATH"
       },
-      "phases": [
-        {
-          "belowHealth": 0.85,
-          "summon": "meowzaB1m",
-          "summonCount": 4,
-          "bark": "BOS1_meowzaB0"
-        },
-        {
-          "belowHealth": 0.7,
-          "summon": "meowzaB2m",
-          "summonCount": 3
-        },
-        {
-          "belowHealth": 0.55,
-          "summon": "meowzaC1m1",
-          "summonCount": 4,
-          "bark": "BOS1_meowzaC0"
-        },
-        {
-          "belowHealth": 0.4,
-          "summon": "meowzaC2m",
-          "summonCount": 3
-        },
-        {
-          "belowHealth": 0.25,
-          "summon": "meowzanuke1m1",
-          "summonCount": 1,
-          "bark": "BOS1_meowzanuke"
-        },
-        {
-          "belowHealth": 0.12,
-          "summon": "meowzaD2m",
-          "summonCount": 4,
-          "bark": "BOS1_meowzaD0"
-        }
-      ]
+      "ai": "dungeon_finalboss_meowza"
     },
     "meowzaB1m": {
       "name": "Godleader Meowza",
       "template": "meowzaB1m",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "meowzaB2m": {
       "name": "Godleader Meowza",
       "template": "meowzaB2m",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 2.0,
       "aggroRadius": 30
     },
     "meowzaC1m1": {
       "name": "Godleader Meowza",
       "template": "meowzaC1m1",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 6,
       "aggroRadius": 30
     },
     "meowzaC2m": {
       "name": "Godleader Meowza",
       "template": "meowzaC2m",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 3.0,
       "aggroRadius": 30
     },
     "meowzaD2m": {
       "name": "Godleader Meowza",
       "template": "meowzaD2m",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "meowzaDEATH": {
       "name": "Godleader Meowza",
       "template": "meowzaDEATH",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "meowzadungeondestroyablewall": {
       "name": "meowzadungeondestroyablewall",
       "template": "meowzadungeondestroyablewall",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "meowzahealthnode": {
       "name": "Spirit Vessel of Meowza",
       "template": "meowzahealthnode",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "meowzahurtsnake": {
       "name": "Supplicant of Meowza",
       "template": "meowzahurtsnake",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 2.0,
       "aggroRadius": 30
     },
     "meowzalaserA": {
       "name": "Godleader Meowza",
       "template": "meowzalaserA",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "meowzalaserB": {
       "name": "Godleader Meowza",
       "template": "meowzalaserB",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "meowzalaserC": {
       "name": "Godleader Meowza",
       "template": "meowzalaserC",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "meowzalaserD": {
       "name": "Godleader Meowza",
       "template": "meowzalaserD",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "meowzalasergateWE": {
       "name": "meowzalasergateWE",
       "template": "meowzalasergateWE",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "meowzanuke1m1": {
       "name": "Godleader Meowza",
       "template": "meowzanuke1m1",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28,
       "invulnerable": true
@@ -372,14 +336,14 @@
     "meowzastardog": {
       "name": "Hound of Meowza",
       "template": "meowzastardog",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "meowzaturtle": {
       "name": "Acolyte of Meowza",
       "template": "meowzaturtle",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 4.4,
       "aggroRadius": 28
     }

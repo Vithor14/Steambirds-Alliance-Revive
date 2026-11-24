@@ -1,0 +1,137 @@
+{
+  "format": 1,
+  "id": "dungeon_grind_summonermaster",
+  "name": "Dr. Geckelston (phases)",
+  "author": "Steambirds Revive",
+  "description": "The phases of Dr. Geckelston as an AI: each phase starts when the health goes under its limit. Made from the old \"phases\" of the unit type (dungeon_grind.json).",
+  "units": ["summonermaster"],
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "transitions": [
+        {
+          "to": "phase1",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase1",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "summoner",
+      "summonCount": 1,
+      "transitions": [
+        {
+          "to": "phase2",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase2",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "summonercentipede01",
+      "summonCount": 1,
+      "transitions": [
+        {
+          "to": "phase3",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.45
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase3",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "summoner2",
+      "summonCount": 1,
+      "transitions": [
+        {
+          "to": "phase4",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase4",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "summonerzombie28days",
+      "summonCount": 2,
+      "transitions": [
+        {
+          "to": "phase5",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.15
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase5",
+      "move": {
+        "mode": "builtin",
+        "builtin": "circle"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "summonerzombiefinal",
+      "summonCount": 2,
+      "message": "Geckel-Clones!"
+    }
+  ]
+}

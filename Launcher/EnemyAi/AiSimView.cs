@@ -20,6 +20,8 @@ internal sealed class AiSimView : Panel
     private readonly NumberBox playerSpeed;
     private readonly NumberBox playerRadius;
     private readonly CheckBox playerVisible;
+    private readonly ComboBox playerSpriteBox;
+    private AssetPicture? playerPicture;
     private readonly NumberBox drain;
     private readonly CheckBox respawn;
     private readonly NumberBox speedMult;
@@ -27,17 +29,21 @@ internal sealed class AiSimView : Panel
     private readonly NumberBox fireMult;
     private readonly NumberBox aimLead;
     private readonly CheckBox freeAim;
+    private readonly CheckBox showExits;
+    private readonly CheckBox showRanges;
     private readonly Label status;
     private readonly TextBox log;
     private readonly System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer { Interval = 33 };
     private readonly Stopwatch clock = Stopwatch.StartNew();
     private readonly List<PointF> trail = new List<PointF>();
+    private string lastReportedState = "";
     private double lastTick;
     private double lastTrail;
     private bool playing = true;
     private AiBrain? brain;
     private string title = "";
     private string unitName = "";
+    private string builtinFlight = "chase";
     private string unitCaption = "";
     private string aiCaption = "";
     private bool temporary;
@@ -60,6 +66,9 @@ internal sealed class AiSimView : Panel
         playerSpeed.ValueChanged += (_, _) => sim.PlayerSpeed = (float)playerSpeed.Value;
         playerRadius = Number(22, 4, 120, 2, 64);
         playerRadius.ValueChanged += (_, _) => sim.CircleRadius = (float)playerRadius.Value;
+        playerSpriteBox = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 140 };
+        playerSpriteBox.SelectedIndexChanged += (_, _) => PlayerSpriteChanged();
+        FillPlayerSprites();
         playerVisible = new ThemedCheckBox { Text = L.T("Player in sight"), AutoSize = true, Checked = true };
         playerVisible.CheckedChanged += (_, _) => sim.PlayerVisible = playerVisible.Checked;
 
@@ -67,6 +76,7 @@ internal sealed class AiSimView : Panel
         drain.ValueChanged += (_, _) => sim.HealthDrainPerSecond = (float)drain.Value / 100f;
         Button hit = Ui.Button(L.T("Hit -25%"), (_, _) => sim.Damage(0.25f));
         Button heal = Ui.Button(L.T("Heal"), (_, _) => sim.Damage(-1f));
+        Button killMinions = Ui.Button(L.T("Destroy summons"), (_, _) => sim.KillMinions());
         respawn = new ThemedCheckBox { Text = L.T("Comes back after dying"), AutoSize = true, Checked = true };
         respawn.CheckedChanged += (_, _) => sim.AutoRespawn = respawn.Checked;
 
@@ -75,26 +85,34 @@ internal sealed class AiSimView : Panel
         fireMult = Number(1, 0.1m, 10, 0.1m, 64);
         aimLead = Number(0, 0, 3, 0.1m, 64);
         freeAim = new ThemedCheckBox { Text = L.T("Free aim"), AutoSize = true };
+        showExits = new ThemedCheckBox { Text = L.T("Show ways out of the state"), AutoSize = true, Checked = true };
+        showRanges = new ThemedCheckBox { Text = L.T("Show weapon range"), AutoSize = true };
+        showExits.CheckedChanged += (_, _) => canvas.Invalidate();
+        showRanges.CheckedChanged += (_, _) => canvas.Invalidate();
         foreach (NumberBox n in new[] { speedMult, turnMult, fireMult, aimLead }) n.ValueChanged += (_, _) => TuningChanged();
         freeAim.CheckedChanged += (_, _) => TuningChanged();
 
         var tip = context.ToolTip;
         tip.SetToolTip(playerBox, L.T("How the player's plane moves in the test. With the first option, click on the map to send it somewhere."));
+        tip.SetToolTip(playerSpriteBox, L.T("The picture of the player's plane in the test (a 2D picture of a plane of the game; it only changes how it looks)."));
         tip.SetToolTip(playerVisible, L.T("Off = there is no player to look at (to test what the AI does when the player is gone)."));
         tip.SetToolTip(drain, L.T("The unit loses this percent of its health every second (to test health conditions and phases)."));
+        tip.SetToolTip(killMinions, L.T("Removes the units the AI summoned (the simulator does not fly them: they only count, and fall after 12 seconds by themselves)."));
         tip.SetToolTip(speedMult, L.T("\"speedMultiplier\" of the unit type."));
         tip.SetToolTip(turnMult, L.T("\"turnMultiplier\" of the unit type."));
         tip.SetToolTip(fireMult, L.T("\"fireRateMultiplier\" of the unit type."));
         tip.SetToolTip(aimLead, L.T("\"aimLead\" of the unit type (a behavior's own value wins)."));
         tip.SetToolTip(freeAim, L.T("\"freeAim\" of the unit type: the guns turn to the player by themselves."));
+        tip.SetToolTip(showExits, L.T("Draws what makes the AI leave the current state: a circle for a distance, a mark on the health bar, a clock for a time, a cone for facing the player. Each transition has its own color, and a list at the bottom has all of them (a condition that is true now is marked)."));
+        tip.SetToolTip(showRanges, L.T("Draws how far each gun that the current state lets fire can shoot, and the area where the player has to be for it to shoot (the gun's arc). One color per gun, the same as its shots."));
 
         var controls = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = true, FlowDirection = FlowDirection.LeftToRight };
         controls.Controls.AddRange(new Control[]
         {
             playButton, restart, Pair(L.T("Speed"), speedBox),
-            Pair(L.T("Player"), playerBox), Pair(L.T("speed"), playerSpeed), Pair(L.T("circle"), playerRadius), playerVisible,
-            Pair(L.T("Health lost %/s"), drain), hit, heal, respawn,
-            Pair(L.T("Speed x"), speedMult), Pair(L.T("Turn x"), turnMult), Pair(L.T("Fire x"), fireMult), Pair(L.T("Aim lead"), aimLead), freeAim
+            Pair(L.T("Player"), playerBox), Pair(L.T("Plane"), playerSpriteBox), Pair(L.T("speed"), playerSpeed), Pair(L.T("circle"), playerRadius), playerVisible,
+            Pair(L.T("Health lost %/s"), drain), hit, heal, killMinions, respawn,
+            Pair(L.T("Speed x"), speedMult), Pair(L.T("Turn x"), turnMult), Pair(L.T("Fire x"), fireMult), Pair(L.T("Aim lead"), aimLead), freeAim, showExits, showRanges
         });
 
         status = new Label { Dock = DockStyle.Bottom, AutoSize = false, Height = 20, TextAlign = ContentAlignment.MiddleLeft };
@@ -163,6 +181,7 @@ internal sealed class AiSimView : Panel
     public void SetUnit(AiUnitChoice? choice)
     {
         unitName = choice?.UnitName ?? "";
+        builtinFlight = string.IsNullOrWhiteSpace(choice?.BuiltInBehavior) ? "chase" : choice!.BuiltInBehavior.Trim().ToLowerInvariant();
         unitCaption = choice == null ? "" : choice.IsType ? choice.TypeName + " (" + (unitName.Length > 0 ? unitName : L.T("test plane")) + ")" : unitName.Length > 0 ? unitName : L.T("test plane");
         speedMult.Value = Clamp(speedMult, choice?.SpeedMult ?? 1f);
         turnMult.Value = Clamp(turnMult, choice?.TurnMult ?? 1f);
@@ -185,6 +204,33 @@ internal sealed class AiSimView : Panel
         aiCaption = ai;
         temporary = loadedForEditing;
         canvas.Invalidate();
+    }
+
+    // Planes of the game the player can be drawn as: the friendly ones first (the pictures come from the game files; the player's own
+    // classes have none), then a few fighters. "Arrow" is the plain triangle used when there is no picture.
+    private static readonly string[] PlayerSprites =
+    {
+        "allybird", "allygooseprefab", "enemystarfighter", "enemyfighter", "enemyhunter", "enemyracehunter", "enemylasership", "enemytiewingman"
+    };
+
+    private void FillPlayerSprites()
+    {
+        string keep = playerSpriteBox.SelectedItem?.ToString() ?? "";
+        playerSpriteBox.Items.Clear();
+        foreach (string art in PlayerSprites)
+        {
+            if (EditorAssets.Current.UnitPicture(art) != null) playerSpriteBox.Items.Add(art);
+        }
+        playerSpriteBox.Items.Add(L.T("Arrow"));
+        int index = keep.Length > 0 ? playerSpriteBox.Items.IndexOf(keep) : 0;
+        playerSpriteBox.SelectedIndex = Math.Max(0, index);
+    }
+
+    private void PlayerSpriteChanged()
+    {
+        string chosen = playerSpriteBox.SelectedItem?.ToString() ?? "";
+        playerPicture = chosen.Length > 0 && chosen != L.T("Arrow") ? EditorAssets.Current.UnitPicture(chosen) : null;
+        canvas?.Invalidate();
     }
 
     private static decimal Clamp(NumberBox box, float value) => Math.Clamp((decimal)value, box.Minimum, box.Maximum);
@@ -220,7 +266,8 @@ internal sealed class AiSimView : Panel
             TurnMult = (float)turnMult.Value,
             FireRateMult = (float)fireMult.Value,
             AimLead = (float)aimLead.Value,
-            FreeAim = freeAim.Checked
+            FreeAim = freeAim.Checked,
+            Builtin = builtinFlight
         };
     }
 
@@ -308,8 +355,17 @@ internal sealed class AiSimView : Panel
         log.AppendText(line + "\r\n");
     }
 
+    // The state the AI is in now ("" when there is no AI), for the graph view.
+    public event Action<string>? RunningStateChanged;
+
     private void UpdateStatus()
     {
+        string running = brain == null ? "" : sim.StateId;
+        if (running != lastReportedState)
+        {
+            lastReportedState = running;
+            RunningStateChanged?.Invoke(running);
+        }
         if (brain == null)
         {
             status.Text = L.T("Select an AI or a behavior to see it act.");
@@ -317,7 +373,9 @@ internal sealed class AiSimView : Panel
         }
         float distance = AiMath.Distance(sim.X, sim.Y, sim.PlayerX, sim.PlayerY);
         status.Text = L.F("State: {0} ({1:0.0}s)   health {2:0}%   shots {3}   hits on the player {4}   distance {5:0.0}",
-            sim.StateId, sim.StateTime, sim.MaxHealth > 0 ? sim.Health / sim.MaxHealth * 100f : 0f, sim.ShotsFired, sim.PlayerHits, distance);
+            sim.StateId, sim.StateTime, sim.MaxHealth > 0 ? sim.Health / sim.MaxHealth * 100f : 0f, sim.ShotsFired, sim.PlayerHits, distance) +
+            (sim.TotalSummoned > 0 ? "   " + L.F("summons alive {0}/{1}", sim.MinionsAlive, sim.TotalSummoned) : "") +
+            (sim.Shielded ? "   " + L.T("SHIELD") : "");
     }
 
     // ------------------------------------------------------------------ canvas
@@ -431,12 +489,24 @@ internal sealed class AiSimView : Panel
                 g.DrawLine(pen, home.X, home.Y - 5, home.X, home.Y + 5);
             }
 
+            if (view.showRanges.Checked && view.brain != null) AiSimOverlay.DrawWeapons(g, sim, ToScreen(sim.X, sim.Y), zoom, Font, GunColor, Size);
+
             DrawTrail(g);
             DrawTarget(g, p);
             DrawBullets(g);
             DrawPlayer(g);
             DrawEnemy(g, p);
+            if (view.showExits.Checked && view.brain != null)
+            {
+                float unitRadius = Math.Max(6f, sim.Unit.Radius * zoom);
+                AiSimOverlay.DrawConditions(g, sim, ToScreen(sim.X, sim.Y), unitRadius, zoom, Font, p, Size);
+            }
             DrawHud(g, p);
+            if (view.brain != null)
+            {
+                int bottom = Height - 24;
+                if (view.showExits.Checked) AiSimOverlay.DrawLegend(g, sim, Font, p, Size, bottom);
+            }
         }
 
         private void DrawGrid(Graphics g, Theme.Palette p)
@@ -507,6 +577,18 @@ internal sealed class AiSimView : Panel
             GraphicsState state = g.Save();
             g.TranslateTransform(at.X, at.Y);
             g.RotateTransform(sim.PlayerRot);
+            AssetPicture? plane = view.playerPicture;
+            if (plane != null)
+            {
+                // A 2D picture of a plane of the game, nose up like the unit's: the same turn as the arrow.
+                float half = Math.Max(10f, 2.4f * zoom);
+                using var attributes = new System.Drawing.Imaging.ImageAttributes();
+                attributes.SetColorMatrix(new System.Drawing.Imaging.ColorMatrix { Matrix33 = sim.PlayerVisible ? 1f : 0.35f });
+                g.DrawImage(plane.Image, new[] { new PointF(-half, -half), new PointF(half, -half), new PointF(-half, half) },
+                    new RectangleF(0, 0, plane.Image.Width, plane.Image.Height), GraphicsUnit.Pixel, attributes);
+                g.Restore(state);
+                return;
+            }
             var arrow = new[] { new PointF(0, -11), new PointF(8, 9), new PointF(0, 4), new PointF(-8, 9) };
             int alpha = sim.PlayerVisible ? 235 : 90;
             using (var fill = new SolidBrush(Color.FromArgb(alpha, 70, 130, 230))) g.FillPolygon(fill, arrow);
@@ -546,13 +628,22 @@ internal sealed class AiSimView : Panel
             }
             g.Restore(state);
 
+            if (sim.Shielded)
+            {
+                using var ring = new Pen(Color.FromArgb(200, 90, 200, 255), 2.5f);
+                using var glow = new SolidBrush(Color.FromArgb(45, 90, 200, 255));
+                g.FillEllipse(glow, at.X - r * 1.7f, at.Y - r * 1.7f, r * 3.4f, r * 3.4f);
+                g.DrawEllipse(ring, at.X - r * 1.7f, at.Y - r * 1.7f, r * 3.4f, r * 3.4f);
+            }
+
             // Health bar.
-            float width = Math.Max(26f, r * 2f);
+            float width = Math.Max(view.showExits.Checked ? 64f : 26f, r * 2f);
             float fraction = sim.MaxHealth > 0f ? Math.Clamp(sim.Health / sim.MaxHealth, 0f, 1f) : 0f;
             RectangleF bar = new RectangleF(at.X - width / 2f, at.Y - r - 12f, width, 4f);
             using (var back = new SolidBrush(Color.FromArgb(160, 20, 20, 20))) g.FillRectangle(back, bar);
             using (var fill = new SolidBrush(fraction > 0.5f ? Color.LimeGreen : fraction > 0.25f ? Color.Gold : Color.OrangeRed))
                 g.FillRectangle(fill, bar.X, bar.Y, bar.Width * fraction, bar.Height);
+            if (view.showExits.Checked && view.brain != null) AiSimOverlay.DrawHealthMarks(g, sim, bar, Font);
         }
 
         private void DrawHud(Graphics g, Theme.Palette p)
@@ -577,6 +668,15 @@ internal sealed class AiSimView : Panel
                 TextRenderer.DrawText(g, L.T("behavior") + ": " + sim.Last.State.BehaviorId, Font, new Point(10, y), p.Muted);
                 y += 18;
             }
+            if (sim.Shielded || sim.TotalSummoned > 0 || sim.VisualEffect.Length > 0 || sim.Homing)
+            {
+                string extra = (sim.Shielded ? L.T("shield up") + "   " : "") +
+                    (sim.TotalSummoned > 0 ? L.F("summons alive {0}/{1}", sim.MinionsAlive, sim.TotalSummoned) + "   " : "") +
+                    (sim.VisualEffect.Length > 0 ? L.T("effect") + ": " + sim.VisualEffect + "   " : "") +
+                    (sim.Homing ? L.T("homing bullets") : "");
+                TextRenderer.DrawText(g, extra.TrimEnd(), Font, new Point(10, y), p.Warn);
+                y += 18;
+            }
             DrawGunList(g, p, y + 2);
             TextRenderer.DrawText(g, L.T("Left click: send the player there    Right drag: move the view    Wheel: zoom"), Font,
                 new Point(10, Height - 20), p.Muted);
@@ -591,7 +691,8 @@ internal sealed class AiSimView : Panel
                 bool allowed = o != null && o.FireEnabled && (o.Guns.Length == 0 || Array.IndexOf(o.Guns, gun.Index) >= 0);
                 using (var dot = new SolidBrush(GunColor(gun.Index, allowed ? 255 : 90))) g.FillEllipse(dot, 12, y + 4, 9, 9);
                 string name = gun.Name.Length > 0 ? gun.Name : "gun" + gun.Index;
-                TextRenderer.DrawText(g, "#" + gun.Index + " " + name + (allowed ? "" : "  (" + L.T("off in this state") + ")"), Font, new Point(26, y), allowed ? p.Text : p.Muted);
+                string reach = allowed && view.showRanges.Checked ? "   -   " + AiSimOverlay.GunSummary(view.sim, gun) : "";
+                TextRenderer.DrawText(g, "#" + gun.Index + " " + name + reach + (allowed ? "" : "  (" + L.T("off in this state") + ")"), Font, new Point(26, y), allowed ? p.Text : p.Muted);
                 y += 16;
             }
         }

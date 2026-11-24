@@ -112,7 +112,7 @@ internal sealed partial class MapCanvas
         GameUnit? unit = EditorAssets.Current.FindUnit(template.Length > 0 ? template : typeName);
 
         string text = (typeName + " " + template).ToLowerInvariant();
-        string behavior = Json.Str(type, "behavior");
+        string behavior = EnemyAiEditors.FlightOf(type);
         UnitRole role = UnitRole.Enemy;
         if (type != null)
         {

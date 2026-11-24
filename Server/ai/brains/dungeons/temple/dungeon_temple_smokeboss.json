@@ -1,0 +1,115 @@
+{
+  "format": 1,
+  "id": "dungeon_temple_smokeboss",
+  "name": "High Priestess Tiffany (phases)",
+  "author": "Steambirds Revive",
+  "description": "The phases of High Priestess Tiffany as an AI: each phase starts when the health goes under its limit. Made from the old \"phases\" of the unit type (dungeon_temple.json).",
+  "units": ["smokeboss"],
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "transitions": [
+        {
+          "to": "phase1",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase1",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "smokebossswarm",
+      "summonCount": 4,
+      "message": "Shades!",
+      "bark": "smokeboss_1",
+      "transitions": [
+        {
+          "to": "phase2",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase2",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "temple_droneBIG",
+      "summonCount": 2,
+      "transitions": [
+        {
+          "to": "phase3",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase3",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "smokebossswarm",
+      "summonCount": 6,
+      "transitions": [
+        {
+          "to": "phase4",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase4",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "temple_fireball",
+      "summonCount": 2
+    }
+  ]
+}

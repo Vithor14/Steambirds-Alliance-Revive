@@ -325,7 +325,6 @@ public static partial class Enemies
                 t.Template ??= "auto:weak";
                 t.Behavior = NormalizeBehavior(t.Behavior);
                 t.Guns ??= new List<int>();
-                t.Phases = (t.Phases ?? new List<BossPhase>()).Where(f => f != null).OrderByDescending(f => f.BelowHealth).ToList();
                 types[pair.Key] = t;
             }
         }
@@ -355,14 +354,6 @@ public static partial class Enemies
                     if (!config.Types.ContainsKey(g.Type) && !defaultTypes.ContainsKey(g.Type))
                         log("ENEMY", "enemies.json: encounter '" + e.Name + "' wave " + (i + 1) + " uses the type '" + g.Type + "', which does not exist");
                 }
-            }
-        }
-        foreach (var pair in config.Types)
-        {
-            foreach (BossPhase f in pair.Value.Phases)
-            {
-                if (!string.IsNullOrWhiteSpace(f.Summon) && !config.Types.ContainsKey(f.Summon) && !defaultTypes.ContainsKey(f.Summon))
-                    log("ENEMY", "enemies.json: the type '" + pair.Key + "' summons '" + f.Summon + "', which does not exist");
             }
         }
     }

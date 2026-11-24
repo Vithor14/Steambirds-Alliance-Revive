@@ -61,7 +61,7 @@ The client has the data structures (`WorldLayout`, `GroundAssetContainer`, `Terr
   group (a leader and followers, or one solo) of the region's pool, asleep: it wakes when a player is within `wakeRadius`, or on a hit.
   Farther than `despawnRadius` from every player the group is taken away. After the group dies the site rests
   `secondsPerStandardEnemyIn10x10 x enemies x respawnScale`.
-- The type is `world/<template>` (the game's unit, `chase` behavior, free to roam, no area limit). **No new AI was written:** put a type
+- The type is `world/<template>` (the game's unit, the generic AI `generic_chase`, free to roam, no area limit). **No world-specific AI was written yet** (`airains\world` is the folder for them): put a type
   with the same key in `enemies.json`, or an AI file in the Enemy AI tab, to change it.
 - The server limit is 140 enemies per instance; `maxAlive` (100) stays under it.
 
@@ -158,7 +158,7 @@ Launcher: Server > World map > **Enemies** tab. Server: `World\WorldEnemyLists.c
   `healthMultiplier` and `enabled`. The server rereads them every second (`siteSpacingTiles` only matters when the world is built).
   `tierOffset` is in the file but nothing reads it yet, so the tab does not show it.
 - **Lists per biome.** `world-enemies.json` (written by the launcher, gitignored, reread when it changes) holds what the host changed:
-  `regions.<tile name>` (`beach`, `lowlands`, `lowlands2`...) with `groups` and `boss`. A group is `{ "name", "solo", "leaders", "members" }`:
+  `regions.<tile name>` (`beach`, `lowlands`, `lowlands2`...) with `groups`, `boss` and `ai`. `ai` is `{ "<unit>": "<AI id>" }`: the AI file (`Serverirains`) each unit runs in that biome (`WorldEnemyLists.AiFor`); a unit that is not in it runs `generic_chase`. The launcher offers, for each enemy, the AIs made for it (their `units` list) first and then the generic ones. A unit with its own AI is a type of its own (`world/<unit>~<AI id>`). A group is `{ "name", "solo", "leaders", "members" }`:
   a leader and its followers, or `solo: true` (a spawn site creates one enemy of `members`). A region with `groups` in the file uses
   them instead of the game's groups; a region that is not in the file keeps the game's (`WorldEnemyPools.For` / `DefaultsFor`). Units
   that are not in the catalog, walls, player planes and the `enemies.skip` of `world.json` are ignored. A site picks the group when it
@@ -174,7 +174,7 @@ Launcher: Server > World map > **Enemies** tab. Server: `World\WorldEnemyLists.c
   A region offers the bosses of its folder, the strongest first, except Egyptian Dig (`pharaoh`), Noble Estates (`hypnotist`) and Imperial
   Palace (`notra`) first, which `PreferredBoss` sets; the first is the biome's boss. The host picks another (any unit of the game, which
   then comes alone if it is not a boss of the game) per region in the tab (`regions.<tile>.boss`). Reconstruction: no original boss AI: the
-  boss is the unit with the `chase` behavior (type `world/boss/<unit>`) and each part or minion another one with `chase` too
+  boss is the unit with the `generic_chase` AI (type `world/boss/<unit>`) and each part or minion another one with `chase` too
   (`world/part/<unit>`), all replaceable in `enemies.json` like the others. The server writes the groups with their parts in
   `world-enemy-defaults.json` (`bosses`).
 - **Requests from the launcher.** Right click on the map (a cross marks the point): *Spawn boss here* (submenu with the bosses of the biome

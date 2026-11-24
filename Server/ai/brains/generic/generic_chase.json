@@ -1,0 +1,20 @@
+{
+  "format": 1,
+  "id": "generic_chase",
+  "name": "Generic: Chase",
+  "author": "Steambirds Revive",
+  "description": "Flies at the player and circles close, shooting (the built-in \"chase\" flight). Distance and wake radius come from the unit type (preferredDistance, aggroRadius).",
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "chase"
+      },
+      "fire": {
+        "enabled": true
+      }
+    }
+  ]
+}

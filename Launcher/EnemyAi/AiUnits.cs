@@ -37,6 +37,15 @@ internal static class AiUnits
     // The guns of the unit that is in the simulator: the weapons checklist of the forms shows these.
     public static IReadOnlyList<SteambirdsAi.AiGunStats> CurrentGuns { get; set; } = Array.Empty<SteambirdsAi.AiGunStats>();
 
+    // The unit types of enemies.json (what a state can summon; a map's own types can be typed in by hand).
+    public static IEnumerable<string> TypeNames()
+    {
+        return ReadTypes(System.IO.Path.Combine(LauncherPaths.ServerFolder, "enemies.json")).Select(c => c.TypeId).OrderBy(n => n, StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    // The unit types of enemies.json as units of the simulator.
+    public static IEnumerable<AiUnitChoice> EnemyTypes(string path) => ReadTypes(path);
+
     // "mapTypes": unit types of the map editor the tab was asked to open (they go first).
     public static List<AiUnitChoice> Build(string serverFolder, bool armedOnly, IEnumerable<AiUnitChoice>? mapTypes = null)
     {
@@ -78,7 +87,7 @@ internal static class AiUnits
     public static AiUnitChoice FromType(string key, JsonObject type, string kind)
     {
         string ai = Json.Str(type, "ai").Trim();
-        string behavior = Json.Str(type, "behavior").Trim();
+        string behavior = EnemyAiEditors.FlightOf(type);
         GameUnit? unit = Resolve(Json.Str(type, "template"));
         string name = Json.Str(type, "name");
         string label = kind + ": " + key + (name.Length > 0 && !name.Equals(key, StringComparison.OrdinalIgnoreCase) ? " (" + name + ")" : "") +

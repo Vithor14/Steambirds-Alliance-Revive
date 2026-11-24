@@ -296,7 +296,6 @@
       "name": "Cyclopus",
       "template": "octopus",
       "boss": true,
-      "behavior": "turret",
       "aggroRadius": 60,
       "firstShotDelay": 2.0,
       "onDeath": "octopusDEATH",
@@ -304,24 +303,13 @@
         "onWake": "octopus",
         "onDeath": "octopusDEATH"
       },
-      "phases": [
-        {
-          "belowHealth": 0.66,
-          "summon": "octopuslaser2",
-          "summonCount": 2
-        },
-        {
-          "belowHealth": 0.33,
-          "summon": "octopuslaser3",
-          "summonCount": 2
-        }
-      ]
+      "ai": "dungeon_eye_octopus"
     },
     "cyclopus": {
       "name": "Psychopus",
       "template": "cyclopus",
       "miniboss": true,
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 45,
       "firstShotDelay": 1.5
     },
@@ -329,168 +317,168 @@
       "name": "Psychopus",
       "template": "cyclopus2",
       "miniboss": true,
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 45,
       "firstShotDelay": 1.5
     },
     "cyclopuslaser": {
       "name": "Psychopus Eye",
       "template": "cyclopuslaser",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 4.5,
       "aggroRadius": 28
     },
     "eyedungeondestroyablewall": {
       "name": "Wall",
       "template": "eyedungeondestroyablewall",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "eyedungeondestroyablewall_barricade": {
       "name": "eyedungeondestroyablewall_barricade",
       "template": "eyedungeondestroyablewall_barricade",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "eyedungeondestroyablewallstrong": {
       "name": "Wall",
       "template": "eyedungeondestroyablewallstrong",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "eyedungeontreasure": {
       "name": "Treasure",
       "template": "eyedungeontreasure",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "opensAfterHitSeconds": 1.5
     },
     "lasereye": {
       "name": "Laser Eye",
       "template": "lasereye",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "laserpointer_E": {
       "name": "laserpointer_E",
       "template": "laserpointer_E",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "laserpointer_W": {
       "name": "laserpointer_W",
       "template": "laserpointer_W",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "laserspinner_CCW_N": {
       "name": "laserspinner_CCW_N",
       "template": "laserspinner_CCW_N",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "laserspinner_CW_N": {
       "name": "laserspinner_CW_N",
       "template": "laserspinner_CW_N",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "laserspinner_long_CCW_N": {
       "name": "laserspinner_long_CCW_N",
       "template": "laserspinner_long_CCW_N",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "laserspinner_long_CW_N": {
       "name": "laserspinner_long_CW_N",
       "template": "laserspinner_long_CW_N",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "octopusDEATH": {
       "name": "Cyclopus",
       "template": "octopusDEATH",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "octopuslaser": {
       "name": "Watcher",
       "template": "octopuslaser",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "octopuslaser2": {
       "name": "Cyclopus",
       "template": "octopuslaser2",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 4.5,
       "aggroRadius": 28
     },
     "octopuslaser3": {
       "name": "Cyclopus",
       "template": "octopuslaser3",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 4.5,
       "aggroRadius": 28
     },
     "orbiter": {
       "name": "Cat Eye",
       "template": "orbiter",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 4.5,
       "aggroRadius": 28
     },
     "popper": {
       "name": "Popper",
       "template": "popper",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "popper2": {
       "name": "Mini Popper",
       "template": "popper2",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "poppermini": {
       "name": "Popper Jr.",
       "template": "poppermini",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.2,
       "aggroRadius": 28
     },
     "scanner": {
       "name": "Scanner",
       "template": "scanner",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "teslaeye": {
       "name": "Tesla Eye",
       "template": "teslaeye",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "triguard": {
       "name": "Gazer",
       "template": "triguard",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.2,
       "aggroRadius": 28
     },
     "triguardleader": {
       "name": "Gazer",
       "template": "triguardleader",
-      "behavior": "circle",
+      "ai": "generic_circle",
       "preferredDistance": 9,
       "aggroRadius": 32
     },
     "warper": {
       "name": "Watcher",
       "template": "warper",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     }
   },

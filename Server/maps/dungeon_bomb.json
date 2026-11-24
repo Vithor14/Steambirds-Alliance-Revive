@@ -355,7 +355,7 @@
       "name": "Overseer Charles",
       "template": "fatblimp",
       "miniboss": true,
-      "behavior": "circle",
+      "ai": "generic_circle",
       "aggroRadius": 45,
       "firstShotDelay": 1.5,
       "periodicSummon": {
@@ -370,7 +370,6 @@
       "name": "The Bomb Maker",
       "template": "bombboss",
       "boss": true,
-      "behavior": "circle",
       "aggroRadius": 60,
       "firstShotDelay": 2.0,
       "onDeath": "bombbossDEATH",
@@ -378,20 +377,7 @@
         "onWake": "bombboss",
         "onDeath": "bombbossDEATH"
       },
-      "phases": [
-        {
-          "belowHealth": 0.66,
-          "summon": "bombbossexploder",
-          "summonCount": 3
-        },
-        {
-          "belowHealth": 0.33,
-          "summon": "bombbossexploderBIG",
-          "summonCount": 1,
-          "behavior": "charge",
-          "speedMultiplier": 1.2
-        }
-      ],
+      "ai": "dungeon_bomb_bombboss",
       "periodicSummon": {
         "type": "bombbossexploder",
         "seconds": 5,
@@ -403,7 +389,7 @@
     "bombbarrel": {
       "name": "Stored Bomb",
       "template": "bombbarrel",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "onDeath": "bombbarrelboom",
       "note": "Barril visivel. Ao ser destruido solta o anel de balas (bombbarrelboom).",
       "chainReaction": {
@@ -414,7 +400,7 @@
     "bombbarrelboom": {
       "name": "Stored Bomb",
       "template": "bombbarrelboom",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 0,
       "firstShotDelay": 0.0,
       "shotRange": 999,
@@ -425,7 +411,7 @@
     "homingbomb": {
       "name": "Loose Bomb",
       "template": "homingbomb",
-      "behavior": "kamikaze",
+      "ai": "generic_kamikaze",
       "preferredDistance": 6,
       "aggroRadius": 30,
       "onDeath": "bombbarrelboom",
@@ -438,7 +424,7 @@
     "bomberjet": {
       "name": "bomberjet",
       "template": "bomberjet",
-      "behavior": "kamikaze",
+      "ai": "generic_kamikaze",
       "preferredDistance": 6,
       "aggroRadius": 30,
       "onDeath": "bombbarrelboom",
@@ -447,7 +433,7 @@
     "homingbomblayer": {
       "name": "Bomb Carrier",
       "template": "homingbomblayer",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28,
       "periodicSummon": {
@@ -462,7 +448,7 @@
     "homingbomblayercenter": {
       "name": "Bomb Carrier",
       "template": "homingbomblayercenter",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28,
       "periodicSummon": {
@@ -477,7 +463,7 @@
     "flakblimp": {
       "name": "Munitions Engineer",
       "template": "flakblimp",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28,
       "periodicSummon": {
@@ -492,7 +478,7 @@
     "flakblimpbig": {
       "name": "Big Red",
       "template": "flakblimpbig",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28,
       "periodicSummon": {
@@ -507,60 +493,60 @@
     "bombdungeontreasureBIG_reward": {
       "name": "Big Treasure",
       "template": "bombdungeontreasureBIG_reward",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "opensAfterHitSeconds": 1.5
     },
     "bombdungeontreasureBIG_dud": {
       "name": "Treasure",
       "template": "bombdungeontreasureBIG_dud",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "opensAfterHitSeconds": 1.5
     },
     "altar": {
       "name": "Guard Barracks",
       "template": "altar",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "bombbossDEATH": {
       "name": "The Bomb Maker",
       "template": "bombbossDEATH",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "bombbossexploder": {
       "name": "The Bomb Maker",
       "template": "bombbossexploder",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "bombbossexploderBIG": {
       "name": "The Bomb Maker",
       "template": "bombbossexploderBIG",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "bombdungeondestroyablewall": {
       "name": "bombdungeondestroyablewall",
       "template": "bombdungeondestroyablewall",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "bombdungeondestroyablewallstrong": {
       "name": "bombdungeondestroyablewallstrong",
       "template": "bombdungeondestroyablewallstrong",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "bombdungeontreasure": {
       "name": "Treasure",
       "template": "bombdungeontreasure",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "opensAfterHitSeconds": 1.5
     },
     "bombdungeontreasureBIG": {
       "name": "Big Treasure",
       "template": "bombdungeontreasureBIG",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "health": 1000,
       "dpsChest": {
         "seconds": 25,
@@ -572,39 +558,39 @@
     "bomberjetexploder": {
       "name": "bomberjetexploder",
       "template": "bomberjetexploder",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "bombfactoryworker": {
       "name": "Factory Worker",
       "template": "bombfactoryworker",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "bombguard": {
       "name": "Ammunitions Guard",
       "template": "bombguard",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "bombturret": {
       "name": "Factory Turret",
       "template": "bombturret",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "flakblimpexploder": {
       "name": "Munitions Engineer",
       "template": "flakblimpexploder",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "flakblimpexploderstrong": {
       "name": "Munitions Engineer",
       "template": "flakblimpexploderstrong",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     }

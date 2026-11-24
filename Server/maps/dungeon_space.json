@@ -332,22 +332,14 @@
       "name": "Mammoth-1",
       "template": "battlemech",
       "miniboss": true,
-      "behavior": "circle",
       "aggroRadius": 45,
       "firstShotDelay": 1.5,
-      "phases": [
-        {
-          "belowHealth": 0.5,
-          "summon": "battlemechshieldbomb",
-          "summonCount": 3
-        }
-      ]
+      "ai": "dungeon_space_battlemech"
     },
     "avatar": {
       "name": "Doomsday Mechanism",
       "template": "avatar",
       "boss": true,
-      "behavior": "circle",
       "aggroRadius": 60,
       "firstShotDelay": 2.0,
       "onDeath": "avatarDEATH",
@@ -355,47 +347,24 @@
         "onWake": "avatar",
         "onDeath": "avatarDEATH"
       },
-      "phases": [
-        {
-          "belowHealth": 0.8,
-          "summon": "avatarnova1",
-          "summonCount": 1,
-          "message": "Omega decolando!"
-        },
-        {
-          "belowHealth": 0.6,
-          "summon": "avatarbattlemech",
-          "summonCount": 2
-        },
-        {
-          "belowHealth": 0.4,
-          "summon": "avatarbattlemechshieldbomb",
-          "summonCount": 4
-        },
-        {
-          "belowHealth": 0.25,
-          "summon": "avatarbattlemech3",
-          "summonCount": 2,
-          "message": "Mammoth-2 em campo!"
-        }
-      ]
+      "ai": "dungeon_space_avatar"
     },
     "ambushgate": {
       "name": "ambushgate",
       "template": "ambushgate",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "avatarDEATH": {
       "name": "Doomsday Mechanism",
       "template": "avatarDEATH",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "avatarbattlemech": {
       "name": "Mammoth-2",
       "template": "avatarbattlemech",
       "miniboss": true,
-      "behavior": "circle",
+      "ai": "generic_circle",
       "aggroRadius": 45,
       "firstShotDelay": 1.5
     },
@@ -403,178 +372,178 @@
       "name": "Mammoth-2",
       "template": "avatarbattlemech3",
       "miniboss": true,
-      "behavior": "circle",
+      "ai": "generic_circle",
       "aggroRadius": 45,
       "firstShotDelay": 1.5
     },
     "avatarbattlemechshieldbomb": {
       "name": "avatarbattlemechshieldbomb",
       "template": "avatarbattlemechshieldbomb",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "avatarcannon": {
       "name": "Doomsday Mechanism",
       "template": "avatarcannon",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "avatarlaunchtower": {
       "name": "avatarlaunchtower",
       "template": "avatarlaunchtower",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 6,
       "aggroRadius": 30
     },
     "avatarlaunchtower2": {
       "name": "avatarlaunchtower2",
       "template": "avatarlaunchtower2",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 6,
       "aggroRadius": 30
     },
     "avatarnova1": {
       "name": "Omega",
       "template": "avatarnova1",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "battlemechshieldbomb": {
       "name": "Bomb",
       "template": "battlemechshieldbomb",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "blocker": {
       "name": "Sentinel-2",
       "template": "blocker",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "blocker0": {
       "name": "Sentinel-1",
       "template": "blocker0",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "blocker2slider": {
       "name": "Sentinel-2B",
       "template": "blocker2slider",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "blocker3": {
       "name": "Sentinel-3",
       "template": "blocker3",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "blocker4": {
       "name": "Sentinel-3D",
       "template": "blocker4",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "blocker5": {
       "name": "Sentinel-2D",
       "template": "blocker5",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "mage": {
       "name": "Defender Cannon",
       "template": "mage",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "nova1": {
       "name": "Omega",
       "template": "nova1",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "nova2": {
       "name": "Omega",
       "template": "nova2",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "nova3": {
       "name": "Omega",
       "template": "nova3",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "nova4": {
       "name": "Omega",
       "template": "nova4",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "nova5": {
       "name": "Omega",
       "template": "nova5",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "nova6": {
       "name": "Omega",
       "template": "nova6",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "spacedungeondestroyablewall": {
       "name": "Wall",
       "template": "spacedungeondestroyablewall",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "spacedungeontreasure": {
       "name": "Treasure",
       "template": "spacedungeontreasure",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "opensAfterHitSeconds": 1.5
     },
     "spaceturret": {
       "name": "Concealed Turret",
       "template": "spaceturret",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 6,
       "aggroRadius": 30
     },
     "sunfox": {
       "name": "Winter Guard",
       "template": "sunfox",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "sunfoxbig": {
       "name": "Winter Commander",
       "template": "sunfoxbig",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "sunfoxleader": {
       "name": "Gun Platform",
       "template": "sunfoxleader",
-      "behavior": "circle",
+      "ai": "generic_circle",
       "preferredDistance": 9,
       "aggroRadius": 32
     },
     "sunfoxleaderchill": {
       "name": "Gun Platform",
       "template": "sunfoxleaderchill",
-      "behavior": "circle",
+      "ai": "generic_circle",
       "preferredDistance": 9,
       "aggroRadius": 32
     },
     "sunfoxtrap": {
       "name": "Winter Guard",
       "template": "sunfoxtrap",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 6,
       "aggroRadius": 30,
       "invulnerable": true

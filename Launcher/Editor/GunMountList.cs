@@ -4,8 +4,9 @@ using SteambirdsLauncher.UI;
 
 namespace SteambirdsLauncher.Editor;
 
-// The weapons (gun mounts) of a unit as a checklist: a check says "this mount shoots". Clicking the name of a mount shows
-// its data (pattern, arc, fire rate, bullet, reach...). The list comes from the unit, so it changes with the unit.
+// The weapons (gun mounts) of a unit as a checklist: a check says "this mount shoots". Each mount is an expandable section:
+// clicking its name (or the arrow) opens its data right under it (pattern, arc, fire rate, bullet, reach...); several can be
+// open at once. The list comes from the unit, so it changes with the unit.
 // An empty stored list means "every mount of the unit": then all the boxes are checked.
 internal sealed class GunMountList : FlowLayoutPanel
 {
@@ -14,14 +15,15 @@ internal sealed class GunMountList : FlowLayoutPanel
         public int Index;
         public AiGunStats? Gun;
         public CheckBox Box = null!;
+        public Label Arrow = null!;
         public Label Name = null!;
+        public Label Details = null!;
     }
 
     private readonly List<Entry> entries = new List<Entry>();
-    private readonly Label details;
+    private readonly HashSet<int> expanded = new HashSet<int>();
     private readonly Label note;
     private bool loading;
-    private int selected = -1;
 
     public GunMountList()
     {
@@ -30,7 +32,6 @@ internal sealed class GunMountList : FlowLayoutPanel
         AutoSize = true;
         AutoSizeMode = AutoSizeMode.GrowAndShrink;
         Margin = new Padding(3, 2, 3, 2);
-        details = Ui.Wrapping("", 430, true);
         note = Ui.Wrapping("", 430, true);
     }
 
@@ -59,9 +60,23 @@ internal sealed class GunMountList : FlowLayoutPanel
                     Checked = stored.Count == 0 || stored.Contains(index)
                 };
                 entry.Box.CheckedChanged += (_, _) => OnChecked(entry);
+                entry.Arrow = new Label { AutoSize = true, Margin = new Padding(0, 4, 2, 0), Cursor = Cursors.Hand };
                 entry.Name = new Label { AutoSize = true, Margin = new Padding(0, 4, 3, 0), Cursor = Cursors.Hand, Text = Caption(entry) };
-                entry.Name.Click += (_, _) => Select(entry.Index);
-                Controls.Add(Ui.Flow(entry.Box, entry.Name));
+                entry.Details = Ui.Wrapping(Describe(entry), 400, true);
+                entry.Details.Margin = new Padding(26, 0, 3, 6);
+                entry.Details.Visible = expanded.Contains(index);
+                entry.Arrow.Click += (_, _) => Toggle(entry);
+                entry.Name.Click += (_, _) => Toggle(entry);
+                ShowArrow(entry);
+
+                var section = new FlowLayoutPanel
+                {
+                    FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoSize = true,
+                    AutoSizeMode = AutoSizeMode.GrowAndShrink, Margin = new Padding(0)
+                };
+                section.Controls.Add(Ui.Flow(entry.Box, entry.Arrow, entry.Name));
+                section.Controls.Add(entry.Details);
+                Controls.Add(section);
                 entries.Add(entry);
             }
 
@@ -69,17 +84,13 @@ internal sealed class GunMountList : FlowLayoutPanel
             {
                 note.Text = L.T("This unit has no weapons, so there is nothing to choose.");
                 Controls.Add(note);
-                details.Text = "";
-                selected = -1;
             }
             else
             {
                 note.Text = stored.Count == 0
-                    ? L.T("Every mount shoots. Uncheck the ones that should stay quiet in this state; click a name to see its data.")
-                    : L.T("Click a name to see the data of the mount. Check all of them to go back to \"every mount shoots\".");
+                    ? L.T("Every mount shoots. Uncheck the ones that should stay quiet in this state; click a name to open its data.")
+                    : L.T("Click a name to open the data of the mount. Check all of them to go back to \"every mount shoots\".");
                 Controls.Add(note);
-                Controls.Add(details);
-                Select(entries.Any(e => e.Index == selected) ? selected : entries[0].Index);
             }
         }
         finally
@@ -108,20 +119,25 @@ internal sealed class GunMountList : FlowLayoutPanel
             changed.Box.Checked = true;
             loading = false;
             note.Text = L.T("At least one mount has to shoot. To stop shooting in this state, turn off \"Shoots\".");
-            Select(changed.Index);
             return;
         }
-        Select(changed.Index);
         List<int> on = entries.Where(e => e.Box.Checked).Select(e => e.Index).ToList();
         Changed?.Invoke(on.Count == entries.Count ? new List<int>() : on);
     }
 
-    private void Select(int index)
+    private void Toggle(Entry entry)
     {
-        selected = index;
-        foreach (Entry entry in entries) entry.Name.Font = entry.Index == index ? Ui.BoldFont : Font;
-        Entry? chosen = entries.FirstOrDefault(e => e.Index == index);
-        details.Text = chosen == null ? "" : Describe(chosen);
+        if (!expanded.Add(entry.Index)) expanded.Remove(entry.Index);
+        entry.Details.Visible = expanded.Contains(entry.Index);
+        ShowArrow(entry);
+    }
+
+    // A small arrow says whether the data of the mount is open; the name is bold while it is.
+    private void ShowArrow(Entry entry)
+    {
+        bool open = expanded.Contains(entry.Index);
+        entry.Arrow.Text = open ? "▾" : "▸";
+        entry.Name.Font = open ? Ui.BoldFont : Font;
     }
 
     private static string Num(double value) => value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);

@@ -1,0 +1,20 @@
+{
+  "format": 1,
+  "id": "generic_route",
+  "name": "Generic: Route",
+  "author": "Steambirds Revive",
+  "description": "Follows the path of the map (the type's \"route\") forever, whether or not a player is close, shooting (the built-in \"route\" flight).",
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "route"
+      },
+      "fire": {
+        "enabled": true
+      }
+    }
+  ]
+}

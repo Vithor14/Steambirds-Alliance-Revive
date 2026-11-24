@@ -1,0 +1,20 @@
+{
+  "format": 1,
+  "id": "generic_patrol",
+  "name": "Generic: Patrol",
+  "author": "Steambirds Revive",
+  "description": "Wanders around where it was born and attacks when a player comes close (the built-in \"patrol\" flight).",
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "patrol"
+      },
+      "fire": {
+        "enabled": true
+      }
+    }
+  ]
+}

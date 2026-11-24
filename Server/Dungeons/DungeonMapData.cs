@@ -10,7 +10,7 @@ using System.Text.Json;
 // The format is described in maps\README.md.
 //
 // Unit types are registered in Enemies with the key "<map id>/<type>", so two maps can use the same name
-// for different types and nothing collides with enemies.json. "summon" of the boss phases is renamed the same way.
+// for different types and nothing collides with enemies.json.
 public static class DungeonMapData
 {
     // ================================================================== file (JSON)
@@ -121,9 +121,12 @@ public static class DungeonMapData
         public bool Miniboss { get; set; }
         // Type that appears where the unit died (wrecks "*DEATH", reward chests).
         public string OnDeath { get; set; } = "";
+        // Type that appears where the unit went off by itself on a player (a mine). When set, a unit that is shot down
+        // spawns "onDeath" (nothing, if empty) instead, so a mine only releases its blast when a player flies into it.
+        public string OnContact { get; set; } = "";
         // Types that appear one after the other where the previous one died (Phoenix eggs, Giant Egg -> Poison God).
         public List<string>? Sequence { get; set; }
-        // Bark keys (Texts/bark of the client) by moment: onWake, phase, onDeath...
+        // Bark keys (Texts/bark of the client) by moment: onWake, onDeath...
         public Dictionary<string, string>? Barks { get; set; }
         // > 0: the unit ends by itself after this time, as if destroyed (eggs of a sequence).
         public float DurationSeconds { get; set; }
@@ -291,7 +294,7 @@ public static class DungeonMapData
             if (file.Routes == null || !file.Routes.TryGetValue(routeName, out List<RoutePoint>? routePoints) || routePoints == null || routePoints.Count < 2)
             {
                 // Only a unit that flies by the route needs it ("route" on other types is a note for later scripts).
-                if (string.Equals(pair.Value.Behavior, "route", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(Enemies.TypeFlight(pair.Value), "route", StringComparison.OrdinalIgnoreCase))
                     data.Warnings.Add("type '" + pair.Key + "': the route '" + routeName + "' does not exist or has fewer than 2 points");
                 continue;
             }
@@ -304,21 +307,11 @@ public static class DungeonMapData
             pair.Value.RoutePoints = world;
         }
 
-        // Boss phases call types of the same map: same prefix.
-        foreach (Enemies.EnemyType type in data.Types.Values)
-        {
-            foreach (Enemies.BossPhase phase in type.Phases ?? new List<Enemies.BossPhase>())
-            {
-                if (string.IsNullOrWhiteSpace(phase.Summon)) continue;
-                if (data.Types.ContainsKey(phase.Summon)) phase.Summon = data.Key(phase.Summon);
-                else data.Warnings.Add("a phase of '" + type.Name + "' summons '" + phase.Summon + "', which is not in \"types\"");
-            }
-        }
-
         // References to types that do not exist: warned once, ignored when the room is built.
         foreach (KeyValuePair<string, UnitExtras> pair in data.Extras)
         {
             UnitExtras e = pair.Value;
+            if (e.OnContact.Length > 0 && !data.HasType(e.OnContact)) data.Warnings.Add("'" + pair.Key + "' onContact '" + e.OnContact + "' has no type");
             if (e.OnDeath.Length > 0 && !data.HasType(e.OnDeath)) data.Warnings.Add("'" + pair.Key + "' aoMorrer '" + e.OnDeath + "' has no type");
             foreach (string s in e.Sequence ?? new List<string>())
             {

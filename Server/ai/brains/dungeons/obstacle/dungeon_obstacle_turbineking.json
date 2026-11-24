@@ -1,0 +1,90 @@
+{
+  "format": 1,
+  "id": "dungeon_obstacle_turbineking",
+  "name": "Lazer, the Victorious (phases)",
+  "author": "Steambirds Revive",
+  "description": "The phases of Lazer, the Victorious as an AI: each phase starts when the health goes under its limit. Made from the old \"phases\" of the unit type (dungeon_obstacle.json).",
+  "units": ["turbineking"],
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "transitions": [
+        {
+          "to": "phase1",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.75
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase1",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "turbinekingattack",
+      "summonCount": 1,
+      "transitions": [
+        {
+          "to": "phase2",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase2",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "turbinekingattack2",
+      "summonCount": 1,
+      "transitions": [
+        {
+          "to": "phase3",
+          "when": [
+            {
+              "type": "healthBelow",
+              "value": 0.25
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase3",
+      "move": {
+        "mode": "builtin",
+        "builtin": "turret"
+      },
+      "fire": {
+        "enabled": true
+      },
+      "summon": "turbinekingattack3",
+      "summonCount": 1
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "format": 1,
+  "id": "generic_mine",
+  "name": "Generic: Mine",
+  "author": "Steambirds Revive",
+  "description": "Does not move. Once no player is inside its contact radius it arms, and it blows up when a player comes in (the built-in \"mine\" flight; the unit type's contactRadius says how close).",
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "builtin",
+        "builtin": "mine"
+      },
+      "fire": {
+        "enabled": false
+      }
+    }
+  ]
+}

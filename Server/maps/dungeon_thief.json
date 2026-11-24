@@ -392,7 +392,7 @@
     "thiefchest": {
       "name": "Strange Altar to Horus",
       "template": "thiefchest",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28,
       "invulnerable": true,
@@ -406,7 +406,7 @@
     "keylock": {
       "name": "Security Chief 001",
       "template": "keylock",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28,
       "miniboss": true,
@@ -418,7 +418,7 @@
     "keylock2": {
       "name": "Security Chief 002",
       "template": "keylock2",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28,
       "miniboss": true,
@@ -430,7 +430,7 @@
     "keylock3": {
       "name": "Security Chief 003",
       "template": "keylock3",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28,
       "miniboss": true,
@@ -442,7 +442,7 @@
     "thiefkey": {
       "name": "Golden Key",
       "template": "thiefkey",
-      "behavior": "escort",
+      "ai": "generic_escort",
       "preferredDistance": 7,
       "aggroRadius": 28,
       "invulnerable": true,
@@ -453,7 +453,7 @@
     "thiefkey_glow": {
       "name": "Essence of Worthiness",
       "template": "thiefkey_glow",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "preferredDistance": 7,
       "aggroRadius": 28,
       "invulnerable": true
@@ -461,155 +461,155 @@
     "thieftrooperleader": {
       "name": "Guard Dropship",
       "template": "thieftrooperleader",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "thiefchesttreasure": {
       "name": "Strange Altar to Horus",
       "template": "thiefchesttreasure",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "opensAfterHitSeconds": 1.5
     },
     "thiefidol1_awake": {
       "name": "thiefidol1_awake",
       "template": "thiefidol1_awake",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30,
       "invulnerable": true
     },
     "thiefidol2_awake": {
       "name": "thiefidol2_awake",
       "template": "thiefidol2_awake",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30,
       "invulnerable": true
     },
     "thiefidol3_awake": {
       "name": "thiefidol3_awake",
       "template": "thiefidol3_awake",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30,
       "invulnerable": true
     },
     "cart": {
       "name": "Delivery Drone",
       "template": "cart",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "keynode": {
       "name": "Security Node",
       "template": "keynode",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "lasergateWE": {
       "name": "Laser Gate",
       "template": "lasergateWE",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "lasergrid": {
       "name": "Laser Grid",
       "template": "lasergrid",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "shockeye": {
       "name": "Shock Eye",
       "template": "shockeye",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "thiefdungeontreasure": {
       "name": "Treasure",
       "template": "thiefdungeontreasure",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "opensAfterHitSeconds": 1.5
     },
     "thiefdungeonwallgate1": {
       "name": "Locked",
       "template": "thiefdungeonwallgate1",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "thiefdungeonwallgate2": {
       "name": "Locked",
       "template": "thiefdungeonwallgate2",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "thiefdungeonwallgate3": {
       "name": "thiefdungeonwallgate3",
       "template": "thiefdungeonwallgate3",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "thieffence": {
       "name": "Security Node",
       "template": "thieffence",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 4.0,
       "aggroRadius": 28
     },
     "thieffenceleader": {
       "name": "Security Satellite",
       "template": "thieffenceleader",
-      "behavior": "circle",
+      "ai": "generic_circle",
       "preferredDistance": 5.2,
       "aggroRadius": 32
     },
     "thiefguard": {
       "name": "Immortal Guard",
       "template": "thiefguard",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "thiefidol1": {
       "name": "Horus Idol",
       "template": "thiefidol1",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "thiefidol2": {
       "name": "Geb Idol",
       "template": "thiefidol2",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "thiefidol3": {
       "name": "Thoth Idol",
       "template": "thiefidol3",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "thieftrooper": {
       "name": "Treasure Guard",
       "template": "thieftrooper",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "thiefturretstrong": {
       "name": "Anti-theft Turret",
       "template": "thiefturretstrong",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "thiefwatcher": {
       "name": "Thief Zapper",
       "template": "thiefwatcher",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "trapmine": {
       "name": "X-Mine II",
       "template": "trapmine",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "trapmineshort": {
       "name": "X-Mine",
       "template": "trapmineshort",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     }
   },

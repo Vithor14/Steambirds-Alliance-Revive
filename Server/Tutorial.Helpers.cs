@@ -119,64 +119,54 @@ public static partial class Tutorial
     {
         Enemies.RegisterDefaultType("tutorial_hunter", new Enemies.EnemyType
         {
-            Name = "Training Drone", Template = "tutorialattacker", Behavior = "chase",
+            Name = "Training Drone", Template = "tutorialattacker", Ai = "generic_chase",
             PreferredDistance = 7f, AggroRadius = 26f, FirstShotDelay = 1.5f
         });
         Enemies.RegisterDefaultType("tutorial_drone", new Enemies.EnemyType
         {
-            Name = "Gas Drone", Template = "tutorialattacker2minion_walker", Behavior = "charge",
+            Name = "Gas Drone", Template = "tutorialattacker2minion_walker", Ai = "generic_charge",
             PreferredDistance = 6f, AggroRadius = 40f
         });
         Enemies.RegisterDefaultType("tutorial_cannon", new Enemies.EnemyType
         {
-            Name = "Training Turret", Template = "tutorialcannon", Behavior = "fixed", Invulnerable = true,
+            Name = "Training Turret", Template = "tutorialcannon", Ai = "generic_fixed", Invulnerable = true,
             AggroRadius = 0f, ShotRange = 40f, FirstShotDelay = 0.3f
         });
         Enemies.RegisterDefaultType("tutorial_boss", new Enemies.EnemyType
         {
-            Name = "Large Training Drone", Template = "tutorialattacker4", Boss = true, Behavior = "circle",
+            Name = "Large Training Drone", Template = "tutorialattacker4", Boss = true,
             PreferredDistance = 9f, AggroRadius = 60f, FirstShotDelay = 2.0f,
-            Phases = new List<Enemies.BossPhase>
-            {
-                new Enemies.BossPhase
-                {
-                    BelowHealth = 0.66f, Summon = "tutorial_minion", SummonCount = 2
-                },
-                new Enemies.BossPhase
-                {
-                    BelowHealth = 0.33f, Behavior = "charge", SpeedMultiplier = 1.2f,
-                    Summon = "tutorial_minion", SummonCount = 2
-                }
-            }
+            // Two phases that summon the escorts: ai\brains\tutorial_boss.json
+            Ai = "tutorial_boss"
         });
         Enemies.RegisterDefaultType("tutorial_minion", new Enemies.EnemyType
         {
-            Name = "Large Drone Escort", Template = "tutorialattacker4minion", Behavior = "chase",
+            Name = "Large Drone Escort", Template = "tutorialattacker4minion", Ai = "generic_chase",
             PreferredDistance = 7f, AggroRadius = 60f
         });
         Enemies.RegisterDefaultType("tutorial_boss_death", new Enemies.EnemyType
         {
-            Name = "Large Drone Wreck", Template = "tutorialattacker4DEATH", Behavior = "idle", Invulnerable = true
+            Name = "Large Drone Wreck", Template = "tutorialattacker4DEATH", Ai = "generic_idle", Invulnerable = true
         });
         Enemies.RegisterDefaultType("tutorial_wall0", new Enemies.EnemyType
         {
-            Name = "Crate Wall", Template = "tutorialwall0", Behavior = "idle", HealthMultiplier = 0.3f
+            Name = "Crate Wall", Template = "tutorialwall0", Ai = "generic_idle", HealthMultiplier = 0.3f
         });
         Enemies.RegisterDefaultType("tutorial_wall", new Enemies.EnemyType
         {
-            Name = "Crate Gate", Template = "tutorialwall", Behavior = "idle", HealthMultiplier = 0.3f
+            Name = "Crate Gate", Template = "tutorialwall", Ai = "generic_idle", HealthMultiplier = 0.3f
         });
         Enemies.RegisterDefaultType("tutorial_wall_boss", new Enemies.EnemyType
         {
-            Name = "Boss Gate", Template = "tutorialwallboss", Behavior = "idle", HealthMultiplier = 0.3f
+            Name = "Boss Gate", Template = "tutorialwallboss", Ai = "generic_idle", HealthMultiplier = 0.3f
         });
         Enemies.RegisterDefaultType("tutorial_chest", new Enemies.EnemyType
         {
-            Name = "Supply Crate", Template = "tutorialwalkerdungeontreasure", Behavior = "idle", OpensAfterHitSeconds = 1.5f
+            Name = "Supply Crate", Template = "tutorialwalkerdungeontreasure", Ai = "generic_idle", OpensAfterHitSeconds = 1.5f
         });
         Enemies.RegisterDefaultType("tutorial_ally", new Enemies.EnemyType
         {
-            Name = "Drill Sergeant Davis", Template = "tutorialwalkerally", Behavior = "escort", Team = 1, FreeRoam = true,
+            Name = "Drill Sergeant Davis", Template = "tutorialwalkerally", Ai = "generic_escort", Team = 1, FreeRoam = true,
             Invulnerable = true, PreferredDistance = 5f
         });
     }

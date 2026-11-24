@@ -337,7 +337,7 @@
     "wavemaster": {
       "name": "The Grinder",
       "template": "wavemaster",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30,
       "miniboss": true,
       "note": "The Grinder: minichefe segundo a wiki (o loot dele nao tem 'miniboss')"
@@ -346,7 +346,6 @@
       "name": "Lazer, the Victorious",
       "template": "turbineking",
       "boss": true,
-      "behavior": "turret",
       "aggroRadius": 60,
       "firstShotDelay": 2.0,
       "onDeath": "turbinekingDEATH",
@@ -354,28 +353,12 @@
         "onWake": "turbineking",
         "onDeath": "turbinekingDEATH"
       },
-      "phases": [
-        {
-          "belowHealth": 0.75,
-          "summon": "turbinekingattack",
-          "summonCount": 1
-        },
-        {
-          "belowHealth": 0.5,
-          "summon": "turbinekingattack2",
-          "summonCount": 1
-        },
-        {
-          "belowHealth": 0.25,
-          "summon": "turbinekingattack3",
-          "summonCount": 1
-        }
-      ]
+      "ai": "dungeon_obstacle_turbineking"
     },
     "obstacledungeontreasureBIG": {
       "name": "Big Treasure",
       "template": "obstacledungeontreasureBIG",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "health": 1250,
       "dpsChest": {
         "seconds": 25,
@@ -386,7 +369,7 @@
     "bulletbeltchunkyE": {
       "name": "Bullet Belt",
       "template": "bulletbeltchunkyE",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30,
       "shotRange": 8,
       "firstShotDelay": 0.5
@@ -394,7 +377,7 @@
     "bulletbeltchunkyN": {
       "name": "Bullet Belt",
       "template": "bulletbeltchunkyN",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30,
       "shotRange": 8,
       "firstShotDelay": 0.5
@@ -402,7 +385,7 @@
     "bulletbeltchunkyS": {
       "name": "Bullet Belt",
       "template": "bulletbeltchunkyS",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30,
       "shotRange": 8,
       "firstShotDelay": 0.5
@@ -410,7 +393,7 @@
     "bulletbeltchunkyW2": {
       "name": "Bullet Belt",
       "template": "bulletbeltchunkyW2",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30,
       "shotRange": 8,
       "firstShotDelay": 0.5
@@ -418,34 +401,34 @@
     "buzzard": {
       "name": "Scavenger",
       "template": "buzzard",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "fathunter": {
       "name": "Harasser",
       "template": "fathunter",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 4.5,
       "aggroRadius": 28
     },
     "fathuntermini": {
       "name": "Tormentor",
       "template": "fathuntermini",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 4.5,
       "aggroRadius": 28
     },
     "giantgate": {
       "name": "Dicer",
       "template": "giantgate",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "mazedrawer": {
       "name": "Slicer",
       "template": "mazedrawer",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30,
       "guns": [
         0,
@@ -456,96 +439,96 @@
     "obstacledungeondestroyablewall": {
       "name": "Wall",
       "template": "obstacledungeondestroyablewall",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "obstacledungeondestroyablewall_barricade": {
       "name": "obstacledungeondestroyablewall_barricade",
       "template": "obstacledungeondestroyablewall_barricade",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "obstacledungeondestroyablewallstrong": {
       "name": "Wall",
       "template": "obstacledungeondestroyablewallstrong",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "obstacledungeontreasure": {
       "name": "Treasure",
       "template": "obstacledungeontreasure",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "opensAfterHitSeconds": 1.5
     },
     "obstacledungeontreasureBIG_reward": {
       "name": "Big Treasure",
       "template": "obstacledungeontreasureBIG_reward",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "opensAfterHitSeconds": 1.5
     },
     "shockwaver": {
       "name": "Bouncer",
       "template": "shockwaver",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "turbine": {
       "name": "Mincer",
       "template": "turbine",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "turbinekingDEATH": {
       "name": "Lazer, the Victorious",
       "template": "turbinekingDEATH",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "turbinekingattack": {
       "name": "turbinekingattack",
       "template": "turbinekingattack",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "turbinekingattack2": {
       "name": "turbinekingattack2",
       "template": "turbinekingattack2",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "turbinekingattack3": {
       "name": "turbinekingattack3",
       "template": "turbinekingattack3",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "turbinekingbuzzard": {
       "name": "Royal Scavenger",
       "template": "turbinekingbuzzard",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 3.3,
       "aggroRadius": 28
     },
     "wavemaker4_inv": {
       "name": "Greater Grater",
       "template": "wavemaker4_inv",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "wavemakerN": {
       "name": "Grater",
       "template": "wavemakerN",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "wavemakerW": {
       "name": "Grater",
       "template": "wavemakerW",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "wavemasterminion": {
       "name": "Pest",
       "template": "wavemasterminion",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     }
   },

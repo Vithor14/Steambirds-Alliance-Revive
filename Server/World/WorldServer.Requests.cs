@@ -161,7 +161,7 @@ public static partial class WorldServer
         WorldSettings.EnemySettings settings = WorldSettingsFile.Current.Enemies;
         string group = "boss:" + request.Id;
         float rotation = (float)(random.NextDouble() * 360.0 - 180.0);
-        int id = Enemies.CreateFromScript(s.Server, handle, Role, EnsureBossType(bossGroup.Name, settings, true), x, y, rotation, group, null, null, now, log);
+        int id = Enemies.CreateFromScript(s.Server, handle, Role, EnsureBossType(bossGroup.Name, settings, true, region.Name), x, y, rotation, group, null, null, now, log);
         if (id == 0)
         {
             message = "The server could not create " + bossGroup.Name + " (enemy limit or a unit that is not in the catalog).";
@@ -181,7 +181,7 @@ public static partial class WorldServer
                 py = y;
             }
             float partRotation = (float)(random.NextDouble() * 360.0 - 180.0);
-            if (Enemies.CreateFromScript(s.Server, handle, Role, EnsureBossType(bossGroup.Parts[i], settings, false), px, py, partRotation, group, null, null, now, log) != 0)
+            if (Enemies.CreateFromScript(s.Server, handle, Role, EnsureBossType(bossGroup.Parts[i], settings, false, region.Name), px, py, partRotation, group, null, null, now, log) != 0)
                 created++;
         }
 
@@ -193,15 +193,16 @@ public static partial class WorldServer
 
     // The game's unit as a boss ("world/boss/<unit>") or as a part or minion of one ("world/part/<unit>") of the open world: the default
     // AI (chase), free to roam. A type with the same key in enemies.json replaces it, so the host or the Enemy AI tab can give it its
-    // own behavior.
-    private static string EnsureBossType(string template, WorldSettings.EnemySettings settings, bool boss)
+    // own AI.
+    private static string EnsureBossType(string template, WorldSettings.EnemySettings settings, bool boss, string regionName)
     {
-        string key = (boss ? "world/boss/" : "world/part/") + template;
+        string ai = WorldEnemyLists.AiFor(regionName, template);
+        string key = (boss ? "world/boss/" : "world/part/") + template + (ai.Equals(WorldEnemyLists.DefaultAi, StringComparison.OrdinalIgnoreCase) ? "" : "~" + ai);
         Enemies.RegisterDefaultType(key, new Enemies.EnemyType
         {
             Name = template,
             Template = template,
-            Behavior = "chase",
+            Ai = ai,
             FreeRoam = true,
             Boss = boss,
             HealthMultiplier = settings.HealthMultiplier

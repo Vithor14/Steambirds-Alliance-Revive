@@ -310,7 +310,7 @@
     "dragonsnakeegg": {
       "name": "Giant Egg",
       "template": "dragonsnakeegg",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "sequence": [
         "dragonsnake01"
       ],
@@ -322,249 +322,224 @@
       "name": "Poison God",
       "template": "dragonsnake01",
       "boss": true,
-      "behavior": "circle",
       "aggroRadius": 60,
       "firstShotDelay": 2.0,
       "onDeath": "dragonsnakeDEATH",
       "barks": {
         "onWake": "dragonsnake01_0",
-        "phase": "dragonsnake01_1",
         "onDeath": "dragonsnakeDEATH"
       },
-      "phases": [
-        {
-          "belowHealth": 0.8,
-          "summon": "dragonsnake02",
-          "summonCount": 2,
-          "message": "Poison God Engines!"
-        },
-        {
-          "belowHealth": 0.55,
-          "summon": "dragonsnakeminion01",
-          "summonCount": 4
-        },
-        {
-          "belowHealth": 0.35,
-          "summon": "dragonsnake03_big",
-          "summonCount": 2
-        },
-        {
-          "belowHealth": 0.15,
-          "summon": "dragonsnakeminion02",
-          "summonCount": 6,
-          "behavior": "charge"
-        }
-      ]
+      "ai": "dungeon_snake_dragonsnake01"
     },
     "belt_end_wall": {
       "name": "belt_end_wall",
       "template": "belt_end_wall",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "belt_start_wall": {
       "name": "belt_start_wall",
       "template": "belt_start_wall",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "coilsnake01": {
       "name": "Poison Convoy",
       "template": "coilsnake01",
       "miniboss": true,
-      "behavior": "circle",
+      "ai": "generic_circle",
       "aggroRadius": 45,
       "firstShotDelay": 1.5
     },
     "coilsnake01neck": {
       "name": "coilsnake01neck",
       "template": "coilsnake01neck",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 6,
       "aggroRadius": 30
     },
     "coilsnake02": {
       "name": "Poison Convoy",
       "template": "coilsnake02",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 6,
       "aggroRadius": 30
     },
     "coilsnake03": {
       "name": "Poison Convoy",
       "template": "coilsnake03",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 6,
       "aggroRadius": 30
     },
     "conveyorbeltZ_N": {
       "name": "Conveyor Belt",
       "template": "conveyorbeltZ_N",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "conveyorbelt_egg": {
       "name": "conveyorbelt_egg",
       "template": "conveyorbelt_egg",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "conveyorbelt_straight_N_12": {
       "name": "Conveyor Belt",
       "template": "conveyorbelt_straight_N_12",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "dragonsnake02": {
       "name": "Poison God Engine",
       "template": "dragonsnake02",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 6,
       "aggroRadius": 30
     },
     "dragonsnake03_big": {
       "name": "Poison God",
       "template": "dragonsnake03_big",
-      "behavior": "charge",
+      "ai": "generic_charge",
       "preferredDistance": 6,
       "aggroRadius": 30
     },
     "dragonsnakeDEATH": {
       "name": "Poison God",
       "template": "dragonsnakeDEATH",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "invulnerable": true
     },
     "dragonsnakeminion01": {
       "name": "Snake Servant",
       "template": "dragonsnakeminion01",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "dragonsnakeminion02": {
       "name": "Snake Servant",
       "template": "dragonsnakeminion02",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "hurtsnake2": {
       "name": "Factory Security",
       "template": "hurtsnake2",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "magnetbeltP_N": {
       "name": "Poison Belt",
       "template": "magnetbeltP_N",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "magnetbeltP_S": {
       "name": "Poison Belt",
       "template": "magnetbeltP_S",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "poisonventA": {
       "name": "poisonventA",
       "template": "poisonventA",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "poisonventC": {
       "name": "poisonventC",
       "template": "poisonventC",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "snake": {
       "name": "Cargo Snake",
       "template": "snake",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 2.0,
       "aggroRadius": 28
     },
     "snakebig": {
       "name": "Cargo Snake",
       "template": "snakebig",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "snakedungeondestroyablewall": {
       "name": "Wall",
       "template": "snakedungeondestroyablewall",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "snakedungeondestroyablewall_barricade": {
       "name": "snakedungeondestroyablewall_barricade",
       "template": "snakedungeondestroyablewall_barricade",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "snakedungeondestroyablewallstrong": {
       "name": "Wall",
       "template": "snakedungeondestroyablewallstrong",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "snakedungeontreasure": {
       "name": "Treasure",
       "template": "snakedungeontreasure",
-      "behavior": "idle",
+      "ai": "generic_idle",
       "opensAfterHitSeconds": 1.5
     },
     "snakeegg2": {
       "name": "Egg",
       "template": "snakeegg2",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "snakeegg3": {
       "name": "Egg",
       "template": "snakeegg3",
-      "behavior": "idle"
+      "ai": "generic_idle"
     },
     "snakeleader": {
       "name": "Cargo Collector",
       "template": "snakeleader",
-      "behavior": "circle",
+      "ai": "generic_circle",
       "preferredDistance": 9,
       "aggroRadius": 32
     },
     "snaketurret": {
       "name": "Scanner Drone",
       "template": "snaketurret",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 7,
       "aggroRadius": 28
     },
     "speedsnake": {
       "name": "Offering Shepherd",
       "template": "speedsnake",
-      "behavior": "chase",
+      "ai": "generic_chase",
       "preferredDistance": 4.0,
       "aggroRadius": 28
     },
     "speedsnakeleader": {
       "name": "Offering Shepherd",
       "template": "speedsnakeleader",
-      "behavior": "circle",
+      "ai": "generic_circle",
       "preferredDistance": 9,
       "aggroRadius": 32
     },
     "wallsnake2": {
       "name": "Venom Barrier",
       "template": "wallsnake2",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "wallsnakeleader2": {
       "name": "Venom Barrier",
       "template": "wallsnakeleader2",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     },
     "wallsnakeleader3": {
       "name": "Containment Barrier",
       "template": "wallsnakeleader3",
-      "behavior": "turret",
+      "ai": "generic_turret",
       "aggroRadius": 30
     }
   },
