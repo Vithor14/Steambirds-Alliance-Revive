@@ -93,7 +93,7 @@ public sealed class AiRuntime
         Out.State = brain.States[brain.Initial];
     }
 
-    public AiBrain Brain { get; }
+    public AiBrain Brain { get; private set; }
     public AiOutput Out { get; } = new AiOutput();
     public AiCompiledState State => Brain.States[stateIndex];
     public double StateTime(double now) => now - enteredAt;
@@ -166,6 +166,12 @@ public sealed class AiRuntime
             if (state.SummonEvery > 0f) nextSummonAt = now + state.SummonEvery;
         }
 
+        Roll(state);
+    }
+
+    // The numbers the conditions of a state wait for (a timeInState with a maximum is a random time between the two).
+    private void Roll(AiCompiledState state)
+    {
         rolled = new float[state.Transitions.Length][];
         for (int t = 0; t < state.Transitions.Length; t++)
         {
@@ -179,6 +185,27 @@ public sealed class AiRuntime
                     : cond.Value;
             }
         }
+    }
+
+    // The AI was edited while it runs (the simulator of the editor): the new version takes over without starting again.
+    // The unit stays in the state it is in, and keeps the time it has been there, when the new version still has a state
+    // with that id; the numbers its conditions wait for are rolled again. Without that state it starts from the initial one.
+    public void Rebind(AiBrain next)
+    {
+        string id = started ? Brain.States[stateIndex].Id : "";
+        Brain = next;
+        int index = id.Length == 0 ? -1 : Array.FindIndex(next.States, s => s.Id == id);
+        if (index < 0)
+        {
+            started = false;
+            Out.State = next.States[next.Initial];
+            return;
+        }
+        stateIndex = index;
+        Out.State = next.States[index];
+        Roll(next.States[index]);
+        if (next.States[index].SummonType.Length == 0) nextSummonAt = double.MaxValue;
+        if (!next.States[index].Shield) shieldUntil = 0.0;
     }
 
     private bool Evaluate(AiCondition c, float value, in AiSense s, float dist)

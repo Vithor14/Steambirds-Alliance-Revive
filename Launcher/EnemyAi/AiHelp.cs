@@ -157,7 +157,7 @@ internal static class AiHelp
         new HelpTopic("The simulator",
             "The simulator runs a small arena with the unit that is selected, its AI, bullets and a plane that stands for the player. It uses the same code as the server for flying and shooting, so what you see is what the server will do, except for walls, rooms and other enemies (see Limits).",
             "## Controls",
-            "- Play / Pause and Restart: stop the arena or start it again from the first state.",
+            "- Play / Pause and Restart: stop the arena or start it again from the first state. Editing the AI does not restart it: the new version takes over and the unit goes on from where it is (if its state was deleted, it starts from the first one). Only Restart, or picking another AI or unit, starts the simulation again.",
             "- Speed: how fast the simulation runs.",
             "- Player: follows your clicks (click on the arena to send it there), flies in a circle, or stands still. Its speed and circle size are next to it.",
             "- Player in sight: off means there is no player at all, to test what the AI does when the player is gone.",

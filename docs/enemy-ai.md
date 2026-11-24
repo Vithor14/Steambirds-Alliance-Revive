@@ -107,7 +107,7 @@ bullets, damage, speed, lifetime, reach, bullet steering and the shot type (gun 
 of the `gun` lines of `units_config.txt` (plugin 1.22.0 with this change): rebuild the plugin and export the game files again
 to get it. Every gun of the unit has a color (HUD list, dimmed when the current state does not let it fire) and its bullets are drawn in
 that color, so it is clear which gun fired what (`AiSimBullet.Gun`).
-Editing restarts the simulation with the new AI; a behavior alone is simulated as a one-state AI.
+Editing does **not** restart the simulation (24/11/2026): the new version takes over and the unit goes on from where it is (`AiSim.ReplaceBrain` → `AiRuntime.Rebind`: it keeps the state it is in, and the time spent there, when the new version still has a state with that id; otherwise it starts from the initial state). An edit that does not compile leaves the last good version running. Only the Restart button, or picking another AI or unit, starts it again; a behavior alone is simulated as a one-state AI.
 
 Unsaved files are kept when the language changes (the tab is rebuilt) and the launcher asks to save before closing.
 

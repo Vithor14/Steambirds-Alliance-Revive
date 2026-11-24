@@ -246,6 +246,19 @@ public sealed class AiSim
         Reset();
     }
 
+    // The AI was edited: the new version takes over and the simulation goes on from where it is (no Reset). With nothing
+    // to take over from (no AI was running) it starts, as SetBrain does.
+    public void ReplaceBrain(AiBrain brain)
+    {
+        if (Brain == null || runtime == null)
+        {
+            SetBrain(brain);
+            return;
+        }
+        Brain = brain;
+        runtime.Rebind(brain);
+    }
+
     // Removes the units the AI summoned (to test "own summons alive" conditions).
     public void KillMinions()
     {

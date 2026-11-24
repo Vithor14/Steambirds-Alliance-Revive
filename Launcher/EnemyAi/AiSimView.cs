@@ -176,6 +176,16 @@ internal sealed class AiSimView : Panel
         canvas.Invalidate();
     }
 
+    // The AI was edited: the simulation goes on with the new version (only the Restart button starts it again).
+    public void ReplaceBrain(AiBrain newBrain, string newTitle)
+    {
+        brain = newBrain;
+        title = newTitle;
+        sim.ReplaceBrain(newBrain);
+        UpdateStatus();
+        canvas.Invalidate();
+    }
+
     // What the tab chose: the game unit that is flown and drawn, and what the enemy type says about it (speed, aim...).
     // A plain game unit has no type, so its settings are the neutral ones.
     public void SetUnit(AiUnitChoice? choice)

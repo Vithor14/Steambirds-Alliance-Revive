@@ -1924,5 +1924,6 @@
   "The checkpoint works once a plane has passed this u. Used when the checkpoint works by a u line.": "",
   "Works after the plane passes u = {0}": "",
   "Works after the plane passes v = {0}": "",
-  "Effect of the client the unit shows from the start (a shield, a detection ring around a mine...). Empty = none.": ""
+  "Effect of the client the unit shows from the start (a shield, a detection ring around a mine...). Empty = none.": "",
+  "- Play / Pause and Restart: stop the arena or start it again from the first state. Editing the AI does not restart it: the new version takes over and the unit goes on from where it is (if its state was deleted, it starts from the first one). Only Restart, or picking another AI or unit, starts the simulation again.": ""
 }

@@ -547,7 +547,7 @@ internal sealed class AiTab : Panel
         UpdateHint();
         UpdateButtons();
         UpdateAiBox();
-        Simulate();
+        Simulate(true);
     }
 
     // ------------------------------------------------------------------ the AI of the unit
@@ -753,16 +753,20 @@ internal sealed class AiTab : Panel
         current.Dirty = true;
         UpdateNode(current);
         UpdateButtons();
-        Simulate();
+        Simulate(false);
     }
 
-    // Compiles what is open and shows the problems; the simulator starts again with it.
-    private void Simulate()
+    // Compiles what is open and shows the problems. Another AI (restart = true) starts the simulator again; an edit of the
+    // same one is handed to the simulation that is running, which goes on from where it is: only the Restart button
+    // starts it again. An edit that does not compile leaves the last good version running.
+    private void Simulate(bool restart)
     {
         var found = new List<AiProblem>();
         AiBrain? brain = current == null ? null : store.Compile(current, found);
         ShowProblems(found);
-        simView.SetBrain(brain, current == null ? "" : current.DisplayName);
+        string name = current == null ? "" : current.DisplayName;
+        if (restart || current == null) simView.SetBrain(brain, name);
+        else if (brain != null) simView.ReplaceBrain(brain, name);
     }
 
     private void ShowProblems(List<AiProblem> found)
@@ -889,7 +893,7 @@ internal sealed class AiTab : Panel
             store.Save(current);
             UpdateNode(current);
             UpdateButtons();
-            Simulate();
+            Simulate(false);
         }
         catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is InvalidOperationException)
         {
