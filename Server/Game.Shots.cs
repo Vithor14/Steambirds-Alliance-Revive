@@ -153,21 +153,29 @@ public static partial class Game
             pieces.Add(msg.ReadString() ?? "");
         }
 
-        if (ProgressionHandler.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
-        if (InventoryHandler.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
+        RunCommand(server, msg.SenderConnection, role, pieces, now, log);
+    }
+
+    // Runs a chat command as a player: the ones the client sends (SlashCommand) and the ones the host types in the
+    // server console (Admin\ConsoleCommands.cs, which calls this on the thread of the server the player is on).
+    public static void RunCommand(NetServer server, NetConnection connection, string role, List<string> pieces, double now,
+        Action<string, string> log)
+    {
+        if (ProgressionHandler.Command(server, connection, role, pieces, now, log)) return;
+        if (InventoryHandler.Command(server, connection, role, pieces, now, log)) return;
         // Debug and admin tools (/debug, /god, /sound, /screenshot, /stats, /audit, /passwd...).
-        if (AdminHandler.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
-        if (StoreHandler.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
+        if (AdminHandler.Command(server, connection, role, pieces, now, log)) return;
+        if (StoreHandler.Command(server, connection, role, pieces, now, log)) return;
         // Friends (/friends, /addfriend NAME).
-        if (SocialHandler.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
+        if (SocialHandler.Command(server, connection, role, pieces, now, log)) return;
         // Dungeons (/dungeons, /dungeon X; inside a dungeon /room, /boss, /leave, /restart) before the tutorial,
         // which also uses /leave and /restart: DungeonServer.Command only takes those inside a dungeon.
-        if (DungeonServer.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
+        if (DungeonServer.Command(server, connection, role, pieces, now, log)) return;
         // Open world (/world, /worldinfo, /carrier).
-        if (WorldServer.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
-        if (Tutorial.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
-        if (!Enemies.Command(server, msg.SenderConnection, role, pieces, now, log))
-            log("MSG", j.Role + " chat command not handled by the server: " + string.Join(" ", pieces));
+        if (WorldServer.Command(server, connection, role, pieces, now, log)) return;
+        if (Tutorial.Command(server, connection, role, pieces, now, log)) return;
+        if (!Enemies.Command(server, connection, role, pieces, now, log))
+            log("MSG", role + " chat command not handled by the server: " + string.Join(" ", pieces));
     }
 
     // ------------------------------------------------------------------ skills

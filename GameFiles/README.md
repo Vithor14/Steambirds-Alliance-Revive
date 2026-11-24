@@ -7,6 +7,8 @@ release was removed on 23/11/2026: the launcher zip is the only package.)
 
 ## What it does
 
+The launcher runs it by itself after it downloads the game from Steam (first-run window and Client tab: `--game <folder> --no-pause`, with a window that shows the output). It can also be run by hand at any time.
+
 1. Finds the game: `--game`, `STEAMBIRDS_GAME`, then `<Steam>\steamapps\content\app_386010\depot_386011` (the folder of
    `download_depot 386010 386011 58813776496064724`). Without the game it shows the depot command and can open the
    Steam console.

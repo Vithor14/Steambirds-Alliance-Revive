@@ -94,6 +94,9 @@ public sealed class ServerProcess : IDisposable
             CreateNoWindow = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            // The console commands of the Server tab go to the server through its standard input (Server\Admin\ConsoleCommands.cs).
+            RedirectStandardInput = true,
+            StandardInputEncoding = new UTF8Encoding(false),
             StandardOutputEncoding = Encoding.UTF8,
             StandardErrorEncoding = Encoding.UTF8
         };
@@ -177,6 +180,34 @@ public sealed class ServerProcess : IDisposable
             // The server already ended (Exited takes care of the state).
         }
         return true;
+    }
+
+    // Writes one line to the console of the server (Server\Admin\ConsoleCommands.cs: "NAME<TAB>/command", "*<TAB>/command" or
+    // "/command"). False when the server is not running.
+    public bool SendCommand(string line, out string error)
+    {
+        error = "";
+        Process? running;
+        lock (gate) running = process;
+        if (running == null || State != ServerState.Running)
+        {
+            error = L.T("The server is not running.");
+            return false;
+        }
+        try
+        {
+            lock (gate)
+            {
+                running.StandardInput.WriteLine(line.Replace((char)13, (char)32).Replace((char)10, (char)32));
+                running.StandardInput.Flush();
+            }
+            return true;
+        }
+        catch (Exception e)
+        {
+            error = L.F("Could not send the command to the server: {0}", e.Message);
+            return false;
+        }
     }
 
     // Ends the server. It saves its files (account.json, inventory.json...) as soon as they change, so nothing is lost.

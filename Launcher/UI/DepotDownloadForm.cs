@@ -184,11 +184,25 @@ internal sealed class DepotDownloadForm : Form
         context.ClientNotice(L.F("game folder: {0} (build {1})", folder!, GameInstall.ReadBuildId(folder)));
         if (appIdError != null) context.ClientNotice(L.F("could not create steam_appid.txt: {0}", appIdError));
 
+        // Right after the download the data the server and the editor need is taken from the game (SteambirdsGameFiles.exe).
+        string gameFilesNote = RunGameFiles(folder!);
+
         string text = L.F("The game is in:\n{0}\n\nThe launcher uses this folder now. Click Play in the Client tab.", folder!);
         if (!GameInstall.HasBepInEx(folder))
             text += "\n\n" + L.T("This folder has no BepInEx: the game runs, but without the Quieter plugin (its fixes and the tables it writes for the server). To use it, copy the BepInEx folder of a game that has it into this folder.");
         if (appIdError != null)
             text += "\n\n" + L.F("steam_appid.txt could not be created ({0}). Open the launcher as administrator once, or create the file with the text 386010 in the game folder.", appIdError);
+        if (gameFilesNote.Length > 0) text += "\n\n" + gameFilesNote;
         Ui.ShowInfo(this, text);
+    }
+
+    // Opens the window that runs SteambirdsGameFiles.exe. Returns a note for the final message (empty when all went well).
+    private string RunGameFiles(string folder)
+    {
+        if (!GameFilesRunForm.ToolExists)
+            return L.F("SteambirdsGameFiles.exe was not found next to the launcher ({0}): run it once, with the game installed, to get the server data and the map editor pictures.", GameFilesRunForm.ToolPath);
+        using var form = new GameFilesRunForm(context, folder);
+        form.ShowDialog(this);
+        return form.Succeeded ? "" : L.T("The game files were not prepared (see the window of SteambirdsGameFiles.exe). Run it again later: the server and the map editor need its data.");
     }
 }

@@ -102,6 +102,9 @@ public static partial class Program
                     server.Recycle(msg);
                 }
 
+                // Commands typed in the server console (launcher: Server > Console) for the players of this server.
+                ConsoleCommands.Run(server, RoleName(role), Clock.Elapsed.TotalSeconds, Log);
+
                 // Enemies of this server: AI, shots, waves and UpdateUnitsBatch (20 times per second).
                 Enemies.Update(server, RoleName(role), Clock.Elapsed.TotalSeconds, Log);
 

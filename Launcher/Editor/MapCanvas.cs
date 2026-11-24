@@ -83,6 +83,8 @@ internal sealed partial class MapCanvas : Control
     public bool ShowDecor { get; set; } = true;
     public bool ShowLabels { get; set; } = true;
     public bool UsePictures { get; set; } = true;
+    // The axes legend and the "no floor" hint (off for the thumbnails of the Server tab).
+    public bool ShowOverlay { get; set; } = true;
 
     // Step objects snap to when they are placed or moved (0 = free).
     public double SnapStep { get; set; } = 0.5;

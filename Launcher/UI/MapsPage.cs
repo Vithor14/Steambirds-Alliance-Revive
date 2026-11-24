@@ -1,5 +1,6 @@
 using System.Globalization;
 using SteambirdsLauncher.Core;
+using SteambirdsLauncher.Editor;
 
 namespace SteambirdsLauncher.UI;
 
@@ -8,7 +9,8 @@ namespace SteambirdsLauncher.UI;
 //  - Nexus and tutorial maps: map file of each one (dungeons.json "nexusMap" / "tutorialMap"; the originals are
 //    maps\nexus.json and maps\tutorial_walker.json).
 //  - "Open in the editor": loads the selected map (Nexus, tutorial or the dungeon of the selected row) in the Map editor tab.
-//  - Map preview inside this page: not implemented yet (the editor shows the map).
+//  - Map preview: the card at the right of the table draws the map of the selected row (or of the Nexus / tutorial choice
+//    last touched) with the editor's own canvas (Editor\MapThumbnail.cs).
 internal sealed class MapsPage : UserControl
 {
     private readonly LauncherContext context;
@@ -27,6 +29,14 @@ internal sealed class MapsPage : UserControl
     private readonly Button undoButton;
     private readonly Label statusLabel;
     private readonly System.Windows.Forms.Timer watchTimer;
+    private readonly PictureBox previewPicture;
+    private readonly Label previewCaption;
+    private readonly System.Windows.Forms.Timer previewTimer;
+    // Pictures already drawn, by file: (time of the file, picture, description). Redrawn when the file changes.
+    private readonly Dictionary<string, (DateTime Stamp, Bitmap Picture, string Description)> previewCache =
+        new Dictionary<string, (DateTime, Bitmap, string)>(StringComparer.OrdinalIgnoreCase);
+    private string previewMap = "";
+    private string previewShown = "";
     private DateTime loadedStamp = DateTime.MinValue;
     private bool loading;
     private bool dirty;
@@ -47,8 +57,16 @@ internal sealed class MapsPage : UserControl
         // ------------------------------------------------------------ Nexus and tutorial maps
         nexusMap = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 200 };
         tutorialMap = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 200 };
-        nexusMap.SelectedIndexChanged += (_, _) => MarkDirty();
-        tutorialMap.SelectedIndexChanged += (_, _) => MarkDirty();
+        nexusMap.SelectedIndexChanged += (_, _) =>
+        {
+            MarkDirty();
+            RequestPreview(SelectedText(nexusMap));
+        };
+        tutorialMap.SelectedIndexChanged += (_, _) =>
+        {
+            MarkDirty();
+            RequestPreview(SelectedText(tutorialMap));
+        };
         tip.SetToolTip(nexusMap, L.T("Map file of the Nexus (Rebel City). The original is nexus. To make another version, open nexus in the Map editor, change it and use Save as."));
         tip.SetToolTip(tutorialMap, L.T("Map file of the tutorial (Training Grounds). The original is tutorial_walker. To make another version, open it in the Map editor, change it and use Save as."));
 
@@ -153,12 +171,35 @@ internal sealed class MapsPage : UserControl
             if (grid.IsCurrentCellDirty && grid.CurrentCell is DataGridViewCheckBoxCell or DataGridViewComboBoxCell)
                 grid.CommitEdit(DataGridViewDataErrorContexts.Commit);
         };
-        grid.CellValueChanged += (_, _) => MarkDirty();
+        grid.CellValueChanged += (_, e) =>
+        {
+            MarkDirty();
+            if (!loading && e.RowIndex >= 0 && e.RowIndex == grid.CurrentCell?.RowIndex) RequestPreview(MapOfRow(e.RowIndex));
+        };
+        grid.CurrentCellChanged += (_, _) =>
+        {
+            if (!loading && grid.CurrentCell != null) RequestPreview(MapOfRow(grid.CurrentCell.RowIndex));
+        };
         grid.DataError += (_, e) => e.ThrowException = false;
 
         // The table fills what is left; the cards and the toolbar sit above it.
+        // The preview sits at the right of the table (added before the cards so it only takes the height of the table).
+        previewPicture = new PictureBox { Dock = DockStyle.Fill, SizeMode = PictureBoxSizeMode.Zoom, BackColor = Color.Transparent };
+        previewCaption = Ui.Wrapping("", 330, gray: true);
+        previewCaption.Dock = DockStyle.Bottom;
+        var previewCard = new Card { Title = L.T("Map preview"), Dock = DockStyle.Right, Width = 380, Margin = Padding.Empty };
+        previewCard.Controls.Add(previewPicture);
+        previewCard.Controls.Add(previewCaption);
+        previewTimer = new System.Windows.Forms.Timer { Interval = 150 };
+        previewTimer.Tick += (_, _) =>
+        {
+            previewTimer.Stop();
+            ShowPreview();
+        };
+
         var dungeonsPanel = new Panel { Dock = DockStyle.Fill };
         dungeonsPanel.Controls.Add(Ui.Framed(grid));
+        dungeonsPanel.Controls.Add(previewCard);
         dungeonsPanel.Controls.Add(settingsCard);
         dungeonsPanel.Controls.Add(toolbar);
 
@@ -179,6 +220,7 @@ internal sealed class MapsPage : UserControl
         watchTimer.Start();
 
         Reload();
+        RequestPreview(SelectedText(nexusMap));
     }
 
     // A wrapping flow inside a card needs to know how wide it may be, or it does not grow taller when it wraps.
@@ -291,6 +333,56 @@ internal sealed class MapsPage : UserControl
             index = box.Items.Count - 1;
         }
         box.SelectedIndex = index;
+    }
+
+    private string MapOfRow(int row) =>
+        row >= 0 && row < grid.Rows.Count ? Convert.ToString(grid.Rows[row].Cells["map"].Value) ?? "" : "";
+
+    // Asks for the picture of a map file; it is drawn a moment later (moving through the rows does not draw each one).
+    private void RequestPreview(string map)
+    {
+        if (map.Length == 0) return;
+        previewMap = map;
+        previewTimer.Stop();
+        previewTimer.Start();
+    }
+
+    private void ShowPreview()
+    {
+        string map = previewMap;
+        if (map.Length == 0) return;
+        string path = Path.Combine(LauncherPaths.MapsFolder, map + ".json");
+        if (!File.Exists(path))
+        {
+            previewShown = "";
+            previewPicture.Image = null;
+            Ui.SetStatus(previewCaption, L.F("{0}: the map file was not found in the maps folder.", map), TextRole.Bad);
+            return;
+        }
+
+        DateTime stamp = File.GetLastWriteTimeUtc(path);
+        try
+        {
+            if (!previewCache.TryGetValue(path, out var cached) || cached.Stamp != stamp)
+            {
+                MapThumbnail.Result drawn = MapThumbnail.Render(path, 640, 480);
+                if (previewCache.TryGetValue(path, out var old))
+                {
+                    if (ReferenceEquals(previewPicture.Image, old.Picture)) previewPicture.Image = null;
+                    old.Picture.Dispose();
+                }
+                cached = (stamp, drawn.Picture, drawn.Description);
+                previewCache[path] = cached;
+            }
+            previewPicture.Image = cached.Picture;
+            previewShown = map;
+            Ui.SetStatus(previewCaption, map + ": " + cached.Description, TextRole.Muted);
+        }
+        catch (Exception e)
+        {
+            previewPicture.Image = null;
+            Ui.SetStatus(previewCaption, L.F("{0}: the map could not be drawn ({1}).", map, e.Message), TextRole.Bad);
+        }
     }
 
     private static string SelectedText(ComboBox box) => box.SelectedItem as string ?? "";
@@ -425,6 +517,11 @@ internal sealed class MapsPage : UserControl
         {
             watchTimer.Stop();
             watchTimer.Dispose();
+            previewTimer.Stop();
+            previewTimer.Dispose();
+            previewPicture.Image = null;
+            foreach (var cached in previewCache.Values) cached.Picture.Dispose();
+            previewCache.Clear();
         }
         base.Dispose(disposing);
     }

@@ -77,6 +77,10 @@ The server tries, in this order: progression, items, dungeons, tutorial and enem
 
 Who may use the other commands is decided by `chatCommands` in `network.json`: `everyone`, `host` (only the game on the server's PC) or `none`. `/leave` and `/players` always work.
 
+### From the server console (launcher)
+
+The host can also run every command above for a player without typing in the game: Server tab, Console page, *Run for* (the game of this PC, all players online or one player), the command, Enter. *Command list...* lists the commands with a description. The command runs as that player (it ignores `chatCommands`, the console is the host's), its answer goes to that player's chat and the server logs a `[CONSOLE]` line. The launcher writes to the standard input of the server (`Server\Admin\ConsoleCommands.cs`); in a terminal the lines are `NAME<TAB>/command`, `*<TAB>/command` (everybody) or `/command` (the game of this PC).
+
 ### Admin and debug tools
 
 Built in 0.6.0 (`Server\Admin\`, details in `docs/admin-tools.md`). They follow `chatCommands` of `network.json`; the ones marked "host" only work in the game of the server's PC.

@@ -242,7 +242,7 @@ internal sealed partial class MapCanvas
         if (selected != null && IsKindVisible(selected.Kind)) DrawSelection(g, selected);
 
         DrawToolPreview(g, p);
-        DrawOverlay(g, p);
+        if (ShowOverlay) DrawOverlay(g, p);
     }
 
     private void DrawFloor(Graphics g, FloorStyle floorStyle, double u0, double u1, double v0, double v1)
@@ -252,9 +252,8 @@ internal sealed partial class MapCanvas
 
         // Pieces placed one by one ("floor.pieces") are drawn over the tiles, with their rotation. A map can have only
         // pieces and no drawn floor (the Nexus), so they do not depend on the tiles.
-        Dictionary<(int P, int Q), FloorPiece> placed = UsePictures && slotPx >= 12
-            ? PlacedPieces()
-            : new Dictionary<(int P, int Q), FloorPiece>();
+        // Without pictures (or zoomed far out, or a piece the game pictures do not have) a piece is a flat square.
+        Dictionary<(int P, int Q), FloorPiece> placed = PlacedPieces();
         if (floor.TileCount == 0 && placed.Count == 0) return;
 
         if (floor.TileCount > 0)
@@ -288,12 +287,13 @@ internal sealed partial class MapCanvas
         }
 
         var view = new Rectangle(0, 0, Width, Height);
+        using var flatPieces = new SolidBrush(floorStyle.FloorColor);
         foreach (KeyValuePair<(int P, int Q), FloorPiece> pair in placed)
         {
-            if (pair.Value.Picture == null) continue;
             Rectangle slot = CellRect(pair.Key.P * MapCoords.Slot, pair.Key.Q * MapCoords.Slot, MapCoords.Slot);
             if (!slot.IntersectsWith(view)) continue;
-            DrawCroppedRotated(g, pair.Value.Picture, slot, MapCoords.Slot, pair.Value.Rotation);
+            if (pair.Value.Picture == null || !UsePictures || slotPx < 12) g.FillRectangle(flatPieces, slot);
+            else DrawCroppedRotated(g, pair.Value.Picture, slot, MapCoords.Slot, pair.Value.Rotation);
         }
     }
 

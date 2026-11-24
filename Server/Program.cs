@@ -139,6 +139,9 @@ public static partial class Program
         SocialHandler.SwitchToNexus = (server, connection, reason) => SendToNexus(server, connection, reason);
         SocialHandler.SwitchToWorld = (server, connection, reason) => SendToWorld(server, connection, reason);
 
+        // Commands typed in the server console (Admin\ConsoleCommands.cs).
+        ConsoleCommands.Start(Log);
+
         // Map test mode: the Nexus (only the login passes through it) and the dungeon server; nothing else.
         StartUdp(NexusPort, RoleNexus);
         if (!MapTest.Active) StartUdp(TutorialPort, RoleTutorial);

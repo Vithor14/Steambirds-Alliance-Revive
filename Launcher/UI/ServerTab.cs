@@ -59,12 +59,8 @@ internal sealed class ServerTab : UserControl
             context.Settings.ShowServerInfoLines = on;
             context.SaveSettings();
         });
-        var commandBox = new ThemedTextBox { Width = 360, PlaceholderText = "/command", Margin = new Padding(3, 4, 3, 3) };
-        ThemedButton sendButton = Ui.Button(L.T("Send"));
-        Ui.Disable(commandBox, sendButton);
-        FlowLayoutPanel commandRow = Ui.Flow(Ui.Text(L.T("Command:")), commandBox, sendButton, Ui.ComingSoon(tip,
-            L.T("The server does not read commands from its console yet.\nThe admin commands (/xp, /dungeon, /items, /loot...) are typed in the game chat.")));
-        commandRow.Dock = DockStyle.Bottom;
+        // Commands of the server, run as the player the host picks (ConsoleCommandBar, Server\Admin\ConsoleCommands.cs).
+        var commandRow = new ConsoleCommandBar(context) { Dock = DockStyle.Bottom };
         var consolePage = new Panel { Dock = DockStyle.Fill };
         consolePage.Controls.Add(Ui.Framed(console));
         consolePage.Controls.Add(commandRow);

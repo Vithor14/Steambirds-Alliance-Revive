@@ -70,3 +70,7 @@ When the Steam game is running the game always tries Steam first, so the usernam
 `PlaneRetirement.PayCurrencyForPilotXp`: `floor((1 - realTimePlaneXPProportion) × unpaid pilot score) / pilotXpPer1Currency` of `pilotXpCurrencyId`, from
 `pilotXpCurrencyAwardThreshold` on (the three come from the game's `configBinary`). Paid when a plane is retired and when it is destroyed (with permadeath off a plane that falls again only
 pays the part it had not paid yet). The client shows `ClientNotificationGiveCurrencyForPilotXp` `54391`. `docs/progression.md`.
+
+## Console commands (24/11/2026)
+
+The launcher (Server tab, Console page) and a terminal can run the chat commands above for a player: `Server\Admin\ConsoleCommands.cs` reads lines from the standard input (`NAME<TAB>/command`, `*<TAB>/command` for everybody, `/command` for the game of this PC; `/players` lists who is online) and queues the command for the UDP server each player is connected to; the loop of that server runs it with `Game.RunCommand`, as the player, ignoring `chatCommands`. Each run is a `[CONSOLE]` log line.
