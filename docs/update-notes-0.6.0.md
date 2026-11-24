@@ -28,7 +28,7 @@ but not yet played with two or more people. Please report anything odd.
 - Three small maps for people who make maps, each a compact grid with the name of every item written on the floor in front of it:
   `maps\map_maker_floors.json` (**every floor piece**, 349, one tile each), `map_maker_decor.json` (**every decoration**, 292) and
   `map_maker_enemies.json` (**every enemy unit**, 822, the 38 bosses in the last rows). Enemies wait asleep and **only wake up when they take
-  damage** (and only the one that was hit). `/room N` jumps to a group of rows. Open one in the map editor and click **Play test**.
+  damage** (and only the one that was hit). `/room N` jumps to a group of rows. Each one has a plain floor with walls all around, and you start in the middle (in the enemies map, between the normal units and the bosses; there the floor narrows where the bosses are so nobody gets lost, and the units are 10 u apart). Open one in the map editor and click **Play test**.
   Generated from the game data by `tools\make_map_maker_helper.py`; details in `docs/map-format.md`. (First version: one long map; it took
   about 5 minutes to fly to the enemies, so it became three maps with the items twice as close.)
 
@@ -111,7 +111,7 @@ não foi jogado com duas ou mais pessoas. Avise se algo estranho aparecer.
 - Três mapas pequenos para quem faz mapas, cada um uma grade compacta com o nome de cada item escrito no chão à frente dele:
   `maps\map_maker_floors.json` (**todas as peças de chão**, 349, um tile cada), `map_maker_decor.json` (**todas as decorações**, 292) e
   `map_maker_enemies.json` (**todas as unidades inimigas**, 822, os 38 chefes nas últimas fileiras). Os inimigos ficam dormindo e **só acordam
-  quando levam dano** (e só o que foi atingido). `/room N` pula para um grupo de fileiras. Abra um no editor de mapas e clique em **Play test**.
+  quando levam dano** (e só o que foi atingido). `/room N` pula para um grupo de fileiras. Cada um tem chão liso com paredes em volta, e o jogador começa no meio (no de inimigos, entre os inimigos comuns e os chefes; ali o chão afina onde estão os chefes para ninguém se perder, e as unidades ficam a 10 u uma da outra). Abra um no editor de mapas e clique em **Play test**.
   Gerados a partir dos dados do jogo por `tools\make_map_maker_helper.py`; detalhes em `docs/map-format.md`. (A primeira versão era um mapa
   comprido: levava uns 5 minutos para chegar aos inimigos, então virou três mapas com os itens duas vezes mais perto.)
 
