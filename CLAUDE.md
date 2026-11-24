@@ -26,8 +26,8 @@ Maintained 100% by the community, with some additions and improvements.
 
 ## Where things stand
 
-- Version at the last update (23/11/2026): server and launcher **0.5.0**, plugin Steambirds Quieter **1.22.0**, client build
-  **201219.1413**. Release notes: `docs/update-notes-0.5.0.md` (English and Portuguese).
+- Version at the last update (24/11/2026): server and launcher **0.6.0**, plugin Steambirds Quieter **1.22.0**, client build
+  **201219.1413**. Release notes: `docs/release-notes-0.6.0.md` (short, for GitHub) and `docs/update-notes-0.6.0.md` (full, English and Portuguese).
 - **`CHECKLIST.md` (repo root) is the source of truth**: done / partial / missing per area, and the suggested MVP order.
   Update it when a feature changes state (keep its Portuguese style) and recompute its summary table (a bullet counts as
   done `- [x]`, partial `- [ ] 🟡` or missing `- [ ]`).
@@ -55,7 +55,8 @@ Maintained 100% by the community, with some additions and improvements.
 | `docs/social.md` | friends, flocks (Flock Hall), whispers, flock chat, teleport and "Join Server", `social.json`, `flocks.json` (English) |
 | `docs/admin-tools.md` | admin and debug tools: debug settings, sounds, screenshots, server stats, inventory audit, password accounts (English) |
 | `docs/update-notes-0.5.0.md` | release notes of 0.5.0 (English and Portuguese) |
-| `docs/update-notes-0.6.0.md` | release notes of 0.6.0, **in progress**: fed with every change until the release (English and Portuguese) |
+| `docs/update-notes-0.6.0.md`, `docs/release-notes-0.6.0.md` | release notes of 0.6.0: full (English and Portuguese) and the short one for GitHub |
+| `docs/update-notes-0.7.0.md` | release notes of 0.7.0, **in progress**: fed with every change until the release (English and Portuguese) |
 | `docs/radmin-vpn-guide.md` | player-facing guide: install Radmin VPN, join the `Steambirds_Revive` network, host or join a server (English) |
 | `docs/discord-server.md`, `docs/discord-start-here.md` | plan of the community Discord server and the ready-to-paste `#start-here` texts (not code) |
 
@@ -75,7 +76,7 @@ Maintained 100% by the community, with some additions and improvements.
   - Maps: `maps\*.json` (format: `docs/map-format.md`, all field names in English). Loot: `loot_tables\`. Enemy AI: `ai\`.
   - Game data exported by the plugin (gitignored, copied from the game): `data\`. Item catalog written by the server: `catalog\`.
   - Accounts: `accounts\<key>\` (gitignored). Chat messages of the client: `Game*.cs`; message IDs: `MessageCatalog.cs`.
-- `Launcher\` — WinForms .NET 8 launcher (0.5.0): `Core\`, `UI\` (screens) with `UI\Controls\` (themed controls), `Editor\` (map editor tab),
+- `Launcher\` — WinForms .NET 8 launcher (0.6.0): `Core\`, `UI\` (screens) with `UI\Controls\` (themed controls), `Editor\` (map editor tab),
   `EnemyAi\` (Enemy AI tab and simulator), `lang\` (English is the default; `pt-BR.json`, `_template.json`).
   Docs: `Launcher\README.md`, `Launcher\Editor\README.md`, `Launcher\lang\README.md`.
 - `Shared\EnemyAi\` — enemy AI core (file formats, runtime, flight, gun aim, simulator), compiled into **both** `Server` and `Launcher`
@@ -152,8 +153,8 @@ In-game testing is done by the user. When they report a test, read `server-repor
 - Never commit game files (assets, DLLs, `configBinary`, decompiled code); `.gitignore` covers them.
   Commit / push only when the user asks.
 - Write complete changes in place, then tell the user which files changed and what to test in the game.
-- **0.6.0 is in progress:** every change to the game, the server, the launcher or the editors gets a line in
-  `docs/update-notes-0.6.0.md` (English and Portuguese, in the right section), in the same change. At the release the file is closed and
+- **0.7.0 is in progress:** every change to the game, the server, the launcher or the editors gets a line in
+  `docs/update-notes-0.7.0.md` (English and Portuguese, in the right section), in the same change. At the release the file is closed and
   the next one (`update-notes-<next>.md`) starts.
 - When a feature, file or command changes, update the docs in the same change: `CHECKLIST.md`, the matching `docs\` note, the
   READMEs and `Chat commands.md`. (A big part of the docs went stale between 16/11 and 23/11 because they were not.)

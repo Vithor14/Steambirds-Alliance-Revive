@@ -16,8 +16,8 @@
 # Before zipping, the script checks the package for those files and stops if it finds one.
 #
 # Usage:  .\"Build launcher release.ps1"                       (version = the one in Launcher\SteambirdsLauncher.csproj)
-#         .\"Build launcher release.ps1" -Version 0.5.0
-#         .\"Build launcher release.ps1" -Version 0.5.0 -NoPause
+#         .\"Build launcher release.ps1" -Version 0.6.0
+#         .\"Build launcher release.ps1" -Version 0.6.0 -NoPause
 # Everything shown on screen is also written to Release\build\release.log.
 
 param(

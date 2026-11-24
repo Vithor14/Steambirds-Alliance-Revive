@@ -1,8 +1,6 @@
-# Steambirds Alliance Revive 0.6.0 (in progress)
+# Steambirds Alliance Revive 0.6.0
 
-**Status: not released.** This file is fed with every change until 0.6.0 is out; add a line here (English and Portuguese) in the same change
-that touches the game, the server, the launcher or the editors. The version number of the launcher and the server is still 0.5.0 in the
-code: it changes to 0.6.0 when the release is built. / **Em andamento:** este arquivo recebe cada alteração até o lançamento da 0.6.0.
+**Released on 24/11/2026.** This file is closed: changes after 0.6.0 go in `docs/update-notes-0.7.0.md`. The short version for the GitHub release is `docs/release-notes-0.6.0.md`. / **Lançada em 24/11/2026.** Este arquivo está fechado: as alterações depois da 0.6.0 vão em `docs/update-notes-0.7.0.md`.
 
 Base: `fe9c331` (the last commit of 0.5.0). / Base: `fe9c331` (último commit da 0.5.0).
 
@@ -101,9 +99,7 @@ but not yet played with two or more people. Please report anything odd.
 
 ## Português
 
-**Em andamento, não lançada.** Este arquivo recebe uma linha (em inglês e em português) a cada alteração do jogo, do servidor, do launcher
-ou dos editores, até a 0.6.0 sair. O número de versão do launcher e do servidor ainda é 0.5.0 no código: vira 0.6.0 quando o release for
-montado.
+**Lançada em 24/11/2026.** Arquivo fechado; as alterações seguintes ficam em `docs/update-notes-0.7.0.md`.
 
 Grande teste de 23/11 com 3 PCs (Brasil, Argentina e Tailândia): o tutorial, 4 dungeons, o mundo aberto, loot, lojas e amigos funcionaram; os
 problemas que ele achou estão corrigidos abaixo. O que está marcado *não jogado* foi compilado e conferido pelo código do cliente, mas ainda

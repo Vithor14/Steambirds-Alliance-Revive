@@ -24,7 +24,7 @@ community-made project. The game itself is **not** included: you need your own c
 Not done yet: quests and missions, the Combat Sim, secure trade, the original boss AI and most dungeon-specific scripts (only
 Iron Lair and Bomb Factory are switched on; the others are ready to try in `dungeons.json`). Several recent features (stores,
 friends and flocks, plane variants, dungeon keys) were tested only with a test client, not in the game yet: please report
-anything odd. See [CHECKLIST.md](CHECKLIST.md) for the full status and [what is new in 0.5.0](docs/update-notes-0.5.0.md).
+anything odd. See [CHECKLIST.md](CHECKLIST.md) for the full status and [what is new in 0.6.0](docs/release-notes-0.6.0.md).
 
 ## Play or host
 
@@ -59,7 +59,7 @@ zip for GitHub Releases (launcher, server, `SteambirdsGameFiles.exe` and plugin,
 | Path | What it is |
 |---|---|
 | `Server\` | The game server (.NET 8): HTTP login and UDP game servers; maps, loot tables and settings as data files |
-| `Launcher\` | WinForms launcher (0.5.0) with the map editor and Enemy AI tabs |
+| `Launcher\` | WinForms launcher (0.6.0) with the map editor and Enemy AI tabs |
 | `Shared\EnemyAi\` | Enemy AI core, shared by the server and the launcher |
 | `QuieterPlugin\` | BepInEx plugin for the game client (data exports and client-side fixes) |
 | `GameFiles\` | `SteambirdsGameFiles.exe`: gets the needed files from your own game copy |
