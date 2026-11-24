@@ -268,9 +268,19 @@ public static partial class Game
         float start = (float)now;
         float duration = cloud.Duration > 0f ? cloud.Duration : 5f;
 
+        // The look of the cloud follows the variant of the plane that used the skill (art replacement of the variant).
+        string variant = "";
+        short art = 0;
+        Accounts.SavedPlane? plane = Accounts.GetPlane(j.CharacterId);
+        if (plane != null)
+        {
+            variant = plane.Variant;
+            art = PlaneVariants.ArtReplacementId(plane.Class, plane.Variant);
+        }
+
         // The cloud goes to the owner and to the other players of the room that see the owner's plane. The owner id inside the
         // cloud options is the plane id of the RECEIVER (own shortId for the owner, relay id for the others).
-        SendCloudSpawn(server, connection, shortId, ownerShortId, cloud, start, x, y, rotation);
+        SendCloudSpawn(server, connection, shortId, ownerShortId, cloud, start, x, y, rotation, art);
         pendingDeaths.Add(new PendingDeath
         {
             When = now + duration,
@@ -283,7 +293,7 @@ public static partial class Game
         });
         foreach (var (observer, relayOwnerId) in PlayerRelay.Observers(connection))
         {
-            SendCloudSpawn(server, observer, shortId, relayOwnerId, cloud, start, x, y, rotation);
+            SendCloudSpawn(server, observer, shortId, relayOwnerId, cloud, start, x, y, rotation, art);
             pendingDeaths.Add(new PendingDeath
             {
                 When = now + duration,
@@ -311,12 +321,14 @@ public static partial class Game
         log("SKILL", j.Role + " cloud skill '" + name + "' used by the unit " + ownerShortId + where +
             " -> created the unit " + shortId + " (prefab " + cloud.PrefabIndex + " " + cloud.Prefab +
             ", radius " + CopperReader.Num(cloud.FinalRadius) + ", lasts " + CopperReader.Num(duration) + "s" +
-            (cloud.AttachedToOwner ? ", attached to the owner" : "") + ")");
+            (cloud.AttachedToOwner ? ", attached to the owner" : "") +
+            (art != 0 ? ", look of the variant " + variant + " (art replacement " + art + ")" : "") + ")");
     }
 
     // SpawnUnitsBatch of a cloud for one receiver. ownerId = the owner's plane as the receiver knows it.
+    // artReplacement = netIdShort of the art replacement of the owner's variant (0 = none): the client swaps the effect prefab with it.
     private static void SendCloudSpawn(NetServer server, NetConnection target, int shortId, int ownerId, Cloud cloud, float start,
-        float x, float y, float rotation)
+        float x, float y, float rotation, short artReplacement)
     {
         // CloudScript.CreateEntOptions: owner, cloud hash, start, radius modifier,
         // duration modifier and a byte that says whether it follows a unit.
@@ -340,11 +352,11 @@ public static partial class Game
         spawn.Write((short)0);                              // familyRootTemplateHash
         spawn.WriteVariableInt32(0);                        // parentShortId
         spawn.WriteVariableInt32(PlaneSpawn.PlayerTeamIndex); // the player's team
-        spawn.Write((short)0);                              // artReplacement
+        spawn.Write(artReplacement);                        // artReplacement: the variant's cloud look
         spawn.Write(server.UniqueIdentifier);               // authority = server
         spawn.WriteVariableInt32(options.LengthBytes + 1);   // unitOptions: bytes + 1
         spawn.Write(options.Data, 0, options.LengthBytes);   // never spawn.Write(options): loose bits would shift the rest
-        spawn.WriteVariableUInt32(1u | 4u | 32768u);        // FieldUpdate: position, rotation and scale
+        spawn.WriteVariableUInt32(1u | 4u | 32768u);       // FieldUpdate: position, rotation and scale
         WriteScaled(spawn, x, 1024f);
         WriteScaled(spawn, y, 1024f);
         WriteScaled(spawn, rotation, 32f);

@@ -1,6 +1,6 @@
 # Steambirds Alliance Revive — Launcher
 
-Launcher of the project (version 0.7.0). The header has the five main tabs, grouped by what they are for — **play** (Client, Server), **make** (Map editor, Enemy AI) and, at the right end, **Settings** — and the state of the server and of the game:
+Launcher of the project (version 0.7.1). The header has the five main tabs, grouped by what they are for — **play** (Client, Server), **make** (Map editor, Enemy AI) and, at the right end, **Settings** — and the state of the server and of the game:
 
 - **Client**: three sub-tabs and a **Play bar** that stays in view.
   - *Servers*: lists the servers (this PC, the local network and VPNs like Radmin and Hamachi, or a typed IP).

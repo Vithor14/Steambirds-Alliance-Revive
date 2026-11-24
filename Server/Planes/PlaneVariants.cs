@@ -74,6 +74,27 @@ public static class PlaneVariants
         }
     }
 
+    // Network id (netIdShort) of the art replacement a variant brings, 0 when the variant has none (or the id is unknown).
+    //
+    // The client repaints a cloud's effect through the "art replacement" of the unit that creates it (CloudScript.Init ->
+    // ApplyArtReplacement(prefabName); the art_replacements config maps, for example, "poisonCloudFX" to "poisonCloudFXPremium"
+    // for the Epic variants). The id travels in the artReplacement field of the cloud's spawn, so the server must send the one of the
+    // variant that the plane that used the skill wears. It changes only the picture: radius, duration and effects stay the same.
+    //
+    // NetIdentifiedConfig.netIdShort: the config's hashOverride when set, else the Mono hash of its id (the file key).
+    public static short ArtReplacementId(string planeClass, string variant)
+    {
+        if (string.IsNullOrEmpty(planeClass) || string.IsNullOrEmpty(variant)) return 0;
+        PlaneClassInfo? cls = ItemCatalog.GetClass(planeClass);
+        if (cls == null || !cls.VariantDecorations.TryGetValue(variant, out ConfigNode? node)) return 0;
+
+        string art = node["artReplacement"].AsString("");
+        if (art.Length == 0) return 0;
+
+        int hashOverride = ConfigBinary.Get("art_replacements")[art]["hashOverride"].AsInt(0);
+        return hashOverride != 0 ? unchecked((short)hashOverride) : MonoHash.TemplateHash(art);
+    }
+
     public static void WriteClientUpdatePlaneVariant(NetBuffer buf, string variantId)
     {
         buf.Write(MsgClientUpdatePlaneVariant);

@@ -26,8 +26,8 @@ Maintained 100% by the community, with some additions and improvements.
 
 ## Where things stand
 
-- Version at the last update (24/11/2026): server and launcher **0.7.0**, plugin Steambirds Quieter **1.22.0**, client build
-  **201219.1413**. Release notes: `docs/release-notes-0.7.0.md` (short, for GitHub) and `docs/update-notes-0.7.0.md` (full, English and Portuguese).
+- Version at the last update (24/11/2026): server and launcher **0.7.1**, plugin Steambirds Quieter **1.22.0**, client build
+  **201219.1413**. Release notes: `docs/release-notes-0.7.0.md` (short, for GitHub) and `docs/update-notes-0.7.0.md` (full, English and Portuguese). Patch 0.7.1: `docs/update-notes-0.7.1.md`.
 - **`CHECKLIST.md` (repo root) is the source of truth**: done / partial / missing per area, and the suggested MVP order.
   Update it when a feature changes state (keep its Portuguese style) and recompute its summary table (a bullet counts as
   done `- [x]`, partial `- [ ] 🟡` or missing `- [ ]`).
@@ -76,7 +76,7 @@ Maintained 100% by the community, with some additions and improvements.
   - Maps: `maps\*.json` (format: `docs/map-format.md`, all field names in English). Loot: `loot_tables\`. Enemy AI: `ai\`.
   - Game data exported by the plugin (gitignored, copied from the game): `data\`. Item catalog written by the server: `catalog\`.
   - Accounts: `accounts\<key>\` (gitignored). Chat messages of the client: `Game*.cs`; message IDs: `MessageCatalog.cs`.
-- `Launcher\` — WinForms .NET 8 launcher (0.7.0): `Core\`, `UI\` (screens) with `UI\Controls\` (themed controls), `Editor\` (map editor tab),
+- `Launcher\` — WinForms .NET 8 launcher (0.7.1): `Core\`, `UI\` (screens) with `UI\Controls\` (themed controls), `Editor\` (map editor tab),
   `EnemyAi\` (Enemy AI tab and simulator), `lang\` (English is the default; `pt-BR.json`, `_template.json`).
   Docs: `Launcher\README.md`, `Launcher\Editor\README.md`, `Launcher\lang\README.md`.
 - `Shared\EnemyAi\` — enemy AI core (file formats, runtime, flight, gun aim, simulator), compiled into **both** `Server` and `Launcher`

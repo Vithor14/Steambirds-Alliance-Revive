@@ -59,7 +59,7 @@ zip for GitHub Releases (launcher, server, `SteambirdsGameFiles.exe` and plugin,
 | Path | What it is |
 |---|---|
 | `Server\` | The game server (.NET 8): HTTP login and UDP game servers; maps, loot tables and settings as data files |
-| `Launcher\` | WinForms launcher (0.7.0) with the map editor and Enemy AI tabs |
+| `Launcher\` | WinForms launcher (0.7.1) with the map editor and Enemy AI tabs |
 | `Shared\EnemyAi\` | Enemy AI core, shared by the server and the launcher |
 | `QuieterPlugin\` | BepInEx plugin for the game client (data exports and client-side fixes) |
 | `GameFiles\` | `SteambirdsGameFiles.exe`: gets the needed files from your own game copy |
