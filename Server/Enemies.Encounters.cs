@@ -163,9 +163,9 @@ public static partial class Enemies
     private static Enemy? CreateEnemy(Instance inst, string key, EnemyType type, float x, float y, bool fromWave, double now,
         Action<string, string> log)
     {
-        if (inst.Enemies.Count >= MaxEnemiesPerInstance)
+        if (inst.Enemies.Count >= inst.MaxEnemies)
         {
-            log("ENEMY", inst.Role + " limit of " + MaxEnemiesPerInstance + " living enemies: '" + key + "' not created");
+            log("ENEMY", inst.Role + " limit of " + inst.MaxEnemies + " living enemies: '" + key + "' not created");
             return null;
         }
 

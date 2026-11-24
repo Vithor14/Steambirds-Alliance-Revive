@@ -80,8 +80,10 @@ public static partial class Enemies
             Think(inst, enemy, dt, now, log);
             Fire(inst, enemy, now);
 
-            // Bombs ("kamikaze"): touching the player blows them up (no XP, no loot: the bomb used itself).
-            if (enemy.Ai == null && enemy.Behavior == "kamikaze" && !enemy.Asleep && enemy.Aggro && inst.HasPlayer && inst.PlayerAlive &&
+            // Bombs ("kamikaze") and mines ("mine"): a player inside the contact radius blows them up (no XP, no loot: the
+            // bomb used itself). A mine only arms itself when its spawn time is over.
+            if (enemy.Ai == null && (enemy.Behavior == "kamikaze" || (enemy.Behavior == "mine" && now >= enemy.ActiveAt)) &&
+                !enemy.Asleep && enemy.Aggro && inst.HasPlayer && inst.PlayerAlive &&
                 Distance(enemy.X, enemy.Y, inst.PlayerX, inst.PlayerY) <= Math.Max(0.5f, enemy.Type.ContactRadius))
                 (exploded ??= new List<Enemy>()).Add(enemy);
             // The same, for an AI file: a state with "contact.explodeRadius" or "selfDestruct" asks for it.
@@ -250,8 +252,8 @@ public static partial class Enemies
         else if (!validTarget) enemy.Aggro = false;
         else if (!enemy.Aggro && (enemy.Type.AggroRadius <= 0f || dist <= enemy.Type.AggroRadius)) enemy.Aggro = true;
 
-        // Fixed cannon: does not move or turn; it fires straight where it points (see Fire).
-        if (enemy.Behavior == "fixed" && enemy.Ai == null)
+        // Fixed cannon: does not move or turn; it fires straight where it points (see Fire). A mine does not move either.
+        if ((enemy.Behavior == "fixed" || enemy.Behavior == "mine") && enemy.Ai == null)
         {
             enemy.Vel = 0f;
             return;

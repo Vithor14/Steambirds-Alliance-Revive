@@ -16,6 +16,8 @@ public sealed class GameTarget
     public int NexusPort { get; init; } = ServerNetworkFile.DefaultNexusPort;
     public string? PlayerName { get; init; }
     public string ServerName { get; init; } = "";
+    // The map test server of the map editor (MapTestPorts), not the server of the Server tab.
+    public bool IsMapTest { get; init; }
 
     public string OzyUrl => FoundServer.OzyUrl(Host, HttpPort, PlayerName);
 }

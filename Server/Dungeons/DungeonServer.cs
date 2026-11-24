@@ -258,6 +258,16 @@ public static partial class DungeonServer
         }
     }
 
+    // Readable name of a dungeon instance ("Iron Lair #3") from its room key ("dungeon:3"). Null if it does not exist (anymore).
+    public static string? LabelOf(string roomKey)
+    {
+        lock (Game.Lock)
+        {
+            Session? s = sessions.Values.FirstOrDefault(x => x.Id == roomKey);
+            return s == null ? null : s.Entry.Label + " #" + roomKey.Substring(roomKey.IndexOf(':') + 1);
+        }
+    }
+
     public static string? TerrainOf(NetConnection? connection)
     {
         if (connection == null) return null;

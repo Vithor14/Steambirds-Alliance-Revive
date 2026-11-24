@@ -51,6 +51,15 @@ internal static class MapEditorHelp
             "- Edit the file text...: the map as it will be saved, as text. You can change it there; it is checked when you press Apply and nothing changes if it is not a valid map. Useful for fields that the forms do not have.",
             "- Enemy AI editor...: goes to the Enemy AI tab of the launcher."),
 
+        new HelpTopic("Play test",
+            "The Play test button (top right of the editor, F5, or Tools, Play test) tries the map in the game with nothing to set up.",
+            "- It saves the map, starts a small server that has nothing but this map and opens the game logging in to it. The game goes straight into the map, like the tutorial: no account to make and no Nexus. The server listens on this PC only and on ports of its own, so the normal server of the Server tab can stay on.",
+            "- It needs Steam open and the game folder set in the Client tab. The game can only be open once: close it before testing again.",
+            "- After changing the map: save it and type /restart in the game's chat to load the new version.",
+            "- The test pilot is a new walker with complete tier 10 equipment, who already accepted the EULA and the privacy policy, saved in server\\maptest, apart from your real accounts. If the plane dies, or you type /leave, you come back into the map.",
+            "- Tools, Stop the test server closes it. It also closes by itself when the game closes. What the test server prints shows in the console of the Server tab, marked [map test].",
+            "- A map with errors (saved as a draft) is not tested: fix it first with Tools, Check map."),
+
         new HelpTopic("Mouse and keyboard",
             "## Mouse",
             "- Left button: uses the chosen tool.",

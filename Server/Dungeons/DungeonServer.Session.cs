@@ -221,6 +221,8 @@ public static partial class DungeonServer
 
         float tier = 0f;
         if (s.Data?.File.Values != null) s.Data.File.Values.TryGetValue("tier", out tier);
+        if (s.Data?.File.Values != null && s.Data.File.Values.TryGetValue("maxEnemies", out float maxEnemies) && maxEnemies > 0f)
+            Enemies.SetMaxEnemies(s.Server, s.Connection, Role, (int)maxEnemies, now);
         s.Script?.Start(now);
         Chat(s, s.Entry.Label + (tier > 0f ? " (tier " + tier.ToString("0", Inv) + ")" : "") + ". Commands: /dungeonhelp");
         log("DUNGEON", "[dungeon] " + s.Entry.Label + " started: " + pieces + " wall piece(s) in " + s.Gates.Count + " gate(s)");

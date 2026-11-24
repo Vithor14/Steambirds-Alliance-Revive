@@ -77,8 +77,9 @@ public static partial class Enemies
         public int DamageMultiple { get; set; } = 1;
         public float PreferredDistance { get; set; } = 12f;
         public float AggroRadius { get; set; } = 60f;
-        // Behavior "kamikaze" (bombs): the unit dies when it gets this close to the player. The explosion itself
-        // is whatever "onDeath" spawns in the dungeon map (a short ring of bullets), so it can hurt.
+        // Behavior "kamikaze" (bombs that fly at the player) and "mine" (a bomb that stays where it was dropped): the unit dies
+        // when it gets this close to the player. The explosion itself is whatever "onDeath" spawns in the dungeon map
+        // (a short ring of bullets), so it can hurt. For a mine, pick a "visualEffect" ring (detectionZone_1..3) that matches.
         public float ContactRadius { get; set; } = 1.4f;
         public float ShotRange { get; set; }
         public float AimLead { get; set; }
@@ -264,6 +265,8 @@ public static partial class Enemies
         // Running AI file (null = the built-in behavior above). See Enemies.Brains.cs.
         public SteambirdsAi.AiRuntime? Ai;
         public double LastDamagedAt = -1;
+        // Health actually taken from this enemy by each player (peer id), for the after-fight "your damage: X%".
+        public readonly Dictionary<long, float> DamageBy = new Dictionary<long, float>();
         public float PhaseSpeedMult = 1f;
         public float PhaseFireRateMult = 1f;
         public List<int> ActiveGuns = new List<int>();
@@ -335,6 +338,8 @@ public static partial class Enemies
         public bool Done;
 
         public readonly Dictionary<int, Enemy> Enemies = new Dictionary<int, Enemy>();
+        // Most living enemies at once (the map's "values.maxEnemies" can raise it: SetMaxEnemies).
+        public int MaxEnemies = MaxEnemiesPerInstance;
         public double LastTick;
         public double LastSend;
 
@@ -420,7 +425,7 @@ public static partial class Enemies
         NumberHandling = JsonNumberHandling.AllowReadingFromString
     };
 
-    private static readonly string[] Behaviors = { "chase", "circle", "charge", "turret", "patrol", "idle", "escort", "fixed", "kamikaze", "route" };
+    private static readonly string[] Behaviors = { "chase", "circle", "charge", "turret", "patrol", "idle", "escort", "fixed", "kamikaze", "mine", "route" };
 
     // ================================================================== global data
 
@@ -570,6 +575,11 @@ public static partial class Enemies
             if (enemy.Invulnerable) return "enemy " + Describe(enemy) + " invulnerable";
             if (now < enemy.ShieldUntil) return "enemy " + Describe(enemy) + " with a shield";
 
+            // Only the health that was really left counts (the last shot does not get credit for overkill).
+            float dealt = Math.Min(damage, Math.Max(0f, enemy.Health));
+            long attacker = connection.RemoteUniqueIdentifier;
+            enemy.DamageBy[attacker] = (enemy.DamageBy.TryGetValue(attacker, out float before) ? before : 0f) + dealt;
+
             enemy.Health -= damage;
             enemy.LastDamagedAt = now;
             enemy.HealthChanged = true;
@@ -592,13 +602,20 @@ public static partial class Enemies
                 // With several players in the instance, every one of them gets the XP and their own loot bags.
                 if (enemy.Team == EnemyTeam)
                 {
+                    float totalDamage = enemy.DamageBy.Values.Sum();
                     foreach (NetConnection member in inst.Members.ToList())
                     {
-                        PilotProgression.EnemyKilled(inst.Server, member, inst.Role.Trim('[', ']'), enemy.Model.Name, enemy.Model.Hash,
-                            enemy.Model.Tier, enemy.Model.MaxHp, enemy.Boss || enemy.Model.Boss, enemy.ShortId, enemy.X, enemy.Y, now);
+                        // This player's share of the damage taken by the enemy (the killer gets all of it if nothing was recorded).
+                        float share = totalDamage > 0f
+                            ? (enemy.DamageBy.TryGetValue(member.RemoteUniqueIdentifier, out float mine) ? mine : 0f) / totalDamage
+                            : (member == connection ? 1f : 0f);
+                        bool lootAllowed = PilotProgression.EnemyKilled(inst.Server, member, inst.Role.Trim('[', ']'), enemy.Model.Name, enemy.Model.Hash,
+                            enemy.Model.Tier, enemy.Model.MaxHp, enemy.Boss || enemy.Model.Boss, enemy.ShortId, enemy.X, enemy.Y, share, now);
                         // Loot (Items/LootDrops.cs and the loot_tables folder): bags where the enemy fell.
-                        LootDrops.EnemyKilled(inst.Server, member, inst.Role.Trim('[', ']'), enemy.Model.Name, enemy.Model.Tier,
-                            enemy.Boss || enemy.Model.Boss, enemy.X, enemy.Y, now, log);
+                        // A boss only drops loot for players who did at least the minimum share of the damage.
+                        if (lootAllowed)
+                            LootDrops.EnemyKilled(inst.Server, member, inst.Role.Trim('[', ']'), enemy.Model.Name, enemy.Model.Tier,
+                                enemy.Boss || enemy.Model.Boss, enemy.X, enemy.Y, now, log);
                     }
                 }
                 return "enemy " + Describe(enemy) + " DESTROYED";

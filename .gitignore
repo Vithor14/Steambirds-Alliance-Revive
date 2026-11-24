@@ -33,6 +33,8 @@ FileList.txt
 
 # Server: accounts of the players (one folder per Steam ID), backups and files sent by the game
 /Server/accounts/
+# Server: accounts of the map test (the map editor's "Play test")
+/Server/maptest/
 /Server/flocks.json
 /Server/_backup/
 /Server/client-uploads/

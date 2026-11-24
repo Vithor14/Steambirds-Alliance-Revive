@@ -392,8 +392,17 @@ public static class PlayerRelay
             }
 
             log("CHAT", "[" + sender.Room + "] " + sender.Name + ": " + text + " -> " + delivered + " player(s)");
+            ChatMonitor.Emit(log, "map", sender.Room, ChatMonitor.LabelOfRoom(sender.Room), sender.Name, "",
+                string.IsNullOrWhiteSpace(text) ? "(quick chat #" + quickChatId + ")" : text);
             return delivered;
         }
+    }
+
+    // The room (map instance) this connection is in. Null for the tutorial and for unknown connections.
+    public static string? RoomOf(NetConnection? connection)
+    {
+        if (connection == null) return null;
+        lock (Gate) return members.TryGetValue(connection.RemoteUniqueIdentifier, out Member? member) ? member.Room : null;
     }
 
     // Where the live plane of this account is now (the last position its client reported). False when it has no plane in a room.

@@ -28,17 +28,29 @@ internal sealed class LauncherContext : IDisposable
 
         Server.LineReceived += (line, fromStdErr) =>
         {
+            // The chat monitor lines go to the Chat page; the console already shows the readable [CHAT] line.
+            if (!fromStdErr && ServerChat.TryAddLine(line)) return;
             LineKind kind = fromStdErr ? LineKind.Error : ClassifyServerLine(line);
             ServerConsole.Append(line, kind, ServerLogLevel.IsInfo(line, kind));
         };
         Server.StateChanged += () =>
         {
+            // Dungeon instance numbers start over with the server: the old chat would mix with the new one.
+            if (Server.State == ServerState.Starting) ServerChat.Clear();
             Presence?.Refresh();
             RunOnUi(() => ServerStateChanged?.Invoke());
         };
         Server.Exited += (requested, code) => RunOnUi(() => OnServerExited(requested, code));
+        // The map test server (map editor, "Play test"): its lines go to the same console, marked.
+        MapTestServer.LineReceived += (line, fromStdErr) =>
+        {
+            LineKind kind = fromStdErr ? LineKind.Error : ClassifyServerLine(line);
+            ServerConsole.Append("[map test] " + line, kind, ServerLogLevel.IsInfo(line, kind));
+        };
         Game.Exited += code =>
         {
+            // The test server only lives for the game that was opened to test the map.
+            if (PlayingTarget?.IsMapTest == true) MapTestServer.Stop();
             PlayingTarget = null;
             Presence?.Refresh();
             ClientNotice(code.HasValue ? L.F("the game closed (code {0})", code.Value) : L.T("the game closed"));
@@ -86,6 +98,10 @@ internal sealed class LauncherContext : IDisposable
     public ServerProcess Server { get; } = new ServerProcess();
     public GameProcess Game { get; } = new GameProcess();
 
+    // The server of the map editor's "Play test" (Editor\MapTestRunner.cs): one map, this PC only, ports of its own.
+    public ServerProcess MapTestServer { get; } = new ServerProcess();
+    public string? MapTestPath { get; set; }
+
     // Discord Rich Presence (Core\DiscordPresence.cs).
     public DiscordPresence Presence { get; }  // null only while the constructor runs
 
@@ -119,14 +135,15 @@ internal sealed class LauncherContext : IDisposable
 
         ServerNetworkFile local = ServerNetworkFile.Read();
         FoundServer? hosted = null;
-        if (hosting || (playing && (PlayingTarget?.IsThisPc ?? Settings.ServerAddress.Length == 0)))
+        bool mapTest = playing && PlayingTarget?.IsMapTest == true;
+        if (hosting || (playing && !mapTest && (PlayingTarget?.IsThisPc ?? Settings.ServerAddress.Length == 0)))
         {
             ServerBrowser.ProbeResult probe = await ServerBrowser.ProbeAsync("localhost", local.HttpPort, 2000, cancel);
             hosted = probe.Server;
         }
 
         FoundServer? played = null;
-        if (playing)
+        if (playing && !mapTest)
         {
             GameTarget? target = PlayingTarget;
             if (target?.IsThisPc ?? Settings.ServerAddress.Length == 0)
@@ -162,6 +179,7 @@ internal sealed class LauncherContext : IDisposable
     public ToolTip ToolTip { get; } = new ToolTip { AutoPopDelay = 20000, InitialDelay = 350, ReshowDelay = 200, ShowAlways = true };
     public ConsoleBuffer ServerConsole { get; } = new ConsoleBuffer(6000);
     public ConsoleBuffer ClientConsole { get; } = new ConsoleBuffer(6000);
+    public ChatLog ServerChat { get; } = new ChatLog(5000);
 
     // Lists and tables read from the game's configBinary (fallback lists when the game is not found).
     public GameConfig GameData { get; private set; } = GameConfig.Empty();
@@ -661,6 +679,7 @@ internal sealed class LauncherContext : IDisposable
 
     public void Dispose()
     {
+        MapTestServer.Dispose();
         Presence.Dispose();
         bepinexTail.Dispose();
         unityTail.Dispose();

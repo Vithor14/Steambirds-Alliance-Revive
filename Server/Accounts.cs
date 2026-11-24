@@ -174,7 +174,10 @@ public static class Accounts
     private static Account? temporary;
     private static Action<string, string> log = (_, _) => { };
 
-    public static string BaseFolder => Directory.GetCurrentDirectory();
+    // Where "accounts\" lives: the server's folder, or another one in the map test mode (MapTest).
+    private static string? baseFolderOverride;
+    public static string BaseFolder => baseFolderOverride ?? Directory.GetCurrentDirectory();
+    public static void UseBaseFolder(string folder) => baseFolderOverride = folder;
     public static string AccountsFolder => Path.Combine(BaseFolder, AccountsFolderName);
 
     // ================================================================== startup and accounts

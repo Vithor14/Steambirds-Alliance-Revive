@@ -57,8 +57,16 @@ public static partial class Program
 
     public static void Main(string[] args)
     {
+        // Map test mode (--test-map, started by the launcher's map editor): one map, this PC only, ports and accounts of its own.
+        if (!MapTest.Start(args, Log))
+        {
+            Environment.ExitCode = 2;
+            return;
+        }
+
         // Network settings (network.json, Network\): server name, who can join and the ports of this run.
-        ServerNetworkSettingsFile.Start(Log);
+        if (MapTest.Active) ServerNetworkSettingsFile.StartForMapTest(MapTest.Ports, Log);
+        else ServerNetworkSettingsFile.Start(Log);
         Ports = ServerNetworkSettingsFile.Ports;
         HttpPort = Ports.Http;
         NexusPort = Ports.Nexus;
@@ -131,13 +139,14 @@ public static partial class Program
         SocialHandler.SwitchToNexus = (server, connection, reason) => SendToNexus(server, connection, reason);
         SocialHandler.SwitchToWorld = (server, connection, reason) => SendToWorld(server, connection, reason);
 
+        // Map test mode: the Nexus (only the login passes through it) and the dungeon server; nothing else.
         StartUdp(NexusPort, RoleNexus);
-        StartUdp(TutorialPort, RoleTutorial);
+        if (!MapTest.Active) StartUdp(TutorialPort, RoleTutorial);
         StartUdp(DungeonPort, RoleDungeon);
-        StartUdp(WorldPort, RoleWorld);
+        if (!MapTest.Active) StartUdp(WorldPort, RoleWorld);
 
         // Server search of the launchers (local network and VPNs): answers on the UDP port searchPort.
-        LanDiscovery.Start(Ports.Search, ServerInfo, Log);
+        if (!MapTest.Active) LanDiscovery.Start(Ports.Search, ServerInfo, Log);
 
         if (ServerNetworkSettingsFile.OpenToOtherPcs)
         {

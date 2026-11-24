@@ -121,6 +121,8 @@ public static partial class Program
             PlayerSession player = BindSession(connection, session, user, out string howFound);
             using Accounts.Scope playerScope = Accounts.Use(player.Account);
             string name = player.Name;
+            // Map test mode: a plane and the tutorial done, before the welcome tells the client what the account has.
+            if (MapTest.Active && role == RoleNexus) MapTest.PrepareAccount(server, connection, Log);
             Log("HELLO", $"[{RoleName(role)}] {name} (account {player.Account.Key}, {howFound}{(player.FromThisPc ? ", this PC" : ", from " + connection.RemoteEndPoint)}), " +
                 $"version={version}, client user={user}");
 
@@ -204,6 +206,10 @@ public static partial class Program
                 server.SendMessage(mapInfo, connection, NetDeliveryMethod.ReliableOrdered, 0);
                 Log("MAPINFO", $"[{RoleName(role)}] ClientSetClientMapInfo of '{terrain}' sent ({infoBytes} bytes)");
             }
+
+            // Map test mode: the Nexus is only the door. Straight to the map (also after a death or /leave: it starts again).
+            if (MapTest.Active && role == RoleNexus)
+                SendToDungeon(server, connection, MapTest.Entry.Type, "map test: " + MapTest.Entry.Name);
             return;
         }
 
@@ -212,6 +218,12 @@ public static partial class Program
         {
             var tutorial = msg.ReadString();
             if (!string.IsNullOrWhiteSpace(tutorial)) RequestedTutorial = tutorial;
+            if (MapTest.Active)
+            {
+                // There is no tutorial server in the map test mode.
+                SendToDungeon(server, msg.SenderConnection, MapTest.Entry.Type, "map test (the client asked for the tutorial '" + tutorial + "')");
+                return;
+            }
             IPEndPoint destination = PlayerSessions.AddressFor(msg.SenderConnection, new IPEndPoint(IPAddress.Loopback, TutorialPort));
             Log("TUTORIAL", $"[{RoleName(role)}] {PlayerSessions.NameOf(msg.SenderConnection)} asked for '{tutorial}' -> ClientSwitchToServer to {destination}");
 

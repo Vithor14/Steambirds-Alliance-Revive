@@ -44,7 +44,7 @@ $releaseFolders   = @("maps", "loot_tables", "ai")
 $excludedRootFiles = @("appsettings.Development.json", "account.json", "inventory.json", "acceptances.json", "flocks.json")
 
 # Folders of Server\ that are known and never released: build output, game data, accounts, logs, backups.
-$knownPrivateFolders = @("bin", "obj", "Properties", ".vs", "data", "catalog", "accounts", "client-uploads", "logs", "_backup")
+$knownPrivateFolders = @("bin", "obj", "Properties", ".vs", "data", "catalog", "accounts", "client-uploads", "logs", "_backup", "maptest")
 
 New-Item -ItemType Directory -Force -Path $buildFolder | Out-Null
 $script:log = New-Object System.IO.StreamWriter($logFile, $false, (New-Object System.Text.UTF8Encoding($false)))
@@ -148,7 +148,7 @@ function FindForbiddenFiles($folder) {
     $forbiddenNames = @("configBinary", "ground_assets.txt", "thumbs.json", "item_catalog.json", "item_catalog.md",
         "account.json", "inventory.json", "acceptances.json", "launcher.json", "server-report.txt")
     $forbiddenExtensions = @(".assets", ".ress", ".resource", ".bundle", ".unity3d", ".ogg", ".wav", ".glb", ".fbx", ".png", ".jpg", ".pdb", ".log")
-    $forbiddenFolders = @("accounts", "data", "catalog", "client-uploads", "_backup", "logs", "editor-assets", "BepInEx")
+    $forbiddenFolders = @("accounts", "maptest", "data", "catalog", "client-uploads", "_backup", "logs", "editor-assets", "BepInEx")
     $found = @()
     foreach ($file in @(Get-ChildItem -LiteralPath $folder -File -Recurse -Force)) {
         $relative = $file.FullName.Substring($folder.Length).TrimStart('\')

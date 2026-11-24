@@ -35,6 +35,8 @@ public static partial class SocialHandler
         m.Write(Accounts.Pilot().Level);
         to.Server.SendMessage(m, to.Connection, NetDeliveryMethod.ReliableOrdered, 0);
         log("CHAT", "[whisper] " + me.Name + " -> " + to.Name + ": " + text);
+        ChatMonitor.MapOf(connection, out string room, out string label);
+        ChatMonitor.Emit(log, "whisper", room, label, me.Name, to.Name, text);
     }
 
     // ServerGuildChat(string text): everybody of the sender's default flock who is online gets ClientGuildChat, the sender too (the
@@ -79,5 +81,7 @@ public static partial class SocialHandler
         }
         FlockStore.Touch(me.IdText, me.Name);
         log("CHAT", "[flock " + flock.Name + "] " + me.Name + ": " + text + " -> " + delivered + " player(s)");
+        ChatMonitor.MapOf(connection, out string room, out string label);
+        ChatMonitor.Emit(log, "flock", room, label, me.Name, flock.Name, text);
     }
 }

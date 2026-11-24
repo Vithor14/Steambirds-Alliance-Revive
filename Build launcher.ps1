@@ -240,7 +240,7 @@ function CopyServerData() {
     Say "=== Server data -> dist\server ===" Cyan
 
     # Data folders: the ones without code (maps, data, loot_tables, items...). A new data folder is picked up automatically.
-    $ignore = @("bin", "obj", "Properties", "client-uploads", ".vs", "_backup", "accounts")
+    $ignore = @("bin", "obj", "Properties", "client-uploads", ".vs", "_backup", "accounts", "maptest")
     $folders = @(Get-ChildItem -LiteralPath $serverFolder -Directory | Where-Object {
         ($ignore -notcontains $_.Name) -and
         -not (Get-ChildItem -LiteralPath $_.FullName -Filter "*.cs" -File -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1)

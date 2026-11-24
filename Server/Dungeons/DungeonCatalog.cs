@@ -148,11 +148,28 @@ public static class DungeonCatalog
         return Path.Combine(folders[0], FileName);
     }
 
+    // Map test mode (MapTest): dungeons.json is ignored and the only dungeon is this entry.
+    private static CatalogFile? onlyCatalog;
+
+    public static void UseOnly(Entry entry)
+    {
+        lock (padlock)
+        {
+            onlyCatalog = new CatalogFile
+            {
+                Note = "map test",
+                NexusPortals = new NexusPortals { Enabled = false },
+                Dungeons = new List<Entry> { entry }
+            };
+        }
+    }
+
     // Reads dungeons.json again if it changed. Without the file: Iron Lair and Bomb Factory, on.
     public static CatalogFile Reload()
     {
         lock (padlock)
         {
+            if (onlyCatalog != null) return onlyCatalog;
             string path = FilePath();
             DateTime date = File.Exists(path) ? File.GetLastWriteTimeUtc(path) : DateTime.MinValue;
             if (path == loadedFrom && date == loadedDate) return catalog;

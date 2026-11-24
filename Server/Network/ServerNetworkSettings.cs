@@ -106,6 +106,31 @@ public static class ServerNetworkSettingsFile
         }
     }
 
+    // Map test mode (MapTest): the ports are given, only this PC, and network.json is not read.
+    private static bool fixedForTest;
+
+    public static void StartForMapTest(NetworkPorts ports, Action<string, string> log)
+    {
+        lock (gate)
+        {
+            fixedForTest = true;
+            ServerNetworkSettingsFile.log = log;
+            Ports = ports;
+            OpenToOtherPcs = false;
+            current = new ServerNetworkSettings
+            {
+                ServerName = "Map test",
+                AllowOtherPlayers = false,
+                ShowInServerSearch = false,
+                MaxPlayers = 4,
+                ChatCommands = "everyone",
+                HttpPort = ports.Http, NexusPort = ports.Nexus, TutorialPort = ports.Tutorial,
+                DungeonPort = ports.Dungeon, WorldPort = ports.World, SearchPort = ports.Search
+            };
+            log("NETWORK", "map test: " + Ports + "; only this PC");
+        }
+    }
+
     // Reads (or creates) network.json and fixes the ports of this run.
     public static void Start(Action<string, string> log)
     {
@@ -175,7 +200,7 @@ public static class ServerNetworkSettingsFile
     {
         try
         {
-            if (!File.Exists(FilePath)) return;
+            if (fixedForTest || !File.Exists(FilePath)) return;
             DateTime modified = File.GetLastWriteTimeUtc(FilePath);
             if (modified == readAt) return;
             readAt = modified;

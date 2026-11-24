@@ -4,7 +4,7 @@
   "id": "dungeon_sneezy",
   "name": "Iron Lair",
   "terrain": "DungeonSneezy",
-  "note": "Iron Lair: the SN-Z fight arena rebuilt from the original description. A donut: a square ring of open floor around a walled square chamber in the middle (4 openings, one per side) where the players spawn. SN-Z flies around the ring forever (route 'ring'), fires slow homing shots, drops big-blast bombs, and at half health shields itself for a few seconds while it fires volleys at the player. The cell size, route and rooms are in this file: edit them freely.",
+  "note": "Iron Lair: the SN-Z fight arena rebuilt from the original description. A donut: a square ring of open floor around a walled square chamber in the middle (4 openings, one per side) where the players spawn. SN-Z flies around the ring forever (route 'ring'), fires slow straight shots, drops big-blast mines, and at half health shields itself for a few seconds while it fires volleys at the player. The cell size, route and rooms are in this file: edit them freely.",
   "source": "Build 190828.2045: units, names, lines, quests and territory come from the configBinary; the arena and the fight pattern were rebuilt (the file Dungeons/dungeon_* of the build is empty).",
   "key": "key_sneezy",
   "portalItem": "dungeon_sneezy",
@@ -113,7 +113,7 @@
       "speedMultiplier": 1.6,
       "firstShotDelay": 2.0,
       "fireRateMultiplier": 0.7,
-      "homingBullets": true,
+      "homingBullets": false,
       "guns": [
         5
       ],
@@ -147,7 +147,7 @@
           "message": "SN-Z is shielded and fires at you!"
         }
       ],
-      "note": "Circles the ring on the 'ring' route forever. Base: gun 5 (mainphase1_2, slow sprinkler) with homing shots. Bombs every 7 s (max 3). Below 50% health: 8 s shield and the aimed guns 0-2 and 16-18 (limited by maxBulletsPerSecond of dungeons.json). Guns of the SN-Z: 0-2 machine guns, 3/6/13/15 dud, 4-5 mainphase1, 7-12 mainphase2, 14 mainphase3, 16-18 mainphase4, 19-21 finalattack."
+      "note": "Circles the ring on the 'ring' route forever. Base: gun 5 (mainphase1_2, slow sprinkler), not homing. Mines every 7 s (max 3). Below 50% health: 8 s shield and the aimed guns 0-2 and 16-18 (limited by maxBulletsPerSecond of dungeons.json). Guns of the SN-Z: 0-2 machine guns, 3/6/13/15 dud, 4-5 mainphase1, 7-12 mainphase2, 14 mainphase3, 16-18 mainphase4, 19-21 finalattack."
     },
     "sneezyDEATH": {
       "name": "SN-Z",
@@ -156,14 +156,17 @@
       "invulnerable": true
     },
     "sneezybomb": {
-      "name": "SN-Z Beacon",
+      "name": "SN-Z Mine",
       "template": "sneezybomb",
-      "behavior": "kamikaze",
-      "speedMultiplier": 2.5,
-      "aggroRadius": 200,
+      "behavior": "mine",
+      "aggroRadius": 0,
       "contactRadius": 7,
+      "visualEffect": "detectionZone_1",
+      "guns": [
+        99
+      ],
       "onDeath": "sneezyblast",
-      "note": "Bomb that flies at the player and goes off when it gets within 7 u (or is shot): the blast is 'sneezyblast'."
+      "note": "Mine dropped by SN-Z: stays where it fell, does not shoot, and shows its trigger area in red (visualEffect detectionZone_1..3 = ring size; keep it matching contactRadius). It goes off, releasing 'sneezyblast', when a player gets within contactRadius (or when it is shot)."
     },
     "sneezyblast": {
       "name": "SN-Z Blast",

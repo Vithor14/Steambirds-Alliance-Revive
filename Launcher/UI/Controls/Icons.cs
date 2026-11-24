@@ -29,7 +29,8 @@ internal static class Icons
     public const string Friends = "";
     public const string Maps = "";
     public const string World = "";
-    public const string Network = "";
+    public const string Chat = "";   // ChatBubbles
+    public const string Network ="";
 
     private static readonly Dictionary<float, Font> Fonts = new Dictionary<float, Font>();
     private static bool? available;

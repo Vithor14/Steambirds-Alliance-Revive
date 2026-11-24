@@ -29,7 +29,7 @@ No mundo aberto cada cliente só recebe os inimigos dentro de `enemies.viewRadiu
 ## Roteiros (`Tutorial*.cs`)
 - Unidade num ponto fixo, com grupo (contagem de vivos) e área (retângulo de tiles da sala, girado 45°). A área prende o voo dentro da sala; sem área vale o quadrado `arena`.
 - Campos de tipo: `team` (2 inimigo, 1 aliado), `invulnerable`, `opensAfterHitSeconds` (baú: abre N s após o primeiro tiro), `freeRoam` (sem limite de área).
-- Comportamentos: `idle` (paredes, baús, destroços), `escort` (aliado que segue o jogador ou vai até um destino), `fixed` (torre que não gira), `kamikaze` (bombas das dungeons). Os demais: `chase`, `circle`, `charge`, `turret`, `patrol`.
+- Comportamentos: `idle` (paredes, baús, destroços), `escort` (aliado que segue o jogador ou vai até um destino), `fixed` (torre que não gira), `kamikaze` (bombas das dungeons que voam até o jogador), `mine` (mina parada: explode quando o jogador entra no `contactRadius`; use `visualEffect` `detectionZone_1..3` para mostrar a área em vermelho). Os demais: `chase`, `circle`, `charge`, `turret`, `patrol`.
 - No servidor de tutorial nenhum encontro começa sozinho; o encontro antigo virou `waves` (desligado, `/encounter waves`).
 
 ## Comandos no chat

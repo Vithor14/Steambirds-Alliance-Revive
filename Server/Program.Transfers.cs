@@ -67,6 +67,8 @@ public static partial class Program
         using Accounts.Scope accountScope = Accounts.UseFor(connection);
         DungeonServer.SetPending(Accounts.AccountIdText, type);
         string? characterId = Game.GetPlaneCharacterId(connection);
+        // Map test mode: the player never spawned a plane in the Nexus, so the account's first plane goes along.
+        if (characterId == null && MapTest.Active) characterId = Accounts.Planes().FirstOrDefault()?.CharacterId;
         Accounts.SavedPlane? plane = Accounts.GetPlane(characterId);
         IPEndPoint destination = PlayerSessions.AddressFor(connection, DungeonAddress);
 

@@ -63,7 +63,8 @@ public sealed class ServerProcess : IDisposable
     public event Action? StateChanged;
     public event Action<bool, int?>? Exited;            // stopped by the launcher, exit code
 
-    public bool Start(string? gameFolder, out string error)
+    // arguments: extra command line of the server (the map test mode: --test-map "<file>"). logName: prefix of the session log.
+    public bool Start(string? gameFolder, out string error, string? arguments = null, string logName = "server")
     {
         error = "";
         lock (gate)
@@ -82,12 +83,13 @@ public sealed class ServerProcess : IDisposable
         }
 
         LauncherPaths.EnsureLogsFolder();
-        TrimOldLogs(LauncherPaths.LogsFolder, "server-*.log", 30);
-        string logPath = Path.Combine(LauncherPaths.LogsFolder, "server-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".log");
+        TrimOldLogs(LauncherPaths.LogsFolder, logName + "-*.log", 30);
+        string logPath = Path.Combine(LauncherPaths.LogsFolder, logName + "-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".log");
 
         var startInfo = new ProcessStartInfo(LauncherPaths.ServerExe)
         {
             WorkingDirectory = LauncherPaths.ServerFolder,
+            Arguments = arguments ?? "",
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardOutput = true,

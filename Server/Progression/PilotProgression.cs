@@ -227,8 +227,10 @@ public static class PilotProgression
 
     // An enemy of the server was destroyed by this player (Enemies.TakeDamage).
     // templateName/tier/maxHitPoints come from the server's unit catalog (units_config.txt).
-    public static void EnemyKilled(NetServer server, NetConnection connection, string role, string templateName, short templateHash,
-        int tier, float maxHitPoints, bool boss, int shortId, float x, float y, double now)
+    // damageShare: part (0..1) of the enemy's damage that this player dealt. Returns false when the loot of this enemy must be
+    // withheld from this player (the after-fight text is shown and the share is under the unit's damage threshold).
+    public static bool EnemyKilled(NetServer server, NetConnection connection, string role, string templateName, short templateHash,
+        int tier, float maxHitPoints, bool boss, int shortId, float x, float y, float damageShare, double now)
     {
         // The XP goes to the account of the player of this connection (also when the update loop calls this).
         using Accounts.Scope accountScope = Accounts.UseFor(connection);
@@ -263,15 +265,18 @@ public static class PilotProgression
 
             ProgressionData.UnitXpInfo? unit = ProgressionData.GetUnit(templateName);
             bool showDetails = unit != null ? unit.ShowPostFightDetails : boss;
+            bool lootAllowed = true;
             if (settings.PostFightDetails && showDetails)
             {
                 float threshold = unit != null && unit.DamageThreshold >= 0f ? unit.DamageThreshold : ProgressionData.DefaultDamageThreshold;
-                // Each player has their own enemies in the sketch, so the player did all of the damage.
+                float share = Math.Clamp(damageShare, 0f, 1f);
                 ProgressionMessages.Send(server, connection,
-                    m => ProgressionMessages.WriteClientPostFightDetails(m, templateHash, shortId, x, y, 1f, threshold, awarded));
-                log("XP", "[" + role + "] after-fight of " + templateName + ": 100% of the damage (minimum " + (threshold * 100f).ToString("0.##", Inv) +
-                    "%), " + awarded + " XP");
+                    m => ProgressionMessages.WriteClientPostFightDetails(m, templateHash, shortId, x, y, share, threshold, awarded));
+                lootAllowed = share >= threshold;
+                log("XP", "[" + role + "] after-fight of " + templateName + ": " + (share * 100f).ToString("0.##", Inv) + "% of the damage (minimum " +
+                    (threshold * 100f).ToString("0.##", Inv) + "%), " + awarded + " XP" + (lootAllowed ? "" : ", no loot"));
             }
+            return lootAllowed;
         }
     }
 

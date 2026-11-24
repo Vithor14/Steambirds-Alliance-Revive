@@ -74,7 +74,7 @@ internal sealed class EditorContext
     // Behaviors the server understands for an enemy.
     public static readonly string[] Behaviors =
     {
-        "chase", "circle", "turret", "kamikaze", "charge", "patrol", "escort", "idle"
+        "chase", "circle", "turret", "kamikaze", "mine", "charge", "patrol", "escort", "idle"
     };
 
     // Ways a room wakes up (more can be written by hand: "death:<type>").

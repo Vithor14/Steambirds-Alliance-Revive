@@ -24,20 +24,39 @@ but not yet played with two or more people. Please report anything odd.
   The walker tutorial now runs from `maps\tutorial_walker.json` instead of C# code; the dungeon server can run scripts too.
   Played in the 23/11 test from the hangar to the exit portal. Format in `docs/map-script.md`.
 
+### New: Map Maker catalog maps *(not played)*
+- Three small maps for people who make maps, each a compact grid with the name of every item written on the floor in front of it:
+  `maps\map_maker_floors.json` (**every floor piece**, 349, one tile each), `map_maker_decor.json` (**every decoration**, 292) and
+  `map_maker_enemies.json` (**every enemy unit**, 822, the 38 bosses in the last rows). Enemies wait asleep and **only wake up when they take
+  damage** (and only the one that was hit). `/room N` jumps to a group of rows. Open one in the map editor and click **Play test**.
+  Generated from the game data by `tools\make_map_maker_helper.py`; details in `docs/map-format.md`. (First version: one long map; it took
+  about 5 minutes to fly to the enemies, so it became three maps with the items twice as close.)
+
 ### Dungeons
+- New map value `values.maxEnemies`: a map can raise the limit of 140 living enemies per dungeon (the Map Maker enemies map needs 840).
 - **Iron Lair** rebuilt as a donut arena (a round ring around the square room where you are born, a SN-Z that keeps flying around it, slow
-  homing shots and bombs). **It failed the 23/11 test** (too deadly: planes of level 1 to 9 fell in 10 to 60 s); it is being tuned.
+  slow shots and mines). **It failed the 23/11 test** (too deadly: planes of level 1 to 9 fell in 10 to 60 s); it is being tuned.
+  SN-Z's shots are no longer homing, and its bombs are now **mines**: they stay where they are dropped, do not shoot, show their trigger area
+  as a red ring (the game's own `detectionZone_1` effect) and only go off, releasing the blast, when a player flies into that area (or shoots them).
+  New unit behavior `mine` for map authors (`contactRadius` = trigger radius, `visualEffect` = ring).
 - Bomb Factory, Crypt of Cathulhu, Laser Playground and The Arena were completed by 3 players in the test; the Command Center was played
   up to the boss room.
 - The dungeon server now reports where each player is (for the launcher and Discord).
 
 ### Launcher
+- **Play test** in the map editor (button at the top right, `F5`): saves the map, starts a small server that has nothing but that map and opens the
+  game logging in to it, straight into the map like the tutorial. No account to make, no Nexus, this PC only, ports of its own (the normal server
+  can stay on). The test pilot is a walker with complete tier 10 equipment and the EULA and privacy policy already accepted. After changing the map: save and type `/restart` in the game's chat. Server mode `--test-map` in `Server\Dungeons\MapTest.cs`. *(Not played yet.)*
 - **Discord Rich Presence**: your Discord profile can show your plane, its level, your pilot rank and the place (Nexus, tutorial, open
   world, dungeon) while you play, and your server name and pilots online while you host. Never the IP, port, account or player name.
   Turn it off in Settings > General.
 - The *Join the Discord* buttons use the Discord logo.
 - **PLAY asks for confirmation** when the Quieter plugin or BepInEx is missing (without the plugin the Flock Hall is invisible, for one).
 - The server console shows `WARNING: ... did not arrive` lines in the warning color.
+- **Chat monitor:** new *Chat* page in the Server tab (under Monitor). It lists what the players write, separated by map (Rebel City, the open
+  world, each dungeon instance such as "Iron Lair #3"); *All maps* shows everything with the map name in front. Whispers and flock chat are
+  listed under the map of their sender and can be hidden. Filter, auto-scroll, copy. The server prints one `[CHATMON]` line per message
+  (`Server\Network\ChatMonitor.cs`); the launcher keeps it out of the console. The history starts empty at every server start.
 - The server's `/revive/info` answer has `playerDetails` (plane, level, place of each player; `infoVersion` 2).
 
 ### Fixes found in the 23/11 test
@@ -53,6 +72,9 @@ but not yet played with two or more people. Please report anything odd.
 - **Plane variants:** after unlocking one, the chat says it is picked in Options > Variant. (A paladin variant bought in the test was not
   applied and the cause is not known yet: no request reached the server.)
 - Logs: the "marked as finished" line is written once, and a death shows the last position of the plane instead of (0, 0).
+- **Boss damage share:** the text on the ground after a boss ("Your damage: X%") always said 100%. The server now records the health each
+  player really took from the enemy and sends each player their own share. As in the original, a boss only drops loot for a player whose
+  share is at least the unit's `damageThreshold` (default 0.5%, `progression.json`); XP is unchanged.
 
 ### Docs
 - New `docs/radmin-vpn-guide.md`: step by step to play over Radmin VPN. Linked from the `README.md`.
@@ -85,20 +107,39 @@ não foi jogado com duas ou mais pessoas. Avise se algo estranho aparecer.
   `Server\Scripting\`. O tutorial do walker agora roda pelo `maps\tutorial_walker.json` em vez de código C#; o servidor de dungeon também roda
   roteiros. Jogado no teste de 23/11 do hangar até o portal de saída. Formato em `docs/map-script.md`.
 
+### Novo: mapas-catálogo Map Maker *(não jogado)*
+- Três mapas pequenos para quem faz mapas, cada um uma grade compacta com o nome de cada item escrito no chão à frente dele:
+  `maps\map_maker_floors.json` (**todas as peças de chão**, 349, um tile cada), `map_maker_decor.json` (**todas as decorações**, 292) e
+  `map_maker_enemies.json` (**todas as unidades inimigas**, 822, os 38 chefes nas últimas fileiras). Os inimigos ficam dormindo e **só acordam
+  quando levam dano** (e só o que foi atingido). `/room N` pula para um grupo de fileiras. Abra um no editor de mapas e clique em **Play test**.
+  Gerados a partir dos dados do jogo por `tools\make_map_maker_helper.py`; detalhes em `docs/map-format.md`. (A primeira versão era um mapa
+  comprido: levava uns 5 minutos para chegar aos inimigos, então virou três mapas com os itens duas vezes mais perto.)
+
 ### Dungeons
+- Valor novo do mapa `values.maxEnemies`: um mapa pode subir o limite de 140 inimigos vivos por dungeon (o mapa Map Maker de inimigos precisa de 840).
 - **Iron Lair** refeita como arena em rosca (anel redondo em volta da sala quadrada onde se nasce, um SN-Z que não para de voar em volta,
-  tiros teleguiados lentos e bombas). **Reprovou no teste de 23/11** (mortal demais: aviões de nível 1 a 9 caíram em 10 a 60 s); está sendo ajustada.
+  tiros lentos e minas). **Reprovou no teste de 23/11** (mortal demais: aviões de nível 1 a 9 caíram em 10 a 60 s); está sendo ajustada.
+  Os tiros do SN-Z deixaram de ser teleguiados e as bombas viraram **minas**: ficam onde foram soltas, não atiram, mostram a área de disparo
+  como um anel vermelho (o efeito `detectionZone_1` do próprio jogo) e só explodem, soltando o estouro, quando um jogador entra nessa área (ou atira nelas).
+  Comportamento novo `mine` para quem faz mapas (`contactRadius` = raio de disparo, `visualEffect` = anel).
 - Bomb Factory, Crypt of Cathulhu, Laser Playground e The Arena foram concluídas por 3 jogadores no teste; o Command Center foi jogado até a
   sala do chefe.
 - O servidor de dungeon agora informa onde cada jogador está (para o launcher e o Discord).
 
 ### Launcher
+- **Play test** no editor de mapas (botão no canto superior direito, `F5`): salva o mapa, inicia um servidorzinho que só tem esse mapa e abre o jogo
+  entrando nele, direto no mapa como o tutorial. Sem conta para criar, sem Nexus, só neste PC, portas próprias (o servidor normal pode ficar ligado).
+  O piloto de teste é um walker com equipamento tier 10 completo e o EULA e a política de privacidade já aceitos. Depois de mudar o mapa: salve e digite `/restart` no chat do jogo. Modo `--test-map` do servidor em `Server\Dungeons\MapTest.cs`. *(Ainda não jogado.)*
 - **Discord Rich Presence**: seu perfil do Discord pode mostrar o avião, o nível, a patente de piloto e o lugar (Nexus, treino, mundo aberto,
   dungeon) enquanto você joga, e o nome do servidor e os pilotos online enquanto você hospeda. Nunca IP, porta, conta ou nome do jogador.
   Desligue em Settings > General.
 - Os botões *Join the Discord* usam o logo do Discord.
 - **O PLAY pede confirmação** quando o plugin Quieter ou o BepInEx faltam (sem o plugin o Flock Hall fica invisível, por exemplo).
 - O console do servidor mostra as linhas `WARNING: ... did not arrive` na cor de aviso.
+- **Monitor de chat:** nova página *Chat* na aba Server (em Monitor). Lista o que os jogadores escrevem, separado por mapa (Rebel City, mundo
+  aberto, cada instância de dungeon como "Iron Lair #3"); *All maps* mostra tudo com o nome do mapa na frente. Sussurros e chat do bando
+  aparecem no mapa de quem enviou e podem ser escondidos. Filtro, rolagem automática e copiar. O servidor imprime uma linha `[CHATMON]` por
+  mensagem (`Server\Network\ChatMonitor.cs`); o launcher não a mostra no console. O histórico começa vazio a cada início do servidor.
 - A resposta `/revive/info` do servidor tem `playerDetails` (avião, nível e lugar de cada jogador; `infoVersion` 2).
 
 ### Correções do teste de 23/11
@@ -114,6 +155,9 @@ não foi jogado com duas ou mais pessoas. Avise se algo estranho aparecer.
 - **Variantes de avião:** ao desbloquear uma, o chat avisa que se escolhe em Options > Variant. (Uma variante do paladin comprada no teste não
   foi aplicada e a causa ainda não se sabe: nenhum pedido chegou ao servidor.)
 - Logs: a linha "marked as finished" sai uma vez só, e a morte mostra a última posição do avião em vez de (0, 0).
+- **Parcela de dano no boss:** o texto no chão depois de um boss ("Your damage: X%") sempre dizia 100%. Agora o servidor registra a vida que
+  cada jogador realmente tirou do inimigo e manda a cada um a sua parcela. Como no original, o boss só solta loot para quem fez pelo menos o
+  `damageThreshold` da unidade (padrão 0,5%, `progression.json`); o XP não mudou.
 
 ### Documentação
 - Novo `docs/radmin-vpn-guide.md`: passo a passo para jogar pela Radmin VPN. Ligado no `README.md`.

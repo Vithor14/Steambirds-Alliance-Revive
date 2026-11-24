@@ -334,6 +334,17 @@ public static partial class Enemies
         }
     }
 
+    // Most living enemies of this instance at once (default 140: a normal dungeon only has the rooms near the player alive).
+    // A map that wants more (a catalog of every enemy, for example) says so in its "values": {"maxEnemies": 1000}.
+    public static void SetMaxEnemies(NetServer server, NetConnection connection, string role, int count, double now)
+    {
+        lock (Game.Lock)
+        {
+            Instance inst = GetInstance(server, connection, role, now);
+            inst.MaxEnemies = Math.Clamp(count, 1, 5000);
+        }
+    }
+
     // The player's current room: waves and commands (/spawn, /enemy) use this area.
     public static void SetDefaultArea(NetServer server, NetConnection connection, string role, Ground.Rect? area, double now)
     {

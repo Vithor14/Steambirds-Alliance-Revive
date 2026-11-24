@@ -511,9 +511,21 @@ public static class Maps
         AllowTrailingCommas = true
     };
 
+    // Map files that live outside the maps folder (id -> full path): the map test mode (MapTest) reads the file the editor saved.
+    private static readonly Dictionary<string, string> fileOverrides = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+    public static void UseFile(string id, string path)
+    {
+        lock (gate) fileOverrides[id] = path;
+    }
+
     // The server's "maps" folder (where the server runs) or next to the executable.
     public static string FilePath(string id)
     {
+        lock (gate)
+        {
+            if (fileOverrides.TryGetValue(id, out string? chosen)) return chosen;
+        }
         string fileName = id + ".json";
         string[] folders =
         {

@@ -437,6 +437,9 @@ internal sealed class MapEditorTab : UserControl
         tools.DropDownItems.Add(Item(L.T("Center the map on the grid"), CenterMap));
         tools.DropDownItems.Add(Item(L.T("Edit the file text..."), EditText));
         tools.DropDownItems.Add(new ToolStripSeparator());
+        tools.DropDownItems.Add(Item(L.T("Play test"), PlayTest, "F5"));
+        tools.DropDownItems.Add(Item(L.T("Stop the test server"), () => MapTestRunner.Stop(context)));
+        tools.DropDownItems.Add(new ToolStripSeparator());
         var ai = new ToolStripMenuItem(L.T("Enemy AI editor...")) { Enabled = EnemyAiEditors.Available };
         if (!ai.Enabled) ai.ToolTipText = L.T("The Enemy AI tab of the launcher is not available.");
         ai.Click += (_, _) => EnemyAiEditors.Current?.Edit(this, "", new System.Text.Json.Nodes.JsonObject(), () => { }, () => { });
@@ -452,7 +455,19 @@ internal sealed class MapEditorTab : UserControl
             help.DropDownItems.Add(Item(L.T(topics[i].Title), () => ShowHelp(index)));
         }
 
-        menu.Items.AddRange(new ToolStripItem[] { file, edit, view, tools, help });
+        // The button of the test: saves the map, starts a server that has only this map and opens the game on it.
+        var play = new ToolStripMenuItem(L.T("Play test") + " (F5)")
+        {
+            Alignment = ToolStripItemAlignment.Right,
+            ShortcutKeys = Keys.F5,
+            ShowShortcutKeys = false,
+            ToolTipText = L.T("Saves the map, starts a server that has only this map (this PC only, no accounts to make) and opens the game straight on it. After changing the map, save it and type /restart in the game's chat.")
+        };
+        play.Font = new Font(play.Font, FontStyle.Bold);
+        play.Click += (_, _) => PlayTest();
+        menu.ShowItemToolTips = true;
+
+        menu.Items.AddRange(new ToolStripItem[] { file, edit, view, tools, help, play });
     }
 
     private void ShowHelp(int topic)
@@ -635,6 +650,40 @@ internal sealed class MapEditorTab : UserControl
     }
 
     // ------------------------------------------------------------------ tools
+
+    private bool testing;
+
+    // Saves the map and opens the game on it (MapTestRunner): the server of the test has nothing but this map.
+    private async void PlayTest()
+    {
+        if (testing) return;
+        testing = true;
+        try
+        {
+            MapDocument document = session.Document;
+            if ((document.FilePath == null || session.Dirty) && !Save(false)) return;
+            if (document.FilePath == null) return;
+            if (document.Root.ContainsKey("draft"))
+            {
+                Ui.ShowInfo(this, L.T("The map has errors (it was saved as a draft), so the server would not take it. Fix them first: Tools > Check map."));
+                return;
+            }
+
+            statusLabel.Text = L.T("Starting the test server and the game...");
+            bool opened = await MapTestRunner.RunAsync(context, this, document.FilePath);
+            statusLabel.Text = opened
+                ? L.T("The game is on this map. After changing it, save and type /restart in the game's chat.")
+                : L.T("The test did not start.");
+        }
+        catch (Exception e)
+        {
+            Ui.ShowError(this, L.F("Could not start the test: {0}", e.Message));
+        }
+        finally
+        {
+            testing = false;
+        }
+    }
 
     private void CheckMap()
     {

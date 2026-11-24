@@ -89,6 +89,7 @@ internal sealed class ServerTab : UserControl
         var nav = new NavPages { Dock = DockStyle.Fill };
         nav.AddGroup(L.T("Monitor"));
         nav.AddPage(L.T("Console"), Pad(consolePage), Icons.Console);
+        nav.AddPage(L.T("Chat"), Pad(new ChatPage(context)), Icons.Chat);
         nav.AddGroup(L.T("Game rules"));
         nav.AddPage(L.T("Progression"), Pad(progressionPage), Icons.Progression);
         nav.AddPage(L.T("Items and loot"), Pad(itemsPage), Icons.Items);
