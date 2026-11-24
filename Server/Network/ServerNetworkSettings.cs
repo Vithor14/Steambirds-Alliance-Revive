@@ -25,6 +25,11 @@ public sealed class ServerNetworkSettings
     // Extra chat message for every player who arrives at the Nexus (empty = none).
     public string WelcomeMessage { get; set; } = "";
 
+    // true: accounts with username and password (Network/AccountLogins.cs). A Steam login with no account yet makes the game open its
+    // register screen (name, e-mail, password); accounts that already exist keep logging in through Steam, and the game's own login
+    // screen (no Steam) takes username and password. false: one account per Steam ID, no passwords (the default).
+    public bool PasswordLogin { get; set; }
+
     // TCP port of the login (OZY_URL = http://<ip>:<httpPort>/ozy).
     public int HttpPort { get; set; } = NetworkPorts.DefaultHttp;
 
@@ -252,6 +257,10 @@ public static class ServerNetworkSettingsFile
 
   // Extra chat message for every player who arrives at the Nexus (empty = none).
   ""welcomeMessage"": """",
+
+  // true: accounts with username and password. A new Steam player registers in the game (name, e-mail, password);
+  // accounts that already exist keep logging in through Steam. false: one account per Steam ID, no passwords.
+  ""passwordLogin"": false,
 
   // TCP port of the login (the launcher opens the game with OZY_URL=http://<ip>:<httpPort>/ozy).
   ""httpPort"": 6443,

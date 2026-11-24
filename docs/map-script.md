@@ -75,6 +75,7 @@ One verb per action. Any action may have `delay` (seconds), `if` (a condition, c
 |---|---|
 | `say` (+ `by`, `byGate`, `portrait`, `mode`) | speech key of the client (`Texts/bark`); `by` = alias or group (default `instructor`); `byGate` = the unit of a gate; `mode` `dialog` (default: portrait, bubble and chat line) or `bubble`. The portrait comes from `speakers` |
 | `chat` | text in the chat |
+| `sound` | plays a sound of the game for the players of the session (`ClientPlayAudio`; a name of the game's audio bank, e.g. `Stinger Mission Objective`; see `docs/admin-tools.md`) |
 | `guide` (+ `who`, `seconds`, `until`) | the guide unit (alias `instructor`) goes to a point for `seconds`, or until the rule `until` fires |
 | `wake` (+ `stagger`) | wakes a group; with `stagger` one unit every that many seconds |
 | `quiet` | the group goes back to waiting |

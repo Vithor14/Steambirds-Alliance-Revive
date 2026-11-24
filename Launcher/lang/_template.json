@@ -1511,5 +1511,7 @@
   "- The test pilot is a new walker with complete tier 10 equipment, who already accepted the EULA and the privacy policy, saved in server\\maptest, apart from your real accounts. If the plane dies, or you type /leave, you come back into the map.": "",
   "- Tools, Stop the test server closes it. It also closes by itself when the game closes. What the test server prints shows in the console of the Server tab, marked [map test].": "",
   "- A map with errors (saved as a draft) is not tested: fix it first with Tools, Check map.": "",
-  "Discord Rich Presence": ""
+  "Discord Rich Presence": "",
+  "Accounts with username and password": "",
+  "On: a new Steam player registers in the game (name, e-mail, password) and the game's own login screen takes username and password. Accounts that already exist keep logging in through Steam. Off: one account per Steam ID, no passwords.": ""
 }

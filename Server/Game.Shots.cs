@@ -155,6 +155,8 @@ public static partial class Game
 
         if (ProgressionHandler.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
         if (InventoryHandler.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
+        // Debug and admin tools (/debug, /god, /sound, /screenshot, /stats, /audit, /passwd...).
+        if (AdminHandler.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
         if (StoreHandler.Command(server, msg.SenderConnection, role, pieces, now, log)) return;
         // Friends (/friends, /addfriend NAME).
         if (SocialHandler.Command(server, msg.SenderConnection, role, pieces, now, log)) return;

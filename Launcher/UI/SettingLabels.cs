@@ -102,6 +102,8 @@ internal static class SettingLabels
             "Commands like /xp, /dungeon and /items: everyone, host (only the game of this PC) or none. /leave and /players always work.",
             new[] { "everyone", "host", "none" }),
         ["welcomeMessage"] = new SettingInfo("Welcome message", "Extra chat message for every player who arrives at the Nexus (empty = none)."),
+        ["passwordLogin"] = new SettingInfo("Accounts with username and password",
+            "On: a new Steam player registers in the game (name, e-mail, password) and the game's own login screen takes username and password. Accounts that already exist keep logging in through Steam. Off: one account per Steam ID, no passwords."),
         ["httpPort"] = new SettingInfo("Login port (TCP)",
             "Port of the login (the launcher opens the game with OZY_URL=http://<ip>:<port>/ozy). Players of other PCs type it after the IP when it is not 6443. Changes when the server restarts."),
         ["nexusPort"] = new SettingInfo("Nexus port (UDP)", "Changes when the server restarts."),

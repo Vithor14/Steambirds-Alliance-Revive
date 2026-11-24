@@ -135,6 +135,8 @@ public static class MapScript
         // "dialog" (default: portrait, bubble and chat line) or "bubble" (bubble only).
         public string Mode { get; set; } = "";
         public string Chat { get; set; } = "";
+        // sound: name of a sound group of the game (ClientPlayAudio), played for the players of the session.
+        public string Sound { get; set; } = "";
         // guide: the guide unit ("who": alias or group, default "instructor") flies to the point for "seconds", or until the rule "until" fires.
         public string Guide { get; set; } = "";
         public string Who { get; set; } = "";

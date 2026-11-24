@@ -17,6 +17,7 @@ public static class PlaneRetirement
         public Accounts.SavedPlane Plane = null!;
         public int Paid;                     // pilot XP of the retirement (the part that was not counting yet)
         public int Currency;                 // currency paid for that XP
+        public int Shown;                    // the pilot XP the currency is counted on (what the retire window shows)
         public int PilotLevelBefore;
         public int PilotLevelAfter;
         public int BaselineXp;
@@ -46,16 +47,7 @@ public static class PlaneRetirement
 
             string summary = InventoryHandler.PlaneRetired(server, connection, role, characterId);
 
-            if (result.Currency > 0)
-            {
-                string currencyId = ProgressionData.PilotXpCurrencyId;
-                Dictionary<string, int> currencies = InventoryStore.Change(d =>
-                {
-                    InventoryStore.AddCurrency(d, currencyId, result.Currency);
-                    return new Dictionary<string, int>(d.Currencies);
-                });
-                InventoryHandler.SendCurrencies(server, connection, currencies);
-            }
+            PayCurrencyForPilotXp(server, connection, result.Currency, result.Shown);
 
             ProgressionMessages.Send(server, connection, m => ProgressionMessages.WriteClientUpdatePlayer(m, "", 0, 0,
                 result.BaselineXp, result.PilotLevelAfter, result.Unlocks, false));
@@ -69,6 +61,22 @@ public static class PlaneRetirement
             if (result.PilotLevelAfter > result.PilotLevelBefore)
                 PilotExtras.DeliverCareerRewards(server, connection, role);
         }
+    }
+
+    // Pilot XP turned into currency (global.pilotXpPer1Currency, pilotXpCurrencyId, pilotXpCurrencyAwardThreshold of the game's config):
+    // the currency goes into the account, the client gets the new totals and ClientNotificationGiveCurrencyForPilotXp `54391`,
+    // which shows "you got N <currency> for X pilot XP". Used when a plane is retired and when it is destroyed.
+    public static void PayCurrencyForPilotXp(NetServer server, NetConnection connection, int currency, int pilotXp)
+    {
+        if (currency <= 0) return;
+        string currencyId = ProgressionData.PilotXpCurrencyId;
+        Dictionary<string, int> currencies = InventoryStore.Change(d =>
+        {
+            InventoryStore.AddCurrency(d, currencyId, currency);
+            return new Dictionary<string, int>(d.Currencies);
+        });
+        InventoryHandler.SendCurrencies(server, connection, currencies);
+        ProgressionMessages.Send(server, connection, m => ProgressionMessages.WriteClientNotificationGiveCurrencyForPilotXp(m, currency, currencyId, pilotXp));
     }
 
     private static Result Apply(Accounts.AccountData d, string characterId, ProgressionSettings settings)
@@ -99,6 +107,7 @@ public static class PlaneRetirement
         PilotProgression.RefreshUnlocks(d);
         result.Paid = Math.Max(0, ProgressionData.RoundToInt(paid));
         result.Currency = currency;
+        result.Shown = shown;
         result.PilotLevelAfter = pilot.Level;
         result.BaselineXp = pilot.BaselineXp;
         result.Unlocks = new List<string>(pilot.Unlocks);

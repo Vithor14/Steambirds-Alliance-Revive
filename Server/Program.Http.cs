@@ -79,16 +79,39 @@ public static partial class Program
         };
     }
 
+    // An error answer of the Ozy API: {"errors": [...]} with a status code (the game reads the codes, e.g. "password_wrong").
+    sealed record HttpError(int Status, string[] Errors)
+    {
+        public object Body => new { errors = Errors };
+    }
+
+    // Session of a logged in account: the login log line and the Ozy answer.
+    static object StartSession(HttpContext ctx, Accounts.Account account, string name, string how, string? launcherName, string note)
+    {
+        PrepareAccount(account);
+        IPAddress? client = ctx.Connection.RemoteIpAddress is IPAddress remote ? PlayerSessions.Normalize(remote) : null;
+        bool fromThisPc = PlayerSessions.IsThisPc(client);
+        IPAddress serverAddress = ServerAddressForClient(ctx);
+        PlayerSession session = PlayerSessions.Create(account, name, serverAddress, client);
+        Log("LOGIN", $"{name} ({how}{(fromThisPc ? ", this PC" : ", from " + client)}) -> account {account.Key}" +
+            $"{(note.Length > 0 ? " (" + note + ")" : "")}, Nexus at {serverAddress}:{NexusPort}" +
+            $"{(launcherName != null ? ", launcher name" : "")}");
+        return AccountResponse(session);
+    }
+
     // POST /ozy/user/login: who the player is (Steam ID from the ticket), their account, their name and a new session.
+    // With network.json "passwordLogin" a username and password (no ticket) log in to the account of that username, and a Steam ID
+    // with no account yet gets "user_missing": the game opens its register screen and calls /ozy/user/create.
     static object Join(HttpContext ctx, string body, string? launcherName)
     {
-        string? steamTicket = null, guid = null, bodyUser = null;
+        string? steamTicket = null, guid = null, bodyUser = null, bodyPassword = null;
         try
         {
             using var doc = JsonDocument.Parse(body);
             steamTicket = JsonText(doc.RootElement, "steam_ticket");
             guid = JsonText(doc.RootElement, "session_guid");
             bodyUser = JsonText(doc.RootElement, "username");
+            bodyPassword = JsonText(doc.RootElement, "password");
         }
         catch
         {
@@ -96,8 +119,27 @@ public static partial class Program
         }
 
         IPAddress? client = ctx.Connection.RemoteIpAddress is IPAddress remote ? PlayerSessions.Normalize(remote) : null;
+
+        if (AccountLogins.Enabled)
+        {
+            if (string.IsNullOrWhiteSpace(steamTicket) && !string.IsNullOrEmpty(bodyUser) && bodyPassword != null)
+            {
+                Accounts.Account? known = AccountLogins.Login(bodyUser, bodyPassword, out string? loginError);
+                if (known == null)
+                {
+                    Log("LOGIN", $"login of '{bodyUser}' from {client} refused: {loginError}");
+                    return new HttpError(400, new[] { loginError ?? "user_missing" });
+                }
+                return StartSession(ctx, known, known.SavedName.Length > 0 ? known.SavedName : bodyUser, "username and password", launcherName, "");
+            }
+            if (!AccountLogins.SteamAccountExists(steamTicket))
+            {
+                Log("LOGIN", $"Steam player from {client} has no account yet: the game opens its register screen (passwordLogin)");
+                return new HttpError(400, new[] { "user_missing" });
+            }
+        }
+
         var (key, steamId, how) = SteamTicket.AccountKey(steamTicket, guid, client?.ToString());
-        bool fromThisPc = PlayerSessions.IsThisPc(client);
         string name = PlayerNamePath.Clean(launcherName ?? bodyUser);
 
         Accounts.Account account = Accounts.GetOrCreate(key, name, steamId, out string note);
@@ -108,14 +150,76 @@ public static partial class Program
                 : "Pilot " + (steamId != null && steamId.Length >= 4 ? steamId.Substring(steamId.Length - 4) : key.Substring(Math.Max(0, key.Length - 4)));
             Accounts.GetOrCreate(key, name, steamId, out _);
         }
-        PrepareAccount(account);
+        return StartSession(ctx, account, name, how, launcherName, note);
+    }
 
-        IPAddress serverAddress = ServerAddressForClient(ctx);
-        PlayerSession session = PlayerSessions.Create(account, name, serverAddress, client);
-        Log("LOGIN", $"{name} ({how}{(fromThisPc ? ", this PC" : ", from " + client)}) -> account {key}" +
-            $"{(note.Length > 0 ? " (" + note + ")" : "")}, Nexus at {serverAddress}:{NexusPort}" +
-            $"{(launcherName != null ? ", launcher name" : "")}");
-        return AccountResponse(session);
+    // POST /ozy/user/create: the register screen of the game (username, e-mail, password, Steam ticket).
+    static object CreateUser(HttpContext ctx, string body, string? launcherName)
+    {
+        if (!AccountLogins.Enabled) return Join(ctx, body, launcherName);
+        string? username = null, password = null, email = null, steamTicket = null, guid = null;
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            username = JsonText(doc.RootElement, "username");
+            password = JsonText(doc.RootElement, "password");
+            email = JsonText(doc.RootElement, "email");
+            steamTicket = JsonText(doc.RootElement, "steam_ticket");
+            if (doc.RootElement.TryGetProperty("session_guids", out var guids) && guids.ValueKind == JsonValueKind.Array && guids.GetArrayLength() > 0)
+                guid = guids[0].ToString();
+        }
+        catch
+        {
+            return new HttpError(400, new[] { "InvalidParams" });
+        }
+        IPAddress? client = ctx.Connection.RemoteIpAddress is IPAddress remote ? PlayerSessions.Normalize(remote) : null;
+        Accounts.Account? account = AccountLogins.Create(username, password, email, steamTicket, guid, client?.ToString(), out string? error, out string how);
+        if (account == null)
+        {
+            Log("LOGIN", $"register of '{username}' from {client} refused: {error}");
+            return new HttpError(400, new[] { error ?? "InvalidParams" });
+        }
+        Log("LOGIN", $"new account '{username}' registered in the game ({how})");
+        return StartSession(ctx, account, PlayerNamePath.Clean(username), "registered (" + how + ")", launcherName, "new account");
+    }
+
+    // POST /ozy/user/change: new password for the account of the X-Session header.
+    static object ChangePassword(HttpContext ctx, string body)
+    {
+        PlayerSession? session = PlayerSessions.ByTicket(ctx.Request.Headers["X-Session"].ToString());
+        string? oldPassword = null, newPassword = null;
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            oldPassword = JsonText(doc.RootElement, "old_password");
+            newPassword = JsonText(doc.RootElement, "new_password");
+        }
+        catch
+        {
+            return new HttpError(400, new[] { "InvalidParams" });
+        }
+        if (session == null || !AccountLogins.Enabled || !AccountLogins.Has(session.Account.Key)) return new HttpError(400, new[] { "user_missing" });
+        if (!AccountLogins.Verify(session.Account.Key, oldPassword)) return new HttpError(400, new[] { "password_wrong" });
+        string? problem = AccountLogins.CheckPassword(newPassword);
+        if (problem != null) return new HttpError(400, new[] { problem });
+        AccountLogins.SetPassword(session.Account.Key, newPassword!);
+        Log("LOGIN", $"{session.Name} changed their password");
+        return new { };
+    }
+
+    static object ResetRequest(string body)
+    {
+        string? who = null;
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            who = JsonText(doc.RootElement, "username") ?? JsonText(doc.RootElement, "email");
+        }
+        catch
+        {
+        }
+        Log("LOGIN", $"a player asked to reset the password of '{who}': the host does it with /passwd NAME NEW_PASSWORD in the game chat");
+        return new { };
     }
 
     // /ozy/user/self and /ozy/user/queue_check: the account of the X-Session header's session (or the last login of the same IP).
@@ -176,6 +280,15 @@ public static partial class Program
             uploadid = id
         };
     }
+    // Upload slot made by the server for ClientCaptureScreen: the player's game PUTs the picture to UploadUrl, which lands in client-uploads.
+    // The address is the one the player's game used to reach this server.
+    internal static (string Id, string UploadUrl, string FinishUrl) NewCaptureSlot(IPAddress address, string kind, string who)
+    {
+        string clean = new string(who.Where(char.IsLetterOrDigit).ToArray());
+        var id = $"{kind}{clean}{DateTime.Now:yyyyMMddHHmmss}{Random.Shared.Next(100, 999)}";
+        var baseUrl = $"http://{address}:{HttpPort}";
+        return (id, $"{baseUrl}{UploadPrefix}{id}", $"{baseUrl}/ozy/user_uploads/finish/{id}");
+    }
     static string UploadExtension(string? mimeType) => (mimeType ?? "") switch
     {
         var t when t.StartsWith("image/gif") => ".gif",
@@ -230,11 +343,23 @@ public static partial class Program
                 "/ozy/alive" => new { ok = true },
                 "/ozy/user/login" => Join(ctx, body, launcherName),
                 "/ozy/user/self" or "/ozy/user/queue_check" => SessionAccount(ctx, body, launcherName),
+                "/ozy/user/create" => CreateUser(ctx, body, launcherName),
+                "/ozy/user/change" => ChangePassword(ctx, body),
+                // No e-mail server: the host resets a password with the chat command /passwd.
+                "/ozy/user/reset_request" => ResetRequest(body),
+                "/ozy/activation/change_email" or "/ozy/activation/resend" => new { },
+                // The original server told the game where its message broker (RabbitMQ) was; the game never calls it (Ozy/MsgInterfaceConfig).
+                "/ozy/msg_interface_config" => new { hostname = "", username = "", password = "", port = 0, virtualhost = "", msg_and_queue_timeout = 30 },
                 "/ozy/user_uploads/upload" => UploadSlot(ctx, body),
                 _ => new { }
             };
 
             ctx.Response.ContentType = "application/json";
+            if (response is HttpError failed)
+            {
+                ctx.Response.StatusCode = failed.Status;
+                response = failed.Body;
+            }
             await ctx.Response.WriteAsync(JsonSerializer.Serialize(response));
         });
     }

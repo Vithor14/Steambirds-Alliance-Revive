@@ -321,6 +321,8 @@ public static partial class InventoryHandler
                 int auditId = msg.ReadInt32();
                 int count = Count(role + " audit");
                 if (count <= 3 || count % 100 == 0) logTo("INVENTORY", tag + " ServerAuditInvAction " + auditId + " x" + count);
+                // The client says what it did with the id the server gave: Admin\InventoryAudit.cs compares and counts the failures.
+                InventoryAudit.Reported(server, connection, role, auditId, msg, logTo);
                 return true;
             }
             case MsgServerReforgeItemFromIngredients:

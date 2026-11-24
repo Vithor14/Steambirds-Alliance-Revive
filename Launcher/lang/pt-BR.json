@@ -1891,5 +1891,7 @@
   "- The test pilot is a new walker with complete tier 10 equipment, who already accepted the EULA and the privacy policy, saved in server\\maptest, apart from your real accounts. If the plane dies, or you type /leave, you come back into the map.": "- O piloto do teste é um walker novo com equipamento tier 10 completo, que já aceitou o EULA e a política de privacidade, guardado em server\\maptest, separado das suas contas de verdade. Se o avião morrer, ou você digitar /leave, você volta para dentro do mapa.",
   "- Tools, Stop the test server closes it. It also closes by itself when the game closes. What the test server prints shows in the console of the Server tab, marked [map test].": "- Tools, Stop the test server o fecha. Ele também fecha sozinho quando o jogo fecha. O que o servidor de teste escreve aparece no console da aba Server, marcado com [map test].",
   "- A map with errors (saved as a draft) is not tested: fix it first with Tools, Check map.": "- Um mapa com erros (salvo como rascunho) não é testado: corrija antes com Tools, Check map.",
-  "Discord Rich Presence": "Rich Presence do Discord"
+  "Discord Rich Presence": "Rich Presence do Discord",
+  "Accounts with username and password": "Contas com usuário e senha",
+  "On: a new Steam player registers in the game (name, e-mail, password) and the game's own login screen takes username and password. Accounts that already exist keep logging in through Steam. Off: one account per Steam ID, no passwords.": "Ligado: um jogador novo da Steam se registra no jogo (nome, e-mail, senha) e a tela de login do jogo aceita usuário e senha. Contas que já existem continuam entrando pela Steam. Desligado: uma conta por Steam ID, sem senha."
 }

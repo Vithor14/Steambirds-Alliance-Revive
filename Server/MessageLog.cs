@@ -14,7 +14,7 @@ public static class MessageLog
     private static readonly object gate = new();
 
     private static readonly Regex secretField = new(
-        "\"(steam_ticket|netease_ticket|password|session_guid)\"\\s*:\\s*\"[^\"]*\"",
+        "\"(steam_ticket|netease_ticket|password|old_password|new_password|session_guid)\"\\s*:\\s*\"[^\"]*\"",
         RegexOptions.Compiled);
 
     // Logs a message whose ID is not in the client's catalog. Never throws.

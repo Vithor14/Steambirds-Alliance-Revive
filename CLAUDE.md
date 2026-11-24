@@ -53,6 +53,7 @@ Maintained 100% by the community, with some additions and improvements.
 | `docs/stores.md` | stores: shelves, `ClientReceiveStoreContent` bytes, purchase, slots, `stores.json` (English) |
 | `docs/open-world.md` | open world (`Basic`, port 1114): map generator, regions, enemy spawn sites, carriers, `world.json` (English) |
 | `docs/social.md` | friends, flocks (Flock Hall), whispers, flock chat, teleport and "Join Server", `social.json`, `flocks.json` (English) |
+| `docs/admin-tools.md` | admin and debug tools: debug settings, sounds, screenshots, server stats, inventory audit, password accounts (English) |
 | `docs/update-notes-0.5.0.md` | release notes of 0.5.0 (English and Portuguese) |
 | `docs/update-notes-0.6.0.md` | release notes of 0.6.0, **in progress**: fed with every change until the release (English and Portuguese) |
 | `docs/radmin-vpn-guide.md` | player-facing guide: install Radmin VPN, join the `Steambirds_Revive` network, host or join a server (English) |
@@ -62,7 +63,7 @@ Maintained 100% by the community, with some additions and improvements.
 
 - `Server\` — the server (.NET 8: ASP.NET for the HTTP "Ozy" API, Lidgren UDP for "Copper"). Project `SteambirdsServer.csproj`.
   - Folders by topic: `GameData`, `Progression`, `Items`, `Dungeons`, `World` (open world), `Network`, `Planes`, `Skills`,
-    `Social` (friends, flocks, teleport), `Stores`, `Scripting` (map script engine).
+    `Social` (friends, flocks, teleport), `Stores`, `Scripting` (map script engine), `Admin` (debug settings, sounds, screenshots, server stats, inventory audit).
     Top-level files: `Program*.cs` (`Program.cs` startup and `Main`, `Program.Transfers.cs` server switches and plane spawn,
     `Program.Messages.cs` host messages, `Program.Udp.cs` network loop, `Program.Http.cs` login), `Game*.cs` (client messages,
     split by topic), `Enemies*.cs` (AI, waves, view radius, guns), `Tutorial*.cs` (walker tutorial session; its script is in the map file), `Maps.cs` (map files), `Scripting\` (map script engine: `MapScript.cs` format + check, `MapScriptRunner*.cs` runner),

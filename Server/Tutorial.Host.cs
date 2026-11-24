@@ -22,6 +22,8 @@ public static partial class Tutorial
 
         public void Chat(string text) => WorldObjects.SendChat(sess.Server, sess.Connection, text);
 
+        public void PlaySound(string name) => Sounds.Play(sess.Server, sess.Connection, name);
+
         public void LivePlayers(List<(float X, float Y)> into)
         {
             into.Clear();

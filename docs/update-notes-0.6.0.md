@@ -32,6 +32,20 @@ but not yet played with two or more people. Please report anything odd.
   Generated from the game data by `tools\make_map_maker_helper.py`; details in `docs/map-format.md`. (First version: one long map; it took
   about 5 minutes to fly to the enemies, so it became three maps with the items twice as close.)
 
+### New: admin, debug and login tools *(not played)*
+- **Accounts with a password (optional).** `network.json` `passwordLogin: true`: a new Steam player gets the game's own register screen (name, e-mail,
+  password); the game's login screen (no Steam) takes username and password. Accounts that already exist keep logging in through Steam.
+  `/passwd NAME PASSWORD` (host) resets one. Passwords are stored as a salted hash in `accounts\<key>\login.json`. Also answered now: `/user/create`,
+  `/user/change`, `/user/reset_request`, `/activation/*` and `/msg_interface_config`.
+- **Iron for pilot XP.** When a plane is destroyed (and, as before, when it is retired) the pilot XP it pays also becomes currency at the game's rate
+  (`pilotXpPer1Currency`, from the threshold on), and the game shows "you got N for X pilot XP" (`ClientNotificationGiveCurrencyForPilotXp`).
+- **Sounds sent by the server.** `/sound NAME`, `/soundall NAME` and the new map script action `sound`.
+- **Debug and admin.** `/debug`, `/god` (debug settings of the plane: damage, speed, health...), `/watchai`, `/screenshot [PLAYER]`, `/stats`, `/serverstats`,
+  `/audit`, `/admin`. The server also answers the client's own debug messages and `ServerQuery` (units the client never saw spawn).
+- **Server statistics and audit.** The loop time of each server (`/stats`; the game's server time chart with `/serverstats on` and Options > debug display) and an inventory
+  audit that counts the actions the client reports with an id the server never gave out (or twice).
+- Code in `Server\Admin\`, `Server\Network\AccountLogins.cs`, `Server\Enemies.Debug.cs`; details in `docs/admin-tools.md`.
+
 ### Dungeons
 - New map value `values.maxEnemies`: a map can raise the limit of 140 living enemies per dungeon (the Map Maker enemies map needs 840).
 - **Iron Lair** rebuilt as a donut arena (a round ring around the square room where you are born, a SN-Z that keeps flying around it, slow
@@ -114,6 +128,20 @@ não foi jogado com duas ou mais pessoas. Avise se algo estranho aparecer.
   quando levam dano** (e só o que foi atingido). `/room N` pula para um grupo de fileiras. Cada um tem chão liso com paredes em volta, e o jogador começa no meio (no de inimigos, entre os inimigos comuns e os chefes; ali o chão afina onde estão os chefes para ninguém se perder, e as unidades ficam a 10 u uma da outra). Abra um no editor de mapas e clique em **Play test**.
   Gerados a partir dos dados do jogo por `tools\make_map_maker_helper.py`; detalhes em `docs/map-format.md`. (A primeira versão era um mapa
   comprido: levava uns 5 minutos para chegar aos inimigos, então virou três mapas com os itens duas vezes mais perto.)
+
+### Novo: ferramentas de admin, debug e login *(não jogado)*
+- **Contas com senha (opcional).** `network.json` `passwordLogin: true`: um jogador novo da Steam vê a tela de registro do próprio jogo (nome, e-mail, senha);
+  a tela de login do jogo (sem Steam) aceita usuário e senha. Contas que já existem continuam entrando pela Steam. `/passwd NOME SENHA` (host) redefine uma.
+  A senha é guardada como hash com salt em `accounts\<chave>\login.json`. Também respondidos agora: `/user/create`, `/user/change`, `/user/reset_request`,
+  `/activation/*` e `/msg_interface_config`.
+- **Ferro por XP de piloto.** Quando um avião é destruído (e, como antes, quando é aposentado) o XP de piloto que ele paga também vira moeda na taxa do
+  jogo (`pilotXpPer1Currency`, a partir do mínimo) e o jogo mostra "você recebeu N por X de XP de piloto" (`ClientNotificationGiveCurrencyForPilotXp`).
+- **Sons enviados pelo servidor.** `/sound NOME`, `/soundall NOME` e a nova ação `sound` dos roteiros de mapa.
+- **Debug e admin.** `/debug`, `/god` (ajustes de debug do avião: dano, velocidade, vida...), `/watchai`, `/screenshot [JOGADOR]`, `/stats`, `/serverstats`,
+  `/audit`, `/admin`. O servidor também responde às mensagens de debug do próprio cliente e ao `ServerQuery` (unidades que o cliente nunca viu nascer).
+- **Estatísticas do servidor e auditoria.** O tempo do loop de cada servidor (`/stats`; o gráfico de tempo do servidor do jogo com `/serverstats on` e
+  Opções > debug display) e uma auditoria do inventário que conta as ações que o cliente informa com um id que o servidor nunca deu (ou repetido).
+- Código em `Server\Admin\`, `Server\Network\AccountLogins.cs`, `Server\Enemies.Debug.cs`; detalhes em `docs/admin-tools.md`.
 
 ### Dungeons
 - Valor novo do mapa `values.maxEnemies`: um mapa pode subir o limite de 140 inimigos vivos por dungeon (o mapa Map Maker de inimigos precisa de 840).

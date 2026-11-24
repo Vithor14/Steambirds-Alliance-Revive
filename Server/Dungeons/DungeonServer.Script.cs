@@ -25,6 +25,11 @@ public static partial class DungeonServer
 
         public void Chat(string text) => DungeonServer.Chat(s, text);
 
+        public void PlaySound(string name)
+        {
+            foreach (NetConnection member in s.Members.ToList()) Sounds.Play(s.Server, member, name);
+        }
+
         public void LivePlayers(List<(float X, float Y)> into)
         {
             into.Clear();

@@ -529,6 +529,9 @@ public static class PilotProgression
             // Buffs the plane had started end with it: the next plane must not inherit them.
             PilotExtras.PlaneBuffsEnded(server, connection, role, characterId);
 
+            // Iron (the game's pilotXpCurrencyId) for the pilot XP the fall pays, like the retirement does.
+            PlaneRetirement.PayCurrencyForPilotXp(server, connection, result.Currency, result.CurrencyXp);
+
             if (result.PlaneKept != null)
             {
                 // Permadeath off: the client already took the plane out of its list (OnPlayerPlaneDied); it comes back.
@@ -546,6 +549,7 @@ public static class PilotProgression
             {
                 log("DEATH", "[" + role + "] " + result.PlaneClass + " level " + result.PlaneLevel + " (" + result.PlaneXp + " XP) destroyed: +" +
                     result.PilotXpDelta + " pilot XP" + (result.PilotXpBonus > 0 ? " (" + result.PilotXpBonus + " of fall bonus)" : "") +
+                    (result.Currency > 0 ? ", +" + result.Currency + " " + ProgressionData.PilotXpCurrencyId : "") +
                     ", rank " + result.PilotLevelBefore + " -> " + result.PilotLevelAfter +
                     " (" + result.PilotXpTotal + " XP)" + (result.PlaneKept != null ? "; the plane stays in the hangar (permadeath off)" :
                     "; the plane left the account"));
@@ -569,6 +573,9 @@ public static class PilotProgression
         // pilot) plus the bonus of deathPilotXpBonus.
         public int PilotXpDelta;
         public int PilotXpBonus;
+        // Currency for the pilot XP of the fall (pilotXpPer1Currency) and the XP it is counted on.
+        public int Currency;
+        public int CurrencyXp;
         public int PilotXpTotal;
         public int PilotBaselineXp;
         public List<string> Unlocks = new List<string>();
@@ -623,6 +630,12 @@ public static class PilotProgression
         result.PlaneLevel = plane.Level;
         result.PilotXpDelta = Math.Max(0, ProgressionData.RoundToInt(kept + bonus));
         result.PilotXpBonus = Math.Max(0, ProgressionData.RoundToInt(bonus));
+        // Same figure as the retire window: the share that is not counting in real time, without the host's XP multiplier.
+        int currencyXp = (int)Math.Floor((1f - proportion) * unpaid);
+        int currency = ProgressionData.PilotXpPer1Currency > 0 ? currencyXp / ProgressionData.PilotXpPer1Currency : 0;
+        if (currency < ProgressionData.PilotXpCurrencyAwardThreshold) currency = 0;
+        result.Currency = currency;
+        result.CurrencyXp = currencyXp;
         result.PilotLevelAfter = pilot.Level;
         result.PilotBaselineXp = pilot.BaselineXp;
         result.PilotXpTotal = ComputedPilotXp(d);

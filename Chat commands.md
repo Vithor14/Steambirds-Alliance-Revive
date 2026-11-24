@@ -77,6 +77,24 @@ The server tries, in this order: progression, items, dungeons, tutorial and enem
 
 Who may use the other commands is decided by `chatCommands` in `network.json`: `everyone`, `host` (only the game on the server's PC) or `none`. `/leave` and `/players` always work.
 
+### Admin and debug tools
+
+Built in 0.6.0 (`Server\Admin\`, details in `docs/admin-tools.md`). They follow `chatCommands` of `network.json`; the ones marked "host" only work in the game of the server's PC.
+
+| Command | What it does |
+| --- | --- |
+| `/admin` | Lists these commands |
+| `/debug` | Shows your plane's debug settings and the names. `/debug NAME VALUE` sets one (`damage`, `damageReceivedMultiplier`, `speed`, `steam`, `turnRate`, `health`, `epic`...; the switches `spawning`, `enemyMovement`, `debugInfo` take `on`/`off`). `/debug clear [NAME]` takes them off, `/debug latency on\|off` |
+| `/god [off]` | Nothing hurts you (`damageReceivedMultiplier` 0) |
+| `/sound NAME` (or `/sound N`) | Plays a sound of the game's audio bank for you; `/sound` lists the known names |
+| `/soundall NAME` | Same, for everybody on this server (host) |
+| `/screenshot [PLAYER]` | The game takes a picture and uploads it to the server (`client-uploads\screenshot....jpg`); of another player: host |
+| `/stats` | Server loop time, packets, memory, players |
+| `/serverstats [on\|off]` | Sends the server time chart to your game (Options > debug display) |
+| `/audit` | Inventory audit of your connection: actions reported and failures |
+| `/watchai [ID]` | AI text of an enemy (the closest one when no id is given) |
+| `/passwd NAME PASSWORD` | Changes the password of an account with username and password (host; `passwordLogin` in `network.json`) |
+
 ### Items
 
 Work on any server. Item ids and loot tables: `catalog\item_catalog.md` and `loot_tables\`.

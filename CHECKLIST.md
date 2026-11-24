@@ -19,7 +19,7 @@
 
 | # | Área | Feito | Parcial | Falta |
 |---|---|---|---|---|
-| 1 | Base: conexão, login e conta | 14 | 2 | 2 |
+| 1 | Base: conexão, login e conta | 16 | 2 | 0 |
 | 2 | Avião, classes e hangar | 10 | 5 | 0 |
 | 3 | Piloto, permadeath e progressão | 2 | 11 | 0 |
 | 4 | Combate e inimigos | 10 | 7 | 1 |
@@ -31,13 +31,13 @@
 | 10 | Social: chat, amigos, flocks e troca | 2 | 4 | 4 |
 | 11 | Combat Sim | 0 | 0 | 5 |
 | 12 | Troca de servidores | 2 | 1 | 2 |
-| 13 | Áudio, interface e extras | 0 | 1 | 5 |
+| 13 | Áudio, interface e extras | 5 | 1 | 0 |
 | 14 | Código e repositório | 10 | 1 | 0 |
 | 15 | Launcher base — aba Client (objetivo intermediário) | 8 | 2 | 1 |
 | 16 | Launcher — aba Server | 5 | 10 | 2 |
 | 17 | Launcher standalone (objetivo final) | 4 | 3 | 0 |
 | 18 | Editor de mapas | 6 | 6 | 2 |
-| | **Total** | **97** | **86** | **43** |
+| | **Total** | **104** | **86** | **36** |
 
 Os apêndices (classes, terrenos e chefes) e as observações abaixo ficam fora da conta.
 
@@ -102,8 +102,8 @@ O cliente traz os **dados**, mas as **regras** ficavam no servidor original. O s
 - [x] Servidor aberto para outros PCs (v11, testado em 22/11): HTTP em todas as redes (`allowOtherPlayers` no `network.json`), o login devolve o Nexus no endereço que o jogo usou (LAN, Radmin, Hamachi ou IP público) e as trocas de servidor e os portais usam o endereço de cada jogador. Portas, nome, máximo de jogadores e comandos de chat (`everyone`, `host`, `none`) no `network.json`; `/players` no chat; aviso de quem entra e sai. Em 23/11: se um jogador de outro PC é mandado a outro servidor do host e não aparece lá em 20 s, o console mostra `WARNING: ... did not arrive` com a porta UDP a liberar no roteador (compilado, sem teste)
 - [ ] 🟡 Todo jogador entra como admin (`isAdmin`), o que evita a desconexão automática após 120 s parado; quem usa os comandos de chat do servidor agora é escolhido no `network.json` (`chatCommands`: todos, só o host ou ninguém). Testado em 23/11: `everyone` funcionou para os dois jogadores remotos (`/currency`, `/item`, `/xp`, `/spawn`) e a mudança do `network.json` valeu sem reiniciar o servidor
 - [ ] 🟡 **Multiplayer (Nexus):** `PlayerRelay` repassa o avião (SpawnUnitsBatch com o PeerId do dono e shortId de relay 7.000.000+), `UpdateUnitsBatch` (posição, mira, estado, vida, nome, sinal das armas e efeitos), `GunFire` (com o relógio do atirador convertido para o do servidor), `KillUnitsBatch` (morte, troca de avião, saída), nuvens das skills e `ClientReceiveRemotePlayerData` de quem está online. Teste de 19/11 com dois PCs: aviões, animação de tiro, inimigos, portões e reset da dungeon funcionaram; nome, balas e skills em área dos outros foram corrigidos no mesmo dia (testado em 22/11). `TriggerOtherPlayerSkill` repassado (22/11), balas dos outros terminam onde acertam (`ClientKillBullet`); ainda sem `GunFireBatch` `62327`, nuvens para quem entra depois que elas foram criadas. Tutorial segue um mundo por jogador. Teste de 23/11 com 3 PCs (Nexus, 6 dungeons e mundo aberto, servidor em outro país): aviões, tiros, nomes, rastros, nuvens de cura e de dano, chat e dados de quem está online funcionaram. Correção do mesmo dia: o cliente repergunta os dados de outro jogador a cada frame quando o dado passa de 30 s, e o servidor respondia toda vez (28 mil respostas, ~200/s); agora responde no máximo uma vez por segundo a cada par jogador/conta, e o pedido com `accountId` vazio é ignorado em silêncio. Se o cliente não se desconecta em 6 s ao trocar de servidor, o servidor fecha a conexão antiga
-- [ ] Login por usuário e senha (`/user/create`, `/user/change`, `/user/reset_request`, `/activation/*`); opcional, já que o login pela Steam funciona
-- [ ] `/msg_interface_config` (mensagens/banners da interface)
+- [x] Login por usuário e senha, opcional (24/11, compilado e testado por HTTP, não jogado): `passwordLogin` no `network.json`. Jogador novo da Steam recebe `user_missing` e o jogo abre a tela de registro (`/user/create`); `/user/login` com usuário e senha; `/user/change`; `/user/reset_request` e `/activation/*` só respondem vazio (sem e-mail: o host usa `/passwd NOME SENHA`). Hash PBKDF2 em `accounts\<chave>\login.json`. Detalhes em `docs/admin-tools.md`
+- [x] `/msg_interface_config`: o cliente nunca chama (é o broker de mensagens do servidor original); responde a configuração vazia
 
 ## 2. Avião, classes e hangar
 
@@ -173,7 +173,7 @@ Código em `Server\Items` (v9, ainda não testada no jogo). Tabelas de loot em `
 - [ ] 🟡 Avisos de coleta: `ClientNoRoomForPickup` `22110` (o item volta ao mundo), `ClientConsumedItemOnPickup` `22111` (ingredientes e itens `devourOnPickup`), `ClientCargoFull` `14528` (desequipar com cargo cheio). `ClientReplaceInventoryAndPickup` `16148` escrito, sem uso
 - [ ] 🟡 Mover, equipar, descartar e favoritar itens: `ServerInvSwapItems` `17407` (confere o slot do item), `ServerInvRemoveItem` `60901` (soltar = arrastar para o mundo = saco no mundo, sem avião vivo o item fica no cargo; reciclar = o menu do cliente manda Lixo: o item é sempre destruído e paga a moeda de reciclagem se `mulchOnTrash` em `items.json` estiver ligado), `ServerInvAccumulateItem` `60904`, `ServerInvFavoriteItem` `60905`. Testado em 23/11: trocas de vaga, equipar e reciclar (62 itens) funcionam. **Não funciona:** arrastar o item para fora do inventário (soltar no mundo): o servidor não recebe mensagem nenhuma (relato do host e de um jogador)
 - [ ] 🟡 Consumir e ordenar itens: `ServerInvConsumeItem` `60902` (o cliente aplica vida/vapor/nuvem; o servidor entrega desbloqueio, variante, moeda, buff de conta e ingrediente, e gasta os usos), `ServerInvApplySort` `60903` (tier ou tipo, ordem estável e `ClientReplaceInventory` depois)
-- [ ] 🟡 Respostas de inventário: `ClientUpdateInventoryItem` `37467`, `ClientRemoveInventoryItem` `37468`, `ClientReplaceInventory` `16147` e as respostas de RPC (id de auditoria; `ServerAuditInvAction` `61999` só registrado)
+- [ ] 🟡 Respostas de inventário: `ClientUpdateInventoryItem` `37467`, `ClientRemoveInventoryItem` `37468`, `ClientReplaceInventory` `16147` e as respostas de RPC (id de auditoria; `ServerAuditInvAction` `61999` agora é conferido em `Admin\InventoryAudit.cs`, com `ClientOnAuditChange` `23009`)
 - [x] Mover itens entre o avião e o armazém (mesmo `ServerInvSwapItems`, com o characterId do armazém). Testado em 23/11 (24 trocas seguidas do cargo para o armazém)
 - [ ] 🟡 Ingredientes e reforja na Oficina: `ServerReforgeItemFromIngredients` `12157` com o custo da config `reforging` (itens e moedas), `ClientReforgeSucceeded` `12155`/`ClientReforgeFailed` `12156`, `ClientUpdateIngredients` `61591` (carteira no login e na coleta)
 - [x] Reciclagem de itens: lixo dá a moeda da config `mulching` (`newscrap`) pelo tier e pelas tags do item; moedas no PlayerData e no `ClientUpdatePlayer`. Testado em 23/11 (62 reciclagens, de +0 a +50 de newscrap)
@@ -314,12 +314,12 @@ Doc das dungeons recriadas: `docs/dungeons-190828.md`. Servidor de dungeon: `doc
 
 ## 13. Áudio, interface e extras
 
-- [ ] Sons mandados pelo servidor (`ClientPlayAudio` `7335`)
+- [x] Sons mandados pelo servidor (`ClientPlayAudio` `7335`): `/sound`, `/soundall` e a ação `sound` dos roteiros de mapa (24/11, não jogado; lista de nomes em `Sounds.cs`, os outros nomes do banco de áudio do jogo ainda não foram exportados)
 - [ ] 🟡 Música: o plugin de diagnóstico silencia o PlaylistController; para jogar de verdade a música deve tocar
-- [ ] Moedas e compras: os pacotes de moeda eram microtransações da Steam (`54254`, `54297`–`54300`, `54390`, `54391`); trocar por moeda do jogo ou por algo configurável no host
-- [ ] Ajustes de debug e admin (`3732`, `6848`, `15630`, `27395`, `30792`, `49275`, `58246`, `33683`, `19540`, `38607`)
-- [ ] Captura de tela e auditoria (`ClientCaptureScreen` `23010`, `ClientOnAuditChange` `23009`, `ServerAuditInvAction` `61999`)
-- [ ] Estatísticas do servidor (`ClientReceiveServerStats` `59268`, `ServerQuery` `45861`)
+- [x] Moedas e compras: os pacotes de moeda eram microtransações da Steam (`54254`, `54297`–`54300`, `54390`); a loja cobra ouro e ferro da conta (modo configurável no `stores.json`). Ferro por XP de piloto (`54391`) na queda e na aposentadoria do avião, em 24/11 (não jogado)
+- [x] Ajustes de debug e admin (`3732`, `6848`, `15630`, `27395`, `30792`, `49275`, `58246`, `33683`, `19540`, `38607`): `/debug`, `/god`, `/watchai`, mais as mensagens do próprio cliente e o `ServerQuery` `45861` (24/11, não jogado; `docs/admin-tools.md`)
+- [x] Captura de tela e auditoria (`ClientCaptureScreen` `23010`, `ClientOnAuditChange` `23009`, `ServerAuditInvAction` `61999`): `/screenshot [JOGADOR]` grava em `client-uploads`; `/audit` (24/11, não jogado)
+- [x] Estatísticas do servidor (`ClientReceiveServerStats` `59268`, `ServerQuery` `45861`): `/stats`, `/serverstats on` (gráfico de tempo do servidor do jogo, em Opções > debug display); `ServerQuery` reenvia os inimigos que o cliente não viu nascer (24/11, não jogado)
 
 ## 14. Código e repositório
 

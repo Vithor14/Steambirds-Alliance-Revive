@@ -13,6 +13,8 @@ public interface IScriptHost
 
     void Log(string text);
     void Chat(string text);
+    // Plays a sound of the game for every player of the session (ClientPlayAudio).
+    void PlaySound(string name);
     // World positions of the players with a plane in the air.
     void LivePlayers(List<(float X, float Y)> into);
     // Creates one unit (a, b in tiles; rotation in degrees, NaN = facing the player). Returns the shortId or 0.

@@ -13,6 +13,7 @@ public static class ProgressionMessages
 {
     public const ushort MsgIncrementPlayerStats = 879;                 // PeerId, int shortId, float health, float energy, Vector3, bool cap
     public const ushort MsgClientWipePilot = 4870;
+    public const ushort MsgClientNotificationGiveCurrencyForPilotXp = 54391;  // int currencyVal, string currencyId, int pilotXp
     public const ushort MsgClientWipePlaneProgress = 8951;
     public const ushort MsgClientUpdatePlayerPortrait = 12151;         // Portrait
     public const ushort MsgClientReceiveVagueCareerRewards = 12160;    // List<VagueCareerReward>
@@ -194,6 +195,14 @@ public static class ProgressionMessages
     {
         buf.Write(MsgClientPilotCheatState);
         buf.Write(state);
+    }
+
+    public static void WriteClientNotificationGiveCurrencyForPilotXp(NetBuffer buf, int currencyValue, string currencyId, int pilotXp)
+    {
+        buf.Write(MsgClientNotificationGiveCurrencyForPilotXp);
+        buf.Write(currencyValue);
+        buf.Write(currencyId);
+        buf.Write(pilotXp);
     }
 
     public static void WriteClientWipePilot(NetBuffer buf)

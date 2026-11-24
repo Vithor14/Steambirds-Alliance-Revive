@@ -486,6 +486,10 @@ public static partial class Program
         if (InventoryHandler.Handle(server, msg, msgId, RoleName(role), Clock.Elapsed.TotalSeconds, Log))
             return;
 
+        // Debug and admin messages of the client (debug settings, ServerWatchAI, ServerQuery).
+        if (AdminHandler.Handle(server, msg, msgId, RoleName(role), Clock.Elapsed.TotalSeconds, Log))
+            return;
+
         // Pilot progression: skills, loadouts, portrait, buffs, career rewards and skill reports.
         if (ProgressionHandler.Handle(server, msg, msgId, RoleName(role), Clock.Elapsed.TotalSeconds, Log))
             return;

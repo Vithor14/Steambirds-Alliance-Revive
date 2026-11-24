@@ -23,6 +23,7 @@ public static partial class Program
         {
             while (true)
             {
+                double loopStart = Clock.Elapsed.TotalSeconds;
                 NetIncomingMessage? msg;
                 while ((msg = server.ReadMessage()) != null)
                 {
@@ -67,6 +68,7 @@ public static partial class Program
                                     WorldServer.Disconnected(connection, Log);
                                     PilotProgression.Disconnected(connection);
                                     LootDrops.Disconnected(connection);
+                                    AdminHandler.Disconnected(connection);
                                 }
                                 PlayerSessions.Unbind(connection);
                                 // Only the Nexus thread touches this set.
@@ -120,6 +122,9 @@ public static partial class Program
 
                 // Loot bags whose time ran out leave the world.
                 LootDrops.Update(server, Clock.Elapsed.TotalSeconds);
+
+                // Server statistics: how long this turn took (/stats and the game's server time chart).
+                ServerStats.Tick(server, RoleName(role), Clock.Elapsed.TotalSeconds, Clock.Elapsed.TotalSeconds - loopStart);
 
                 Thread.Sleep(5);
             }

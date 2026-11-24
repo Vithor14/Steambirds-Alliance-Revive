@@ -56,4 +56,4 @@ Criado com os padrões na pasta do servidor e relido ao salvar: `planeXpMultipli
 - Patente de cada recompensa de carreira (os 13 ids existem, as patentes não estão no configBinary).
 - Equipamento salvo na morte (`DeathLootConfig.salvageRandomEquipment`): feito como opção do host (`deathSalvageRandomEquipment` no `items.json`); falta testar.
 - Multiplayer: `IncrementPlayerStats` `879` para cura em outros jogadores; o repasse de gatilhos (`TriggerOtherPlayerSkill`) existe desde 22/11, sem teste com dois PCs.
-- Ferro por XP de piloto (`pilotXpPer1Currency` / `ClientNotificationGiveCurrencyForPilotXp` `54391`) ainda não existe (a aposentadoria já usa a mesma taxa).
+- Moeda por XP de piloto (`pilotXpPer1Currency`, `pilotXpCurrencyAwardThreshold`, `pilotXpCurrencyId`, `ClientNotificationGiveCurrencyForPilotXp` `54391`): feita em 24/11. Vale na aposentadoria e na queda do avião (`PlaneRetirement.PayCurrencyForPilotXp`); conta só a parte que não contava em tempo real e que ainda não tinha sido paga. Falta testar no jogo e conferir o `pilotXpCurrencyId` real do configBinary (o log da queda e da aposentadoria mostra o id usado).

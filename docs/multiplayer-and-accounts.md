@@ -36,6 +36,7 @@ Servidor **v11** e launcher **0.3.0** (16/11/2026, testados em 22/11 com dois PC
 | `maxPlayers` | 16 | conferido no `ServerSetSessionTicket` do Nexus (contas distintas online); quem passa leva `Disconnect("Server full")` |
 | `chatCommands` | everyone | `everyone`, `host` (só o jogo do PC do host) ou `none`; `/leave` e `/players` sempre |
 | `welcomeMessage` | "" | chat extra no Nexus |
+| `passwordLogin` | false | contas com usuário e senha (24/11, não testado no jogo): jogador novo da Steam recebe `user_missing` e o jogo abre a tela de registro (`/user/create`); `/user/login` com usuário e senha (sem ticket) entra na conta daquele usuário; `/user/change` troca a senha; `/passwd NOME SENHA` (host) redefine. Hash PBKDF2 com salt em `accounts\<chave>\login.json` (`Network\AccountLogins.cs`). Contas que já existem continuam entrando pela Steam |
 | `httpPort` / `nexusPort` / `tutorialPort` / `dungeonPort` / `worldPort` / `searchPort` | 6443 / 1111 / 1112 / 1113 / 1114 / 6444 | lidas ao iniciar; portas UDP repetidas voltam ao padrão |
 
 - Endereços: o servidor guarda os próprios endpoints como `127.0.0.1:<porta>`; `PlayerSessions.AddressFor(conexão, destino)` troca pelo endereço da sessão do jogador nas trocas de servidor (`Program.Transfers.cs`) e nos portais (`WorldObjects.cs`).

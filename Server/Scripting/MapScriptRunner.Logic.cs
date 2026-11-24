@@ -81,6 +81,10 @@ public sealed partial class MapScriptRunner
         {
             host.Chat(a.Chat);
         }
+        else if (a.Sound.Length > 0)
+        {
+            host.PlaySound(a.Sound);
+        }
         else if (a.Guide.Length > 0)
         {
             Maps.Point p = map.GetPoint(a.Guide);
