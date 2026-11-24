@@ -227,6 +227,7 @@ internal sealed class LauncherContext : IDisposable
     public void LoadGameDataNow()
     {
         GameData = GameConfig.Load(Settings.GameFolder);
+        Editor.EditorAssets.UseGameData(GameData);
     }
 
     // Reads the game data again in the background (after the game folder changed).
@@ -241,6 +242,7 @@ internal sealed class LauncherContext : IDisposable
             {
                 if (version != gameDataVersion) return;
                 GameData = loaded;
+                Editor.EditorAssets.UseGameData(loaded);
                 GameDataChanged?.Invoke();
             });
         });

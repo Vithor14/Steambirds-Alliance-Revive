@@ -43,8 +43,8 @@ public static partial class Tutorial
 
         if (Game.GetPlane(sess.Peer, out float px, out float py, out bool alive, out _) && alive)
         {
-            Ground.ToGrid(px, py, out _, out float pb);
-            UpdateCheckpoint(sess, pb, now, log);
+            Ground.ToGrid(px, py, out float pa, out float pb);
+            UpdateCheckpoint(sess, pa, pb, now, log);
         }
 
         sess.Script.Update(now);

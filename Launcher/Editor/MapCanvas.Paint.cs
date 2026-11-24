@@ -653,6 +653,28 @@ internal sealed partial class MapCanvas
             case ObjectKind.Line:
                 g.DrawLine(pen, 0, y, Width, y);
                 break;
+            case ObjectKind.Checkpoint:
+            {
+                // The line the plane has to cross to make this the checkpoint it comes back to: across the whole view.
+                bool byU = Json.Has(item.Data, "activeAtU");
+                double at = byU ? Json.Num(item.Data, "activeAtU") : Json.Num(item.Data, "activeAtV");
+                using var line = new Pen(Color.FromArgb(70, 140, 235), 2f) { DashStyle = DashStyle.Dash };
+                string text = L.F(byU ? "Works after the plane passes u = {0}" : "Works after the plane passes v = {0}", at.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture));
+                if (byU)
+                {
+                    float lx = ScreenX(at);
+                    g.DrawLine(line, lx, 0, lx, Height);
+                    DrawLabel(g, Theme.P, text, lx + 4, 6, Color.FromArgb(120, 175, 245));
+                }
+                else
+                {
+                    float ly = ScreenY(at);
+                    g.DrawLine(line, 0, ly, Width, ly);
+                    DrawLabel(g, Theme.P, text, 6, ly - 16, Color.FromArgb(120, 175, 245));
+                }
+                g.DrawEllipse(pen, x - 13, y - 13, 26, 26);
+                break;
+            }
             case ObjectKind.Unit:
             {
                 float r = Math.Max(6f, (float)(LookOf(item.Name).Radius * scale)) + 4;

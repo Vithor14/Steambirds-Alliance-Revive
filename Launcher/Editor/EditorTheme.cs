@@ -95,6 +95,7 @@ internal sealed class ToolButton : Control
 {
     private bool hover;
     private bool isChecked;
+    private bool available = true;
 
     public ToolButton(string text)
     {
@@ -118,6 +119,25 @@ internal sealed class ToolButton : Control
         }
     }
 
+    // False = the tool cannot be used yet (the map lacks something). The button stays enabled for Windows, so its tip
+    // still shows (a disabled control gets no mouse messages and no tooltip), but it is drawn faint and does nothing.
+    public bool Available
+    {
+        get => available;
+        set
+        {
+            if (available == value) return;
+            available = value;
+            Cursor = value ? Cursors.Hand : Cursors.Default;
+            Invalidate();
+        }
+    }
+
+    protected override void OnClick(EventArgs e)
+    {
+        if (available) base.OnClick(e);
+    }
+
     // Keyboard hint drawn at the right side ("S", "F"...).
     public string Hint { get; set; } = "";
 
@@ -138,13 +158,19 @@ internal sealed class ToolButton : Control
     protected override void OnPaint(PaintEventArgs e)
     {
         Theme.Palette p = Theme.P;
-        Color back = isChecked ? p.Selection : hover ? p.ButtonHover : p.Button;
+        Color back = isChecked ? p.Selection : hover && available ? p.ButtonHover : p.Button;
+        Color line = isChecked ? p.Selection : p.Border;
+        if (!available)
+        {
+            back = Theme.Blend(p.Back, p.Button, 0.25f);
+            line = Theme.Blend(p.Back, p.Border, 0.3f);
+        }
         e.Graphics.Clear(p.Back);
         var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
         using (var brush = new SolidBrush(back)) e.Graphics.FillRectangle(brush, bounds);
-        using (var pen = new Pen(isChecked ? p.Selection : p.Border)) e.Graphics.DrawRectangle(pen, bounds);
+        using (var pen = new Pen(line)) e.Graphics.DrawRectangle(pen, bounds);
 
-        Color fore = !Enabled ? p.Muted : isChecked ? p.SelectionText : p.Text;
+        Color fore = !available ? Theme.Blend(p.Back, p.Muted, 0.4f) : isChecked ? p.SelectionText : p.Text;
         var textBounds = new Rectangle(6, 0, Width - 12, Height);
         TextRenderer.DrawText(e.Graphics, Text, Font, textBounds, fore,
             TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);

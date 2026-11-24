@@ -1,3 +1,4 @@
+using SteambirdsLauncher.Core.GameData;
 using System.Drawing.Imaging;
 using System.Globalization;
 using System.Text.Json;
@@ -173,8 +174,19 @@ internal sealed class EditorAssets
 
     public static EditorAssets Current { get; private set; } = new EditorAssets("");
 
-    // Names the game shows for its units (set by the editor tab from the game data).
-    public static IReadOnlyDictionary<string, string> UnitNames { get; set; } = new Dictionary<string, string>();
+    // Names the game shows for its units and the visual effects of its client (from the game data).
+    public static IReadOnlyDictionary<string, string> UnitNames { get; private set; } = new Dictionary<string, string>();
+    public static IReadOnlyList<string> EffectNames { get; private set; } = Array.Empty<string>();
+
+    public static void UseGameData(GameConfig config)
+    {
+        UnitNames = config.UnitNames;
+        EffectNames = config.EffectNames;
+    }
+
+    // The effects to pick from: the ones of the game and, without game data, the ones the shipped maps use.
+    public static IEnumerable<string> EffectChoices() =>
+        EffectNames.Count > 0 ? EffectNames : new[] { "detectionZone_1", "detectionZone_2", "detectionZone_3", "tankShield" };
 
     // The name the game shows for the unit a "template" refers to ("" when the game has no text for it).
     public static string UnitDisplayName(string template)

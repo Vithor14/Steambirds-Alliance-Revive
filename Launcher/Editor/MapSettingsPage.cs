@@ -93,15 +93,16 @@ internal sealed class MapSettingsPage : EditorPage
                 Choices = Context.PointNames,
                 Help = "Point where the exit carrier appears. Default: the point named \"portal\"."
             };
-            yield return new FieldSpec("exit.when", "Exit opens when", FieldKind.Text)
+            yield return new FieldSpec("exit.when", "Exit opens when", FieldKind.Condition)
             {
-                Help = "Conditions joined by +: death:<unit type>, cleared:<room>, quest:<id>.\nEmpty = all boss rooms cleared."
+                Condition = Context.EndConditions,
+                Help = "What opens the exit portal: a room is cleared, a unit type dies or a quest is done. With several conditions all of them must be true. Empty = every boss room cleared."
             };
 
-            yield return FieldSpec.Header("Next dungeon (the server does not use it yet)");
-            yield return new FieldSpec("nextDungeon.map", "Map", FieldKind.EditableChoice) { Choices = Context.MapIds, Help = "Map the players go to after this dungeon. The server does not use it yet." };
-            yield return new FieldSpec("nextDungeon.point", "Point", FieldKind.Text) { Help = "Point of the next map where the players appear. The server does not use it yet." };
-            yield return new FieldSpec("nextDungeon.when", "When", FieldKind.Text) { Help = "Condition that sends the players to the next map. The server does not use it yet." };
+            yield return FieldSpec.Header("Next dungeon (not available yet)");
+            yield return new FieldSpec("nextDungeon.map", "Map", FieldKind.EditableChoice) { Choices = Context.MapIds, Disabled = true, Help = "Map the players go to after this dungeon. Not available yet: the server does not use it." };
+            yield return new FieldSpec("nextDungeon.point", "Point", FieldKind.Text) { Disabled = true, Help = "Point of the next map where the players appear. Not available yet: the server does not use it." };
+            yield return new FieldSpec("nextDungeon.when", "When", FieldKind.Text) { Disabled = true, Help = "Condition that sends the players to the next map. Not available yet: the server does not use it." };
         }
 
         yield return FieldSpec.Header("Spawn (nascimento)");

@@ -24,7 +24,10 @@ internal enum FieldKind
     Positions,
 
     // The gun mounts of a unit as a checklist (needs FieldSpec.Guns); stored as a list of indexes, empty = all of them.
-    GunMounts
+    GunMounts,
+
+    // A condition ("cleared:<room>+death:<type>") edited with drop-downs (needs FieldSpec.Condition).
+    Condition
 }
 
 // One field of a property page: the key in the JSON object ("a.b" reaches the object "a" inside it), the label
@@ -69,6 +72,20 @@ internal sealed class FieldSpec
 
     // Text and choice fields: called inside the change, after the new value is written (the data, the old and the new value).
     public Action<JsonObject, string, string>? OnChanged { get; init; }
+
+    // Condition: the kinds of condition the field accepts.
+    public ConditionSpec? Condition { get; init; }
+
+    // A field that is not stored under its own key: how its value is read from the object and written back
+    // (the key only names it). Written values go through OnChanged like any other.
+    public Func<JsonObject, string>? Reader { get; init; }
+    public Action<JsonObject, string>? Writer { get; init; }
+
+    // The field is greyed out while this is false (it depends on another field of the same object).
+    public Func<JsonObject, bool>? EnabledWhen { get; init; }
+
+    // The field is greyed out for good, because the server does not use it yet. Its tip says so.
+    public bool Disabled { get; init; }
 
     public static FieldSpec Header(string label) => new FieldSpec("", label, FieldKind.Header);
 }
@@ -152,7 +169,7 @@ internal sealed class JsonForm : Panel
         else
         {
             Label caption = Ui.Text(L.T(spec.Label));
-            caption.Anchor = spec.Kind is FieldKind.MultiText or FieldKind.Positions or FieldKind.GunMounts ? AnchorStyles.Top | AnchorStyles.Left : AnchorStyles.Left;
+            caption.Anchor = spec.Kind is FieldKind.MultiText or FieldKind.Positions or FieldKind.GunMounts or FieldKind.Condition ? AnchorStyles.Top | AnchorStyles.Left : AnchorStyles.Left;
             row.Caption = caption;
             table.Controls.Add(caption, 0, rowIndex);
             table.Controls.Add(editor, 1, rowIndex);
@@ -212,6 +229,12 @@ internal sealed class JsonForm : Panel
                     combo.KeyDown += (_, e) => EnterCommits(e, () => CommitText(spec, combo.Text));
                 }
                 return combo;
+            }
+            case FieldKind.Condition:
+            {
+                var condition = new ConditionEditor(spec.Condition ?? new ConditionSpec(false, new ConditionKind("", "(none)")), spec.Help);
+                condition.Edited += () => CommitText(spec, condition.Value);
+                return condition;
             }
             case FieldKind.GunMounts:
             {
@@ -277,6 +300,7 @@ internal sealed class JsonForm : Panel
         {
             SetEnabled(Data != null);
             foreach (Row row in rows) Load(row);
+            ApplyDependencies();
         }
         finally
         {
@@ -284,12 +308,28 @@ internal sealed class JsonForm : Panel
         }
     }
 
+    // Fields that depend on another field, or that the server does not use yet, are greyed out (with their caption faint,
+    // but not disabled: a disabled caption shows no tip).
+    private void ApplyDependencies()
+    {
+        foreach (Row row in rows)
+        {
+            FieldSpec spec = row.Spec;
+            bool off = spec.Disabled || (Data != null && spec.EnabledWhen != null && !spec.EnabledWhen(Data));
+            if (off) row.Editor.Enabled = false;
+            if (row.Caption != null) Ui.SetRole(row.Caption, off ? TextRole.Muted : TextRole.Normal);
+        }
+    }
+
     private void Load(Row row)
     {
         FieldSpec spec = row.Spec;
-        JsonNode? node = Data == null ? null : Read(Data, spec.Key);
+        JsonNode? node = Data == null ? null : spec.Reader != null ? JsonValue.Create(spec.Reader(Data)) : Read(Data, spec.Key);
         switch (row.Editor)
         {
+            case ConditionEditor condition:
+                condition.Value = Json.AsString(node);
+                break;
             case CheckBox box:
                 box.Checked = node == null ? spec.DefaultBool : Json.AsBool(node, spec.DefaultBool);
                 break;
@@ -480,16 +520,17 @@ internal sealed class JsonForm : Panel
         if (loading || Data == null) return;
         JsonObject data = Data;
         string value = text.Trim();
-        string old = Json.AsString(Read(data, spec.Key));
+        string old = spec.Reader != null ? spec.Reader(data) : Json.AsString(Read(data, spec.Key));
         if (old == value) return;
         Apply(spec, () =>
         {
-            if (value.Length == 0) Remove(data, spec.Key);
+            if (spec.Writer != null) spec.Writer(data, value);
+            else if (value.Length == 0) Remove(data, spec.Key);
             else Write(data, spec.Key, JsonValue.Create(value)!);
             spec.OnChanged?.Invoke(data, old, value);
         });
-        // The change may have written other fields (the display name follows the game unit): show them.
-        if (spec.OnChanged != null) Refresh_();
+        // The change may have written other fields (the display name follows the game unit) or switch others on or off: show them.
+        if (spec.OnChanged != null || spec.Writer != null || rows.Any(r => r.Spec.EnabledWhen != null)) Refresh_();
     }
 
     private void CommitTextBox(FieldSpec spec, TextBox box)

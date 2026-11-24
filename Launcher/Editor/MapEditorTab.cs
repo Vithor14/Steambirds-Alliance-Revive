@@ -23,6 +23,9 @@ internal sealed class MapEditorTab : UserControl
     private readonly ToolStripStatusLabel issuesLabel;
 
     private readonly Dictionary<EditorTool, ToolButton> toolButtons = new Dictionary<EditorTool, ToolButton>();
+    private readonly Dictionary<EditorTool, string> toolHelp = new Dictionary<EditorTool, string>();
+    private readonly Dictionary<TabPage, string> tabTips = new Dictionary<TabPage, string>();
+    private TabPage? roomsTab;
     private readonly ComboBox unitTypeBox;
     private readonly ComboBox roomBox;
     private readonly ComboBox gateTypeBox;
@@ -47,7 +50,6 @@ internal sealed class MapEditorTab : UserControl
         Dock = DockStyle.Fill;
 
         EditorAssets.Load(context.GameFolder);
-        EditorAssets.UnitNames = context.GameData.UnitNames;
         session = existing ?? new MapSession(MapFactory.Blank("new_dungeon", L.T("New dungeon"), "DungeonBomb", 41));
         canvas = new MapCanvas(session) { Dock = DockStyle.Fill };
         editor = new EditorContext(session, canvas, context.ToolTip);
@@ -61,11 +63,11 @@ internal sealed class MapEditorTab : UserControl
         pageList.AddRange(new EditorPage[] { pointsPage, gatesPage, roomsPage, typesPage, mapPage });
 
         pages = new ThemedTabControl { Dock = DockStyle.Fill, Padding = new Point(8, 4) };
-        AddPage(L.T("Map"), mapPage);
-        AddPage(L.T("Rooms"), roomsPage);
-        AddPage(L.T("Units"), typesPage);
-        AddPage(L.T("Gates"), gatesPage);
-        AddPage(L.T("Points"), pointsPage);
+        AddPage(L.T("Map"), mapPage, "Name, terrain, territory, entrance, exit and floor of the map, and the settings of a dungeon.");
+        roomsTab = AddPage(L.T("Rooms"), roomsPage, "The rooms of the dungeon: each one has an area, wakes up by a rule and holds groups of enemies and waves.");
+        AddPage(L.T("Units"), typesPage, "The unit types of this map: a game unit plus what the map changes (health, AI, what it leaves when it dies).");
+        AddPage(L.T("Gates"), gatesPage, "Gates that close the way until a condition is true.");
+        AddPage(L.T("Points"), pointsPage, "Points, groups, areas, lines, values, routes, checkpoints, signs, decoration, buildings and single floor pieces.");
         pages.SelectedIndexChanged += (_, _) => ReloadStalePage();
 
         // ---- left palette
@@ -171,12 +173,14 @@ internal sealed class MapEditorTab : UserControl
         }
     }
 
-    private void AddPage(string title, EditorPage page)
+    private TabPage AddPage(string title, EditorPage page, string tip)
     {
-        var tab = new TabPage(title) { Padding = new Padding(4) };
+        var tab = new TabPage(title) { Padding = new Padding(4), ToolTipText = L.T(tip) };
         tab.Controls.Add(page);
         pages.TabPages.Add(tab);
         allTabs.Add(tab);
+        tabTips[tab] = tab.ToolTipText;
+        return tab;
     }
 
     // ------------------------------------------------------------------ palette
@@ -209,6 +213,7 @@ internal sealed class MapEditorTab : UserControl
                 canvas.Focus();
             };
             toolButtons[tool] = button;
+            toolHelp[tool] = L.T(help);
             panel.Controls.Add(button);
         }
 
@@ -315,6 +320,38 @@ internal sealed class MapEditorTab : UserControl
         return holder;
     }
 
+    // A tool that needs something the map does not have yet is greyed out, and its tip says what is missing.
+    private void UpdateToolAvailability()
+    {
+        bool floor = session.Document.Floor.TileCount > 0;
+        bool types = editor.TypeNames().Any();
+        bool rooms = editor.RoomNames().Any();
+        string? Missing(EditorTool tool) => tool switch
+        {
+            EditorTool.Walls when !floor => L.T("Needs floor: draw some with the Floor tool first."),
+            EditorTool.Gate when !types => L.T("Needs a unit type: make one in the Units tab first."),
+            EditorTool.Unit when !types => L.T("Needs a unit type: make one in the Units tab first."),
+            EditorTool.Unit when !rooms => L.T("Needs a room: make one in the Rooms tab first (that tab needs an area)."),
+            _ => null
+        };
+        foreach (KeyValuePair<EditorTool, ToolButton> pair in toolButtons)
+        {
+            string? reason = Missing(pair.Key);
+            pair.Value.Available = reason == null;
+            context.ToolTip.SetToolTip(pair.Value, reason == null ? toolHelp[pair.Key] : toolHelp[pair.Key] + "\n" + reason);
+        }
+        if (toolButtons.TryGetValue(canvas.Tool, out ToolButton? current) && !current.Available) canvas.Tool = EditorTool.Select;
+
+        // The Rooms tab needs an area: a room is a place on the map.
+        if (roomsTab != null)
+        {
+            string? roomsReason = editor.AreaNames().Any() ? null : L.T("Needs an area: draw one with the Area tool first.");
+            ThemedTabControl.SetLocked(roomsTab, roomsReason, tabTips[roomsTab]);
+            if (roomsReason != null && ReferenceEquals(pages.SelectedTab, roomsTab) && allTabs.Count > 0) pages.SelectedTab = allTabs[0];
+            pages.Invalidate();
+        }
+    }
+
     private void UpdateToolButtons()
     {
         foreach (KeyValuePair<EditorTool, ToolButton> pair in toolButtons) pair.Value.Checked = pair.Key == canvas.Tool;
@@ -362,14 +399,20 @@ internal sealed class MapEditorTab : UserControl
         canvas.PlaceType = unitTypeBox.Text;
         canvas.PlaceRoom = roomBox.Text;
         canvas.GateType = gateTypeBox.Text;
+        UpdateToolAvailability();
     }
 
     private static void FillBox(ComboBox box, List<string> values, string keep)
     {
-        box.BeginUpdate();
-        box.Items.Clear();
-        foreach (string value in values) box.Items.Add(value);
-        box.EndUpdate();
+        bool same = box.Items.Count == values.Count;
+        for (int i = 0; same && i < values.Count; i++) same = box.Items[i] as string == values[i];
+        if (!same)
+        {
+            box.BeginUpdate();
+            box.Items.Clear();
+            foreach (string value in values) box.Items.Add(value);
+            box.EndUpdate();
+        }
         int index = values.IndexOf(keep);
         if (index < 0 && values.Count > 0) index = 0;
         box.SelectedIndex = index;
@@ -832,6 +875,8 @@ internal sealed class MapEditorTab : UserControl
     private void OnSessionChanged()
     {
         UpdateFileLabel();
+        // Types, rooms and areas made in the pages feed the palette (not while painting: that ends with StructureChanged).
+        if (!canvas.Painting) RefreshChoices();
         // The fields of the pages show the numbers the canvas just changed.
         // Not while painting floor: every cell would rebuild every form. StructureChanged refreshes once at the end.
         if (!canvas.Painting && (canvas.Focused || canvas.Capture)) RefreshForms(pages);
@@ -846,12 +891,11 @@ internal sealed class MapEditorTab : UserControl
     }
 
     // The game data was read again (in the background, after the game folder changed).
-    private void OnGameDataChanged() => EditorAssets.UnitNames = context.GameData.UnitNames;
+    private void OnGameDataChanged() => canvas.Invalidate();
 
     private void OnGameFolderChanged()
     {
         EditorAssets.Load(context.GameFolder);
-        EditorAssets.UnitNames = context.GameData.UnitNames;
         canvas.Invalidate();
     }
 

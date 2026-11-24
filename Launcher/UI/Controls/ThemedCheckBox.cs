@@ -113,7 +113,7 @@ internal sealed class ThemedCheckBox : CheckBox
         string text = Shown;
         if (text.Length == 0) return;
         int textLeft = box.Right + Dpi.Px(this, 9);
-        Color fore = live ? ForeColor : Theme.Blend(backdrop, p.Muted, 0.7f);
+        Color fore = live ? ForeColor : Theme.Blend(backdrop, p.Muted, 0.4f);
         TextRenderer.DrawText(g, text, Font, new Rectangle(textLeft, 0, Math.Max(0, Width - textLeft), Height), fore,
             TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis |
             TextFormatFlags.NoPadding | (UseMnemonic ? 0 : TextFormatFlags.NoPrefix));
@@ -121,8 +121,8 @@ internal sealed class ThemedCheckBox : CheckBox
 
     private void DrawBox(Graphics g, Rectangle box, bool on, bool live, Color backdrop, Theme.Palette p)
     {
-        Color fill = on ? (live ? p.Accent : Theme.Blend(backdrop, p.Accent, 0.35f)) : (live ? p.Input : Theme.Blend(backdrop, p.Input, 0.6f));
-        Color border = on ? fill : !live ? Theme.Blend(backdrop, p.Border, 0.6f) : hover ? p.Accent : p.BorderStrong;
+        Color fill = on ? (live ? p.Accent : Theme.Blend(backdrop, p.Accent, 0.25f)) : (live ? p.Input : Theme.Blend(backdrop, p.Input, 0.25f));
+        Color border = on ? fill : !live ? Theme.Blend(backdrop, p.Border, 0.3f) : hover ? p.Accent : p.BorderStrong;
         using (GraphicsPath path = Dpi.Rounded(box, Dpi.Px(this, 4)))
         using (var brush = new SolidBrush(fill))
         using (var pen = new Pen(border))
@@ -154,8 +154,8 @@ internal sealed class ThemedCheckBox : CheckBox
 
     private void DrawSwitch(Graphics g, Rectangle box, bool on, bool live, Color backdrop, Theme.Palette p)
     {
-        Color track = on ? (live ? p.Accent : Theme.Blend(backdrop, p.Accent, 0.35f)) : (live ? p.SurfaceAlt : Theme.Blend(backdrop, p.SurfaceAlt, 0.6f));
-        Color border = on ? track : !live ? Theme.Blend(backdrop, p.Border, 0.6f) : hover ? p.Accent : p.BorderStrong;
+        Color track = on ? (live ? p.Accent : Theme.Blend(backdrop, p.Accent, 0.25f)) : (live ? p.SurfaceAlt : Theme.Blend(backdrop, p.SurfaceAlt, 0.25f));
+        Color border = on ? track : !live ? Theme.Blend(backdrop, p.Border, 0.3f) : hover ? p.Accent : p.BorderStrong;
         using (GraphicsPath path = Dpi.Rounded(box, box.Height / 2))
         using (var brush = new SolidBrush(track))
         using (var pen = new Pen(border))
@@ -166,7 +166,7 @@ internal sealed class ThemedCheckBox : CheckBox
         int pad = Dpi.Px(this, 3);
         int d = box.Height - pad * 2;
         int x = on ? box.Right - pad - d : box.X + pad;
-        Color thumb = on ? p.AccentInk : live ? p.Muted : Theme.Blend(backdrop, p.Muted, 0.6f);
+        Color thumb = on ? p.AccentInk : live ? p.Muted : Theme.Blend(backdrop, p.Muted, 0.4f);
         using var thumbBrush = new SolidBrush(thumb);
         g.FillEllipse(thumbBrush, x, box.Y + pad, d, d);
     }

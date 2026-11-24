@@ -12,10 +12,12 @@ internal sealed class PointsPage : EditorPage
     {
         public string Title = "";
         public CollectionPanel Panel = null!;
+        public string About = "";
     }
 
     private readonly List<Section> sections = new List<Section>();
     private readonly ComboBox picker;
+    private readonly Label aboutLabel;
     private readonly Panel host;
     private readonly CollectionPanel pointsPanel;
     private readonly CollectionPanel groupsPanel;
@@ -135,7 +137,8 @@ internal sealed class PointsPage : EditorPage
             host.Controls.Add(section.Panel);
         }
 
-        Controls.Add(Stack((Ui.Flow(Ui.Text(L.T("Show")), picker), false), (host, true)));
+        aboutLabel = Ui.Wrapping("", 340, gray: true);
+        Controls.Add(Stack((Ui.Flow(Ui.Text(L.T("Show")), picker), false), (aboutLabel, false), (host, true)));
         WireSelection();
         picker.SelectedIndex = 0;
         Reload();
@@ -143,12 +146,29 @@ internal sealed class PointsPage : EditorPage
 
     private void Add(string title, CollectionPanel panel)
     {
-        sections.Add(new Section { Title = L.T(title), Panel = panel });
+        sections.Add(new Section { Title = L.T(title), Panel = panel, About = L.T(Abouts.TryGetValue(title, out string? about) ? about : "") });
         panel.ListChanged += () => Canvas.Invalidate();
     }
 
+    // What each kind of data is for, shown under the list that picks it.
+    private static readonly Dictionary<string, string> Abouts = new Dictionary<string, string>
+    {
+        ["Points"] = "A named place on the map that other parts look up (the exit point, where a unit appears...).",
+        ["Groups of points"] = "Several places under one name: a script or a spawn picks one of them.",
+        ["Areas"] = "A rectangle. A room uses an area as the place where its enemies stay and fight.",
+        ["Lines (v)"] = "A height (v) on the map. A room can wake up when the plane crosses its line.",
+        ["Values"] = "Named numbers that scripts and rules can read.",
+        ["Routes"] = "A path of points that units of a group follow.",
+        ["Checkpoints"] = "Where the plane comes back after it falls. A checkpoint works once the plane crosses its line, a height (v) or a column (u); select one to see its line on the map.",
+        ["Signs"] = "A text written on the floor, shown when a plane comes near.",
+        ["Decoration"] = "Pictures of the game placed on the map for looks only. They do not change the floor or the walls.",
+        ["Buildings"] = "The buildings of Rebel City, the Nexus: hangar, storage, tavern, store, crafter, pilot school, flock hall, combat sim. A plane flies into one to use it. They only make sense in the Nexus map: in a dungeon leave this empty. Prefab says which building it is; Store id says which shelves (stores.json) a store building sells.",
+        ["Floor pieces"] = "Single pieces of floor placed one by one, with their own picture and rotation. They are drawn over the floor you paint with the Floor tool.",
+    };
+
     private void ShowSection(int index)
     {
+        if (index >= 0 && index < sections.Count) aboutLabel.Text = sections[index].About;
         for (int i = 0; i < sections.Count; i++) sections[i].Panel.Visible = i == index;
     }
 
@@ -253,6 +273,7 @@ internal sealed class PointsPage : EditorPage
         "minV" => "Bottom edge of the area (v).",
         "maxV" => "Top edge of the area (v).",
         "activeAtV" => "The checkpoint starts to work once a plane has passed this v.",
+        "activeAtU" => "The checkpoint starts to work once a plane has passed this u.",
         _ => ""
     };
 
@@ -298,10 +319,47 @@ internal sealed class PointsPage : EditorPage
         yield return Coordinate("maxV", "Max v");
     }
 
+    private const string ActivateByV = "A line at v (a height)";
+    private const string ActivateByU = "A line at u (a column)";
+
+    // Switches the line of a checkpoint between v and u. The other line is removed; the new one starts 4 u behind the checkpoint.
+    private static void SetActivation(JsonObject data, string choice)
+    {
+        if (choice == ActivateByU)
+        {
+            data.Remove("activeAtV");
+            if (!Json.Has(data, "activeAtU")) data["activeAtU"] = Json.Round(Json.Num(data, "u") - 4);
+        }
+        else
+        {
+            data.Remove("activeAtU");
+            if (!Json.Has(data, "activeAtV")) data["activeAtV"] = Json.Round(Json.Num(data, "v") - 4);
+        }
+    }
+
     private static IEnumerable<FieldSpec> CheckpointFields()
     {
         yield return new FieldSpec("name", "Checkpoint", FieldKind.Text) { Help = "Name of the checkpoint (the respawn point), only to tell it apart." };
-        yield return Coordinate("activeAtV", "Active after v");
+        yield return new FieldSpec("activeAxis", "Works when the plane passes", FieldKind.Choice)
+        {
+            Choices = () => new[] { ActivateByV, ActivateByU },
+            AllowEmpty = false,
+            Reader = data => Json.Has(data, "activeAtU") ? ActivateByU : ActivateByV,
+            Writer = SetActivation,
+            Help = "The line the plane has to cross to make this checkpoint the one it comes back to. It is drawn on the map when the checkpoint is selected. A v line is a height on the map (toward the back of the dungeon); a u line is a column (to the right)."
+        };
+        yield return new FieldSpec("activeAtV", "Line at v", FieldKind.Number)
+        {
+            Min = -3000, Max = 3000, Increment = 0.5,
+            EnabledWhen = data => !Json.Has(data, "activeAtU"),
+            Help = "The checkpoint works once a plane has passed this v. Used when the checkpoint works by a v line."
+        };
+        yield return new FieldSpec("activeAtU", "Line at u", FieldKind.Number)
+        {
+            Min = -3000, Max = 3000, Increment = 0.5,
+            EnabledWhen = data => Json.Has(data, "activeAtU"),
+            Help = "The checkpoint works once a plane has passed this u. Used when the checkpoint works by a u line."
+        };
         yield return Coordinate("u", "u");
         yield return Coordinate("v", "v");
         yield return Rotation("rot", MapCoords.FacePlusV);

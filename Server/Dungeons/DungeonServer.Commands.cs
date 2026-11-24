@@ -17,7 +17,7 @@ public static partial class DungeonServer
             return;
         }
         Maps.Checkpoint target = s.Map!.Checkpoints[index];
-        float targetB = target.ActiveAtB;
+        float targetB = target.RoomB;
 
         int rooms = 0;
         foreach (RoomState room in s.Rooms)

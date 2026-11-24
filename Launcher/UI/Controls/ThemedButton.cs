@@ -168,16 +168,16 @@ internal sealed class ThemedButton : Button
                 fore = p.Bad;
                 if (!live)
                 {
-                    fill = Theme.Blend(backdrop, p.Button, 0.5f);
-                    border = Theme.Blend(backdrop, p.Border, 0.6f);
-                    fore = Theme.Blend(backdrop, p.Muted, 0.7f);
+                    fill = Theme.Blend(backdrop, p.Button, 0.25f);
+                    border = Theme.Blend(backdrop, p.Border, 0.3f);
+                    fore = Theme.Blend(backdrop, p.Muted, 0.4f);
                 }
                 break;
             case ButtonKind.Quiet:
                 fill = hover ? (pressed ? p.ButtonHover : p.Button) : backdrop;
                 border = fill;
                 fore = p.Text;
-                if (!live) fore = Theme.Blend(backdrop, p.Muted, 0.7f);
+                if (!live) fore = Theme.Blend(backdrop, p.Muted, 0.4f);
                 break;
             default:
                 fill = pressed ? Theme.Blend(p.ButtonHover, p.Text, 0.08f) : hover ? p.ButtonHover : p.Button;
@@ -185,9 +185,9 @@ internal sealed class ThemedButton : Button
                 fore = p.Text;
                 if (!live)
                 {
-                    fill = Theme.Blend(backdrop, p.Button, 0.5f);
-                    border = Theme.Blend(backdrop, p.Border, 0.6f);
-                    fore = Theme.Blend(backdrop, p.Muted, 0.7f);
+                    fill = Theme.Blend(backdrop, p.Button, 0.25f);
+                    border = Theme.Blend(backdrop, p.Border, 0.3f);
+                    fore = Theme.Blend(backdrop, p.Muted, 0.4f);
                 }
                 break;
         }

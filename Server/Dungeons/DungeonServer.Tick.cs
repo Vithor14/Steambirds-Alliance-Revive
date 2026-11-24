@@ -20,7 +20,7 @@ public static partial class DungeonServer
             if (Game.GetPlane(member.RemoteUniqueIdentifier, out float px, out float py, out bool alive, out _) && alive)
             {
                 Ground.ToGrid(px, py, out float pa, out float pb);
-                UpdateCheckpoint(s, pb, log);
+                UpdateCheckpoint(s, pa, pb, log);
                 UpdateRooms(s, pa, pb, now, log);
             }
         }
@@ -34,13 +34,13 @@ public static partial class DungeonServer
         CheckExit(s, now, log);
     }
 
-    private static void UpdateCheckpoint(Session s, float pb, Action<string, string> log)
+    private static void UpdateCheckpoint(Session s, float pa, float pb, Action<string, string> log)
     {
         List<Maps.Checkpoint> points = s.Map!.Checkpoints;
         int best = s.Checkpoint;
         for (int i = s.Checkpoint + 1; i < points.Count; i++)
         {
-            if (pb >= points[i].ActiveAtB) best = i;
+            if (points[i].Passed(pa, pb)) best = i;
         }
         if (best == s.Checkpoint) return;
         s.Checkpoint = best;

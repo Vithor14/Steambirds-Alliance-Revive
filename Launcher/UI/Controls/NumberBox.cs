@@ -372,8 +372,8 @@ internal sealed class NumberBox : Control
         Dpi.Smooth(g);
 
         bool live = Enabled;
-        Color fill = live ? p.Input : Theme.Blend(backdrop, p.Input, 0.6f);
-        Color border = !live ? Theme.Blend(backdrop, p.Border, 0.6f) : edit.Focused ? p.Accent : hover ? p.BorderStrong : p.Border;
+        Color fill = live ? p.Input : Theme.Blend(backdrop, p.Input, 0.25f);
+        Color border = !live ? Theme.Blend(backdrop, p.Border, 0.3f) : edit.Focused ? p.Accent : hover ? p.BorderStrong : p.Border;
         var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
         using (GraphicsPath path = Dpi.Rounded(bounds, Dpi.Px(this, 4)))
         using (var brush = new SolidBrush(fill))

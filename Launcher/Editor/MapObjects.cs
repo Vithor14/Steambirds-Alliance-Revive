@@ -135,6 +135,7 @@ internal sealed class MapObject
                 Data["v"] = Json.Round(Json.Num(Data, "v") + dv);
                 // The checkpoint starts to count when the plane passes its line.
                 if (Json.Has(Data, "activeAtV")) Data["activeAtV"] = Json.Round(Json.Num(Data, "activeAtV") + dv);
+                if (Json.Has(Data, "activeAtU")) Data["activeAtU"] = Json.Round(Json.Num(Data, "activeAtU") + du);
                 return;
             default:
                 Data["u"] = Json.Round(Json.Num(Data, "u") + du);

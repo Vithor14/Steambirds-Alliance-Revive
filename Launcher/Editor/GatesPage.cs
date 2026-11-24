@@ -85,9 +85,10 @@ internal sealed class GatesPage : EditorPage
             DefaultBool = true,
             Help = "On: the boxes take damage; when one breaks, the whole gate falls.\nOff: the boxes are invulnerable and the gate opens when \"Opens when\" is true."
         };
-        yield return new FieldSpec("opensWhen", "Opens when", FieldKind.Text)
+        yield return new FieldSpec("opensWhen", "Opens when", FieldKind.Condition)
         {
-            Help = "cleared:<room> (every enemy of the room dead), death:<unit type>, quest:<id>. Join with +."
+            Condition = Context.EndConditions,
+            Help = "What makes the gate open: a room is cleared, a unit type dies or a quest is done. With several conditions all of them must be true. Empty = it never opens by itself."
         };
         yield return new FieldSpec("room", "Leads to room", FieldKind.EditableChoice)
         {

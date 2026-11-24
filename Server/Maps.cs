@@ -132,6 +132,8 @@ public static class Maps
     {
         public string Name { get; set; } = "";
         public float ActiveAtV { get; set; }
+        // When present the checkpoint works once a plane has passed this u instead of ActiveAtV.
+        public float? ActiveAtU { get; set; }
         public float U { get; set; }
         public float V { get; set; }
         public float Rot { get; set; }
@@ -170,7 +172,14 @@ public static class Maps
     public readonly record struct Piece(ushort Id, string Name, float? Rotation);
     public sealed record Decor(ushort Id, string Name, Point Point, float Z);
     public sealed record Building(int Prefab, string Name, Point Point, string? Store);
-    public sealed record Checkpoint(string Name, float ActiveAtB, Point Point);
+    // A checkpoint works once a plane has passed its line: a v (ActiveAtB, the default) or, when ActiveAtA is set, a u.
+    public sealed record Checkpoint(string Name, float ActiveAtB, Point Point, float? ActiveAtA = null)
+    {
+        public bool Passed(float pa, float pb) => ActiveAtA.HasValue ? pa >= ActiveAtA.Value : pb >= ActiveAtB;
+
+        // The v of the checkpoint used to tell which rooms are behind it (/room N).
+        public float RoomB => ActiveAtA.HasValue ? Point.B : ActiveAtB;
+    }
     public sealed record Gate(string Name, string Type, int Sj, int SiFrom, int SiTo, bool Damageable);
     public sealed record Sign(string Key, Point Point, float Radius, float Rotation);
 
@@ -637,7 +646,8 @@ public static class Maps
         foreach (KeyValuePair<string, float> pair in file.Values ?? new Dictionary<string, float>()) map.Values[pair.Key] = pair.Value;
 
         foreach (CheckpointFile p in file.Checkpoints ?? new List<CheckpointFile>())
-            map.Checkpoints.Add(new Checkpoint(p.Name, p.ActiveAtV / Ground.CellSize, new Point(p.U, p.V, p.Rot)));
+            map.Checkpoints.Add(new Checkpoint(p.Name, p.ActiveAtV / Ground.CellSize, new Point(p.U, p.V, p.Rot),
+                p.ActiveAtU.HasValue ? p.ActiveAtU.Value / Ground.CellSize : null));
 
         foreach (GateFile p in file.Gates ?? new List<GateFile>())
         {

@@ -243,7 +243,11 @@ internal sealed class UnitTypesPage : EditorPage
             Help = "Types that are born one after the other when the one before dies, separated by commas."
         };
         yield return Number("durationSeconds", "Lives only (s)", "The unit explodes by itself after this time.");
-        yield return new FieldSpec("visualEffect", "Visual effect", FieldKind.Text) { Help = "Name of a statefulEffects of the client." };
+        yield return new FieldSpec("visualEffect", "Visual effect", FieldKind.Choice)
+        {
+            Choices = EditorAssets.EffectChoices,
+            Help = "Effect of the client the unit shows from the start (a shield, a detection ring around a mine...). Empty = none."
+        };
 
         yield return FieldSpec.Header("Summons");
         yield return new FieldSpec("periodicSummon.type", "Summons", FieldKind.EditableChoice) { Choices = Context.TypeNames, Picture = Context.PictureOfType, Help = "Unit type this unit keeps summoning while it is alive." };

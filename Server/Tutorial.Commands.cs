@@ -26,7 +26,7 @@ public static partial class Tutorial
 
         Maps.Point destination = sess.Map.GetCheckpoint(checkpointName).Point;
         float destB = destination.B;
-        UpdateCheckpoint(sess, destB, now, log);
+        UpdateCheckpoint(sess, destination.A, destB, now, log);
         destination.World(out float x, out float y);
         WorldObjects.SendTeleport(sess.Server, sess.Connection, x, y, destination.Rotation, 0.2f);
         log("TUTORIAL", "[tutorial] /step " + number + ": plane taken to b = " + Num(destB) + " (" + Num(x) + ", " + Num(y) + ")");

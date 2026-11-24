@@ -764,8 +764,17 @@ internal sealed partial class MapCanvas : Control
             MapObject item = list[i];
             if (only.HasValue && item.Kind != only.Value) continue;
             if (!IsKindVisible(item.Kind)) continue;
-            if (item.Kind == ObjectKind.Area) continue;
+            if (item.Kind == ObjectKind.Area || item.Kind == ObjectKind.Decor) continue;
             if (Hits(item, at)) return item;
+        }
+
+        // Decoration last: its picture is often big, so it is hit anywhere on the picture, but it must not hide what is on top of it.
+        for (int i = list.Count - 1; i >= 0; i--)
+        {
+            MapObject item = list[i];
+            if (item.Kind != ObjectKind.Decor || !ShowDecor) continue;
+            if (only.HasValue && item.Kind != only.Value) continue;
+            if (HitsDecor(item, at)) return item;
         }
         if (only.HasValue && only.Value != ObjectKind.Area) return null;
 
@@ -784,6 +793,22 @@ internal sealed partial class MapCanvas : Control
             if (insideOuter && !insideInner) return item;
         }
         return null;
+    }
+
+    // The decoration is hit on its picture (a square turned like the picture is drawn), or within 10 px of its center.
+    private bool HitsDecor(MapObject item, Point at)
+    {
+        item.GetPosition(out double u, out double v);
+        double dx = at.X - ScreenX(u);
+        double dy = at.Y - ScreenY(v);
+        if (dx * dx + dy * dy <= 10 * 10) return true;
+        AssetPicture? picture = UsePictures ? EditorAssets.Current.GroundPicture(item.Name) : null;
+        if (picture == null) return false;
+        double half = picture.Half * scale;
+        double angle = -MapCoords.CanvasAngle(item.Rotation) * Math.PI / 180.0;
+        double lx = dx * Math.Cos(angle) - dy * Math.Sin(angle);
+        double ly = dx * Math.Sin(angle) + dy * Math.Cos(angle);
+        return Math.Abs(lx) <= half && Math.Abs(ly) <= half;
     }
 
     private bool Hits(MapObject item, Point at)

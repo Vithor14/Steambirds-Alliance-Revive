@@ -135,10 +135,15 @@ internal sealed class RoomsPage : EditorPage
             Choices = Context.LineNames,
             Help = "The room wakes up when the player passes this line (v)."
         };
-        yield return new FieldSpec("wakes", "Wakes up", FieldKind.EditableChoice)
+        yield return new FieldSpec("wakes", "Wakes up", FieldKind.Condition)
         {
-            Choices = () => EditorContext.WakeModes,
-            Help = "aoEntrar = when the player enters the area. death:<unit type> = when that unit dies."
+            Condition = new ConditionSpec(false,
+                new ConditionKind("", "By default (the player enters its area)"),
+                new ConditionKind("onEnter", "The player enters its area", null, true),
+                new ConditionKind("death", "A unit type dies", Context.TypeNames),
+                new ConditionKind("script", "A script wakes it (same as entering for now)", null, true),
+                new ConditionKind("drill", "The drill wakes it (same as entering for now)", null, true)),
+            Help = "What makes the room wake up: its enemies start to fight."
         };
         yield return new FieldSpec("boss", "Boss room", FieldKind.Bool) { Help = "The dungeon ends when every boss room is cleared (when the exit has no condition)." };
         yield return new FieldSpec("miniboss", "Mini-boss room", FieldKind.Bool) { Help = "Marks the room as a mini-boss room (the dungeon shows it as an optional fight)." };
@@ -163,10 +168,12 @@ internal sealed class RoomsPage : EditorPage
         {
             Help = "One enemy per line: u, v, rotation. You can also place them with the Enemy tool on the map."
         };
-        yield return new FieldSpec("wakes", "Appears when", FieldKind.EditableChoice)
+        yield return new FieldSpec("wakes", "Appears when", FieldKind.Condition)
         {
-            Choices = () => EditorContext.WakeModes,
-            Help = "Empty = at the start. death:<unit type> = the unit is born when that type dies."
+            Condition = new ConditionSpec(false,
+                new ConditionKind("", "At the start"),
+                new ConditionKind("death", "A unit type dies", Context.TypeNames)),
+            Help = "When the units of this group are born: at the start, or when a unit type dies."
         };
         yield return new FieldSpec("route", "Route", FieldKind.EditableChoice) { Choices = Context.RouteNames, Help = "Route (Points tab) the units of this group follow." };
         yield return new FieldSpec("miniboss", "Mini-boss", FieldKind.Bool) { Help = "The units of this group are mini-bosses." };

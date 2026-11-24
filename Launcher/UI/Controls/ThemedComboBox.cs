@@ -126,10 +126,10 @@ internal sealed class ThemedComboBox : ComboBox
         Theme.Palette p = Theme.P;
         Dpi.Smooth(g);
         Color backdrop = Dpi.BackdropOf(this);
-        Color fill = Enabled ? p.Input : Theme.Blend(backdrop, p.Input, 0.6f);
-        Color border = !Enabled ? Theme.Blend(backdrop, p.Border, 0.6f)
+        Color fill = Enabled ? p.Input : Theme.Blend(backdrop, p.Input, 0.25f);
+        Color border = !Enabled ? Theme.Blend(backdrop, p.Border, 0.3f)
             : DroppedDown || Focused ? p.Accent : hover ? p.BorderStrong : p.Border;
-        Color fore = Enabled ? p.Text : Theme.Blend(backdrop, p.Muted, 0.7f);
+        Color fore = Enabled ? p.Text : Theme.Blend(backdrop, p.Muted, 0.4f);
 
         Rectangle all = ClientRectangle;
         Region? saved = null;

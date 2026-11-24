@@ -36,6 +36,12 @@ internal sealed class EditorContext
     public IEnumerable<string> RoomNames() =>
         Json.Objects(Json.ArrOrNull(Root, "encounters")).Select(r => Json.Str(r, "room")).Where(n => n.Length > 0);
 
+    // Conditions that end something (open a gate, open the exit): any number of them, all must be true.
+    public ConditionSpec EndConditions => new ConditionSpec(true,
+        new ConditionKind("cleared", "A room is cleared (every enemy in it dead)", RoomNames),
+        new ConditionKind("death", "A unit type dies", TypeNames),
+        new ConditionKind("quest", "A quest is done (quest id)"));
+
     public IEnumerable<string> AreaNames() => Json.ObjectProperties(Json.ObjOrNull(Root, "areas")).Select(p => p.Key);
 
     public IEnumerable<string> PointNames() => Json.ObjectProperties(Json.ObjOrNull(Root, "points")).Select(p => p.Key);
@@ -70,15 +76,6 @@ internal sealed class EditorContext
         yield return "Nexus";
         yield return "TutorialWalker";
     }
-
-    // Behaviors the server understands for an enemy.
-    public static readonly string[] Behaviors =
-    {
-        "chase", "circle", "turret", "kamikaze", "mine", "charge", "patrol", "escort", "idle"
-    };
-
-    // Ways a room wakes up (more can be written by hand: "death:<type>").
-    public static readonly string[] WakeModes = { "onEnter", "script", "drill" };
 }
 
 // A page of the right-hand side of the editor. Pages are built again when the whole map is replaced (new, open, undo).

@@ -56,6 +56,7 @@ internal static class MapTransforms
         {
             MovePoint(checkpoint, du, dv);
             AddNumber(checkpoint, "activeAtV", dv);
+            AddNumber(checkpoint, "activeAtU", du);
         }
 
         foreach (JsonObject sign in Json.Objects(root["signs"] as JsonArray)) MovePoint(sign, du, dv);

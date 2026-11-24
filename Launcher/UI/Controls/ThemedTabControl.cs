@@ -48,6 +48,21 @@ internal sealed class ThemedTabControl : TabControl
         page.Enabled = false;
     }
 
+    // A tab that cannot be used yet because the map (or whatever it edits) lacks something. The reason is its tooltip;
+    // null opens the tab again.
+    public static void SetLocked(TabPage page, string? reason, string openTip)
+    {
+        if (reason == null)
+        {
+            if (ReferenceEquals(page.Tag, NotImplementedMarker)) page.Tag = null;
+            page.ToolTipText = openTip;
+            page.Enabled = true;
+            return;
+        }
+        page.Tag = NotImplementedMarker;
+        page.ToolTipText = openTip.Length > 0 ? openTip + "\n" + reason : reason;
+    }
+
     public static bool IsNotImplemented(TabPage page) => ReferenceEquals(page.Tag, NotImplementedMarker);
 
     protected override void OnSelecting(TabControlCancelEventArgs e)
@@ -121,7 +136,7 @@ internal sealed class ThemedTabControl : TabControl
             Rectangle tab = GetTabRect(i);
             bool selected = i == SelectedIndex;
             TabPage page = TabPages[i];
-            Color fore = IsNotImplemented(page) ? Theme.Blend(back, p.Muted, 0.55f) : selected || i == hot ? p.Text : p.Muted;
+            Color fore = IsNotImplemented(page) ? Theme.Blend(back, p.Muted, 0.4f) : selected || i == hot ? p.Text : p.Muted;
             var area = new Rectangle(tab.X, tab.Y, tab.Width, tab.Height - thickness);
             if (PageIcons.TryGetValue(page, out string? glyph))
             {

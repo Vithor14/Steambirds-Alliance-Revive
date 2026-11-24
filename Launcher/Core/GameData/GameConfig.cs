@@ -108,6 +108,8 @@ public sealed partial class GameConfig
 
     public List<Locale> Locales { get; } = new List<Locale>();
     // Names of the units the game shows ("Texts/en-US/units": unit id -> name), for the map editor.
+    // Names of the visual effects of the client ("statefulEffects", e.g. tankShield), sorted.
+    public List<string> EffectNames { get; } = new List<string>();
     public Dictionary<string, string> UnitNames { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     public List<PlaneClass> Classes { get; } = new List<PlaneClass>();
     public List<string> Currencies { get; } = new List<string>();
@@ -203,6 +205,9 @@ public sealed partial class GameConfig
     private void Read(Dictionary<string, ConfigNode> files)
     {
         ConfigNode Get(string name) => files.TryGetValue(name, out ConfigNode? node) ? node : ConfigNode.Missing;
+
+        foreach (KeyValuePair<string, ConfigNode> effect in Get("statefulEffects").Pairs) EffectNames.Add(effect.Key);
+        EffectNames.Sort(StringComparer.OrdinalIgnoreCase);
 
         foreach (KeyValuePair<string, ConfigNode> unit in Get("Texts/en-US/units").Pairs)
         {

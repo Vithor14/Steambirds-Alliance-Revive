@@ -93,14 +93,16 @@ internal static class AiFields
         yield return FieldSpec.Header("Shield");
         yield return new FieldSpec("shield", "Shield", FieldKind.Bool) { Help = "The unit ignores all damage while the shield is up." };
         yield return Number("shieldSeconds", "Shield lasts (s)", 0, 0, 600, 0.5, "0 = the whole time the unit is in this state.");
-        yield return new FieldSpec("shieldEffect", "Shield look (effect)", FieldKind.Text)
+        yield return new FieldSpec("shieldEffect", "Shield look (effect)", FieldKind.Choice)
         {
+            Choices = Editor.EditorAssets.EffectChoices,
             Help = "Name of a client effect (statefulEffects) shown while the shield is up. Empty = tankShield."
         };
 
         yield return FieldSpec.Header("Look and weapons");
-        yield return new FieldSpec("effect", "Visual effect from here on", FieldKind.Text)
+        yield return new FieldSpec("effect", "Visual effect from here on", FieldKind.Choice)
         {
+            Choices = Editor.EditorAssets.EffectChoices,
             Help = "Name of a client effect (statefulEffects, e.g. detectionZone_1) the unit shows from this state on. Empty = keeps the one it has."
         };
         yield return new FieldSpec("homing", "Homing bullets", FieldKind.Choice)
