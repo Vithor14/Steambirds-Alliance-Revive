@@ -116,6 +116,9 @@ internal sealed partial class MapCanvas : Control
 
     public MapObject? Selected => selected;
 
+    // The Floor / Walls tool is painting or dragging a rectangle (the pages wait for the end instead of refreshing per cell).
+    public bool Painting => drag == DragMode.Paint || drag == DragMode.Rect;
+
     // The selection changed (the property pages show it).
     public event Action? SelectionChanged;
 

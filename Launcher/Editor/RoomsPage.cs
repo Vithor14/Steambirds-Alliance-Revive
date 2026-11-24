@@ -163,7 +163,6 @@ internal sealed class RoomsPage : EditorPage
         {
             Help = "One enemy per line: u, v, rotation. You can also place them with the Enemy tool on the map."
         };
-        yield return new FieldSpec("behavior", "Behavior", FieldKind.Choice) { Choices = () => EditorContext.Behaviors, Help = "Replaces the behavior of the type for this group." };
         yield return new FieldSpec("wakes", "Appears when", FieldKind.EditableChoice)
         {
             Choices = () => EditorContext.WakeModes,

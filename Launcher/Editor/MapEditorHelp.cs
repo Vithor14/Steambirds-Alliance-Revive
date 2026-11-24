@@ -20,7 +20,7 @@ internal static class MapEditorHelp
             "## The three areas",
             "- Left: the tools and the options of the chosen tool.",
             "- Middle: the map. The pictures are the ones of the game (View, Game pictures).",
-            "- Right: one tab per kind of data (Map, Rooms, Units, Gates, Points). When you click an object on the map only the tabs that have its fields stay; click an empty spot to bring them all back.",
+            "- Right: one tab per kind of data (Map, Rooms, Units, Gates, Points). Every tab is always visible; when you click an object on the map, the first tab that has its fields is selected.",
             "Every field and every option has a tip: hold the mouse over it."),
 
         new HelpTopic("File menu",
@@ -151,7 +151,7 @@ internal static class MapEditorHelp
             "- Closes its gates when entered: the gates that lead to the room close behind the player and open when the room is cleared.",
             "A room is cleared when no enemy that counts is left and no wave is waiting. Chests, walls, wreckage, invulnerable and still units do not count.",
             "## Enemies (groups)",
-            "Each group is a unit type with a list of positions (u, v, rotation), one enemy per position. Appears when: empty means at the start; death:<unit type> means it is born when that type dies. Behavior overrides the built-in behavior of the type for this group. Mini-boss makes the group mini-bosses.",
+            "Each group is a unit type with a list of positions (u, v, rotation), one enemy per position. Appears when: empty means at the start; death:<unit type> means it is born when that type dies. How a group moves comes from the AI of its unit type (Units tab). Mini-boss makes the group mini-bosses.",
             "## Waves",
             "A wave is a set of groups that come one after the other: the first after the number of seconds you set, and each next one when the one before is dead. The message is shown in the chat when the wave starts."),
 

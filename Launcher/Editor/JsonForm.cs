@@ -67,6 +67,9 @@ internal sealed class FieldSpec
     // Choice and EditableChoice: the picture of a choice (a unit, a floor piece), drawn next to its name in the list.
     public Func<string, AssetPicture?>? Picture { get; init; }
 
+    // Text and choice fields: called inside the change, after the new value is written (the data, the old and the new value).
+    public Action<JsonObject, string, string>? OnChanged { get; init; }
+
     public static FieldSpec Header(string label) => new FieldSpec("", label, FieldKind.Header);
 }
 
@@ -310,17 +313,34 @@ internal sealed class JsonForm : Panel
 
     private static void LoadCombo(ComboBox combo, FieldSpec spec, string current)
     {
-        combo.Items.Clear();
-        if (spec.AllowEmpty || spec.Kind == FieldKind.EditableChoice) combo.Items.Add("");
+        // Build the wanted list first (a set avoids the quadratic Items.Contains) and touch the combo only when it
+        // differs: this runs on every change the canvas makes, and rebuilding long lists made painting freeze.
+        var wanted = new List<string>();
+        var seen = new HashSet<string>();
+        if (spec.AllowEmpty || spec.Kind == FieldKind.EditableChoice)
+        {
+            wanted.Add("");
+            seen.Add("");
+        }
         IEnumerable<string> choices = spec.Choices?.Invoke() ?? Enumerable.Empty<string>();
         foreach (string choice in choices)
         {
-            if (!combo.Items.Contains(choice)) combo.Items.Add(choice);
+            if (seen.Add(choice)) wanted.Add(choice);
         }
-        if (current.Length > 0 && !combo.Items.Contains(current)) combo.Items.Add(current);
+        if (current.Length > 0 && seen.Add(current)) wanted.Add(current);
+
+        bool same = combo.Items.Count == wanted.Count;
+        for (int i = 0; same && i < wanted.Count; i++) same = combo.Items[i] as string == wanted[i];
+        if (!same)
+        {
+            combo.BeginUpdate();
+            combo.Items.Clear();
+            foreach (string item in wanted) combo.Items.Add(item);
+            combo.EndUpdate();
+        }
 
         if (spec.Kind == FieldKind.EditableChoice) combo.Text = current;
-        else combo.SelectedItem = current.Length > 0 || combo.Items.Contains("") ? current : null;
+        else combo.SelectedItem = current.Length > 0 || seen.Contains("") ? current : null;
     }
 
     private static string TextOf(FieldSpec spec, JsonNode? node)
@@ -466,7 +486,10 @@ internal sealed class JsonForm : Panel
         {
             if (value.Length == 0) Remove(data, spec.Key);
             else Write(data, spec.Key, JsonValue.Create(value)!);
+            spec.OnChanged?.Invoke(data, old, value);
         });
+        // The change may have written other fields (the display name follows the game unit): show them.
+        if (spec.OnChanged != null) Refresh_();
     }
 
     private void CommitTextBox(FieldSpec spec, TextBox box)

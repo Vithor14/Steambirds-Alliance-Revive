@@ -50,11 +50,15 @@ Base: `1b6148c` (the last commit of 0.6.0). / Base: `1b6148c` (último commit da
 
 ### Fixes
 
+- **Map editor, right-hand tabs:** the tabs stay all visible when an object is selected (before, only the tabs of that object stayed and it was hard to bring the others back). The first tab that has the object's fields is still selected by itself.
+- **Map editor, left palette:** the options of the chosen tool (enemy type, room, snap...) were drawn with the labels apart from their boxes and the boxes piled up, so they could not be used. Each option is now one block (label above its box) that grows with them.
+- **Map editor, unit types:** a new type whose name is a unit of the game is made from that unit by itself, and *Display name* takes the name the game shows for it (`Texts/en-US/units`). Choosing another *Game unit* changes the display name too, unless you wrote a name of your own. The *Rooms* tab no longer shows *Behavior* in the enemy groups (the AI of the unit type decides how it moves).
 - **Iron Lair mines:** SN-Z's mines went off the moment they were dropped (the boss circles where the players are, so they landed inside the
   trigger area) and again when shot down: two giant rings per mine. Now a mine does nothing until it is *armed*, which happens once no player is
   inside its red ring; from then on it goes off by itself, releasing the ring of shots (`onContact`), only when a player flies into it. A mine
   that is shot down from outside just disappears. SN-Z's shots are not homing anymore. New unit behavior `mine` and map field `onContact`.
 - **Safe trade:** a trade request was declined by itself about 1.3 s after it was sent, and the other player then got "no trade to answer". The game client declines on its own when the requester's plane leaves the small trigger area spawned at the request. The server now ignores a decline that arrives in the first 4 s, keeps the request open and tells the target to type `/trade`.
+- **Map editor freeze:** painting floor or walls by dragging froze the editor for seconds, because every painted tile rebuilt all the drop-downs of the pages on the right (and the lists were checked with a quadratic search). The pages now refresh once when the drag ends, and a drop-down is only rebuilt when its list really changed.
 
 ## Português
 
@@ -103,8 +107,12 @@ Base: `1b6148c` (the last commit of 0.6.0). / Base: `1b6148c` (último commit da
 
 ### Correções
 
+- **Editor de mapas, abas da direita:** as abas ficam sempre todas visíveis ao selecionar um objeto (antes só ficavam as do objeto e era difícil trazer as outras de volta). A primeira aba que tem os campos do objeto continua sendo selecionada sozinha.
+- **Editor de mapas, paleta da esquerda:** as opções da ferramenta escolhida (tipo de inimigo, sala, grade...) apareciam com os rótulos longe das caixas e as caixas empilhadas, sem dar para usar. Agora cada opção é um bloco só (rótulo em cima da caixa) que cresce junto.
+- **Editor de mapas, tipos de unidade:** um tipo novo cujo nome é uma unidade do jogo já nasce feito dessa unidade, e o *Display name* pega o nome que o jogo mostra para ela (`Texts/en-US/units`). Trocar a *Game unit* também troca o display name, a menos que você tenha escrito um nome seu. A aba *Rooms* não mostra mais *Behavior* nos grupos de inimigos (a IA do tipo decide como ele se move).
 - **Minas da Iron Lair:** as minas do SN-Z explodiam assim que eram soltas (o chefe gira onde os jogadores estão, então caíam dentro da área de
   disparo) e de novo ao serem abatidas: dois anéis gigantes por mina. Agora a mina não faz nada até estar *armada*, o que acontece quando nenhum
   jogador está dentro do anel vermelho; daí em diante ela só explode sozinha, soltando o anel de tiros (`onContact`), quando um jogador voa para
   dentro dele. Mina abatida de fora só some. Os tiros do SN-Z não são mais teleguiados. Comportamento novo `mine` e campo de mapa `onContact`.
 - **Troca segura:** o pedido de troca era recusado sozinho cerca de 1,3 s depois de enviado, e o outro jogador recebia "no trade to answer". O cliente do jogo recusa por conta própria quando o avião de quem pediu sai da pequena área (gatilho) criada no pedido. Agora o servidor ignora uma recusa que chegue nos primeiros 4 s, mantém o pedido aberto e avisa o alvo para digitar `/trade`.
+- **Trava do editor de mapas:** pintar chão ou paredes arrastando travava o editor por segundos, porque cada quadrado pintado reconstruía todas as listas das abas da direita (e as listas eram conferidas com uma busca quadrática). Agora as abas atualizam uma vez ao soltar o mouse, e uma lista só é reconstruída quando mudou de verdade.

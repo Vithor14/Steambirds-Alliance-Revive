@@ -107,6 +107,8 @@ public sealed partial class GameConfig
     public string SourcePath { get; private set; } = "";
 
     public List<Locale> Locales { get; } = new List<Locale>();
+    // Names of the units the game shows ("Texts/en-US/units": unit id -> name), for the map editor.
+    public Dictionary<string, string> UnitNames { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     public List<PlaneClass> Classes { get; } = new List<PlaneClass>();
     public List<string> Currencies { get; } = new List<string>();
     public List<string> Ingredients { get; } = new List<string>();
@@ -201,6 +203,12 @@ public sealed partial class GameConfig
     private void Read(Dictionary<string, ConfigNode> files)
     {
         ConfigNode Get(string name) => files.TryGetValue(name, out ConfigNode? node) ? node : ConfigNode.Missing;
+
+        foreach (KeyValuePair<string, ConfigNode> unit in Get("Texts/en-US/units").Pairs)
+        {
+            string text = unit.Value.IsScalar ? unit.Value.AsString("") : unit.Value["name"].AsString("");
+            if (text.Length > 0) UnitNames[unit.Key] = text;
+        }
 
         // Game languages (TextMachine.LocalesConfig).
         foreach (ConfigNode locale in Get("Texts/locales")["locales"].Items)

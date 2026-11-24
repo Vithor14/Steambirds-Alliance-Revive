@@ -30,7 +30,6 @@ internal sealed class MapEditorTab : UserControl
     private readonly ComboBox snapBox;
     private readonly Dictionary<string, Control[]> optionControls = new Dictionary<string, Control[]>();
     private Label? optionsHeading;
-    private readonly Label tabsHint;
 
     private readonly ThemedTabControl pages;
     private readonly List<EditorPage> pageList = new List<EditorPage>();
@@ -48,6 +47,7 @@ internal sealed class MapEditorTab : UserControl
         Dock = DockStyle.Fill;
 
         EditorAssets.Load(context.GameFolder);
+        EditorAssets.UnitNames = context.GameData.UnitNames;
         session = existing ?? new MapSession(MapFactory.Blank("new_dungeon", L.T("New dungeon"), "DungeonBomb", 41));
         canvas = new MapCanvas(session) { Dock = DockStyle.Fill };
         editor = new EditorContext(session, canvas, context.ToolTip);
@@ -102,11 +102,7 @@ internal sealed class MapEditorTab : UserControl
         split.Panel1.Controls.Add(canvas);
         palette.Dock = DockStyle.Left;
         split.Panel1.Controls.Add(palette);
-        tabsHint = Ui.Wrapping(L.T("Showing only the tabs of the selected object. Click an empty spot of the map to see all tabs."), 340, gray: true);
-        tabsHint.Dock = DockStyle.Top;
-        tabsHint.Visible = false;
         split.Panel2.Controls.Add(pages);
-        split.Panel2.Controls.Add(tabsHint);
         split.Panel2.Padding = new Padding(2);
 
         Controls.Add(split);
@@ -122,6 +118,7 @@ internal sealed class MapEditorTab : UserControl
         session.Changed += OnSessionChanged;
         session.Replaced += OnSessionReplaced;
         context.GameFolderChanged += OnGameFolderChanged;
+        context.GameDataChanged += OnGameDataChanged;
         split.SizeChanged += (_, _) => PlaceSplitter();
         canvas.SizeChanged += (_, _) =>
         {
@@ -148,6 +145,7 @@ internal sealed class MapEditorTab : UserControl
             session.Changed -= OnSessionChanged;
             session.Replaced -= OnSessionReplaced;
             context.GameFolderChanged -= OnGameFolderChanged;
+            context.GameDataChanged -= OnGameDataChanged;
         }
         base.Dispose(disposing);
     }
@@ -237,31 +235,27 @@ internal sealed class MapEditorTab : UserControl
         Heading("Options");
         optionsHeading = (Label)panel.Controls[panel.Controls.Count - 1];
 
-        types = OptionBox(panel, "Enemy type", "Unit type the Enemy tool places (the types of this map, Units tab).", out Label typeLabel);
-        rooms = OptionBox(panel, "Room", "Room that receives the enemies placed with the Enemy tool (Rooms tab).", out Label roomLabel);
-        gateTypes = OptionBox(panel, "Gate type", "Unit type the gate is made of: the blocks that close the way until the gate opens.", out Label gateLabel);
-        optionControls["type"] = new Control[] { typeLabel, types };
-        optionControls["room"] = new Control[] { roomLabel, rooms };
-        optionControls["gate"] = new Control[] { gateLabel, gateTypes };
+        // Every option (label + box) lives in its own holder, so the palette only lays out whole options and a label
+        // can never end up apart from its box.
+        types = OptionBox(panel, "Enemy type", "Unit type the Enemy tool places (the types of this map, Units tab).", "type");
+        rooms = OptionBox(panel, "Room", "Room that receives the enemies placed with the Enemy tool (Rooms tab).", "room");
+        gateTypes = OptionBox(panel, "Gate type", "Unit type the gate is made of: the blocks that close the way until the gate opens.", "gate");
 
         Label groupLabel = Ui.Text(L.T("Group name"));
-        panel.Controls.Add(groupLabel);
         group = new ThemedTextBox { Width = 126, Margin = new Padding(3, 0, 3, 3) };
-        panel.Controls.Add(group);
+        optionControls["group"] = new Control[] { OptionHolder(panel, groupLabel, group) };
         string groupHelp = L.T("Group of points the Group point tool adds to. A new name creates a new group.");
         context.ToolTip.SetToolTip(groupLabel, groupHelp);
         context.ToolTip.SetToolTip(group, groupHelp);
-        optionControls["group"] = new Control[] { groupLabel, group };
 
         Label snapLabel = Ui.Text(L.T("Snap (u)"));
-        panel.Controls.Add(snapLabel);
         snap = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 126, Margin = new Padding(3, 0, 3, 3) };
         snap.Items.AddRange(new object[] { L.T("Off"), "0.25", "0.5", "1", "3" });
         snap.SelectedIndex = 2;
         string snapHelp = L.T("Placing and moving objects rounds their position to this step, in map units (u). Off = free position. A tile is 12 u.");
         context.ToolTip.SetToolTip(snapLabel, snapHelp);
         context.ToolTip.SetToolTip(snap, snapHelp);
-        optionControls["snap"] = new Control[] { snapLabel, snap };
+        optionControls["snap"] = new Control[] { OptionHolder(panel, snapLabel, snap) };
 
         var rectangle = new ThemedCheckBox { Text = L.T("Rectangle"), AutoSize = true, Margin = new Padding(3, 6, 3, 0) };
         var wallTile = new ThemedCheckBox { Text = L.T("Walls by tile"), AutoSize = true, Margin = new Padding(3, 0, 3, 0) };
@@ -294,15 +288,31 @@ internal sealed class MapEditorTab : UserControl
         return panel;
     }
 
-    private ComboBox OptionBox(FlowLayoutPanel panel, string caption, string help, out Label label)
+    private ComboBox OptionBox(FlowLayoutPanel panel, string caption, string help, string key)
     {
-        label = Ui.Text(L.T(caption));
-        panel.Controls.Add(label);
+        Label label = Ui.Text(L.T(caption));
         var box = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 126, Margin = new Padding(3, 0, 3, 3), DropDownWidth = 260 };
-        panel.Controls.Add(box);
         context.ToolTip.SetToolTip(label, L.T(help));
         context.ToolTip.SetToolTip(box, L.T(help));
+        optionControls[key] = new Control[] { OptionHolder(panel, label, box) };
         return box;
+    }
+
+    // A label above its box, in one holder that grows with them; the holder is what the palette shows or hides.
+    private static Control OptionHolder(FlowLayoutPanel panel, Control label, Control box)
+    {
+        var holder = new FlowLayoutPanel
+        {
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            Margin = new Padding(0)
+        };
+        holder.Controls.Add(label);
+        holder.Controls.Add(box);
+        panel.Controls.Add(holder);
+        return holder;
     }
 
     private void UpdateToolButtons()
@@ -332,6 +342,7 @@ internal sealed class MapEditorTab : UserControl
             foreach (Control control in pair.Value) control.Visible = visible[pair.Key];
         }
         if (optionsHeading != null) optionsHeading.Visible = visible.Values.Any(v => v);
+        if (optionControls.Values.FirstOrDefault()?[0].Parent is Control palette) palette.PerformLayout();
     }
 
     // The lists of the palette follow the map: unit types, rooms and gate types.
@@ -750,8 +761,8 @@ internal sealed class MapEditorTab : UserControl
         }
     }
 
-    // The object picked on the canvas is shown in the tabs that have its fields, and only those tabs stay visible.
-    // With nothing selected every tab is back.
+    // The object picked on the canvas is shown in the tabs that have its fields and the first of them is selected.
+    // Every tab always stays visible.
     private void OnCanvasSelection()
     {
         MapObject? item = canvas.Selected;
@@ -778,7 +789,7 @@ internal sealed class MapEditorTab : UserControl
             ShowTabs(allTabs, null);
             return;
         }
-        ShowTabs(allTabs.Where(related.Contains).ToList(), first);
+        ShowTabs(allTabs, first);
     }
 
     private TabPage? TabOf(EditorPage? page)
@@ -806,7 +817,6 @@ internal sealed class MapEditorTab : UserControl
                 pages.ResumeLayout(true);
             }
         }
-        tabsHint.Visible = wanted.Count < allTabs.Count;
         if (select != null && !ReferenceEquals(pages.SelectedTab, select)) pages.SelectedTab = select;
         ReloadVisiblePage();
     }
@@ -823,7 +833,8 @@ internal sealed class MapEditorTab : UserControl
     {
         UpdateFileLabel();
         // The fields of the pages show the numbers the canvas just changed.
-        if (canvas.Focused || canvas.Capture) RefreshForms(pages);
+        // Not while painting floor: every cell would rebuild every form. StructureChanged refreshes once at the end.
+        if (!canvas.Painting && (canvas.Focused || canvas.Capture)) RefreshForms(pages);
     }
 
     private void OnSessionReplaced()
@@ -834,9 +845,13 @@ internal sealed class MapEditorTab : UserControl
         UpdateFileLabel();
     }
 
+    // The game data was read again (in the background, after the game folder changed).
+    private void OnGameDataChanged() => EditorAssets.UnitNames = context.GameData.UnitNames;
+
     private void OnGameFolderChanged()
     {
         EditorAssets.Load(context.GameFolder);
+        EditorAssets.UnitNames = context.GameData.UnitNames;
         canvas.Invalidate();
     }
 

@@ -895,7 +895,6 @@
   "Last sub-cell column of the gate.": "",
   "First sub-cell row of the gate (3 u each).": "",
   "Last sub-cell row of the gate.": "",
-  "Showing only the tabs of the selected object. Click an empty spot of the map to see all tabs.": "",
   "Group of points the Group point tool adds to. A new name creates a new group.": "",
   "Placing and moving objects rounds their position to this step, in map units (u). Off = free position. A tile is 12 u.": "",
   "Unit type the Enemy tool places (the types of this map, Units tab).": "",

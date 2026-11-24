@@ -42,7 +42,7 @@ internal sealed class UnitTypesPage : EditorPage
             new ObjectDictionarySource(
                 () => Json.ObjOrNull(Document.Root, "types"),
                 () => Json.Obj(Document.Root, "types"),
-                name => new JsonObject { ["name"] = name, ["template"] = "", [EnemyAiEditors.AiField] = EnemyAiEditors.DefaultAi },
+                NewType,
                 (oldName, newName) => MapRefactor.Rename(Document, NameKind.UnitType, oldName, newName)),
             GeneralFields(), "unit", listHeight: 110, extra: inner, formHeight: 150,
             picture: item => Context.PictureOfType(item.Key));
@@ -147,6 +147,31 @@ internal sealed class UnitTypesPage : EditorPage
 
     // ------------------------------------------------------------------ fields
 
+    // A new type: when its name is a unit of the game it is made from that unit and takes the name the game shows.
+    private static JsonObject NewType(string name)
+    {
+        bool known = EditorAssets.Current.FindUnit(name) != null;
+        string shown = known ? EditorAssets.UnitDisplayName(name) : "";
+        return new JsonObject
+        {
+            ["name"] = shown.Length > 0 ? shown : name,
+            ["template"] = known ? name : "",
+            [EnemyAiEditors.AiField] = EnemyAiEditors.DefaultAi
+        };
+    }
+
+    // The game unit changed: the display name follows it, unless the user wrote a name of their own (a name is
+    // "not their own" when it is empty, the key of the type, or what the game called the old unit).
+    private void FollowTemplate(JsonObject type, string oldTemplate, string newTemplate)
+    {
+        string shown = EditorAssets.UnitDisplayName(newTemplate);
+        if (shown.Length == 0) return;
+        string current = Json.Str(type, "name");
+        string key = Json.ObjectProperties(Json.ObjOrNull(Document.Root, "types")).FirstOrDefault(p => ReferenceEquals(p.Value, type)).Key ?? "";
+        bool ownName = current.Length > 0 && current != key && current != oldTemplate && current != EditorAssets.UnitDisplayName(oldTemplate);
+        if (!ownName) type["name"] = shown;
+    }
+
     private static IEnumerable<string> GameUnitNames()
     {
         return EditorAssets.Current.Units.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList();
@@ -158,6 +183,7 @@ internal sealed class UnitTypesPage : EditorPage
         yield return new FieldSpec("template", "Game unit (template)", FieldKind.EditableChoice)
         {
             Choices = GameUnitNames,
+            OnChanged = FollowTemplate,
             Picture = name => EditorAssets.Current.PictureOfUnit(name),
             Help = "The unit of the game this type is made from (units_config.txt).\nSeveral can be given as a|b, or auto:<name>."
         };

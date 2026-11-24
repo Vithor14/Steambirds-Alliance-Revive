@@ -173,6 +173,21 @@ internal sealed class EditorAssets
 
     public static EditorAssets Current { get; private set; } = new EditorAssets("");
 
+    // Names the game shows for its units (set by the editor tab from the game data).
+    public static IReadOnlyDictionary<string, string> UnitNames { get; set; } = new Dictionary<string, string>();
+
+    // The name the game shows for the unit a "template" refers to ("" when the game has no text for it).
+    public static string UnitDisplayName(string template)
+    {
+        foreach (string option in template.Split('|'))
+        {
+            string id = option.Trim();
+            if (id.Length == 0 || id.StartsWith("auto:", StringComparison.OrdinalIgnoreCase)) continue;
+            if (UnitNames.TryGetValue(id, out string? text) && text.Length > 0) return text;
+        }
+        return "";
+    }
+
     public string Folder { get; }
     public bool HasPictures { get; private set; }
     public bool HasGroundNames => groundNames.Count > 0;

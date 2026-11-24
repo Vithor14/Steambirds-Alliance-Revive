@@ -1008,7 +1008,6 @@
   "Last sub-cell column of the gate.": "Última coluna de subcélulas do portão.",
   "First sub-cell row of the gate (3 u each).": "Primeira linha de subcélulas do portão (3 u cada).",
   "Last sub-cell row of the gate.": "Última linha de subcélulas do portão.",
-  "Showing only the tabs of the selected object. Click an empty spot of the map to see all tabs.": "Mostrando só as abas do objeto selecionado. Clique num ponto vazio do mapa para ver todas as abas.",
   "Group of points the Group point tool adds to. A new name creates a new group.": "Grupo de pontos ao qual a ferramenta Ponto de grupo adiciona. Um nome novo cria um grupo novo.",
   "Placing and moving objects rounds their position to this step, in map units (u). Off = free position. A tile is 12 u.": "Ao colocar e mover objetos, a posição é arredondada para este passo, em unidades do mapa (u). Desligado = posição livre. Um tile tem 12 u.",
   "Unit type the Enemy tool places (the types of this map, Units tab).": "Tipo de unidade que a ferramenta Inimigo coloca (os tipos deste mapa, aba Unidades).",
