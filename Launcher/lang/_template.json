@@ -353,12 +353,8 @@
   "Note": "",
   "Opens at": "",
   "Saved at {0}. The server uses the new list for the next entries.": "",
-  "The server always uses maps\\nexus.json. Choosing another map file for the Nexus is not implemented yet.": "",
-  "The server always uses maps\\tutorial_walker.json. Choosing another map file for the tutorial is not implemented yet.": "",
   "Tutorial (Training Grounds):": "",
   "Type (game terrain)": "",
-  "View the selected map": "",
-  "Viewing each map here on the server screen is not implemented yet.\nOpen a map in the Map editor tab to see it.": "",
   "{0} of {1} dungeon(s) active.": "",
   "{0}: \"Health ×\" must be a number greater than zero (for example 1 or 1.5).": "",
   "{0}: \"Opens at\" must be yyyy-mm-dd hh:mm (for example 2026-11-20 18:00) or empty.": "",
@@ -1513,5 +1509,13 @@
   "- A map with errors (saved as a draft) is not tested: fix it first with Tools, Check map.": "",
   "Discord Rich Presence": "",
   "Accounts with username and password": "",
-  "On: a new Steam player registers in the game (name, e-mail, password) and the game's own login screen takes username and password. Accounts that already exist keep logging in through Steam. Off: one account per Steam ID, no passwords.": ""
+  "On: a new Steam player registers in the game (name, e-mail, password) and the game's own login screen takes username and password. Accounts that already exist keep logging in through Steam. Off: one account per Steam ID, no passwords.": "",
+  "Map file of the Nexus (Rebel City). The original is nexus. To make another version, open nexus in the Map editor, change it and use Save as.": "",
+  "Map file of the tutorial (Training Grounds). The original is tutorial_walker. To make another version, open it in the Map editor, change it and use Save as.": "",
+  "Open in the editor": "",
+  "Open the selected dungeon in the editor": "",
+  "Select a dungeon in the table first.": "",
+  "There is no map file to open.": "",
+  "The Map editor tab is not available.": "",
+  "The map file was not found:\n{0}": ""
 }

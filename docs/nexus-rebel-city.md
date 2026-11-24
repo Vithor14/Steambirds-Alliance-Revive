@@ -142,3 +142,5 @@ Remontagem do Rebel City do Open Beta (cliente 201219.1413). Criado em 14/11/202
 - Talvez: heliponto com "H" no prédio elevado perto da Store, como no vídeo (14:40).
 - Colisões do Nexus (22/11) e Mission Transport: sem teste no jogo.
 - Falta no servidor: quests do Pub e da Oficina (listas vazias), missões de verdade no porta-aviões (hoje só dungeons) e o Combat Sim. Lojas, armazém, Pilot School e Flock Hall existem no servidor e faltam testes no jogo (`CHECKLIST.md`, seções 6 e 10).
+
+- O arquivo do mapa é escolhido pelo `nexusMap` do `dungeons.json` (padrão `nexus`; 24/11, tela "Maps and dungeons" do launcher). Nome sem arquivo volta ao `nexus`.

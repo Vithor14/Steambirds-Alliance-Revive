@@ -10,7 +10,8 @@ using Lidgren.Network;
 // ClientMapInfo and the game's meshes) is in the file itself and in docs/nexus-rebel-city.md in the project.
 public static class Nexus
 {
-    public const string MapId = "nexus";
+    // Map file of the Nexus: "nexusMap" of dungeons.json ("nexus" = the original Rebel City).
+    public static string MapId => DungeonCatalog.NexusMapId;
 
     // shortId of the first building (the others follow the order of the file).
     private const int FirstShortId = 70001;

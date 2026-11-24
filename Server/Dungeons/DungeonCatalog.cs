@@ -34,8 +34,15 @@ public static class DungeonCatalog
         // (0 = no limit). The original units used one gun pattern at a time; the server fires all the guns of the template.
         public float FireRateScale { get; set; } = 1f;
         public float MaxBulletsPerSecond { get; set; } = 10f;
+        // Map files (maps folder, without .json) of the Nexus (Rebel City) and of the walker tutorial. Empty or missing
+        // file = the original map ("nexus" / "tutorial_walker"). A community version is made in the map editor.
+        public string NexusMap { get; set; } = DefaultNexusMap;
+        public string TutorialMap { get; set; } = DefaultTutorialMap;
         public List<Entry> Dungeons { get; set; } = new List<Entry>();
     }
+
+    public const string DefaultNexusMap = "nexus";
+    public const string DefaultTutorialMap = "tutorial_walker";
 
     public const string EntryBoth = "both";
     public const string EntryPortals = "portals";
@@ -223,6 +230,27 @@ public static class DungeonCatalog
     public static bool LockBossRooms => Reload().LockBossRooms;
     public static float FireRateScale => Reload().FireRateScale;
     public static float MaxBulletsPerSecond => Reload().MaxBulletsPerSecond;
+
+    // Map file of the Nexus / of the tutorial chosen by the host (dungeons.json). A name without a file falls back to
+    // the original map (logged once), so a typo never takes the Nexus or the tutorial down.
+    public static string NexusMapId => ChosenMap(Reload().NexusMap, DefaultNexusMap, "nexusMap");
+    public static string TutorialMapId => ChosenMap(Reload().TutorialMap, DefaultTutorialMap, "tutorialMap");
+
+    private static readonly HashSet<string> missingMapsLogged = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+    private static string ChosenMap(string? chosen, string fallback, string field)
+    {
+        string id = (chosen ?? "").Trim();
+        if (id.Length == 0 || string.Equals(id, fallback, StringComparison.OrdinalIgnoreCase)) return fallback;
+        if (File.Exists(Maps.FilePath(id))) return id;
+        lock (padlock)
+        {
+            if (missingMapsLogged.Add(field + ":" + id))
+                logger("DUNGEON", FileName + ": \"" + field + "\" = \"" + id + "\" has no file in the maps folder (" +
+                    Maps.FilePath(id) + "): the original map '" + fallback + "' is used");
+        }
+        return fallback;
+    }
 
     // The carriers outside the city are offered.
     public static bool PortalsEnabled => Reload().EntryMode != EntryMissionTransport;

@@ -7,6 +7,8 @@ Laser Playground, The Arena and Home for Special Children).
 
 | Key | Default | What it does |
 |---|---|---|
+| `nexusMap` | `nexus` | Map file (`maps\*.json`, no extension) of the Nexus (Rebel City). A name without a file falls back to `nexus` (logged once) |
+| `tutorialMap` | `tutorial_walker` | Map file of the walker tutorial, same rules. The tutorial map must keep what the tutorial script needs (checked when the file is read) |
 | `entryMode` | `both` | How players enter dungeons: `both` (carriers outside the city and the Mission Transport), `portals`, `missionTransport` |
 | `lockBossRooms` | `false` | `true`: the doors of a boss room close behind the player until the boss dies (the original behaviour) |
 | `fireRateScale` | `1` | Multiplies every fire rate of dungeon enemies |

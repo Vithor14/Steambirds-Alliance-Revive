@@ -356,12 +356,8 @@
   "Note": "Observação",
   "Opens at": "Abre em",
   "Saved at {0}. The server uses the new list for the next entries.": "Salvo às {0}. O servidor usa a lista nova nas próximas entradas.",
-  "The server always uses maps\\nexus.json. Choosing another map file for the Nexus is not implemented yet.": "O servidor sempre usa maps\\nexus.json. Escolher outro arquivo de mapa para o Nexus ainda não foi implementado.",
-  "The server always uses maps\\tutorial_walker.json. Choosing another map file for the tutorial is not implemented yet.": "O servidor sempre usa maps\\tutorial_walker.json. Escolher outro arquivo de mapa para o tutorial ainda não foi implementado.",
   "Tutorial (Training Grounds):": "Tutorial (Training Grounds):",
   "Type (game terrain)": "Tipo (terreno do jogo)",
-  "View the selected map": "Ver o mapa selecionado",
-  "Viewing each map here on the server screen is not implemented yet.\nOpen a map in the Map editor tab to see it.": "Ver o desenho de cada mapa aqui na tela do servidor ainda não foi implementado.\nAbra um mapa na aba Editor de mapas para vê-lo.",
   "{0} of {1} dungeon(s) active.": "{0} de {1} dungeon(s) ativa(s).",
   "{0}: \"Health ×\" must be a number greater than zero (for example 1 or 1.5).": "{0}: \"Vida ×\" precisa ser um número maior que zero (por exemplo 1 ou 1.5).",
   "{0}: \"Opens at\" must be yyyy-mm-dd hh:mm (for example 2026-11-20 18:00) or empty.": "{0}: \"Abre em\" precisa estar no formato aaaa-mm-dd hh:mm (por exemplo 2026-11-20 18:00) ou vazio.",
@@ -1893,5 +1889,13 @@
   "- A map with errors (saved as a draft) is not tested: fix it first with Tools, Check map.": "- Um mapa com erros (salvo como rascunho) não é testado: corrija antes com Tools, Check map.",
   "Discord Rich Presence": "Rich Presence do Discord",
   "Accounts with username and password": "Contas com usuário e senha",
-  "On: a new Steam player registers in the game (name, e-mail, password) and the game's own login screen takes username and password. Accounts that already exist keep logging in through Steam. Off: one account per Steam ID, no passwords.": "Ligado: um jogador novo da Steam se registra no jogo (nome, e-mail, senha) e a tela de login do jogo aceita usuário e senha. Contas que já existem continuam entrando pela Steam. Desligado: uma conta por Steam ID, sem senha."
+  "On: a new Steam player registers in the game (name, e-mail, password) and the game's own login screen takes username and password. Accounts that already exist keep logging in through Steam. Off: one account per Steam ID, no passwords.": "Ligado: um jogador novo da Steam se registra no jogo (nome, e-mail, senha) e a tela de login do jogo aceita usuário e senha. Contas que já existem continuam entrando pela Steam. Desligado: uma conta por Steam ID, sem senha.",
+  "Map file of the Nexus (Rebel City). The original is nexus. To make another version, open nexus in the Map editor, change it and use Save as.": "Arquivo de mapa do Nexus (Rebel City). O original é nexus. Para fazer outra versão, abra o nexus no Editor de mapas, altere e use Save as.",
+  "Map file of the tutorial (Training Grounds). The original is tutorial_walker. To make another version, open it in the Map editor, change it and use Save as.": "Arquivo de mapa do tutorial (Training Grounds). O original é tutorial_walker. Para fazer outra versão, abra-o no Editor de mapas, altere e use Save as.",
+  "Open in the editor": "Abrir no editor",
+  "Open the selected dungeon in the editor": "Abrir a dungeon selecionada no editor",
+  "Select a dungeon in the table first.": "Selecione uma dungeon na tabela primeiro.",
+  "There is no map file to open.": "Não há arquivo de mapa para abrir.",
+  "The Map editor tab is not available.": "A aba Editor de mapas não está disponível.",
+  "The map file was not found:\n{0}": "O arquivo do mapa não foi encontrado:\n{0}"
 }

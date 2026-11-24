@@ -100,7 +100,7 @@ internal sealed class ServerTab : UserControl
         nav.AddPage(L.T("New accounts"), Pad(new NewAccountsPage(context)), Icons.NewAccount);
         nav.AddPage(L.T("Friends and flocks"), Pad(new SocialPage(context)), Icons.Friends);
         nav.AddGroup(L.T("World"));
-        nav.AddPage(L.T("Maps and dungeons"), Pad(new MapsPage(tip)), Icons.Maps);
+        nav.AddPage(L.T("Maps and dungeons"), Pad(new MapsPage(context)), Icons.Maps);
         nav.AddPage(L.T("World map"), Pad(new WorldPage(context)), Icons.World);
         nav.AddGroup(L.T("Connection"));
         nav.AddPage(L.T("Network and multiplayer"), Pad(new NetworkPage(context)), Icons.Network);

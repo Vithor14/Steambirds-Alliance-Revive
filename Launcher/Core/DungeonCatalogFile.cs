@@ -16,6 +16,10 @@ public static class DungeonCatalogFile
     // Format of "opensAt" accepted by the server (DateTime.TryParse with the invariant culture, local time).
     public const string OpensAtFormat = "yyyy-MM-dd HH:mm";
 
+    // The original maps of the Nexus and of the tutorial (the server uses them when the fields are empty).
+    public const string DefaultNexusMap = "nexus";
+    public const string DefaultTutorialMap = "tutorial_walker";
+
     public sealed class Dungeon
     {
         public string Type { get; set; } = "";       // "type": terrain of the client, e.g. DungeonBomb (not editable)
@@ -38,6 +42,8 @@ public static class DungeonCatalogFile
         public bool LockBossRooms { get; set; }                 // "lockBossRooms"
         public double FireRateScale { get; set; } = 1.0;        // "fireRateScale"
         public double MaxBulletsPerSecond { get; set; } = 10;   // "maxBulletsPerSecond"
+        public string NexusMap { get; set; } = DefaultNexusMap;         // "nexusMap": map file of the Nexus
+        public string TutorialMap { get; set; } = DefaultTutorialMap;   // "tutorialMap": map file of the tutorial
     }
 
     private static readonly JsonNodeOptions NodeOptions = new JsonNodeOptions { PropertyNameCaseInsensitive = true };
@@ -60,8 +66,12 @@ public static class DungeonCatalogFile
             EntryMode = GetString(root, "entryMode", "both"),
             LockBossRooms = GetBool(root, "lockBossRooms", false),
             FireRateScale = GetNumber(root, "fireRateScale", 1.0),
-            MaxBulletsPerSecond = GetNumber(root, "maxBulletsPerSecond", 10)
+            MaxBulletsPerSecond = GetNumber(root, "maxBulletsPerSecond", 10),
+            NexusMap = GetString(root, "nexusMap", DefaultNexusMap),
+            TutorialMap = GetString(root, "tutorialMap", DefaultTutorialMap)
         };
+        if (catalog.NexusMap.Trim().Length == 0) catalog.NexusMap = DefaultNexusMap;
+        if (catalog.TutorialMap.Trim().Length == 0) catalog.TutorialMap = DefaultTutorialMap;
         if (root["nexusPortals"] is JsonObject portals) catalog.NexusPortalsOn = GetBool(portals, "enabled", true);
 
         if (root["dungeons"] is JsonArray list)
@@ -97,6 +107,8 @@ public static class DungeonCatalogFile
         root["lockBossRooms"] = catalog.LockBossRooms;
         root["fireRateScale"] = catalog.FireRateScale;
         root["maxBulletsPerSecond"] = catalog.MaxBulletsPerSecond;
+        root["nexusMap"] = catalog.NexusMap;
+        root["tutorialMap"] = catalog.TutorialMap;
         if (root["nexusPortals"] is JsonObject portals) portals["enabled"] = catalog.NexusPortalsOn;
         else root["nexusPortals"] = new JsonObject { ["enabled"] = catalog.NexusPortalsOn };
 

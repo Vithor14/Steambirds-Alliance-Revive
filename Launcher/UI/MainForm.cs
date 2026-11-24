@@ -186,11 +186,13 @@ internal sealed class MainForm : Form
         {
             editorTab = new MapEditorTab(context, editorSession) { Dock = DockStyle.Fill };
             editorSession = editorTab.Session;
+            context.OpenMapInEditor = OpenMapInEditor;
             return editorTab;
         }
         catch (Exception error)
         {
             editorTab = null;
+            context.OpenMapInEditor = null;
             CrashLog.Report(error, showDialog: false);
             return new Label
             {
@@ -200,6 +202,21 @@ internal sealed class MainForm : Form
                 Text = L.F("The map editor could not open:\n\n{0}\n\nThe details were saved in {1}.", error.Message, LauncherPaths.ErrorLogFile)
             };
         }
+    }
+
+    // "Open in the editor" of the Maps and dungeons page: the map editor tab with this map of the server loaded
+    // (it first asks about the changes the editor has not saved). The editor is the third tab.
+    private void OpenMapInEditor(string mapId)
+    {
+        if (nav == null || editorTab == null) return;
+        string path = Path.Combine(LauncherPaths.MapsFolder, mapId + ".json");
+        if (!File.Exists(path))
+        {
+            Ui.ShowError(this, L.F("The map file was not found:\n{0}", path));
+            return;
+        }
+        if (!editorTab.OpenServerMap(path)) return;
+        nav.Select(2);
     }
 
     // The language changes after the Settings tab handled its event: the tabs are built again right after.

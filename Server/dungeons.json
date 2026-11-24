@@ -7,6 +7,9 @@
     "rot": 0,
     "note": "First carrier at (u, v) of the Nexus map; the others follow every 'step'. It stays outside the city, on the lower side (negative v)."
   },
+  "nexusMap": "nexus",
+  "tutorialMap": "tutorial_walker",
+  "mapsNote": "Map files (maps folder, without .json) of the Nexus (Rebel City) and of the walker tutorial (Training Grounds). Make another version in the Map editor (open nexus or tutorial_walker, change it, Save as) and put its name here. A name without a file falls back to the original map.",
   "maxPlayers": 10,
   "autoExitSeconds": 180,
   "entryMode": "both",

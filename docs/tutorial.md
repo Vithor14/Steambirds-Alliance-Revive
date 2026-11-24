@@ -96,3 +96,5 @@ Referência técnica do tutorial refeito (cliente 201219.1413). Escrito em 14/11
 ## Pendências
 - Conferir no jogo que a v5 (mapa em arquivo) ficou igual à v4.4.
 - Loot da caixa (os quatro motores tier 1) e XP já existem (`docs/items-and-loot.md`, `docs/progression.md`); falta conferir no jogo. Nexus: ver `docs/nexus-rebel-city.md`.
+
+- O arquivo do mapa é escolhido pelo `tutorialMap` do `dungeons.json` (padrão `tutorial_walker`; 24/11, tela "Maps and dungeons" do launcher). Uma versão nova precisa manter o que o roteiro usa (conferido na leitura do mapa).

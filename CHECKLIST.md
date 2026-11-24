@@ -34,10 +34,10 @@
 | 13 | Áudio, interface e extras | 5 | 1 | 0 |
 | 14 | Código e repositório | 10 | 1 | 0 |
 | 15 | Launcher base — aba Client (objetivo intermediário) | 8 | 2 | 1 |
-| 16 | Launcher — aba Server | 5 | 10 | 2 |
+| 16 | Launcher — aba Server | 5 | 12 | 0 |
 | 17 | Launcher standalone (objetivo final) | 4 | 3 | 0 |
 | 18 | Editor de mapas | 6 | 6 | 2 |
-| | **Total** | **104** | **86** | **36** |
+| | **Total** | **104** | **88** | **34** |
 
 Os apêndices (classes, terrenos e chefes) e as observações abaixo ficam fora da conta.
 
@@ -362,9 +362,9 @@ Doc das dungeons recriadas: `docs/dungeons-190828.md`. Servidor de dungeon: `doc
 - [ ] 🟡 Retrato por conta (22/11, compilado, falta testar): coluna Portrait na lista de contas, aba Portrait na janela de edição e botão "Reroll portrait" (sorteia com as regras do jogo a partir de `server\data\portraits_config.txt`; só com o servidor parado, cópia em `server\_backup`). O launcher mostra as peças por nome e id, não o desenho: as peças são prefabs da Unity, e desenhá-las exigiria o plugin exportar as imagens (a fazer)
 - [ ] 🟡 Console do servidor por nível (22/11, compilado, falta testar): o que os jogadores fazem (`[SKILL]`, `[SHOT]`, `[MSG]`, `[XP]`, `[SPAWN]`... em `Core\ServerLogLevel.cs`) é "info" e fica escondido; o padrão mostra avisos, erros e eventos do servidor (quem conecta e sai, dungeons, portais, mortes). Caixa "Show player actions (info)" liga tudo; o `logs\server-<data>.log` e o `server-report.txt` continuam completos
 - [ ] 🟡 Monitor de chat no launcher (23/11, compilado, falta testar): página "Chat" na aba Server, com o chat dos jogadores separado por mapa (Nexus, mundo aberto, cada instância de dungeon; "All maps" mostra tudo). Sussurros e chat do bando entram no mapa de quem enviou e podem ser escondidos. O servidor imprime uma linha `[CHATMON]` por mensagem (`Server\Network\ChatMonitor.cs`) e o launcher a lê em `Core\ChatLog.cs`; o chat do tutorial é privado e não aparece
-- [ ] Escolher o arquivo de mapa do Nexus e do tutorial (no launcher, acinzentado: o servidor usa `nexus` e `tutorial_walker` fixos)
+- [ ] 🟡 Escolher o arquivo de mapa do Nexus e do tutorial (24/11, compilado, falta testar): `nexusMap` e `tutorialMap` no `dungeons.json` (padrão `nexus` e `tutorial_walker`), escolhidos na tela "Mapas e dungeons"; o servidor relê e vale para o próximo jogador (`DungeonCatalog.NexusMapId` / `TutorialMapId`; nome sem arquivo volta ao original). Para fazer outra versão: abrir o mapa no editor e "Save as"
 - [ ] 🟡 Escolher o arquivo de mapa de cada dungeon: tela "Mapas e dungeons" do launcher (grava no `dungeons.json`). Falta testar
-- [ ] Ver cada mapa na tela do servidor (no launcher, acinzentado)
+- [ ] 🟡 Ver cada mapa na tela do servidor (24/11, compilado, falta testar): botões "Open in the editor" (Nexus, tutorial e a dungeon da linha selecionada) abrem o mapa no editor de mapas; a miniatura dentro da própria tela ainda não existe
 - [ ] 🟡 Definir quando cada dungeon fica disponível: "Ativa", "No Nexus", "Vida ×" e "Abre em" na tela "Mapas e dungeons". Falta testar
 - [x] Mapa do mundo com a posição de cada jogador (22/11, aba World map do launcher; dados ao passar o mouse; falta testar com o servidor e o jogo rodando) Testado no jogo em 22/11.
 - [ ] 🟡 Página Friends and flocks (`Launcher\UI\SocialPage.cs`, 23/11): lista as flocks e os membros (só leitura, de `flocks.json`) e edita o `social.json`. Compilada; falta abrir e usar

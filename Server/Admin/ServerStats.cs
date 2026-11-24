@@ -28,7 +28,6 @@ public static class ServerStats
         public double WorstEver;
         public int FrameNumber;
         public int GcCount;
-        public bool GcInWindow;
     }
 
     private static readonly object gate = new object();

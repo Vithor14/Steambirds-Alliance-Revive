@@ -536,6 +536,14 @@ internal sealed class MapEditorTab : UserControl
         if (dialog.ShowDialog(this) == DialogResult.OK) LoadFile(dialog.FileName);
     }
 
+    // Loads a map file of the server (used by the Maps and dungeons page). False = the user kept the current map.
+    public bool OpenServerMap(string path)
+    {
+        if (!ConfirmDiscard()) return false;
+        LoadFile(path);
+        return true;
+    }
+
     private void OpenPath(string path)
     {
         if (!ConfirmDiscard()) return;

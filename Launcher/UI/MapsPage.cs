@@ -5,10 +5,15 @@ namespace SteambirdsLauncher.UI;
 
 // "Maps and dungeons" page of the Server tab.
 //  - Map of each dungeon, when it opens, whether it is on and how much health its enemies have (dungeons.json).
-//  - Nexus and tutorial maps: fixed in the server for now (maps\nexus.json and maps\tutorial_walker.json).
-//  - Map preview: not implemented yet.
+//  - Nexus and tutorial maps: map file of each one (dungeons.json "nexusMap" / "tutorialMap"; the originals are
+//    maps\nexus.json and maps\tutorial_walker.json).
+//  - "Open in the editor": loads the selected map (Nexus, tutorial or the dungeon of the selected row) in the Map editor tab.
+//  - Map preview inside this page: not implemented yet (the editor shows the map).
 internal sealed class MapsPage : UserControl
 {
+    private readonly LauncherContext context;
+    private readonly ThemedComboBox nexusMap;
+    private readonly ThemedComboBox tutorialMap;
     private readonly DataGridView grid;
     private readonly DataGridViewComboBoxColumn mapColumn;
     private readonly NumberBox maxPlayers;
@@ -34,24 +39,26 @@ internal sealed class MapsPage : UserControl
         ("missionTransport", L.T("Only the Mission Transport (mega carrier mission list)"))
     };
 
-    public MapsPage(ToolTip tip)
+    public MapsPage(LauncherContext context)
     {
-        // ------------------------------------------------------------ fixed maps (not selectable yet)
-        var nexusMap = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 200 };
-        nexusMap.Items.Add("nexus");
-        nexusMap.SelectedIndex = 0;
-        var tutorialMap = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 200 };
-        tutorialMap.Items.Add("tutorial_walker");
-        tutorialMap.SelectedIndex = 0;
-        Ui.Disable(nexusMap, tutorialMap);
+        this.context = context;
+        ToolTip tip = context.ToolTip;
+
+        // ------------------------------------------------------------ Nexus and tutorial maps
+        nexusMap = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 200 };
+        tutorialMap = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 200 };
+        nexusMap.SelectedIndexChanged += (_, _) => MarkDirty();
+        tutorialMap.SelectedIndexChanged += (_, _) => MarkDirty();
+        tip.SetToolTip(nexusMap, L.T("Map file of the Nexus (Rebel City). The original is nexus. To make another version, open nexus in the Map editor, change it and use Save as."));
+        tip.SetToolTip(tutorialMap, L.T("Map file of the tutorial (Training Grounds). The original is tutorial_walker. To make another version, open it in the Map editor, change it and use Save as."));
 
         nexusMap.Margin = new Padding(3, 4, 3, 3);
         tutorialMap.Margin = new Padding(3, 4, 3, 3);
+        ThemedButton nexusEdit = Ui.Button(L.T("Open in the editor"), (_, _) => OpenInEditor(SelectedText(nexusMap)));
+        ThemedButton tutorialEdit = Ui.Button(L.T("Open in the editor"), (_, _) => OpenInEditor(SelectedText(tutorialMap)));
         FlowLayoutPanel fixedTable = Ui.WrapFlow(
-            Ui.Note(L.T("Nexus (Rebel City):")), nexusMap, Ui.ComingSoon(tip,
-                L.T("The server always uses maps\\nexus.json. Choosing another map file for the Nexus is not implemented yet.")),
-            Ui.Note(L.T("Tutorial (Training Grounds):")), tutorialMap, Ui.ComingSoon(tip,
-                L.T("The server always uses maps\\tutorial_walker.json. Choosing another map file for the tutorial is not implemented yet.")));
+            Ui.Note(L.T("Nexus (Rebel City):")), nexusMap, nexusEdit,
+            Ui.Note(L.T("Tutorial (Training Grounds):")), tutorialMap, tutorialEdit);
 
         // ------------------------------------------------------------ dungeons
         saveButton = Ui.Primary(L.T("Save"), (_, _) => Save());
@@ -59,15 +66,12 @@ internal sealed class MapsPage : UserControl
         saveButton.Enabled = false;
         undoButton.Enabled = false;
         statusLabel = Ui.Note("");
-        var previewButton = Ui.Button(L.T("View the selected map"));
-        Ui.Disable(previewButton);
+        ThemedButton openButton = Ui.Button(L.T("Open the selected dungeon in the editor"), (_, _) => OpenSelectedDungeon());
 
         // What the table columns mean goes behind a "?" in the toolbar.
         HelpButton tableHelp = Ui.Help(L.T("Active: the dungeon shows in the Nexus and accepts players. Map file: any .json of the server\\maps folder (the community can make other versions of each dungeon). Health ×: multiplies the health of the dungeon's enemies. Opens at: date and time of this PC as yyyy-mm-dd hh:mm (empty = already open). The server reads dungeons.json again by itself; changes apply to the next entries."),
             L.T("Dungeons (dungeons.json)"));
-        var toolbar = Ui.WrapFlow(saveButton, undoButton, previewButton,
-            Ui.ComingSoon(tip, L.T("Viewing each map here on the server screen is not implemented yet.\nOpen a map in the Map editor tab to see it.")),
-            statusLabel, tableHelp);
+        var toolbar = Ui.WrapFlow(saveButton, undoButton, openButton, statusLabel, tableHelp);
         toolbar.Dock = DockStyle.Top;
         toolbar.Padding = new Padding(0, 0, 0, 8);
 
@@ -226,6 +230,8 @@ internal sealed class MapsPage : UserControl
             }
             mapColumn.Items.Clear();
             foreach (string map in maps) mapColumn.Items.Add(map);
+            FillMapChoice(nexusMap, maps, catalog.NexusMap, DungeonCatalogFile.DefaultNexusMap);
+            FillMapChoice(tutorialMap, maps, catalog.TutorialMap, DungeonCatalogFile.DefaultTutorialMap);
 
             maxPlayers.Value = Math.Clamp(catalog.MaxPlayers, (int)maxPlayers.Minimum, (int)maxPlayers.Maximum);
             autoExit.Value = (decimal)Math.Clamp(catalog.AutoExitSeconds, (double)autoExit.Minimum, (double)autoExit.Maximum);
@@ -267,6 +273,56 @@ internal sealed class MapsPage : UserControl
         }
     }
 
+    // Fills the choice of the Nexus / tutorial map with the map files and selects the one in use. A name without a
+    // file stays in the list (the server uses the original map for it).
+    private static void FillMapChoice(ThemedComboBox box, List<string> maps, string chosen, string original)
+    {
+        box.Items.Clear();
+        // The original first, then the community versions (the dungeon and catalog maps are not offered).
+        box.Items.Add(original);
+        foreach (string map in maps.Where(m => !m.StartsWith("dungeon", StringComparison.OrdinalIgnoreCase) &&
+                                               !m.StartsWith("map_maker", StringComparison.OrdinalIgnoreCase) &&
+                                               !string.Equals(m, original, StringComparison.OrdinalIgnoreCase)))
+            box.Items.Add(map);
+        int index = box.Items.Cast<string>().ToList().FindIndex(m => string.Equals(m, chosen, StringComparison.OrdinalIgnoreCase));
+        if (index < 0)
+        {
+            box.Items.Add(chosen);
+            index = box.Items.Count - 1;
+        }
+        box.SelectedIndex = index;
+    }
+
+    private static string SelectedText(ComboBox box) => box.SelectedItem as string ?? "";
+
+    private void OpenSelectedDungeon()
+    {
+        grid.EndEdit();
+        DataGridViewRow? row = grid.CurrentRow;
+        if (row == null)
+        {
+            Ui.ShowError(FindForm(), L.T("Select a dungeon in the table first."));
+            return;
+        }
+        OpenInEditor(Convert.ToString(row.Cells["map"].Value) ?? "");
+    }
+
+    // Loads a map file of the server in the Map editor tab.
+    private void OpenInEditor(string map)
+    {
+        if (map.Length == 0)
+        {
+            Ui.ShowError(FindForm(), L.T("There is no map file to open."));
+            return;
+        }
+        if (context.OpenMapInEditor == null)
+        {
+            Ui.ShowError(FindForm(), L.T("The Map editor tab is not available."));
+            return;
+        }
+        context.OpenMapInEditor(map);
+    }
+
     private static bool DungeonMapExists(string map) => File.Exists(Path.Combine(LauncherPaths.MapsFolder, map + ".json"));
 
     private void MarkDirty()
@@ -296,7 +352,9 @@ internal sealed class MapsPage : UserControl
             EntryMode = EntryModes[Math.Max(0, entryMode.SelectedIndex)].Value,
             LockBossRooms = lockBossRooms.Checked,
             FireRateScale = (double)fireRateScale.Value,
-            MaxBulletsPerSecond = (double)maxBullets.Value
+            MaxBulletsPerSecond = (double)maxBullets.Value,
+            NexusMap = SelectedText(nexusMap).Length > 0 ? SelectedText(nexusMap) : DungeonCatalogFile.DefaultNexusMap,
+            TutorialMap = SelectedText(tutorialMap).Length > 0 ? SelectedText(tutorialMap) : DungeonCatalogFile.DefaultTutorialMap
         };
         var errors = new List<string>();
         foreach (DataGridViewRow row in grid.Rows)
