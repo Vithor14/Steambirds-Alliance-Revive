@@ -33,6 +33,11 @@ public static class SecureTradeRules
     // Seconds a request waits for the answer.
     public static double RequestSeconds => Math.Max(5f, Config["timeout"].AsFloat(60f));
 
+    // A "decline" that arrives this soon after the request is ignored. The client's TradeTrigger (the area spawned at the requester's plane
+    // that the target flies into to accept) declines by itself the moment the requester's plane leaves that area, about 1.3 s after the
+    // request in the 24/11 test, and then the target could no longer answer. A person needs longer than this to type /trade_reject.
+    public const double EarlyDeclineSeconds = 4;
+
     // Seconds an open trade may stay without changes before the server closes it.
     public const double IdleSeconds = 600;
 

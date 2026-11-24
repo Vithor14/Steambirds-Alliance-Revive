@@ -161,6 +161,13 @@ public static partial class SecureTrade
             Say(server, me, "There is no trade request to answer (it may have expired).");
             return;
         }
+        if (!accept && (DateTime.UtcNow - t.Created).TotalSeconds < SecureTradeRules.EarlyDeclineSeconds)
+        {
+            // The client's trade area declined by itself (the requester's plane moved out of it): the request stays open.
+            Say(server, me, "Trade request from " + t.Initiator.Name + " is still open: type /trade to accept or /trade_reject to decline.");
+            log("TRADE", "[" + role + "] " + t.Target.Name + ": early decline of the trade of " + t.Initiator.Name + " ignored (the client's trade area)");
+            return;
+        }
         if (!accept)
         {
             trades.Remove(t);
