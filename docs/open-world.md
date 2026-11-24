@@ -151,7 +151,7 @@ launcher starts.
 
 ## Lists, bosses and requests (24/11)
 
-Launcher: Server > World map > **Enemies** tab. Server: `World\WorldEnemyLists.cs`, `WorldEnemyPools.cs`, `WorldServer.Requests.cs`.
+Launcher: Server > World map > **Enemies** tab (spawn numbers) and **Enemies of each biome** tab (groups, AI and boss per biome). Server: `World\WorldEnemyLists.cs`, `WorldEnemyPools.cs`, `WorldServer.Requests.cs`.
 
 - **Numbers.** The tab edits `world.json` > `enemies` in place (`JsoncFile.ApplyChangesIn`: the comments stay, a key the object lacks is added):
   `spawnRadius`, `despawnRadius`, `wakeRadius`, `viewRadius`, `maxAlive`, `siteSpacingTiles`, `groupSizeMax`, `respawnScale`,

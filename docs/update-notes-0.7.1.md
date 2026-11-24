@@ -5,6 +5,11 @@ Patch sobre a 0.7.0. O cliente (build **201219.1413**) e o plugin (**1.22.0**) n
 
 ## English
 
+### Launcher
+
+- **Open world: *Enemies of each biome* is its own tab.** *Server > World map* now has *Map*, *Enemies* (how enemies spawn), *Enemies of each biome* and *World settings*.
+- **Bigger enemy pictures.** The rows of the biome list are twice as tall (52 instead of 26) and the picture of each enemy grows from 24 to 48 pixels.
+
 ### Fixes
 
 - **Skill clouds follow the plane variant.** Variants such as `EpicA`..`EpicD` replace the effect of a class skill (poison, heal, damage and shield
@@ -15,6 +20,11 @@ Patch sobre a 0.7.0. O cliente (build **201219.1413**) e o plugin (**1.22.0**) n
   (`[SKILL] ... created the unit ...`) now says which variant look it used.
 
 ## Português
+
+### Launcher
+
+- **Mundo aberto: *Enemies of each biome* virou uma aba própria.** *Server > World map* agora tem *Map*, *Enemies* (como os inimigos nascem), *Enemies of each biome* e *World settings*.
+- **Miniaturas maiores.** As linhas da lista de biomas ficaram com o dobro da altura (52 em vez de 26) e a imagem de cada inimigo passou de 24 para 48 pixels.
 
 ### Correções
 

@@ -5,9 +5,18 @@ using SteambirdsLauncher.Editor;
 
 namespace SteambirdsLauncher.UI;
 
-// "Enemies" tab of the open world (Server > World map): how enemies spawn (world.json > enemies: how many at once, how close a player
-// must be...) and which enemies live in each biome, group by group. The lists are saved in world-enemies.json; a biome that was never
-// changed keeps the game's own lists (world-enemy-defaults.json, written by the server). The server reads both files again by itself.
+// Which half of the open world's enemy settings a WorldEnemiesPage shows (each one is its own tab of Server > World map).
+internal enum WorldEnemiesPart
+{
+    // "Enemies": how enemies spawn (world.json > enemies: how many at once, how close a player must be...).
+    Spawning,
+    // "Enemies of each biome": which enemies live in each biome, group by group.
+    Biomes
+}
+
+// Enemy tabs of the open world (Server > World map): how enemies spawn (world.json > enemies) and which enemies live in each biome. The
+// lists are saved in world-enemies.json; a biome that was never changed keeps the game's own lists (world-enemy-defaults.json, written
+// by the server). The server reads both files again by itself. One class builds both tabs; WorldEnemiesPart says which one is shown.
 internal sealed class WorldEnemiesPage : UserControl
 {
     // One number of world.json > enemies.
@@ -70,9 +79,12 @@ internal sealed class WorldEnemiesPage : UserControl
     private bool fillingRegion;
     private DateTime defaultsStamp = DateTime.MinValue;
 
-    public WorldEnemiesPage(LauncherContext context)
+    private readonly WorldEnemiesPart part;
+
+    public WorldEnemiesPage(LauncherContext context, WorldEnemiesPart part)
     {
         this.context = context;
+        this.part = part;
         ToolTip tip = context.ToolTip;
         // The unit catalog and the pictures come from the editor's assets (normally loaded by the map editor tab).
         if (EditorAssets.Current.Folder.Length == 0) EditorAssets.Load(context.GameFolder);
@@ -152,8 +164,8 @@ internal sealed class WorldEnemiesPage : UserControl
         settingsBody.Controls.Add(numbers);
         Card settingsCard = Ui.Group(L.T("How enemies spawn"), settingsBody);
         settingsCard.AutoSize = false;
-        settingsCard.Dock = DockStyle.Left;
-        settingsCard.Width = 470;
+        settingsCard.Dock = part == WorldEnemiesPart.Spawning ? DockStyle.Left : DockStyle.Fill;
+        settingsCard.Width = 560;
         settingsBody.Dock = DockStyle.Fill;
 
         // ---------------------------------------------------------------- lists
@@ -186,6 +198,9 @@ internal sealed class WorldEnemiesPage : UserControl
         // The picture of each enemy, before its name.
         list.PictureColumn = 2;
         list.PictureOf = UnitThumb;
+        // Tall rows (twice the usual), so the picture of each enemy is big enough to recognize.
+        list.RowHeight = 52;
+        list.PictureSize = 48;
         list.SelectedIndexChanged += (_, _) => UpdateListButtons();
         list.KeyDown += (_, e) =>
         {
@@ -239,17 +254,22 @@ internal sealed class WorldEnemiesPage : UserControl
         listsCard.Dock = DockStyle.Fill;
         listsBody.Dock = DockStyle.Fill;
 
-        Controls.Add(listsCard);
-        Controls.Add(new Panel { Dock = DockStyle.Left, Width = 8 });
-        Controls.Add(settingsCard);
-
-        LoadSettings();
-        LoadLists(false);
+        // Each tab shows one card; the other half is built but never shown nor loaded.
+        if (part == WorldEnemiesPart.Biomes)
+        {
+            Controls.Add(listsCard);
+            LoadLists(false);
+        }
+        else
+        {
+            Controls.Add(settingsCard);
+            LoadSettings();
+        }
 
         // Back on this tab after the server wrote the defaults (it does so when it builds the world): pick them up.
         VisibleChanged += (_, _) =>
         {
-            if (!Visible) return;
+            if (part != WorldEnemiesPart.Biomes || !Visible) return;
             if (!listsDirty && DefaultsStampNow() != defaultsStamp) LoadLists(false);
         };
     }

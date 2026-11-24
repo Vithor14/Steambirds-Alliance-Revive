@@ -1698,7 +1698,7 @@
   "The server did not answer. Is it running the open world?": "",
   "The server has not written the game's enemy lists yet. Start the server once (it builds the open world and writes them).": "",
   "world-enemy-defaults.json is empty.": "",
-  "Settings of the open world (world.json). The server reads the file by itself: if nobody is in the world, the new map is built at once (see the Map tab); with players inside it starts when the world is empty. How enemies spawn and which enemies live in each biome are in the Enemies tab; carriers and the spawn point are in the file itself (Settings tab, Files).": "",
+  "Settings of the open world (world.json). The server reads the file by itself: if nobody is in the world, the new map is built at once (see the Map tab); with players inside it starts when the world is empty. How enemies spawn is in the Enemies tab and which enemies live in each biome in the Enemies of each biome tab; carriers and the spawn point are in the file itself (Settings tab, Files).": "",
   "{0} (+{1} parts)": "",
   "(biome's boss)": "",
   "The game has no boss for this biome": "",
