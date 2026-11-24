@@ -74,6 +74,8 @@ internal sealed class WorldEnemiesPage : UserControl
     {
         this.context = context;
         ToolTip tip = context.ToolTip;
+        // The unit catalog and the pictures come from the editor's assets (normally loaded by the map editor tab).
+        if (EditorAssets.Current.Folder.Length == 0) EditorAssets.Load(context.GameFolder);
 
         // ---------------------------------------------------------------- numbers
         fields = new List<Field>
@@ -181,6 +183,9 @@ internal sealed class WorldEnemiesPage : UserControl
 
         list = Ui.Grid((L.T("Group"), 180), (L.T("Role"), 80), (L.T("Enemy"), 150), (L.T("AI"), 180), (L.T("Tier"), 45), (L.T("Health"), 70));
         list.MultiSelect = true;
+        // The picture of each enemy, before its name.
+        list.PictureColumn = 2;
+        list.PictureOf = UnitThumb;
         list.SelectedIndexChanged += (_, _) => UpdateListButtons();
         list.KeyDown += (_, e) =>
         {
@@ -437,6 +442,15 @@ internal sealed class WorldEnemiesPage : UserControl
         bossBox.Text = boss.Length > 0 ? boss : region.Boss;
 
         Fill();
+    }
+
+    // The small picture of the game unit of a row (a dotted square when the unit has none, so the names stay in line).
+    private static Image? UnitThumb(ListViewItem item, int size)
+    {
+        if (!EditorAssets.Current.HasPictures) return null;
+        string unit = item.Tag is ValueTuple<int, bool, string> tag ? tag.Item3 : "";
+        if (unit.Length == 0) return null;
+        return EditorAssets.Current.PictureOfUnit(unit)?.Thumb(size) ?? AssetPicture.Placeholder(size);
     }
 
     private static string GroupName(WorldEnemyGroup group, int index) => group.Name.Length > 0 ? group.Name : L.F("group {0}", index + 1);

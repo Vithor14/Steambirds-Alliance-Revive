@@ -69,8 +69,13 @@ internal sealed class WorldEnemyPickerForm : Form
         };
         filterBox.TextChanged += (_, _) => Fill();
 
-        list = Ui.Grid((L.T("Unit"), 220), (L.T("Tier"), 50), (L.T("Health"), 80), (L.T("Armed"), 60));
+        list = Ui.Grid((L.T("Unit"), 240), (L.T("Tier"), 50), (L.T("Health"), 80), (L.T("Armed"), 60));
         list.MultiSelect = true;
+        // The picture of each unit, before its name.
+        list.PictureColumn = 0;
+        list.PictureOf = (item, size) => EditorAssets.Current.HasPictures
+            ? EditorAssets.Current.PictureOfUnit((string)item.Tag!)?.Thumb(size) ?? AssetPicture.Placeholder(size)
+            : null;
         list.DoubleClick += (_, _) => Pick();
         list.KeyDown += (_, e) =>
         {

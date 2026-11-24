@@ -50,6 +50,8 @@ Base: `1b6148c` (the last commit of 0.6.0). / Base: `1b6148c` (último commit da
 
 ### Fixes
 
+- **Launcher lists:** rows no longer lose their text when the mouse goes over them (Windows asks for the row alone then, and the list only painted the background there). It fixed every list of the launcher, such as the *Add enemies* window of the open world.
+- **Open world, Enemies tab:** each enemy shows the small picture of its game unit before its name, in the list of the biome and in the *Add enemies* window (needs the editor pictures made by `SteambirdsGameFiles.exe`).
 - **Enemy AI editor:** editing an AI no longer restarts the simulation. The new version takes over and the unit goes on from where it is, in the same state (if that state was removed it starts from the first one); an edit with errors leaves the last good version running. Only the Restart button, or choosing another AI or unit, starts it again.
 - **Map editor, conditions as drop-downs:** *Opens when* of a gate, *Exit opens when*, *Wakes up* of a room and *Appears when* of a group are drop-downs now: pick the kind (a room is cleared, a unit type dies, a quest is done) and what it points to; fields that take several conditions have a button to add more. *Visual effect* of a unit type (and the effect fields of the Enemy AI editor) is a drop-down with the effects of the game client.
 - **Map editor, checkpoints by u or v:** a checkpoint can now work once the plane passes a column (`activeAtU`) instead of a height (`activeAtV`). The line is drawn across the map when the checkpoint is selected. Server: `Maps.Checkpoint.Passed`, used by dungeons and the tutorial; `/room N` uses the checkpoint's own v for a checkpoint by u.
@@ -113,6 +115,8 @@ Base: `1b6148c` (the last commit of 0.6.0). / Base: `1b6148c` (último commit da
 
 ### Correções
 
+- **Listas do launcher:** as linhas não perdem mais o texto quando o mouse passa por cima (o Windows pede só a linha nesse momento, e a lista só pintava o fundo ali). Corrigiu todas as listas do launcher, como a janela *Add enemies* do mundo aberto.
+- **Mundo aberto, aba Enemies:** cada inimigo mostra a miniatura da sua unidade do jogo antes do nome, na lista do bioma e na janela *Add enemies* (precisa das imagens do editor feitas pelo `SteambirdsGameFiles.exe`).
 - **Editor de IA:** editar uma IA não reinicia mais a simulação. A nova versão assume e a unidade continua de onde está, no mesmo estado (se esse estado foi removido, recomeça do primeiro); uma edição com erro deixa a última versão boa rodando. Só o botão Restart, ou escolher outra IA ou unidade, reinicia.
 - **Editor de mapas, condições em dropdown:** *Opens when* do portão, *Exit opens when*, *Wakes up* da sala e *Appears when* do grupo agora são dropdowns: escolha o tipo (uma sala é limpa, um tipo de unidade morre, uma missão é cumprida) e a que ele se refere; os campos que aceitam várias condições têm um botão para adicionar mais. *Visual effect* do tipo de unidade (e os campos de efeito do editor de IA) é um dropdown com os efeitos do cliente do jogo.
 - **Editor de mapas, checkpoint por u ou v:** um checkpoint agora pode valer quando o avião passa de uma coluna (`activeAtU`) em vez de uma altura (`activeAtV`). A linha é desenhada no mapa quando o checkpoint está selecionado. Servidor: `Maps.Checkpoint.Passed`, usado pelas dungeons e pelo tutorial; `/room N` usa o v do próprio checkpoint quando ele é por u.

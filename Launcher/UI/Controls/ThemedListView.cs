@@ -84,27 +84,64 @@ internal sealed class ThemedListView : ListView
             TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
     }
 
+    // Column that shows a small picture before its text, and where the picture comes from (the item and the size in pixels;
+    // null = no picture, the room is kept so the names stay in line).
+    public int PictureColumn { get; set; } = -1;
+    public Func<ListViewItem, int, Image?>? PictureOf { get; set; }
+
+    // The whole row is drawn here. Windows asks for a redraw of the item alone when the mouse goes over it (without the
+    // sub-items), so painting only the background here, and the texts in OnDrawSubItem, made the texts vanish on hover.
     protected override void OnDrawItem(DrawListViewItemEventArgs e)
     {
-        Theme.Palette p = Theme.P;
-        Color back = RowBack(e.Item, e.ItemIndex, p);
-        using var brush = new SolidBrush(back);
-        e.Graphics.FillRectangle(brush, e.Bounds);
+        ListViewItem item = e.Item;
+        int x = e.Bounds.X;
+        for (int i = 0; i < Columns.Count; i++)
+        {
+            int width = Columns[i].Width;
+            if (i >= item.SubItems.Count) break;
+            DrawCell(e.Graphics, item, i, new Rectangle(x, e.Bounds.Y, width, e.Bounds.Height));
+            x += width;
+        }
+        // What is right of the last column (and the gap of a row that has fewer cells than columns).
+        if (x < e.Bounds.Right)
+        {
+            using var brush = new SolidBrush(RowBack(item, e.ItemIndex, Theme.P));
+            e.Graphics.FillRectangle(brush, new Rectangle(x, e.Bounds.Y, e.Bounds.Right - x, e.Bounds.Height));
+        }
     }
 
+    // Drawn again by Windows when it asks for the cells one by one: the same picture as above.
     protected override void OnDrawSubItem(DrawListViewSubItemEventArgs e)
     {
-        Theme.Palette p = Theme.P;
-        ListViewItem item = e.Item!;
-        // The first column's bounds start after the item image: fill it so the stripe has no gap.
-        Color back = RowBack(item, e.ItemIndex, p);
-        using (var brush = new SolidBrush(back)) e.Graphics.FillRectangle(brush, e.Bounds);
+        int index = e.ColumnIndex;
+        int x = e.Item!.Bounds.X;
+        for (int i = 0; i < index && i < Columns.Count; i++) x += Columns[i].Width;
+        DrawCell(e.Graphics, e.Item, index, new Rectangle(x, e.Bounds.Y, Columns[index].Width, e.Bounds.Height));
+    }
 
-        Color fore = item.Selected ? p.SelectionText : e.SubItem?.ForeColor ?? ForeColor;
-        Font font = e.SubItem?.Font ?? Font;
-        Rectangle text = e.Bounds;
+    private void DrawCell(Graphics g, ListViewItem item, int column, Rectangle bounds)
+    {
+        Theme.Palette p = Theme.P;
+        using (var brush = new SolidBrush(RowBack(item, item.Index, p))) g.FillRectangle(brush, bounds);
+
+        ListViewItem.ListViewSubItem sub = item.SubItems[column];
+        Color fore = item.Selected ? p.SelectionText : sub.ForeColor;
+        Rectangle text = bounds;
         text.Inflate(-Dpi.Px(this, 8), 0);
-        TextRenderer.DrawText(e.Graphics, e.SubItem?.Text ?? "", font, text, fore,
+        if (column == PictureColumn && PictureOf != null)
+        {
+            int size = Math.Max(8, Math.Min(bounds.Height - Dpi.Px(this, 4), Dpi.Px(this, 24)));
+            Image? picture = PictureOf(item, size);
+            if (picture != null)
+            {
+                var target = new Rectangle(text.X, bounds.Y + (bounds.Height - size) / 2, size, size);
+                g.DrawImage(picture, target);
+            }
+            int indent = size + Dpi.Px(this, 6);
+            text.X += indent;
+            text.Width = Math.Max(0, text.Width - indent);
+        }
+        TextRenderer.DrawText(g, sub.Text ?? "", sub.Font ?? Font, text, fore,
             TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
     }
 
