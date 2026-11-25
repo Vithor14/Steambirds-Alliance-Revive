@@ -27,7 +27,7 @@ Maintained 100% by the community, with some additions and improvements.
 ## Where things stand
 
 - Version at the last update (24/11/2026): server and launcher **0.7.1**, plugin Steambirds Quieter **1.22.0**, client build
-  **201219.1413**. Release notes: `docs/release-notes-0.7.0.md` (short, for GitHub) and `docs/update-notes-0.7.0.md` (full, English and Portuguese). Patch 0.7.1: `docs/update-notes-0.7.1.md`.
+  **201219.1413**. Release notes: `docs/release-notes-0.7.0.md` (short, for GitHub) and `docs/update-notes-0.7.0.md` (full, English and Portuguese). Patch 0.7.1: `docs/update-notes-0.7.1.md` (full) and `docs/release-notes-0.7.1.md` (short, for GitHub).
 - **`CHECKLIST.md` (repo root) is the source of truth**: done / partial / missing per area, and the suggested MVP order.
   Update it when a feature changes state (keep its Portuguese style) and recompute its summary table (a bullet counts as
   done `- [x]`, partial `- [ ] 🟡` or missing `- [ ]`).

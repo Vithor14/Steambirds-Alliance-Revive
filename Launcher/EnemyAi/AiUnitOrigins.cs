@@ -52,8 +52,10 @@ internal static class AiUnitOrigins
             string name = Path.GetFileNameWithoutExtension(path).Substring("dungeon_".Length);
             var group = new AiUnitGroup(name);
             foreach (AiUnitChoice type in ReadMapTypes(path, L.T("dungeon") + " " + name, armedOnly)) group.Units.Add(type);
+            foreach (AiUnitChoice type in group.Units) type.AiFolder = "dungeons/" + SteambirdsAi.AiCatalog.CleanId(name);
             if (group.Units.Count > 0) dungeons.Children.Add(group);
         }
+        foreach (AiUnitChoice type in tutorial.Units) type.AiFolder = "dungeons/tutorial";
         if (tutorial.Units.Count > 0) dungeons.Children.Insert(0, tutorial);
         if (dungeons.Children.Count > 0) groups.Add(dungeons);
 
@@ -148,7 +150,9 @@ internal static class AiUnitOrigins
                     }
                 }
                 var type = new JsonObject { ["name"] = unit, ["template"] = unit, [EnemyAiEditors.AiField] = ai };
-                group.Units.Add(AiUnits.FromType(unit, type, L.T("world") + " " + region.Key));
+                AiUnitChoice choice = AiUnits.FromType(unit, type, L.T("world") + " " + region.Key);
+                choice.AiFolder = SteambirdsAi.AiCatalog.WorldFolder;
+                group.Units.Add(choice);
             }
             if (group.Units.Count > 0) world.Children.Add(group);
         }

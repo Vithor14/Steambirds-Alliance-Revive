@@ -109,6 +109,10 @@ to get it. Every gun of the unit has a color (HUD list, dimmed when the current 
 that color, so it is clear which gun fired what (`AiSimBullet.Gun`).
 Editing does **not** restart the simulation (24/11/2026): the new version takes over and the unit goes on from where it is (`AiSim.ReplaceBrain` → `AiRuntime.Rebind`: it keeps the state it is in, and the time spent there, when the new version still has a state with that id; otherwise it starts from the initial state). An edit that does not compile leaves the last good version running. Only the Restart button, or picking another AI or unit, starts it again; a behavior alone is simulated as a one-state AI.
 
+**Generic AIs are protected (25/11/2026).** An AI in `brains\generic` (and a behavior file one of them uses) is never changed from the editor: `AiStore.IsProtected` is true for it (it exists on the disk), and `Save`, `Rename`, `Move` and `Delete` refuse it. Loading a unit opens its generic AI as it is; when an edit comes in (`AiTab.OnEdited`), the tab queues `DivertToCopy`, which calls `AiStore.DivertEdits`: the edited tree is cloned into a new unsaved AI **"new {unit} AI"** (id `new_<unit>_ai`, `units` = the unit, origin = `AiUnitChoice.AiFolder`: `dungeons/<dungeon>` for dungeon types, `world` otherwise), and the generic file is read from the disk again (`RestoreFromDisk`). The copy is loaded on the unit and the simulation goes on (`Rebind(restart: false)`). *Save as...* (`AiStore.SaveAs`), *Duplicate*, *Export* (`AiStore.Export(forUnit)`), *New AI* and *Import* (`place`) make the same kind of AI: made for the selected unit, in its folder, never generic.
+
+In *Behavior values* (`AiFields.Behavior`) a movement field is greyed out when the selected `move.mode` does not read it (`EnabledWhen = UsedBy(...)`, the "Uses:" list of each mode in `AiCatalog.MoveModes`; an empty mode counts as `orbit`). `JsonForm.SetEnabled` applies these dependencies again, so a state's own values form does not wake them up when it is switched on.
+
 Unsaved files are kept when the language changes (the tab is rebuilt) and the launcher asks to save before closing.
 
 ## Limits

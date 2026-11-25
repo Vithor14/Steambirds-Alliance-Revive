@@ -28,6 +28,9 @@ internal sealed class AiUnitChoice
     public float AimLead { get; init; }
     public bool FreeAim { get; init; }
 
+    // The folder of server\ai\brains where a new AI made for this unit goes ("dungeons/arena", "world"); set by the unit picker's groups.
+    public string AiFolder { get; set; } = "";
+
     public bool IsType => TypeId.Length > 0;
 }
 

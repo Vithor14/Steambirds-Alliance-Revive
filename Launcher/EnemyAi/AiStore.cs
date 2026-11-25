@@ -131,6 +131,7 @@ internal sealed class AiStore
     public void Save(AiDoc doc)
     {
         if (doc.LoadError != null) throw new InvalidOperationException(doc.LoadError);
+        if (IsProtected(doc)) throw new InvalidOperationException(L.T(ProtectedText));
         doc.Root["format"] = AiCatalog.FormatVersion;
         doc.Root["id"] = doc.Id;
         string path = PathOf(doc);
@@ -147,6 +148,83 @@ internal sealed class AiStore
         {
             if (doc.LoadError == null) Save(doc);
         }
+    }
+
+    // ------------------------------------------------------------------ generic AIs are never overwritten
+
+    public const string ProtectedText = "Generic AIs are never overwritten. Duplicate it, or just edit it: the changes go to a new AI made for the unit.";
+
+    // A generic AI (folder brains\generic) that is on the disk, and a behavior file one of them uses, cannot be changed, renamed, moved,
+    // deleted or saved over from the editor: the server runs them for every unit that has no AI of its own. An edit goes to a copy made for
+    // the unit (DivertEdits); a file that only exists in the launcher (new, not saved yet) is not protected.
+    public bool IsProtected(AiDoc doc)
+    {
+        if (doc.LoadError != null || doc.IsNew || !File.Exists(PathOf(doc))) return false;
+        if (doc.Kind == AiKind.Brain) return AiLibrary.IsGenericOrigin(doc.Origin);
+        return UsedBy(doc).Any(id => Find(AiKind.Brain, id) is { } brain && AiLibrary.IsGenericOrigin(brain.Origin));
+    }
+
+    // Puts the file back as it is on the disk (what the editor changed in memory is dropped).
+    public void RestoreFromDisk(AiDoc doc)
+    {
+        JsonNode? node = JsonNode.Parse(TextFiles.ReadShared(PathOf(doc)), null,
+            new System.Text.Json.JsonDocumentOptions { CommentHandling = System.Text.Json.JsonCommentHandling.Skip, AllowTrailingCommas = true });
+        if (node is not JsonObject fresh) throw new System.Text.Json.JsonException("not a JSON object");
+        doc.Root.Clear();
+        foreach (KeyValuePair<string, JsonNode?> pair in fresh.ToList())
+        {
+            fresh.Remove(pair.Key);
+            doc.Root[pair.Key] = pair.Value;
+        }
+        doc.Dirty = false;
+        Changed?.Invoke();
+    }
+
+    // "new <unit> AI" (or behavior): the name of what a generic file becomes when it is changed or exported for a unit.
+    public static string SpecificName(AiKind kind, string unit)
+    {
+        string who = unit.Length > 0 ? unit : "unit";
+        return kind == AiKind.Brain ? "new " + who + " AI" : "new " + who + " behavior";
+    }
+
+    // The copy of a file made for a unit: it keeps everything (embedded behaviors follow the new id), is listed in "units" so the unit
+    // is offered it, and lives in the folder of the unit (a behavior is a loose file). Nothing is written unless save is true.
+    public AiDoc AddSpecific(AiDoc source, JsonObject root, string name, string unit, string origin, bool save)
+    {
+        var copy = (JsonObject)root.DeepClone();
+        copy["name"] = name;
+        copy["author"] = "";
+        if (source.Kind == AiKind.Brain && unit.Length > 0) copy["units"] = new JsonArray(unit);
+        return Add(source.Kind, name, copy, save, source.Kind == AiKind.Brain ? origin : "");
+    }
+
+    // A protected file was edited in memory: its edits become a new AI made for the unit (unsaved, in the folder of the unit) and
+    // the protected file is read from the disk again, as it was.
+    public AiDoc DivertEdits(AiDoc source, string unit, string origin)
+    {
+        var edited = (JsonObject)source.Root.DeepClone();
+        RestoreFromDisk(source);
+        return AddSpecific(source, edited, SpecificName(source.Kind, unit), unit, origin, false);
+    }
+
+    // "Save as": the open file under a new name, saved now. A generic AI becomes an AI made for the unit; any other keeps its folder.
+    // The original goes back to what is on the disk when it had unsaved changes (they live in the copy now).
+    public AiDoc SaveAs(AiDoc source, string name, string unit, string origin)
+    {
+        var edited = (JsonObject)source.Root.DeepClone();
+        bool generic = source.Kind == AiKind.Brain && AiLibrary.IsGenericOrigin(source.Origin);
+        AiDoc made;
+        if (generic)
+        {
+            made = AddSpecific(source, edited, name, unit, origin, true);
+        }
+        else
+        {
+            edited["name"] = name;
+            made = Add(source.Kind, name, edited, true, source.Kind == AiKind.Brain ? source.Origin : "");
+        }
+        if (source.Dirty && !source.IsNew && File.Exists(PathOf(source))) RestoreFromDisk(source);
+        return made;
     }
 
     // ------------------------------------------------------------------ create, rename, delete
@@ -195,18 +273,27 @@ internal sealed class AiStore
         return doc;
     }
 
-    public AiDoc Duplicate(AiDoc source)
+    // A copy of a generic AI is not generic (it would be protected too): with a place it goes to the folder of the unit and is made for it.
+    public AiDoc Duplicate(AiDoc source, string unit = "", string? origin = null)
     {
         var copy = (JsonObject)source.Root.DeepClone();
         string name = Json.Str(copy, "name");
         copy["name"] = (name.Length > 0 ? name : source.Id) + " (copy)";
-        return Add(source.Kind, source.Id + "_copy", copy, false, source.Origin);
+        string where = source.Origin;
+        if (source.Kind == AiKind.Brain && origin != null && AiLibrary.IsGenericOrigin(source.Origin))
+        {
+            where = origin;
+            copy["author"] = "";
+            if (unit.Length > 0) copy["units"] = new JsonArray(unit);
+        }
+        return Add(source.Kind, source.Id + "_copy", copy, false, where);
     }
 
     // Moves the file to another folder of brains\ (generic, world, dungeons/<name>); the id stays.
     public void Move(AiDoc doc, string origin)
     {
         if (string.Equals(doc.Origin, origin, StringComparison.Ordinal)) return;
+        if (IsProtected(doc)) throw new InvalidOperationException(L.T(ProtectedText));
         string oldPath = PathOf(doc);
         bool onDisk = File.Exists(oldPath) && !doc.IsNew;
         string previous = doc.Origin;
@@ -234,6 +321,7 @@ internal sealed class AiStore
     {
         string id = AiCatalog.CleanId(wantedId);
         if (id.Length == 0 || string.Equals(id, doc.Id, StringComparison.Ordinal)) return;
+        if (IsProtected(doc)) throw new InvalidOperationException(L.T(ProtectedText));
         if (Find(doc.Kind, id) != null && !string.Equals(id, doc.Id, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException(L.F("There is already a file called \"{0}\".", id));
 
@@ -273,6 +361,7 @@ internal sealed class AiStore
     // The file goes to server\_backup\ai-<date> (never deleted for good).
     public void Delete(AiDoc doc)
     {
+        if (IsProtected(doc)) throw new InvalidOperationException(L.T(ProtectedText));
         string path = PathOf(doc);
         if (File.Exists(path) && !doc.IsNew)
         {
@@ -363,14 +452,26 @@ internal sealed class AiStore
     // ------------------------------------------------------------------ sharing
 
     // One file with the brain and the behaviors it uses (or one file with the behavior alone).
-    public void Export(AiDoc doc, string path)
+    // forUnit: a generic AI is written as a new AI made for that unit (what a copy in the list would be), so the file is shared and
+    // imported as a specific AI; the AI in the list is not touched. Returns the id of the AI the file holds.
+    public string Export(AiDoc doc, string path, string forUnit = "", string origin = "")
     {
         var brains = new List<(string, JsonObject)>();
         var behaviors = new List<(string, JsonObject)>();
+        string exportedId = doc.Id;
+        JsonObject exportedRoot = doc.Root;
+        if (doc.Kind == AiKind.Brain && AiLibrary.IsGenericOrigin(doc.Origin) && forUnit.Length > 0)
+        {
+            AiDoc copy = AddSpecific(doc, doc.Root, SpecificName(AiKind.Brain, forUnit), forUnit, origin, false);
+            docs.Remove(copy);
+            Changed?.Invoke();
+            exportedId = copy.Id;
+            exportedRoot = copy.Root;
+        }
         if (doc.Kind == AiKind.Brain)
         {
-            brains.Add((doc.Id, doc.Root));
-            foreach (string id in AiPackage.UsedBehaviors(doc.Root))
+            brains.Add((exportedId, exportedRoot));
+            foreach (string id in AiPackage.UsedBehaviors(exportedRoot))
             {
                 AiDoc? used = Find(AiKind.Behavior, id);
                 if (used != null && used.LoadError == null) behaviors.Add((used.Id, used.Root));
@@ -380,8 +481,9 @@ internal sealed class AiStore
         {
             behaviors.Add((doc.Id, doc.Root));
         }
-        string name = Json.Str(doc.Root, "name").Length > 0 ? Json.Str(doc.Root, "name") : doc.Id;
+        string name = Json.Str(exportedRoot, "name").Length > 0 ? Json.Str(exportedRoot, "name") : exportedId;
         TextFiles.WriteAtomic(path, CompactJson.Write(AiPackage.Build(name, brains, behaviors)), false);
+        return exportedId;
     }
 
     // Reads a file someone shared: a package, or a single brain or behavior file. Nothing is written yet.
@@ -393,7 +495,9 @@ internal sealed class AiStore
     // Adds what a shared file holds. A file whose id already exists gets a new id (nothing of yours is overwritten);
     // the states of imported brains that used a renamed behavior follow it. Returns the documents that were added.
     // save false: the files only exist in the launcher (marked as unsaved) until the user saves them.
-    public List<AiDoc> Import(AiPackage.Contents contents, bool save = true)
+    // place: the folder and the unit the AIs are for. An AI that comes in is never generic (it would be protected at once) and one with
+    // no "units" would be offered to no one.
+    public List<AiDoc> Import(AiPackage.Contents contents, bool save = true, (string Origin, string Unit)? place = null)
     {
         var added = new List<AiDoc>();
         var renamedBehaviors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -411,7 +515,15 @@ internal sealed class AiStore
                 string used = Json.Str(state, "behavior");
                 if (used.Length > 0 && renamedBehaviors.TryGetValue(AiCatalog.CleanId(used), out string? mapped)) state["behavior"] = mapped;
             }
-            added.Add(Add(AiKind.Brain, id, clone, save));
+            if (place != null)
+            {
+                if (place.Value.Unit.Length > 0 && Json.Strings(clone["units"]).Count == 0) clone["units"] = new JsonArray(place.Value.Unit);
+                added.Add(Add(AiKind.Brain, id, clone, save, place.Value.Origin));
+            }
+            else
+            {
+                added.Add(Add(AiKind.Brain, id, clone, save));
+            }
         }
         return added;
     }

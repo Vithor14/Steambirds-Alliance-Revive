@@ -26,34 +26,38 @@ internal static class AiFields
             Help = string.Join("\n", AiCatalog.MoveModes.Select(o => o.Id + ": " + L.T(o.Help)))
         };
         yield return Number("move.speed", "Speed (fraction of top speed)", 0.7, 0, 3, 0.05,
-            "1 = the unit's top speed. Most modes use it.");
+            "1 = the unit's top speed. Most modes use it.", UsedBy("orbit", "approach", "straight", "wander", "flee", "home"));
         yield return new FieldSpec("move.farSpeed", "Speed when far (orbit)", FieldKind.OptionalNumber)
         {
-            Help = "orbit: speed while the player is farther than distance x \"far factor\". Empty = the same speed."
+            Help = "orbit: speed while the player is farther than distance x \"far factor\". Empty = the same speed.",
+            EnabledWhen = UsedBy("orbit")
         };
         yield return Number("move.distance", "Distance", 14, 0, 500, 1,
-            "orbit: radius of the circle around the player. wander: radius of the area around home.");
+            "orbit: radius of the circle around the player. wander: radius of the area around home.", UsedBy("orbit", "wander"));
         yield return Number("move.deviation", "Deviation (degrees)", 30, 0, 180, 5,
-            "orbit: how many degrees ahead along the circle the unit aims. Small = it spirals in slowly, large = it goes around fast.");
-        yield return Number("move.farFactor", "Far factor", 1.6, 1, 20, 0.1, "orbit: \"far\" starts at distance x this value.");
-        yield return Number("move.lead", "Lead (s)", 0, 0, 5, 0.05, "approach: seconds of the player's velocity the unit aims ahead (0 = at the player).");
-        yield return Number("move.interval", "Interval (s)", 5, 0.5, 120, 0.5, "wander: seconds between two destinations.");
+            "orbit: how many degrees ahead along the circle the unit aims. Small = it spirals in slowly, large = it goes around fast.", UsedBy("orbit"));
+        yield return Number("move.farFactor", "Far factor", 1.6, 1, 20, 0.1, "orbit: \"far\" starts at distance x this value.", UsedBy("orbit"));
+        yield return Number("move.lead", "Lead (s)", 0, 0, 5, 0.05, "approach: seconds of the player's velocity the unit aims ahead (0 = at the player).", UsedBy("approach"));
+        yield return Number("move.interval", "Interval (s)", 5, 0.5, 120, 0.5, "wander: seconds between two destinations.", UsedBy("wander"));
         yield return new FieldSpec("move.spin", "Spin (1 right, -1 left, 0 random)", FieldKind.Int)
         {
-            Min = -1, Max = 1, Help = "orbit: 1 goes around clockwise, -1 counter-clockwise, 0 picks at random for each unit."
+            Min = -1, Max = 1, Help = "orbit: 1 goes around clockwise, -1 counter-clockwise, 0 picks at random for each unit.",
+            EnabledWhen = UsedBy("orbit")
         };
         yield return new FieldSpec("move.face", "Face the player (hold)", FieldKind.Bool)
         {
-            DefaultBool = true, Help = "hold: the unit turns to look at the player (a turret)."
+            DefaultBool = true, Help = "hold: the unit turns to look at the player (a turret).",
+            EnabledWhen = UsedBy("hold")
         };
         yield return new FieldSpec("move.builtin", "Built-in flight (builtin)", FieldKind.Choice)
         {
             Choices = () => AiCatalog.BuiltinFlights,
             AllowEmpty = true,
-            Help = "builtin: which flight of the server runs. Empty = the \"behavior\" of the unit type."
+            Help = "builtin: which flight of the server runs. Empty = the \"behavior\" of the unit type.",
+            EnabledWhen = UsedBy("builtin")
         };
         yield return Number("move.speedMult", "Speed multiplier (builtin)", 1, 0.1, 5, 0.1,
-            "builtin: multiplies the speed of the unit (1.2 = a fifth faster than the unit type says).");
+            "builtin: multiplies the speed of the unit (1.2 = a fifth faster than the unit type says).", UsedBy("builtin"));
 
         yield return FieldSpec.Header("Weapons");
         yield return new FieldSpec("fire.enabled", "Shoots", FieldKind.Bool) { DefaultBool = true, Help = "Off = the unit does not shoot in this state." };
@@ -171,10 +175,21 @@ internal static class AiFields
         yield return new FieldSpec("not", "Not (the opposite)", FieldKind.Bool) { Help = "The condition is true when it is NOT met." };
     }
 
-    private static FieldSpec Number(string key, string label, double def, double min, double max, double step, string help)
+    private static FieldSpec Number(string key, string label, double def, double min, double max, double step, string help, Func<JsonObject, bool>? enabledWhen = null)
     {
-        return new FieldSpec(key, label, FieldKind.Number) { Default = def, Min = min, Max = max, Increment = step, Help = help };
+        return new FieldSpec(key, label, FieldKind.Number) { Default = def, Min = min, Max = max, Increment = step, Help = help, EnabledWhen = enabledWhen };
     }
+
+    // The movement mode of a behavior (or of a state with its own values); an empty one is "orbit", like the file reader.
+    private static string ModeOf(JsonObject data)
+    {
+        string mode = Json.Str(Json.ObjOrNull(data, "move"), "mode");
+        return mode.Length > 0 ? mode : "orbit";
+    }
+
+    // A movement field is active only for the modes that read it (the list is the "Uses:" of each mode in AiCatalog.MoveModes);
+    // for the others it is greyed out.
+    private static Func<JsonObject, bool> UsedBy(params string[] modes) => data => modes.Contains(ModeOf(data), StringComparer.Ordinal);
 
     // ------------------------------------------------------------------ list texts
 

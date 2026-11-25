@@ -18,7 +18,7 @@ the launcher read every folder inside `brains\` (and `behaviors\`), so a file ca
 unique across all of them (a second file with the same id is ignored and reported).
 
 - **`units`** (in the AI file): the game units the AI was made for (the `template` of a unit type, e.g. `"units": ["swarmboss"]`). The editors
-  offer an AI only to those units. An AI in `brains\generic` works for any unit and its `units` list is ignored.
+  offer an AI only to those units. An AI in `brains\generic` works for any unit and its `units` list is ignored. The launcher never changes, renames, moves or deletes a generic AI: editing one makes a new AI for the selected unit (`new_<unit>_ai`, in the folder of that unit).
 - **Behaviors** live in two places: as files in `behaviors\` (any AI can pick them), or **embedded** in the AI file, in a
   `"behaviors": [ { "id": "...", "move": { ... } } ]` list: only that AI's states can pick an embedded behavior (it wins over a file with the same id). The launcher names an embedded behavior `<ai id>_<name>` (the prefix follows when the AI is renamed and goes away when the behavior is saved in `behaviors\`), and the library reports an error when an embedded behavior has the id of a behavior file.
 

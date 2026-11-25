@@ -180,6 +180,14 @@ internal static class AiHelp
             "If the id does not exist the server writes a warning in its log and the unit uses its normal built-in behavior. The map check also warns about it.",
             "Typing /brains in the game chat lists the AIs the server loaded."),
 
+        new HelpTopic("Generic AIs are protected",
+            "## Never overwritten",
+            "The AIs of the generic folder (and the behavior files they use) run for every unit that has no AI of its own, so the editor never changes them. A unit that runs one opens it as it is.",
+            "## Editing one",
+            "Change anything and the AI in the editor becomes \"new <unit> AI\": a new AI made for the unit in the simulator, with what you changed, in the folder of that unit (a dungeon, or world). The generic AI stays as it was. The new AI is unsaved until you save it; Save writes it in its folder and the unit is offered it in the AI box.",
+            "## Save as, Duplicate, Export and New",
+            "Save as... saves what is open under the name you type; for a generic AI the result is an AI made for the unit. Duplicate, Export and New AI do the same: what comes out of a generic AI is made for the unit in the simulator, never generic. A generic AI cannot be renamed, moved or deleted from the editor."),
+
         new HelpTopic("Sharing files: import and export",
             "## Export...",
             "Writes one file with the selected AI and every behavior it uses, so it can be sent to someone else in a single file.",
