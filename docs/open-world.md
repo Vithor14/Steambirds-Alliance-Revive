@@ -176,7 +176,7 @@ Launcher: Server > World map > **Enemies** tab (spawn numbers) and **Enemies of 
   then comes alone if it is not a boss of the game) per region in the tab (`regions.<tile>.boss`). Reconstruction: no original boss AI: the
   boss is the unit with the `generic_chase` AI (type `world/boss/<unit>`) and each part or minion another one with `chase` too
   (`world/part/<unit>`), all replaceable in `enemies.json` like the others. The server writes the groups with their parts in
-  `world-enemy-defaults.json` (`bosses`).
+  `world-enemy-defaults.json` (`bosses`). The *Enemies of each biome* tab lists the bosses of the biome (and their parts) after the groups so each can be given an AI (`regions.<tile>.ai`, by unit name, used for the boss and for its parts).
 - **Requests from the launcher.** Right click on the map (a cross marks the point): *Spawn boss here* (submenu with the bosses of the biome
   under the mouse, each with how many parts come along, the biome's boss marked) and *Spawn dungeon carrier here* (submenu with the active
   dungeons of `dungeons.json`); the *Spawn dungeon* button creates a carrier at a random place. The

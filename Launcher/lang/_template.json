@@ -1835,7 +1835,7 @@
   "Goes to the Enemy AI tab with this enemy and its AI loaded, ready to edit and test.": "",
   "AI of the selected enemy:": "",
   "Drops what you changed in this biome (the groups, the boss and the AIs): it goes back to the game's own list.": "",
-  "Each spawn site of a biome picks one of these groups at random: a leader with followers, or one enemy of a solo group. The enemies are the game's units with the generic chase AI; pick another AI for an enemy below (one made for it, or a generic one) and edit AIs in the Enemy AI tab.": "",
+  "Each spawn site of a biome picks one of these groups at random: a leader with followers, or one enemy of a solo group. The enemies are the game's units with the generic chase AI; pick another AI for an enemy below (one made for it, or a generic one) and edit AIs in the Enemy AI tab. The bosses of the biome are listed after the groups, each with its parts and minions; they take an AI the same way.": "",
   "{0}  (not made for this unit)": "",
   "{0}  (made for this unit)": "",
   "Several enemies are selected: only the AIs that fit all of them are listed.": "",
@@ -1937,5 +1937,7 @@
   "Works after the plane passes u = {0}": "",
   "Works after the plane passes v = {0}": "",
   "Effect of the client the unit shows from the start (a shield, a detection ring around a mine...). Empty = none.": "",
-  "- Play / Pause and Restart: stop the arena or start it again from the first state. Editing the AI does not restart it: the new version takes over and the unit goes on from where it is (if its state was deleted, it starts from the first one). Only Restart, or picking another AI or unit, starts the simulation again.": ""
+  "- Play / Pause and Restart: stop the arena or start it again from the first state. Editing the AI does not restart it: the new version takes over and the unit goes on from where it is (if its state was deleted, it starts from the first one). Only Restart, or picking another AI or unit, starts the simulation again.": "",
+  "Boss: {0}": "",
+  "Part": ""
 }

@@ -2215,7 +2215,7 @@
   "Goes to the Enemy AI tab with this enemy and its AI loaded, ready to edit and test.": "Vai para a aba Enemy AI com este inimigo e a IA dele carregados, prontos para editar e testar.",
   "AI of the selected enemy:": "IA do inimigo selecionado:",
   "Drops what you changed in this biome (the groups, the boss and the AIs): it goes back to the game's own list.": "Descarta o que você mudou neste bioma (os grupos, o chefe e as IAs): ele volta à lista do próprio jogo.",
-  "Each spawn site of a biome picks one of these groups at random: a leader with followers, or one enemy of a solo group. The enemies are the game's units with the generic chase AI; pick another AI for an enemy below (one made for it, or a generic one) and edit AIs in the Enemy AI tab.": "Cada ponto de spawn de um bioma sorteia um destes grupos: um líder com seguidores, ou um inimigo de um grupo solo. Os inimigos são as unidades do jogo com a IA genérica de perseguir; escolha abaixo outra IA para um inimigo (uma feita para ele, ou uma genérica) e edite as IAs na aba Enemy AI.",
+  "Each spawn site of a biome picks one of these groups at random: a leader with followers, or one enemy of a solo group. The enemies are the game's units with the generic chase AI; pick another AI for an enemy below (one made for it, or a generic one) and edit AIs in the Enemy AI tab. The bosses of the biome are listed after the groups, each with its parts and minions; they take an AI the same way.": "Cada ponto de spawn de um bioma sorteia um destes grupos: um líder com seguidores, ou um inimigo de um grupo solo. Os inimigos são as unidades do jogo com a IA genérica de perseguir; escolha abaixo outra IA para um inimigo (uma feita para ele, ou uma genérica) e edite as IAs na aba Enemy AI. Os chefes do bioma aparecem depois dos grupos, cada um com suas partes e capangas; eles recebem uma IA do mesmo jeito.",
   "{0}  (not made for this unit)": "{0}  (não foi feita para esta unidade)",
   "{0}  (made for this unit)": "{0}  (feita para esta unidade)",
   "Several enemies are selected: only the AIs that fit all of them are listed.": "Há vários inimigos selecionados: só aparecem as IAs que servem para todos.",
@@ -2315,5 +2315,7 @@
   "The checkpoint works once a plane has passed this u. Used when the checkpoint works by a u line.": "O checkpoint vale quando um avião passa deste u. Usado quando o checkpoint funciona por uma linha u.",
   "Works after the plane passes u = {0}": "Vale depois que o avião passa de u = {0}",
   "Works after the plane passes v = {0}": "Vale depois que o avião passa de v = {0}",
-  "Effect of the client the unit shows from the start (a shield, a detection ring around a mine...). Empty = none.": "Efeito do cliente que a unidade mostra desde o começo (um escudo, um anel de detecção numa mina...). Vazio = nenhum."
+  "Effect of the client the unit shows from the start (a shield, a detection ring around a mine...). Empty = none.": "Efeito do cliente que a unidade mostra desde o começo (um escudo, um anel de detecção numa mina...). Vazio = nenhum.",
+  "Boss: {0}": "Chefe: {0}",
+  "Part": "Parte"
 }

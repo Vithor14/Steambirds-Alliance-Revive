@@ -117,7 +117,8 @@ internal sealed class WorldEnemiesPage : UserControl
         tip.SetToolTip(enabledBox, L.T("Off: the open world is just the map, with no enemies."));
 
         var numbers = Ui.Table(2);
-        numbers.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        // A fixed label column: in a wide window the boxes stay next to their labels instead of at the far right edge.
+        numbers.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 460f));
         numbers.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         numbers.Padding = new Padding(0, 0, 8, 0);
         Ui.AddRow(numbers, enabledBox, null);
@@ -164,8 +165,8 @@ internal sealed class WorldEnemiesPage : UserControl
         settingsBody.Controls.Add(numbers);
         Card settingsCard = Ui.Group(L.T("How enemies spawn"), settingsBody);
         settingsCard.AutoSize = false;
-        settingsCard.Dock = part == WorldEnemiesPart.Spawning ? DockStyle.Left : DockStyle.Fill;
-        settingsCard.Width = 560;
+        // The "Enemies" tab fills the whole window.
+        settingsCard.Dock = DockStyle.Fill;
         settingsBody.Dock = DockStyle.Fill;
 
         // ---------------------------------------------------------------- lists
@@ -236,7 +237,8 @@ internal sealed class WorldEnemiesPage : UserControl
         saveButtons.Dock = DockStyle.Bottom;
 
         hint = Ui.Wrapping(L.T("Each spawn site of a biome picks one of these groups at random: a leader with followers, or one enemy of a solo group. " +
-                               "The enemies are the game's units with the generic chase AI; pick another AI for an enemy below (one made for it, or a generic one) and edit AIs in the Enemy AI tab."), 640, gray: true);
+                               "The enemies are the game's units with the generic chase AI; pick another AI for an enemy below (one made for it, or a generic one) and edit AIs in the Enemy AI tab. " +
+                               "The bosses of the biome are listed after the groups, each with its parts and minions; they take an AI the same way."), 640, gray: true);
         hint.Dock = DockStyle.Bottom;
 
         var listsBody = new Panel { Dock = DockStyle.Fill };
@@ -496,6 +498,7 @@ internal sealed class WorldEnemiesPage : UserControl
             foreach (string member in group.Members)
                 AddRow(g, GroupName(group, g), group.Solo ? L.T("Alone") : L.T("Follower"), false, member, member);
         }
+        AddBossRows(region);
         foreach (ListViewItem item in list.Items)
         {
             if (item.Tag is ValueTuple<int, bool, string> tag && selected.Contains(tag)) item.Selected = true;
@@ -510,6 +513,32 @@ internal sealed class WorldEnemiesPage : UserControl
         int total = groups.Sum(g => g.Leaders.Count + g.Members.Count);
         Ui.SetStatus(listStatus, state + "  " + L.F("{0} group(s), {1} enemy entries.", groups.Count, total), listsDirty ? TextRole.Warn : TextRole.Muted);
         UpdateListButtons();
+    }
+
+    // The rows of the bosses are not part of the host's groups: they have this group number, so they can be given an AI but not removed.
+    private const int BossRowGroup = -1;
+
+    // The bosses of the biome (the ones "Spawn boss here" can create) and the parts and minions that come with each, after the groups.
+    // Their AI is picked like the AI of any other enemy of the biome (the server uses it for the boss and for its parts).
+    private void AddBossRows(WorldEnemyRegion region)
+    {
+        List<WorldBossGroup> bosses = region.Bosses.Count > 0
+            ? region.Bosses.ToList()
+            : region.BossChoices.Select(name => new WorldBossGroup { Name = name }).ToList();
+        string edited = EditOf(region)?.Boss ?? "";
+        string chosen = edited.Length > 0 ? edited : region.Boss;
+        // A boss the host typed that is not one of the game's choices.
+        if (chosen.Length > 0 && !bosses.Any(b => b.Name.Equals(chosen, StringComparison.OrdinalIgnoreCase)))
+            bosses.Add(new WorldBossGroup { Name = chosen });
+
+        foreach (WorldBossGroup boss in bosses)
+        {
+            if (boss.Name.Length == 0) continue;
+            string label = L.F("Boss: {0}", boss.Name);
+            AddRow(BossRowGroup, label, L.T("Boss"), true, boss.Name, boss.Name);
+            foreach (string part in boss.Parts.Distinct(StringComparer.OrdinalIgnoreCase))
+                AddRow(BossRowGroup, label, L.T("Part"), false, part, part);
+        }
     }
 
     private void AddRow(int group, string groupName, string role, bool leader, string enemy, string name)
@@ -537,10 +566,10 @@ internal sealed class WorldEnemiesPage : UserControl
         UpdateAiBox();
         bool has = Current != null;
         addButton.Enabled = has;
-        bool anySelected = list.SelectedItems.Count > 0;
-        removeButton.Enabled = has && SelectedRows().Any(r => r.Name.Length > 0);
-        removeGroupButton.Enabled = has && anySelected;
-        renameGroupButton.Enabled = has && list.SelectedItems.Count > 0 && SelectedRows().Select(r => r.Group).Distinct().Count() == 1;
+        bool anyGroupRow = SelectedRows().Any(r => r.Group >= 0);
+        removeButton.Enabled = has && SelectedRows().Any(r => r.Group >= 0 && r.Name.Length > 0);
+        removeGroupButton.Enabled = has && anyGroupRow;
+        renameGroupButton.Enabled = has && anyGroupRow && SelectedRows().Select(r => r.Group).Distinct().Count() == 1;
         resetButton.Enabled = has && EditOf(Current!) != null;
         saveLists.Enabled = listsDirty;
         undoLists.Enabled = listsDirty;
@@ -586,7 +615,7 @@ internal sealed class WorldEnemiesPage : UserControl
     {
         WorldEnemyRegion? region = Current;
         if (region == null) return;
-        List<(int Group, bool Leader, string Name)> rows = SelectedRows().Where(r => r.Name.Length > 0).ToList();
+        List<(int Group, bool Leader, string Name)> rows = SelectedRows().Where(r => r.Group >= 0 && r.Name.Length > 0).ToList();
         if (rows.Count == 0) return;
 
         List<WorldEnemyGroup> groups = Customize(region);
@@ -604,7 +633,7 @@ internal sealed class WorldEnemiesPage : UserControl
     {
         WorldEnemyRegion? region = Current;
         if (region == null) return;
-        List<int> indexes = SelectedRows().Select(r => r.Group).Distinct().OrderByDescending(i => i).ToList();
+        List<int> indexes = SelectedRows().Select(r => r.Group).Where(i => i >= 0).Distinct().OrderByDescending(i => i).ToList();
         if (indexes.Count == 0) return;
 
         List<WorldEnemyGroup> groups = Customize(region);
