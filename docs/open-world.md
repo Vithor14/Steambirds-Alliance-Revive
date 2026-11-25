@@ -54,9 +54,9 @@ The client has the data structures (`WorldLayout`, `GroundAssetContainer`, `Terr
 
 - The game's units are filed by region: `Units/01 - Beach`, `11/12/13` lowlands, `21/22/23` midlands, `31/32/33` highlands, `41`
   mountains, `51` highmountains. The first digit is the band and the second the variant (`lowlands2` -> `12`). `GRP<n>_x` +
-  `GRP<n>_xleader` are a group, `SLO<n>_x` a solo enemy, `BOS` bosses and their parts (a boss is created only when the host asks, see
+  `GRP<n>_xleader` are a group, `SLO<n>_x` / `SLO-x` / `SOL<n>_x` a solo enemy (so are `SPC`, `HVY`, `XXX_` and `unit_` files: each unit comes alone), `BOS` bosses and their parts (a boss is created only when the host asks, see
   "Lists, bosses and requests" below). Helpers of other units
-  (controllers, grenades, clones, exploders...) are left out by name.
+  (controllers, grenades, clones, exploders...) and what units fire (names ending in missile, bomb, laser, fireball, hammer...) are left out by name.
 - A region has "spawn sites" on a jittered grid (`siteSpacingTiles`). A player within `spawnRadius` makes the site create one
   group (a leader and followers, or one solo) of the region's pool, asleep: it wakes when a player is within `wakeRadius`, or on a hit.
   Farther than `despawnRadius` from every player the group is taken away. After the group dies the site rests
