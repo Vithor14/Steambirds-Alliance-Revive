@@ -132,7 +132,7 @@ The user's scripts are **interactive** (`Read-Host`). Do not run them yourself u
 - `Build plugin.ps1` — builds the plugin and copies it into the game's `BepInEx\plugins`.
 - `Build launcher release.ps1` — builds `Release\SteambirdsLauncher-<version>-win-x64.zip` for GitHub Releases (launcher,
   server, `SteambirdsGameFiles.exe`, plugin, settings, maps; refuses to zip game files, accounts or logs).
-- `Push to GitHub.ps1 "message"` — commit and push.
+- `Push to GitHub.ps1 "message"` — commit on `main` and push `main`. If another branch is checked out, it switches to `main` first and refuses to run while that branch has commits `main` does not. It never creates or pushes another branch.
 - `Clean project.ps1` — removes build output, logs, duplicate copies and other garbage (`-WhatIf` only lists them).
 
 The server is run and the game opened from the launcher (Server and Client tabs; the old `Run server.ps1`, `Run game.ps1`
