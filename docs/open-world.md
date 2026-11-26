@@ -177,6 +177,12 @@ Launcher: Server > World map > **Enemies** tab. Server: `World\WorldEnemyLists.c
   boss is the unit with the `generic_chase` AI (type `world/boss/<unit>`) and each part or minion another one with `chase` too
   (`world/part/<unit>`), all replaceable in `enemies.json` like the others. The server writes the groups with their parts in
   `world-enemy-defaults.json` (`bosses`).
+  A boss the host gave no AI runs the AI of `ai\brains\world` made for it (its `units` lists the boss unit; `Enemies.WorldAiMadeFor`),
+  and the parts that AI summons by itself (the templates of its `summon` types, `Enemies.TemplatesSummonedBy`) are not created with it.
+  When one `BOS` number holds two units the game marks as bosses, each is a boss of its own and each part goes to the boss whose name
+  it shares the longest start with: the Imperial Palace's group held Solaris (`solarissun`, with planets, rings and moon) and the
+  Ambassador (`ufo`, with `ufosaucer`, `ufosaucermini`, `ufohopper`). The Ambassador's AI (`ambassador.json`, a reconstruction from
+  a video) is the first world boss AI: see `Server\ai\brains\world\README.md`.
 - **Requests from the launcher.** Right click on the map (a cross marks the point): *Spawn boss here* (submenu with the bosses of the biome
   under the mouse, each with how many parts come along, the biome's boss marked) and *Spawn dungeon carrier here* (submenu with the active
   dungeons of `dungeons.json`); the *Spawn dungeon* button creates a carrier at a random place. The

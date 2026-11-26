@@ -55,8 +55,26 @@ They are fields of a **state** (`Server\ai\README.md` has the table), done by `B
   room), in its group, with `Enemy.Summoner` set. `summonEvery` repeats it while the state lasts and `summonMax` limits how many
   of its own are alive; the `summonsAtMost` condition counts them (`AiSense.SummonsAlive`, only computed when a state summons or
   a condition asks: `AiBrain.NeedsSummonCount`). In a dungeon map the type is looked up as `<map>/<name>` first, then as `<name>`.
-- **Shield:** while `ShieldOn` the server renews `Enemy.ShieldUntil` every tick (`TakeDamage` ignores damage until then) and shows
-  `shieldEffect` (or `tankShield`) in EFFECTSTATE1; when the state stops asking, `UpdateInstance` puts the normal look back.
+  `summonPlace: around` spreads them evenly on a circle (`summonDistance` away, facing along it); a summon inherits `FreeRoam` from
+  its summoner (open world) and remembers the type name it was summoned as (`Enemy.SummonedAs`), which `siblingsAtMost` filters by
+  (`AiSense.CountSiblings`, `AiBrain.NeedsSiblingCount`). `orbit` with `around: summoner` reads the summoner's position
+  (`AiSense.HasSummoner/SummonerX/SummonerY`, `AiBrain.NeedsSummoner`); a dead summoner falls back to the unit's home.
+- **Path and top speed (25/11/2026):** the `path` move flies `points` (offsets from home) in order (`AiRuntime`, `pathIndex` reset on
+  each state start). `move.topSpeed` replaces the unit's top speed (`AiOutput.TopSpeed`; `Think` and `AiSim` swap `velMax`). The
+  launcher's simulator does not fly the summons, so `around: summoner` circles home there and `siblingsAtMost` is always true.
+- **Spin and locked rings (25/11/2026):** `move.spinRate` and `orbit` with `lock` set `AiOutput.Slide`; `Think` then calls
+  `AiMotion.Slide` instead of `Steer` (moves straight to the destination; the body turns at `SpinRate`, or toward `FaceRot` for a
+  locked guard) and stores the travel heading in `Enemy.MoveDir`, which `WriteFields` uses for the velocity sent to the client
+  (NaN = along `Rot`). A locked guard's place is an angle from the summoner's facing (`AiSense.SummonerRot`), taken on its first tick
+  and kept across states; it skips enemy separation.
+- **Zigzag (25/11/2026):** the `zigzag` move (`AiRuntime`: one dash at a time, `legX/legY`, the side flips each dash and starts at random per unit, the angle is `deviation` plus or minus a random `jitter`) slides with `FaceRot` = the dash heading; `legsDone` counts the finished dashes (and path points) of the state.
+- **Death wrecks (25/11/2026):** a unit type's `deathUnit` (a type, or a game unit registered as `wreck/<unit>`, idle and invulnerable)
+  is created where the unit died, with its facing, and removed after `deathSeconds` (`Enemies.Wrecks.cs`, `Enemy.ExpiresAt` for units
+  that are not allies). A wreck fires its guns all the time it lasts (`Enemy.Wreck`, `FireWreck`): the boss death models share one 0-damage gun, `gargantuaDEATHgun`, which is its burning smoke puffs. When its time is up the wreck is DESTROYED (KillReason DestroyedFromDamage), not faded out: the client plays the unit's `explosionPrefab` only then, and the death models carry the big final explosion (`ufoDEATH`: `ExplosionB_Final`; the `ufo` itself has `planeExplosionEmpty`). The dungeon server's wrecks are destroyed the same way. The wreck can show `deathEffect` (default none) and have a unit state `deathState` (`Enemy.State`, sent as FieldUpdate STATE, mask 128, one byte after the rotation; the client's `UnitScriptAnimator` sets `maneuvering` for any state but Default and Chilling 45-47, and `attacking` while the unit has a server effect). The beams of light and small explosions of the death animations are the client's instant effects (configBinary `instantEffects`, message `ClientInstantEffect` 58535: shortID, fxID = Mono hash of the name, offset x20, scale x10): `explosionBossInitial`, `explosionBossDebris`, `deathAnimation` (animator trigger `death`), `epicDeath1-4`. A wreck queues them (`deathSequence`, default `DefaultDeathSequence`; `Enemy.PendingEffects`, sent by `SendDueEffects` after `UpdateInterest`); the dungeon server's `*DEATH` wrecks call `StartDeathSequence`. Found after ruling out a 20 s life, the gun, `enemyEffects_spinningLight` and unit states (`/wreck UNIT [seconds] [effect] [state]`, `WreckCommand`, plays the sequence too). The open world sets it to `<unit>DEATH` for its bosses when the game has that unit (`EnsureBossType`).
+- **Shield:** while `ShieldOn` the server renews `Enemy.ShieldUntil` every tick (`TakeDamage` ignores damage until then) and
+  sends the game's shielded glow (`Entity.FLAG_SHIELDED` = 2048 in FieldUpdate FLAGS, mask 2048; `Enemies.Messages.cs` `StatusFlags`),
+  plus `shieldEffect` in EFFECTSTATE1 when it is set; when the state stops asking, the flag is cleared and `UpdateInstance` puts the normal look back.
+  A unit type with `invulnerable` and `shieldedLook` shows the same glow while it is invulnerable.
 - **Look:** `effect` sets `Enemy.BaseEffect` from this state on. **Homing:** `homing` sets `Enemy.Homing`.
 - **Phases:** a phase is a state that a `healthBelow` transition leads to; nothing else is special. The old `phases` of the unit
   types (`BossPhase`, `ApplyPhases`, `barks.phase` of the dungeon server) are gone: a one-off script converted the 24 bosses of

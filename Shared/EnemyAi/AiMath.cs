@@ -67,6 +67,35 @@ public static class AiMotion
             y += MathF.Cos(rot * AiMath.Rad) * vel * dt;
         }
     }
+
+    // A unit that does not fly nose first (AiOutput.Slide): it moves straight to the destination (never past it) and its body turns
+    // on its own: toward faceRot (at most maxTurn degrees per second) when it is a number, otherwise spinRate degrees per second.
+    // moveDir = the heading it moves along (for the velocity sent to the client).
+    public static void Slide(ref float x, ref float y, ref float rot, ref float vel, out float moveDir, float targetX, float targetY,
+        float targetVel, float velMax, float maxTurn, float spinRate, float faceRot, float dt)
+    {
+        if (!float.IsNaN(faceRot))
+        {
+            float turn = maxTurn * dt;
+            rot = AiMath.NormalizeAngle(rot + Math.Clamp(AiMath.AngleDifference(rot, faceRot), -turn, turn));
+        }
+        else
+        {
+            rot = AiMath.NormalizeAngle(rot + spinRate * dt);
+        }
+
+        float left = AiMath.Distance(x, y, targetX, targetY);
+        moveDir = left > 0.0001f ? AiMath.Heading(x, y, targetX, targetY) : rot;
+        // Twice the acceleration of a plane: a slide is a short dash (a zigzag) or a place to keep, and must get there sharply.
+        float accel = Math.Max(3f, velMax * 3f) * dt;
+        vel = AiMath.Approach(vel, Math.Clamp(targetVel, 0f, Math.Max(0f, velMax)), accel);
+        float step = Math.Min(vel * dt, left);
+        if (step <= 0f) return;
+        x += MathF.Sin(moveDir * AiMath.Rad) * step;
+        y += MathF.Cos(moveDir * AiMath.Rad) * step;
+        // Arrived: it stops there (no drift past the point, and the next state starts from rest).
+        if (step >= left) vel = 0f;
+    }
 }
 
 // Where one gun points for its next shot (the game's FireMode patterns). Same logic as the client's GunMountInfo.

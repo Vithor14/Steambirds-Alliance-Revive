@@ -1,0 +1,20 @@
+{
+  "format": 1,
+  "id": "ambassador_cat",
+  "name": "Ambassador: cat representative",
+  "author": "Steambirds Revive",
+  "description": "Summoned by the Ambassador in its first phase (3 of them, evenly spaced, close to it). Fixed to the Ambassador's body 4.5 units from its center, it circles with it as the boss turns, facing the way it circles (faceForward), shooting (its laser, fast line and spinner; not the big slow circles). Shielded for its first 5.5 seconds. Reconstruction from a video.",
+  "units": ["ufosaucer", "ufosaucermini"],
+  "initial": "guard",
+  "states": [
+    {
+      "id": "guard",
+      "graphX": 40,
+      "graphY": 40,
+      "move": { "mode": "orbit", "around": "summoner", "lock": true, "distance": 4.5, "faceForward": true, "speed": 0.6 },
+      "fire": { "enabled": true, "guns": [0, 3, 4], "range": 30 },
+      "shield": true,
+      "shieldSeconds": 5.5
+    }
+  ]
+}

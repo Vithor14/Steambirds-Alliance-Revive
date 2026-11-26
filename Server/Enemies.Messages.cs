@@ -40,9 +40,11 @@ public static partial class Enemies
                 m.Write((short)0);                                      // artReplacement
                 m.Write(inst.Server.UniqueIdentifier);                // authority = server
                 m.WriteVariableInt32(0);                                // null unitOptions (GenericUnit does not read options)
-                WriteFields(m, enemy, true, enemy.EffectId != 0);
+                uint flags = StatusFlags(enemy, now);
+                WriteFields(m, enemy, true, enemy.EffectId != 0, null, flags != 0 ? flags : null);
                 if (only == null)
                 {
+                    enemy.FlagsSent = flags;
                     enemy.EffectChanged = false;
                     enemy.HealthChanged = false;
                     enemy.LastHealthSent = now;
@@ -78,8 +80,11 @@ public static partial class Enemies
         {
             bool withHealth = enemy.HealthChanged || now - enemy.LastHealthSent > 2.0;
             bool withEffect = enemy.EffectChanged;
-            items.Add(new UnitUpdate(enemy, withHealth, withEffect, BuildGunSignal(inst, enemy, now)));
+            uint flags = StatusFlags(enemy, now);
+            uint? withFlags = flags != enemy.FlagsSent ? flags : null;
+            items.Add(new UnitUpdate(enemy, withHealth, withEffect, BuildGunSignal(inst, enemy, now), withFlags));
             enemy.EffectChanged = false;
+            enemy.FlagsSent = flags;
             if (withHealth)
             {
                 enemy.HealthChanged = false;
@@ -101,7 +106,17 @@ public static partial class Enemies
         }
     }
 
-    private readonly record struct UnitUpdate(Enemy Enemy, bool WithHealth, bool WithEffect, byte[]? Guns);
+    private readonly record struct UnitUpdate(Enemy Enemy, bool WithHealth, bool WithEffect, byte[]? Guns, uint? Flags);
+
+    // Entity flags of the client (Entity.FLAG_*), sent in FieldUpdate FLAGS. FLAG_SHIELDED (2048) gives the unit the game's
+    // shielded look (EffectTypeVisual.Shielded: a pink glow rising over the whole model) while it ignores damage.
+    private const uint FlagShielded = 2048u;
+
+    private static uint StatusFlags(Enemy enemy, double now)
+    {
+        bool shielded = now < enemy.ShieldUntil || (enemy.Invulnerable && enemy.Type.ShieldedLook);
+        return shielded ? FlagShielded : 0u;
+    }
 
     private static void WriteUpdateBatch(Instance inst, NetConnection? only, List<UnitUpdate> items, double now)
     {
@@ -112,7 +127,7 @@ public static partial class Enemies
         {
             m.WriteVariableInt32(item.Enemy.ShortId);
             m.Write((byte)0);
-            WriteFields(m, item.Enemy, item.WithHealth, item.WithEffect, item.Guns);
+            WriteFields(m, item.Enemy, item.WithHealth, item.WithEffect, item.Guns, item.Flags);
         }
         m.Write((float)now);
         Broadcast(inst, m, only);
@@ -121,12 +136,20 @@ public static partial class Enemies
     // FieldUpdateSerializer.Write: mask, then position (x1024), velocity (x1024), rotation (x32), health (x512, fraction).
     // withEffect: also the visual effect (EFFECTSTATE1 = 8192, short id; 0 turns it off). The client reads the fields in
     // the order of FieldUpdateSerializer: position, velocity, rotation, (aim, state), health, ..., effect state 1.
+    // flags: FIELDMASK_FLAGS (2048), the Entity.FLAG_* bits (StatusFlags; 0 clears them); null = nothing to say.
     // guns: FIELDMASK_GUNS (4096), the angle of each turret (Enemies.Guns.cs); null = nothing to say.
-    private static void WriteFields(NetBuffer m, Enemy enemy, bool withHealth, bool withEffect = false, byte[]? guns = null)
+    private static void WriteFields(NetBuffer m, Enemy enemy, bool withHealth, bool withEffect = false, byte[]? guns = null,
+        uint? flags = null)
     {
-        uint mask = 1u | 2u | 4u | (withHealth ? 8u : 0u) | (guns != null ? 4096u : 0u) | (withEffect ? 8192u : 0u);
-        float vx = MathF.Sin(enemy.Rot * Rad) * enemy.Vel;
-        float vy = MathF.Cos(enemy.Rot * Rad) * enemy.Vel;
+        // STATE (128): the unit's UnitScript.States byte. Sent while it is not Default (and once more when it goes back to 0): the
+        // client's UnitScriptAnimator plays its "maneuvering" animations for any state but Default and Chilling (45-47).
+        bool withState = enemy.State != 0 || enemy.StateSent != 0;
+        uint mask = 1u | 2u | 4u | (withState ? 128u : 0u) | (withHealth ? 8u : 0u) | (flags.HasValue ? 2048u : 0u) |
+            (guns != null ? 4096u : 0u) | (withEffect ? 8192u : 0u);
+        // A sliding unit moves along MoveDir, not where it points.
+        float heading = float.IsNaN(enemy.MoveDir) ? enemy.Rot : enemy.MoveDir;
+        float vx = MathF.Sin(heading * Rad) * enemy.Vel;
+        float vy = MathF.Cos(heading * Rad) * enemy.Vel;
 
         m.WriteVariableUInt32(mask);
         WriteScaled(m, enemy.X, 1024f);
@@ -134,7 +157,13 @@ public static partial class Enemies
         WriteScaled(m, vx, 1024f);
         WriteScaled(m, vy, 1024f);
         WriteScaled(m, NormalizeAngle(enemy.Rot), 32f);
+        if (withState)
+        {
+            m.Write(enemy.State);
+            enemy.StateSent = enemy.State;
+        }
         if (withHealth) WriteScaled(m, Math.Clamp(enemy.Health / enemy.MaxHp, 0f, 1f), 512f);
+        if (flags.HasValue) m.WriteVariableUInt32(flags.Value);
         if (guns != null)
         {
             m.WriteVariableInt32(guns.Length);

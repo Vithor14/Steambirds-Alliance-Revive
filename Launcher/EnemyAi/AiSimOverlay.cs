@@ -149,6 +149,8 @@ internal static class AiSimOverlay
             "facingTarget" => L.F("facing the player (within {0} degrees)", v),
             "hasTarget" => L.T("has a player"),
             "summonsAtMost" => L.F("summons alive at most {0}", v),
+            "siblingsAtMost" => L.F("other summons of its summoner alive at most {0}", v),
+            "legsDone" => L.F("at least {0} dashes done", v),
             "chance" => L.F("chance {0} per second", v),
             _ => e.Type + " " + v
         };

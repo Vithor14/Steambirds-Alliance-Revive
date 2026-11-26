@@ -13,8 +13,15 @@
   // generic_turret, generic_patrol, generic_escort, generic_idle, generic_fixed) are the old built-in flights as AI files; they still
   // use the type's aggroRadius and preferredDistance. A boss with phases is an AI with a state per phase: see ai\README.md.
   // A value of 0 in health, shotRange etc. means "use the game's value".
-  // "team": 2 = enemy (default), 1 = player's ally. "invulnerable": ignores damage.
+  // "team": 2 = enemy (default), 1 = player's ally. "invulnerable": ignores damage. "shieldedLook": while invulnerable, shows
+  // the game's pink shielded glow (for a boss that cannot be hurt yet; leave it off for walls and scenery).
   // "opensAfterHitSeconds": seconds for a chest to open after the first hit. "freeRoam": flies outside the room.
+  // "deathUnit": a unit type or a game unit left where the unit dies (a "*DEATH" model plays the death animation, e.g. "ufoDEATH");
+  // it does not move or take damage, fires its guns (the burning of a death model) and is destroyed after "deathSeconds" (0 = 6 s),
+  // which plays its explosion. "deathSequence": the client's instant effects played on it, as "SECONDS EFFECT" (missing = the game's
+  // boss death for a "*DEATH" model: explosionBossInitial, explosionBossDebris, deathAnimation at once, then epicDeath1-4 over 6 s;
+  // [] = none). "deathEffect": a stateful effect on it (empty = none). "deathState": its unit state (a number or a UnitScript.States
+  // name; empty = Default). Dungeon maps use their own "onDeath" (a "*DEATH" wreck there plays the same death sequence).
 
   "chatWarnings": true,
 
@@ -197,7 +204,19 @@
     "ai_charger":    { "name": "AI Charger",    "template": "auto:medium", "ai": "charger" },
     "ai_skirmisher": { "name": "AI Skirmisher", "template": "auto:medium", "ai": "skirmisher", "freeAim": true },
     "ai_sentry":     { "name": "AI Sentry",     "template": "auto:turret", "ai": "sentry", "freeAim": true },
-    "ai_berserker":  { "name": "AI Berserker",  "template": "auto:strong", "ai": "berserker", "freeAim": true }
+    "ai_berserker":  { "name": "AI Berserker",  "template": "auto:strong", "ai": "berserker", "freeAim": true },
+    // The open world's Inquisitor (highmountainhunter) with its chase AI, to test it anywhere: /enemy ai_inquisitor
+    "ai_inquisitor": { "name": "AI Inquisitor", "template": "highmountainhunter", "ai": "inquisitor_chase" },
+
+    // The Ambassador (world boss "ufo" of the Imperial Palace) and the units its AI summons (ai\brains\world\ambassador*.json).
+    // The open world gives the ufo boss the "ambassador" AI by itself; /enemy ai_ambassador creates one anywhere to test it.
+    // deathUnit: the game's death model plays the death animation where it falls (the open world adds it to its bosses by itself).
+    // Inner ring: the pink ufosaucer (its side guns fire through the boss); outer ring: the orange ufosaucermini.
+    "ai_ambassador":        { "name": "Ambassador", "template": "ufo", "ai": "ambassador", "boss": true, "deathUnit": "ufoDEATH" },
+    "ambassador_cat":       { "name": "Cat Representative", "template": "ufosaucer", "ai": "ambassador_cat" },
+    "ambassador_cat_inner": { "name": "Cat Representative", "template": "ufosaucer", "ai": "ambassador_cat_inner" },
+    "ambassador_cat_outer": { "name": "Cat Representative", "template": "ufosaucermini", "ai": "ambassador_cat_outer" },
+    "ambassador_diplomat":  { "name": "Diplomat", "template": "ufohopper", "ai": "ambassador_diplomat" }
   },
 
   // Encounters: sequences of waves. In the tutorial none starts by itself (the Tutorial script is in charge);

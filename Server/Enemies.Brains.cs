@@ -114,6 +114,18 @@ public static partial class Enemies
             Now = now, Dt = dt, LastHitAt = enemy.LastDamagedAt,
             SummonsAlive = ai.Brain.NeedsSummonCount ? CountSummons(inst, enemy) : 0
         };
+        // The summoner, while it is still alive (a dead one leaves the dictionary; its id may be reused by another unit).
+        Enemy? summoner = enemy.Summoner != null && inst.Enemies.TryGetValue(enemy.Summoner.ShortId, out Enemy? found) &&
+                          ReferenceEquals(found, enemy.Summoner) ? found : null;
+        if (ai.Brain.NeedsSummoner && summoner != null)
+        {
+            sense.HasSummoner = true;
+            sense.SummonerX = summoner.X;
+            sense.SummonerY = summoner.Y;
+            sense.SummonerRot = summoner.Rot;
+        }
+        if (ai.Brain.NeedsSiblingCount && enemy.Summoner != null)
+            sense.CountSiblings = unit => CountSiblings(inst, enemy, unit);
         AiOutput o = ai.Step(sense);
 
         if (o.Entered)
@@ -143,7 +155,9 @@ public static partial class Enemies
         if (o.ShieldOn)
         {
             enemy.ShieldUntil = now + 0.35;
-            short effect = MonoHash.StatefulEffectId(o.ShieldEffect.Length > 0 ? o.ShieldEffect : "tankShield");
+            // The shield itself shows as the game's shielded glow (FLAG_SHIELDED, Enemies.Messages.cs StatusFlags);
+            // shieldEffect adds a client effect on top of it while it lasts. Empty = the unit keeps its normal effect.
+            short effect = o.ShieldEffect.Length > 0 ? MonoHash.StatefulEffectId(o.ShieldEffect) : enemy.BaseEffect;
             if (effect != enemy.EffectId)
             {
                 enemy.EffectId = effect;
@@ -151,7 +165,7 @@ public static partial class Enemies
             }
         }
 
-        foreach (AiSummonOrder order in o.Summons) SummonUnits(inst, enemy, order.Type, order.Count, now, log);
+        foreach (AiSummonOrder order in o.Summons) SummonUnits(inst, enemy, order, now, log);
         return o;
     }
 
@@ -160,6 +174,20 @@ public static partial class Enemies
         int alive = 0;
         foreach (Enemy other in inst.Enemies.Values)
             if (ReferenceEquals(other.Summoner, enemy)) alive++;
+        return alive;
+    }
+
+    // siblingsAtMost: the other live units summoned by the same summoner (only those summoned as "unit" when it is not empty).
+    // Counted whether or not the summoner is still alive.
+    private static int CountSiblings(Instance inst, Enemy enemy, string unit)
+    {
+        int alive = 0;
+        foreach (Enemy other in inst.Enemies.Values)
+        {
+            if (ReferenceEquals(other, enemy) || !ReferenceEquals(other.Summoner, enemy.Summoner)) continue;
+            if (unit.Length > 0 && !string.Equals(other.SummonedAs, unit, StringComparison.OrdinalIgnoreCase)) continue;
+            alive++;
+        }
         return alive;
     }
 
@@ -177,9 +205,13 @@ public static partial class Enemies
         return GetEnemyType(name);
     }
 
-    // Creates "count" units behind the summoner (they stay in its group and room, so a script counts them together).
-    private static void SummonUnits(Instance inst, Enemy enemy, string typeName, int count, double now, Action<string, string>? log)
+    // Creates the units of a summon behind the summoner, or evenly spaced on a circle around it (they stay in its group and room,
+    // so a script counts them together).
+    private static void SummonUnits(Instance inst, Enemy enemy, AiSummonOrder order, double now, Action<string, string>? log)
     {
+        string typeName = order.Type;
+        int count = order.Count;
+        float distance = order.Distance > 0f ? order.Distance : 5f;
         EnemyType? type = FindSummonType(enemy, typeName, out string key);
         if (type == null)
         {
@@ -192,20 +224,58 @@ public static partial class Enemies
         count = Math.Clamp(count, 1, 10);
         for (int i = 0; i < count; i++)
         {
-            float a = (enemy.Rot + 180f + (i - (count - 1) * 0.5f) * 40f) * Rad;
-            float x = enemy.X + MathF.Sin(a) * 5f;
-            float y = enemy.Y + MathF.Cos(a) * 5f;
+            float a = (order.Around
+                ? enemy.Rot + 180f + order.Angle + i * 360f / count
+                : enemy.Rot + 180f + (i - (count - 1) * 0.5f) * 40f) * Rad;
+            float x = enemy.X + MathF.Sin(a) * distance;
+            float y = enemy.Y + MathF.Cos(a) * distance;
             ConfineTo(enemy.Area, false, ref x, ref y, DestMargin);
             Enemy? fresh = CreateEnemy(inst, key, type, x, y, enemy.FromWave, now, log ?? ((_, _) => { }));
             if (fresh == null) continue;
             fresh.Group = enemy.Group;
             fresh.Area = enemy.Area;
+            fresh.FreeRoam = fresh.FreeRoam || enemy.FreeRoam;
             fresh.Summoner = enemy;
+            fresh.SummonedAs = typeName;
+            if (order.Around)
+            {
+                // Facing along the circle (clockwise), so an orbit around the summoner starts without a U-turn.
+                fresh.Rot = NormalizeAngle(a / Rad + 90f);
+            }
             summoned.Add(fresh);
         }
         if (summoned.Count == 0) return;
         SendSpawns(inst, summoned, now);
         log?.Invoke("ENEMY", inst.Role + " " + Describe(enemy) + " summoned " + summoned.Count + " x " + key);
+    }
+
+    // An AI of brains\world made for this game unit (its "units" list names it), or null. The first by id when there are several.
+    public static string? WorldAiMadeFor(string template)
+    {
+        foreach (KeyValuePair<string, AiBrainFile> pair in aiLibrary.BrainFiles.OrderBy(p => p.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            if (!aiLibrary.BrainOrigins.TryGetValue(pair.Key, out string? origin) ||
+                !string.Equals(origin, AiCatalog.WorldFolder, StringComparison.OrdinalIgnoreCase)) continue;
+            if (!aiLibrary.Brains.ContainsKey(pair.Key)) continue;
+            if (AiLibrary.Applies(false, pair.Value.Units, new[] { template })) return pair.Key;
+        }
+        return null;
+    }
+
+    // The game units (templates) an AI summons by itself: the templates of the types its states name in "summon". The open world
+    // does not create those as parts of a boss that runs this AI (the AI brings them when the fight asks for them).
+    public static HashSet<string> TemplatesSummonedBy(string? aiId)
+    {
+        var templates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        AiBrain? brain = aiLibrary.Get(aiId);
+        if (brain == null) return templates;
+        foreach (AiCompiledState state in brain.States)
+        {
+            if (state.SummonType.Length == 0) continue;
+            EnemyType? type = GetEnemyType(state.SummonType);
+            if (type != null && !string.IsNullOrWhiteSpace(type.Template)) templates.Add(type.Template.Trim());
+        }
+        return templates;
     }
 
     // /brains: the AIs of the folder and the state of the ones flying now.

@@ -34,6 +34,10 @@ public sealed class AiCompiledState
     public int SummonCount = 1;
     public float SummonEvery;
     public int SummonMax;
+    // Summons placed evenly on a circle around the summoner (false = behind it), at SummonDistance units.
+    public bool SummonAround;
+    public float SummonDistance = 5f;
+    public float SummonAngle;
     public bool Shield;
     public float ShieldSeconds;
     public string ShieldEffect = "";
@@ -56,6 +60,10 @@ public sealed class AiBrain
     public int Initial;
     // Some state summons units or a condition counts them: the caller must fill AiSense.SummonsAlive.
     public bool NeedsSummonCount;
+    // A condition counts the other summons of this unit's summoner (siblingsAtMost): the caller must fill AiSense.CountSiblings.
+    public bool NeedsSiblingCount;
+    // A state circles the summoner (orbit around "summoner"): the caller must fill AiSense.HasSummoner / SummonerX / SummonerY.
+    public bool NeedsSummoner;
     public AiCompiledState[] States = Array.Empty<AiCompiledState>();
 
     public int IndexOf(string stateId)
@@ -265,6 +273,14 @@ public sealed class AiLibrary
             !AiCatalog.BuiltinFlights.Contains((move.Builtin ?? "").Trim().ToLowerInvariant()))
             problems.Add(new AiProblem(true, where, "unknown built-in flight \"" + move.Builtin + "\""));
         if (move.SpeedMult <= 0f) problems.Add(new AiProblem(false, where, "speedMult 0 or less"));
+        if (move.TurnMult <= 0f) problems.Add(new AiProblem(false, where, "turnMult 0 or less"));
+        if (move.TopSpeed < 0f) problems.Add(new AiProblem(false, where, "negative topSpeed"));
+        if (move.Lock && (!string.Equals(move.Mode, "orbit", StringComparison.Ordinal) || AiCatalog.OrbitCenterOf(move) == "player"))
+            problems.Add(new AiProblem(false, where, "lock only works in an orbit around the summoner or home: it is ignored"));
+        if (!AiCatalog.OrbitCenters.Contains((move.Around ?? "player").Trim().ToLowerInvariant()))
+            problems.Add(new AiProblem(false, where, "unknown \"around\" \"" + move.Around + "\": the player is used"));
+        if (string.Equals(move.Mode, "path", StringComparison.Ordinal) && (move.Points == null || move.Points.Count(p => p != null) == 0))
+            problems.Add(new AiProblem(true, where, "path with no points: the unit stays still"));
     }
 
     private static void CheckFire(List<AiProblem> problems, string where, AiFire? fire)
@@ -323,6 +339,9 @@ public sealed class AiLibrary
                 SummonCount = Math.Clamp(s.SummonCount, 1, 10),
                 SummonEvery = Math.Max(0f, s.SummonEvery),
                 SummonMax = Math.Max(0, s.SummonMax),
+                SummonAround = string.Equals(s.SummonPlace?.Trim(), "around", StringComparison.OrdinalIgnoreCase),
+                SummonDistance = s.SummonDistance > 0f ? Math.Min(s.SummonDistance, 60f) : 5f,
+                SummonAngle = s.SummonAngle,
                 Shield = s.Shield,
                 ShieldSeconds = Math.Max(0f, s.ShieldSeconds),
                 ShieldEffect = (s.ShieldEffect ?? "").Trim(),
@@ -332,6 +351,9 @@ public sealed class AiLibrary
             };
             if (s.SummonCount > 10) problems.Add(new AiProblem(false, stateWhere, "summons at most 10 units at a time: 10 are used"));
             if (run.SummonEvery > 0f && run.SummonEvery < 0.5f) run.SummonEvery = 0.5f;
+            if (!string.IsNullOrWhiteSpace(s.SummonPlace) && !run.SummonAround &&
+                !string.Equals(s.SummonPlace.Trim(), "behind", StringComparison.OrdinalIgnoreCase))
+                problems.Add(new AiProblem(false, stateWhere, "unknown summonPlace \"" + s.SummonPlace + "\": behind is used"));
 
             AiMove? move = s.Move;
             AiFire? fire = s.Fire;
@@ -394,6 +416,8 @@ public sealed class AiLibrary
         }
 
         brain.NeedsSummonCount = brain.States.Any(st => st.SummonType.Length > 0 || st.Transitions.Any(tr => tr.When.Any(c => c.Type == "summonsAtMost")));
+        brain.NeedsSiblingCount = brain.States.Any(st => st.Transitions.Any(tr => tr.When.Any(c => c.Type == "siblingsAtMost")));
+        brain.NeedsSummoner = brain.States.Any(st => st.Move.Mode == "orbit" && AiCatalog.OrbitCenterOf(st.Move) == "summoner");
         brain.Initial = brain.IndexOf(file.Initial ?? "");
         if (brain.Initial < 0)
         {

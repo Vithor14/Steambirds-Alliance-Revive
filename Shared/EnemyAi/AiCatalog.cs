@@ -32,7 +32,11 @@ public static class AiCatalog
     public static readonly AiOption[] MoveModes =
     {
         new AiOption("orbit", "Orbit the player",
-            "Flies to a circle around the player and goes around it. Far away it approaches in a straight line. Uses: distance, deviation, speed, farSpeed, farFactor, spin."),
+            "Flies to a circle around the player (or around its summoner or its home, see \"around\") and goes around it. Far away it approaches in a straight line. Uses: around, distance, deviation, speed, farSpeed, farFactor, spin."),
+        new AiOption("path", "Fly a path",
+            "Flies through a list of points in order (offsets from where the unit was born) and, with loop on, starts again from the first. Without loop it stops at the last point. Uses: points, loop, speed."),
+        new AiOption("zigzag", "Zigzag toward the player",
+            "Straight dashes of \"distance\" units, \"deviation\" degrees to one side of the line to the player and then to the other, facing each dash (a hummingbird closing in). Close to the player the dashes go wider, across. Uses: distance, deviation, jitter, pause, speed, turnMult."),
         new AiOption("approach", "Go for the player",
             "Flies straight at the player, a little ahead of where the plane is going. Uses: speed, lead."),
         new AiOption("straight", "Keep going straight",
@@ -69,8 +73,21 @@ public static class AiCatalog
         new AiOption("facingTarget", "Facing the player (degrees)", "True when the player is inside this angle in front of the unit."),
         new AiOption("summonsAtMost", "Own summons alive at most",
             "True when the units this unit summoned that are still alive number at most this value (0 = all of them are dead)."),
+        new AiOption("legsDone", "Dashes done at least",
+            "True once the unit finished this many zigzag dashes (or reached this many points of a path) in this state."),
+        new AiOption("siblingsAtMost", "Summoner's other summons alive at most",
+            "For a summoned unit: true when the other units its summoner summoned that are still alive number at most this value (0 = all of them are dead). With \"unit\", only units of that type count. True when the unit was not summoned."),
         new AiOption("chance", "Chance per second (0-1)", "Every second the transition happens with this probability (0.5 = about once every two seconds).")
     };
+
+    // What an orbit can circle (move.around).
+    public static readonly string[] OrbitCenters = { "player", "summoner", "home" };
+
+    public static string OrbitCenterOf(AiMove move)
+    {
+        string around = (move.Around ?? "").Trim().ToLowerInvariant();
+        return OrbitCenters.Contains(around) ? around : "player";
+    }
 
     public static bool IsMoveMode(string? id) => MoveModes.Any(o => string.Equals(o.Id, id, StringComparison.Ordinal));
 

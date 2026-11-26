@@ -169,8 +169,11 @@ public static partial class WorldServer
         }
         int created = 0;
         double offset = random.NextDouble() * Math.PI * 2.0;
+        // Minions the boss's AI summons by itself (the Ambassador's cats and diplomats) are not created up front.
+        HashSet<string> summonedByAi = Enemies.TemplatesSummonedBy(BossAi(region.Name, bossGroup.Name, true));
         for (int i = 0; i < bossGroup.Parts.Count; i++)
         {
+            if (summonedByAi.Contains(bossGroup.Parts[i])) continue;
             // Spread on a ring around the boss (a second ring when there are many), on free land when there is some.
             double angle = offset + i * Math.PI * 2.0 / Math.Max(1, Math.Min(bossGroup.Parts.Count, 12));
             float distance = 9f + 6f * (i / 12);
@@ -196,7 +199,7 @@ public static partial class WorldServer
     // own AI.
     private static string EnsureBossType(string template, WorldSettings.EnemySettings settings, bool boss, string regionName)
     {
-        string ai = WorldEnemyLists.AiFor(regionName, template);
+        string ai = BossAi(regionName, template, boss);
         string key = (boss ? "world/boss/" : "world/part/") + template + (ai.Equals(WorldEnemyLists.DefaultAi, StringComparison.OrdinalIgnoreCase) ? "" : "~" + ai);
         Enemies.RegisterDefaultType(key, new Enemies.EnemyType
         {
@@ -205,9 +208,21 @@ public static partial class WorldServer
             Ai = ai,
             FreeRoam = true,
             Boss = boss,
+            // The game's death model of the boss ("<unit>DEATH", e.g. ufoDEATH): its death animation where it fell.
+            DeathUnit = boss && Enemies.FindUnit(template + "DEATH") != null ? template + "DEATH" : "",
             HealthMultiplier = settings.HealthMultiplier
         });
         return key;
+    }
+
+    // The AI of a boss (or a part of one): the host's choice for the unit in world-enemies.json; for a boss with no choice, an AI of
+    // ai\brains\world made for it (the Ambassador's "ambassador"); otherwise the default chase.
+    private static string BossAi(string regionName, string template, bool boss)
+    {
+        string ai = WorldEnemyLists.AiFor(regionName, template);
+        if (boss && ai.Equals(WorldEnemyLists.DefaultAi, StringComparison.OrdinalIgnoreCase))
+            ai = Enemies.WorldAiMadeFor(template) ?? ai;
+        return ai;
     }
 
     // ------------------------------------------------------------------ dungeon carrier

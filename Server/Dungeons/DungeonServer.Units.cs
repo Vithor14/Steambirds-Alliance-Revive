@@ -189,10 +189,14 @@ public static partial class DungeonServer
                 if (leaves.EndsWith("DEATH", StringComparison.OrdinalIgnoreCase))
                 {
                     int wreck = id;
+                    // The boss death of the game: big explosion, the model's death animation and small explosions (Enemies.Wrecks.cs).
+                    Enemies.StartDeathSequence(s.Connection, wreck, now);
                     Schedule(s, now + WreckSeconds, "wreck", time =>
                     {
                         if (s.Units.TryGetValue(wreck, out Tracked? w)) w.Removed = true;
-                        Enemies.RemoveUnit(s.Connection, wreck, false, time);
+                        // Destroyed, not faded out: the client plays the death model's explosionPrefab (the boss's big final
+                        // explosion, e.g. ExplosionB_Final) only for a destruction.
+                        Enemies.RemoveUnit(s.Connection, wreck, true, time);
                     });
                 }
             }

@@ -1,0 +1,54 @@
+{
+  "format": 1,
+  "id": "inquisitor_chase",
+  "name": "Inquisitor: chase",
+  "author": "Steambirds Revive",
+  "description": "Wanders near home without shooting. It spots a player from far away (or when shot) and locks on: it chases faster than its normal top speed, turning 2.5 times faster than its unit type, aiming ahead of the plane and firing its short forward cone. Close in it slows down and turns faster, so its circles around the player are tight enough to keep its gun on them. It only gives up when the player is more than 80 units away. Reconstruction: the original AI was on the server and is lost.",
+  "units": ["highmountainhunter"],
+  "initial": "wander",
+  "states": [
+    {
+      "id": "wander",
+      "graphX": 40,
+      "graphY": 120,
+      "move": { "mode": "wander", "distance": 12, "interval": 4, "speed": 0.4 },
+      "fire": { "enabled": false },
+      "transitions": [
+        { "to": "hunt", "when": [ { "type": "playerWithin", "value": 45 } ] },
+        // Shot from outside its sight: it turns on the shooter too.
+        { "to": "hunt", "when": [ { "type": "recentlyHit", "value": 1 }, { "type": "hasTarget" } ] }
+      ]
+    },
+    {
+      // Locked on: chases (aiming where the plane is going) and shoots whenever the player is in front of it.
+      // The unit type turns 40 deg/s; turnMult 2.5 makes it 100 deg/s, so it comes around quickly when it overshoots.
+      "id": "hunt",
+      "graphX": 260,
+      "graphY": 120,
+      "move": { "mode": "approach", "lead": 0.6, "speed": 1.3, "turnMult": 2.5 },
+      "fire": { "enabled": true, "aimLead": 0.6 },
+      "transitions": [
+        { "to": "wander", "when": [ { "type": "hasTarget", "not": true } ] },
+        { "to": "wander", "when": [ { "type": "playerBeyond", "value": 80 } ] },
+        { "to": "close", "when": [ { "type": "playerWithin", "value": 2 } ] }
+      ]
+    },
+    {
+      // Close in: a plane cannot turn tighter than speed / turn rate. At chase speed that is about 2.6 units, so it would circle a
+      // player who stands still with the player off to its side, outside its 40 degree gun arc, and never hit. Here it keeps
+      // pursuing but slower (about 1.6 units/s) and turning 3 times faster (120 deg/s): its circle shrinks to under a unit, so even
+      // when it overshoots and circles, its nose (and gun) stays on the player. Past 3 units it speeds up into the chase again
+      // (the gap between 2 and 3 keeps it from switching back and forth every tick). It only starts braking at 2 units, so it overshoots
+      // a little first (it needs about a second to slow down) and then comes around tight.
+      "id": "close",
+      "graphX": 480,
+      "graphY": 120,
+      "move": { "mode": "approach", "lead": 0.3, "speed": 0.45, "turnMult": 3 },
+      "fire": { "enabled": true, "aimLead": 0.3 },
+      "transitions": [
+        { "to": "wander", "when": [ { "type": "hasTarget", "not": true } ] },
+        { "to": "hunt", "when": [ { "type": "playerBeyond", "value": 3 } ] }
+      ]
+    }
+  ]
+}

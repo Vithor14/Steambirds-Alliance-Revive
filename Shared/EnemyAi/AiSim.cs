@@ -403,11 +403,20 @@ public sealed class AiSim
                 Die(true);
                 return;
             }
+            if (o.TopSpeed > 0f)
+            {
+                // The state's own top speed (not multiplied by the simulator's speed tuning, as on the server).
+                velMax = o.TopSpeed;
+                velMin = Math.Min(velMin, velMax);
+            }
             if (o.UseBuiltin) ApproximateBuiltin(o, velMax, hasTarget);
         }
 
-        if (o != null)
-            AiMotion.Steer(ref X, ref Y, ref Rot, ref Vel, o.TargetX, o.TargetY, o.TargetVel, velMin, velMax, maxTurn, o.Hold, dt);
+        if (o != null && o.Slide && !o.UseBuiltin)
+            AiMotion.Slide(ref X, ref Y, ref Rot, ref Vel, out _, o.TargetX, o.TargetY, o.Hold ? 0f : o.TargetVel, velMax,
+                maxTurn * o.TurnMult, o.SpinRate, o.FaceRot, dt);
+        else if (o != null)
+            AiMotion.Steer(ref X, ref Y, ref Rot, ref Vel, o.TargetX, o.TargetY, o.TargetVel, velMin, velMax, maxTurn * o.TurnMult, o.Hold, dt);
 
         Fire(o, hasTarget);
     }

@@ -184,12 +184,13 @@ Work on any server.
 | `/boss` | Calls the boss wave (inside a dungeon, `/boss` is the dungeon command) |
 | `/enemy TYPE [count]` | Creates enemies of a type from `enemies.json` near you (up to 20) |
 | `/spawn TEMPLATE [count]` | Creates any unit of the game by its template name (up to 20) |
+| `/wreck UNIT [seconds] [effect] [state]` | Puts a death model (`ufoDEATH`, `gargantuaDEATH`...) 12 units in front of you as a boss leaves it: still, invulnerable, firing its gun, with the game's boss death sequence (big explosion, death animation with its beams of light, small explosions), the effect (default none) and the unit state (a number or a `UnitScript.States` name such as `Siege`, default 0), exploding after the seconds (default 20). For trying death animations |
 | `/clear` | Removes every enemy and stops the waves |
 | `/reset` | Restarts the encounter |
 | `/encounter [name]` | Lists the encounters or starts one |
 | `/types` | Lists the types of `enemies.json` and the template of each |
 | `/catalog [filter]` | Searches the game's armed units (up to 15 at a time) |
-| `/brains` | Lists the AI files the server loaded (`server\ai`) and the state of the enemies that use one. Types that use an AI: `/enemy ai_chaser`, `ai_bomber`, `ai_charger`, `ai_skirmisher`, `ai_sentry`, `ai_berserker` |
+| `/brains` | Lists the AI files the server loaded (`server\ai`) and the state of the enemies that use one. Types that use an AI: `/enemy ai_chaser`, `ai_bomber`, `ai_charger`, `ai_skirmisher`, `ai_sentry`, `ai_berserker`, `ai_inquisitor` (the open world's Inquisitor with its chase AI), `ai_ambassador` (the Ambassador world boss with its full fight) |
 
 ### Stores
 

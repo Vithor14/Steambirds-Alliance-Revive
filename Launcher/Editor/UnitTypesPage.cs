@@ -197,6 +197,7 @@ internal sealed class UnitTypesPage : EditorPage
         yield return new FieldSpec("boss", "Boss", FieldKind.Bool) { Help = "Marks a boss: it gets a boss health bar and counts as a boss kill for the pilot." };
         yield return new FieldSpec("miniboss", "Mini-boss", FieldKind.Bool) { Help = "Marks a mini-boss: stronger than a normal enemy, with its own health bar." };
         yield return new FieldSpec("invulnerable", "Invulnerable", FieldKind.Bool) { Help = "The unit takes no damage (walls, decorations, scenery)." };
+        yield return new FieldSpec("shieldedLook", "Shielded glow", FieldKind.Bool) { Help = "While invulnerable, the unit shows the game's pink shielded glow (a boss that cannot be hurt yet). Off for walls and scenery." };
         yield return new FieldSpec("opensAfterHitSeconds", "Wakes up when hit", FieldKind.Bool) { Help = "The unit stays idle until a shot hits it, then it wakes up and fights." };
         yield return new FieldSpec("freeRoam", "Free (no room)", FieldKind.Bool) { Help = "The unit does not belong to a room: it is born at the start and the room logic (waking up, clearing) ignores it." };
         yield return new FieldSpec("excludeFromRoomClear", "Does not count to clear the room", FieldKind.Bool)

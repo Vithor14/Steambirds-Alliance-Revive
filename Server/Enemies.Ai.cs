@@ -106,9 +106,13 @@ public static partial class Enemies
 
         // Turrets and mines of the players.
         UpdateAllies(inst, now, log);
+        // Death wrecks whose time is up.
+        RemoveExpired(inst, now);
 
         // Open world: each player is told about the units near them (and only those) before the updates go out.
         UpdateInterest(inst, now);
+        // Instant effects that are due (the death sequence of the wrecks).
+        SendDueEffects(inst, now);
 
         if (now - inst.LastSend >= SendInterval)
         {
@@ -281,6 +285,12 @@ public static partial class Enemies
         {
             // The AI picks the destination itself ("brain"), or hands the flight to one of the built-in ones below.
             AiOutput brain = BrainStep(inst, enemy, now, dt, velMin, velMax, validTarget, log);
+            if (brain.TopSpeed > 0f)
+            {
+                // The state gives the unit its own top speed (a unit the game made immobile, like the Ambassador).
+                velMax = brain.TopSpeed;
+                velMin = Math.Min(velMin, velMax);
+            }
             if (brain.UseBuiltin)
             {
                 string flight = brain.Builtin.Length > 0 ? NormalizeBehavior(brain.Builtin) : enemy.Behavior;
@@ -409,8 +419,12 @@ public static partial class Enemies
                 break;
         }
 
+        // A unit that slides (spinRate or a locked orbit) keeps the place its AI gives it: no separation push for a locked guard.
+        bool slide = mode == "brain" && enemy.Ai != null && enemy.Ai.Out.Slide && !enemy.Ai.Out.UseBuiltin;
+        bool holdsPlace = slide && !float.IsNaN(enemy.Ai!.Out.FaceRot);
+
         // Separation: enemies do not stack.
-        foreach (Enemy outro in inst.Enemies.Values)
+        foreach (Enemy outro in holdsPlace ? Enumerable.Empty<Enemy>() : inst.Enemies.Values)
         {
             if (outro == enemy) continue;
             float ox = enemy.X - outro.X;
@@ -450,8 +464,20 @@ public static partial class Enemies
         }
 
         // Turn toward the destination and speed up or slow down (Shared\EnemyAi\AiMath.cs, the same code as the launcher's simulator).
-        AiMotion.Steer(ref enemy.X, ref enemy.Y, ref enemy.Rot, ref enemy.Vel, targetX, targetY, targetVel,
-            velMin, velMax, enemy.MaxTurn, mode == "turret" || brainHold, dt);
+        // A sliding unit moves straight to its destination while its body spins or keeps its facing (AiMotion.Slide).
+        if (slide)
+        {
+            AiOutput o = enemy.Ai!.Out;
+            AiMotion.Slide(ref enemy.X, ref enemy.Y, ref enemy.Rot, ref enemy.Vel, out float moveDir, targetX, targetY,
+                brainHold ? 0f : targetVel, velMax, enemy.MaxTurn * o.TurnMult, o.SpinRate, o.FaceRot, dt);
+            enemy.MoveDir = moveDir;
+        }
+        else
+        {
+            enemy.MoveDir = float.NaN;
+            AiMotion.Steer(ref enemy.X, ref enemy.Y, ref enemy.Rot, ref enemy.Vel, targetX, targetY, targetVel,
+                velMin, velMax, enemy.MaxTurn * (enemy.Ai?.Out.TurnMult ?? 1f), mode == "turret" || brainHold, dt);
+        }
 
         if (enemy.FreeRoam) return;
         if (enemy.Area.HasValue)
@@ -513,6 +539,12 @@ public static partial class Enemies
     // Same logic as the client's GunMountInfo.FireBullet/MaybeReload.
     private static void Fire(Instance inst, Enemy enemy, double now)
     {
+        // A death wreck plays its explosion (Enemies.Wrecks.cs).
+        if (enemy.Wreck)
+        {
+            FireWreck(inst, enemy, now);
+            return;
+        }
         // Allies and idle objects do not shoot the player.
         if (enemy.Team != EnemyTeam || enemy.Behavior == "idle") return;
         if (now < enemy.ActiveAt + Math.Max(0f, enemy.Type.FirstShotDelay)) return;

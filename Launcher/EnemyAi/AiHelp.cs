@@ -88,7 +88,7 @@ internal static class AiHelp
             "- At most alive: no new summons while that many of its own summons are alive (0 is no limit). The condition \"Own summons alive at most\" lets a transition wait for the summons to die.",
             "## Shield",
             "- Shield: the unit ignores all damage. Shield lasts (s) says for how long; 0 means the whole time it is in the state.",
-            "- Shield look: the client effect shown on the unit while the shield is up (empty is tankShield).",
+            "- Shield look: a client effect shown on top of the pink shielded glow while the shield is up (empty is only the glow).",
             "## Look and weapons",
             "- Visual effect from here on: a client effect (statefulEffects, for example detectionZone_1) the unit shows from this state on. It stays until another state changes it.",
             "- Homing bullets: on or off from this state on. Empty keeps what the unit has.",

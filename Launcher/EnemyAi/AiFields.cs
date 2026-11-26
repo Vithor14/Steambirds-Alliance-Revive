@@ -27,6 +27,40 @@ internal static class AiFields
         };
         yield return Number("move.speed", "Speed (fraction of top speed)", 0.7, 0, 3, 0.05,
             "1 = the unit's top speed. Most modes use it.");
+        yield return Number("move.topSpeed", "Top speed (units/s)", 0, 0, 100, 0.5,
+            "Every mode: the unit's top speed while the state lasts, in units per second. 0 = the unit's own. For units the game made immobile (top speed 0), like the Ambassador.");
+        yield return new FieldSpec("move.around", "Circles around (orbit)", FieldKind.Choice)
+        {
+            Choices = () => AiCatalog.OrbitCenters,
+            AllowEmpty = true,
+            Help = "orbit: player (empty), summoner (the unit that summoned this one; its home when it has none or it died) or home (where the unit was born)."
+        };
+        yield return new FieldSpec("move.lock", "Fixed to the summoner (orbit)", FieldKind.Bool)
+        {
+            Help = "orbit around summoner or home: the unit keeps its place on the circle and its facing relative to the summoner's body, so it turns with it (a ring of guards on a spinning boss). It slides to its place."
+        };
+        yield return Number("move.faceOffset", "Facing on the circle (lock)", 90, -180, 180, 15,
+            "orbit with lock: the unit's facing in degrees from the line summoner → unit. 90 = along the circle clockwise, -90 = the other way (left side toward the summoner), 0 = facing out, 180 = facing in.");
+        yield return new FieldSpec("move.faceForward", "Face the way it circles (lock)", FieldKind.Bool)
+        {
+            Help = "orbit with lock: the unit faces the way it travels around the circle (the way the summoner turns; it flips when the summoner turns the other way). Off = \"Facing on the circle\"."
+        };
+        yield return Number("move.jitter", "Random angle (zigzag)", 0, 0, 90, 5,
+            "zigzag: each dash goes \"deviation\" degrees off the line to the player, plus or minus a random amount up to this many degrees, so it is harder to predict. 0 = always exactly deviation.");
+        yield return Number("move.pause", "Stop between dashes (s, zigzag)", 0, 0, 5, 0.05,
+            "zigzag: after each dash the unit stops for at least this long and turns to face the player, then dashes again. The first dash after it is born goes at once. 0 = no stop.");
+        yield return Number("move.spinRate", "Body spin (degrees/s)", 0, -720, 720, 5,
+            "Every mode: the body turns by itself this many degrees a second (positive = clockwise, negative = counter-clockwise) and the unit slides to where it goes instead of turning its nose toward it. 0 = off.");
+        yield return new FieldSpec("move.points", "Points (path)", FieldKind.Text)
+        {
+            Reader = ReadPoints,
+            Writer = WritePoints,
+            Help = "path: the points to fly through, as offsets from where the unit was born: \"x, y; x, y; ...\" (for example 0, 12; 10, -6; -10, -6 is a triangle)."
+        };
+        yield return new FieldSpec("move.loop", "Loop (path)", FieldKind.Bool)
+        {
+            DefaultBool = true, Help = "path: after the last point it starts again from the first. Off = it stops at the last point and faces the player."
+        };
         yield return new FieldSpec("move.farSpeed", "Speed when far (orbit)", FieldKind.OptionalNumber)
         {
             Help = "orbit: speed while the player is farther than distance x \"far factor\". Empty = the same speed."
@@ -54,6 +88,8 @@ internal static class AiFields
         };
         yield return Number("move.speedMult", "Speed multiplier (builtin)", 1, 0.1, 5, 0.1,
             "builtin: multiplies the speed of the unit (1.2 = a fifth faster than the unit type says).");
+        yield return Number("move.turnMult", "Turn multiplier", 1, 0.1, 10, 0.1,
+            "Every mode: multiplies how fast the unit turns (2 = twice the turn rate of the unit type). A unit that turns faster makes tighter turns.");
 
         yield return FieldSpec.Header("Weapons");
         yield return new FieldSpec("fire.enabled", "Shoots", FieldKind.Bool) { DefaultBool = true, Help = "Off = the unit does not shoot in this state." };
@@ -89,6 +125,15 @@ internal static class AiFields
         {
             Min = 0, Max = 100, Help = "No new summons while this many of its own summons are alive. 0 = no limit."
         };
+        yield return new FieldSpec("summonPlace", "Where they appear", FieldKind.Choice)
+        {
+            Choices = () => new[] { "behind", "around" },
+            AllowEmpty = true,
+            Help = "behind (empty): side by side behind the summoner. around: evenly spaced on a circle around it (a ring of guards)."
+        };
+        yield return Number("summonDistance", "Distance from the summoner", 0, 0, 60, 0.5, "How far from the summoner they appear. 0 = 5 units.");
+        yield return Number("summonAngle", "Ring turned by (degrees)", 0, -360, 360, 5,
+            "around: turns the circle by this many degrees. Half the spacing (60 for 3 units, 45 for 4) puts a second ring between the units of the first one.");
 
         yield return FieldSpec.Header("Shield");
         yield return new FieldSpec("shield", "Shield", FieldKind.Bool) { Help = "The unit ignores all damage while the shield is up." };
@@ -96,7 +141,7 @@ internal static class AiFields
         yield return new FieldSpec("shieldEffect", "Shield look (effect)", FieldKind.Choice)
         {
             Choices = Editor.EditorAssets.EffectChoices,
-            Help = "Name of a client effect (statefulEffects) shown while the shield is up. Empty = tankShield."
+            Help = "Name of a client effect (statefulEffects) shown on top of the shielded glow while the shield is up. Empty = only the glow."
         };
 
         yield return FieldSpec.Header("Look and weapons");
@@ -168,7 +213,37 @@ internal static class AiFields
         {
             Help = "timeInState only: the time is picked at random between value and this number, each time the state starts."
         };
+        yield return new FieldSpec("unit", "Only units of type", FieldKind.Text)
+        {
+            Help = "siblingsAtMost only: counts only the units summoned as this unit type (the name in the summoner's \"summon\"). Empty = any."
+        };
         yield return new FieldSpec("not", "Not (the opposite)", FieldKind.Bool) { Help = "The condition is true when it is NOT met." };
+    }
+
+    // move.points as text: "x, y; x, y; ..." <-> [ { "x": .., "y": .. }, ... ].
+    private static string ReadPoints(JsonObject data)
+    {
+        JsonArray? points = Json.ArrOrNull(Json.ObjOrNull(data, "move"), "points");
+        if (points == null) return "";
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        return string.Join("; ", Json.Objects(points).Select(p => Json.Num(p, "x").ToString("0.##", inv) + ", " + Json.Num(p, "y").ToString("0.##", inv)));
+    }
+
+    private static void WritePoints(JsonObject data, string text)
+    {
+        JsonObject move = data["move"] as JsonObject ?? new JsonObject();
+        data["move"] = move;
+        var points = new JsonArray();
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        foreach (string part in (text ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            string[] xy = part.Split(',', StringSplitOptions.TrimEntries);
+            if (xy.Length < 2 || !double.TryParse(xy[0], System.Globalization.NumberStyles.Float, inv, out double x) ||
+                !double.TryParse(xy[1], System.Globalization.NumberStyles.Float, inv, out double y)) continue;
+            points.Add(new JsonObject { ["x"] = Math.Round(x, 2), ["y"] = Math.Round(y, 2) });
+        }
+        if (points.Count == 0) move.Remove("points");
+        else move["points"] = points;
     }
 
     private static FieldSpec Number(string key, string label, double def, double min, double max, double step, string help)

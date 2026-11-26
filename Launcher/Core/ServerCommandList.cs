@@ -97,6 +97,7 @@ public static class ServerCommandList
             new Entry(enemies, "/next", L.T("Calls the next wave")),
             new Entry(enemies, "/enemy TYPE [COUNT]", L.T("Creates enemies of a type of enemies.json near the player (up to 20)")),
             new Entry(enemies, "/spawn TEMPLATE [COUNT]", L.T("Creates any unit of the game by its template name (up to 20)")),
+            new Entry(enemies, "/wreck UNIT [SECONDS] [EFFECT|none] [STATE]", L.T("Puts a death model (ufoDEATH...) in front of you as a boss leaves it: still, firing its gun, with an effect and a unit state (a number or a name such as Siege), exploding after the seconds (20)")),
             new Entry(enemies, "/clear", L.T("Removes every enemy and stops the waves")),
             new Entry(enemies, "/reset", L.T("Restarts the encounter")),
             new Entry(enemies, "/encounter [NAME]", L.T("Lists the encounters or starts one")),

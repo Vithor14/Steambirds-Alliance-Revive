@@ -52,7 +52,9 @@ Files accept `//` comments and trailing commas. Unknown fields are ignored (and 
 
 | mode | what the unit does | fields it uses |
 |---|---|---|
-| `orbit` | goes to a circle around the player and goes around it; far away it approaches in a straight line | `distance`, `deviation`, `speed`, `farSpeed`, `farFactor`, `spin` |
+| `orbit` | goes to a circle around the player (or its summoner, or its home: `around`) and goes around it; far away it approaches in a straight line | `around`, `distance`, `deviation`, `speed`, `farSpeed`, `farFactor`, `spin` |
+| `path` | flies through `points` in order (offsets from where it was born, `{ "x": 0, "y": 12 }`); with `loop` (default) it starts again from the first, without it stops at the last point facing the player | `points`, `loop`, `speed` |
+| `zigzag` | straight dashes of `distance` units toward the player, `deviation` degrees (plus or minus a random `jitter`) to one side of the line and then to the other, facing each dash (it slides); with `pause` it stops between dashes and turns to face the player first (not before the first dash after it is born); within 1.5 dashes of the player it weaves around them instead | `distance`, `deviation`, `jitter`, `pause`, `speed`, `turnMult` |
 | `approach` | flies at the player, aiming a little ahead of where the plane is going | `speed`, `lead` |
 | `straight` | keeps flying where it points (a pass through the player) | `speed` |
 | `wander` | random points around where it was born | `distance` (radius), `interval`, `speed` |
@@ -67,6 +69,19 @@ unit's own speed (1.2 = a fifth faster). The launcher's simulator only approxima
 
 `speed` is a fraction of the unit's top speed (1 = top speed; the unit type's `speedMultiplier` applies).
 `spin`: 1 clockwise, -1 counter-clockwise, 0 random per unit. `lead` and `interval` are seconds, `distance` is in units.
+`turnMult` (every mode, default 1) multiplies the unit's turn rate while the state lasts (2 = twice as fast as the unit type turns):
+a unit that turns faster makes tighter turns and comes around sooner when it overshoots.
+`topSpeed` (every mode, units per second, default 0 = the unit's own) replaces the unit's top speed while the state lasts: for units the
+game made immobile (top speed 0 in the game data, like the Ambassador `ufo`, whose flight lived on the original server).
+`around` (orbit): `player` (default), `summoner` (the unit that summoned this one; its home when it was not summoned or the summoner
+died) or `home`. With `summoner` a minion circles its boss, like a ring of guards.
+`lock` (orbit around `summoner` or `home`): the unit keeps its place on the circle and its facing relative to the summoner's body, so the
+ring turns exactly with a spinning boss, the same way it turns, and changes direction when the boss does; it slides to its place and
+enemy separation does not push it. `faceForward` (with `lock`): it faces the way it travels around the circle, the way the summoner turns (flipping when the summoner turns the other way), instead of `faceOffset`. `faceOffset` (with `lock`, default 90): its facing in degrees from the line summoner → unit (90 = along
+the circle clockwise, -90 = the other way, with its left side to the summoner, 0 = out, 180 = in): it decides where its fixed guns point.
+`spinRate` (every mode, degrees per second, default 0): the body turns by itself (positive = clockwise, negative = counter-clockwise)
+and the unit slides to its destination without turning its nose toward it, so it never turns to face the player (the Ambassador).
+The client is sent the velocity along the way it really moves.
 
 ### `fire`
 
@@ -109,8 +124,11 @@ go on while it lasts.
 | `summonCount` | units each time, 1 to 10 (default 1), placed behind the summoner; they join its group and room |
 | `summonEvery` | seconds until it summons again while the state lasts (0 = only when the state starts; at least 0.5) |
 | `summonMax` | no new summons while this many of its own summons are alive (0 = no limit) |
+| `summonPlace` | `behind` (default: side by side behind the summoner) or `around` (evenly spaced on a circle around it, facing along the circle) |
+| `summonDistance` | how far from the summoner they appear (0 = 5 units) |
+| `summonAngle` | with `around`: degrees the circle is turned (half the spacing, 60 for 3 units, puts a second ring between the units of the first) |
 | `shield`, `shieldSeconds` | the unit ignores all damage; for `shieldSeconds`, or the whole state when it is 0 |
-| `shieldEffect` | client effect (`statefulEffects`) shown while the shield is up (empty = `tankShield`) |
+| `shieldEffect` | client effect (`statefulEffects`) shown on top of the pink shielded glow while the shield is up (empty = only the glow; the glow is the game's `Entity.FLAG_SHIELDED`, always on during a shield) |
 | `effect` | client effect the unit shows from this state on (empty = keeps what it has) |
 | `homing` | `"on"` / `"off"`: homing bullets from this state on (empty = keeps what the unit has) |
 | `graphX`, `graphY` | where the launcher's graph view draws the state (the server ignores them) |
@@ -134,6 +152,8 @@ any more). Fire rate and guns of a phase are the state's `fire.rateMult` / `fire
 | `recentlyHit` | the unit took damage in the last `value` seconds |
 | `facingTarget` | the player is inside `value` degrees in front of the unit |
 | `summonsAtMost` | the units this unit summoned that are still alive number at most `value` (0 = all dead) |
+| `siblingsAtMost` | for a summoned unit: the other live units its summoner summoned number at most `value`; with `"unit": "<type>"` only those summoned as that type count (true when the unit was not summoned). The Ambassador's inner ring stays shielded until the outer ring is dead with it |
+| `legsDone` | the unit finished at least `value` zigzag dashes (or reached that many points of a path) in this state (the Ambassador's diplomats drop their shield after 2 and shoot after 3) |
 | `chance` | random: `value` is the probability per second |
 
 ## Sharing

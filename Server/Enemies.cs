@@ -35,8 +35,8 @@ using Lidgren.Network;
 // follows the player or goes to a destination). "team": 1 puts the unit on the player's side (ally).
 // "invulnerable" ignores damage; "opensAfterHitSeconds" makes a chest open after the first hit.
 //
-// Dungeons (Dungeons\DungeonServer.cs): the states of an AI file can give a shield ("shield": no damage for a while)
-// and a visual effect ("effect": a configBinary "statefulEffects" name, sent in FieldUpdate EFFECTSTATE1 with
+// Dungeons (Dungeons\DungeonServer.cs): the states of an AI file can give a shield ("shield": no damage for a while,
+// shown with the game's shielded glow, Entity.FLAG_SHIELDED) and a visual effect ("effect": a configBinary "statefulEffects" name, sent in FieldUpdate EFFECTSTATE1 with
 // the id MonoHash.StatefulEffectId), and summon units (Enemies.Brains.cs). The dungeon server also uses the one-unit calls (GetHealth, RemoveUnit,
 // SetUnitInvulnerable, SetVisualEffect, IsAsleep).
 public static partial class Enemies
@@ -97,6 +97,10 @@ public static partial class Enemies
         public int Team { get; set; } = 2;
         // Ignores damage (allies, wrecks). The script also turns this on and off per group.
         public bool Invulnerable { get; set; }
+        // While "invulnerable" is on, the client shows the game's own shielded look (the pink glow that rises over the
+        // unit; Entity.FLAG_SHIELDED in FieldUpdate FLAGS). Off by default: walls, keys, altars and wrecks are invulnerable
+        // too and should not glow. The shield of an AI state always shows it.
+        public bool ShieldedLook { get; set; }
         // Greater than 0: chest. The first hit starts the count and it opens (disappears exploding) after this time.
         public float OpensAfterHitSeconds { get; set; }
         // No area: flies free, without the arena square (an ally that goes from one room to another).
@@ -104,6 +108,19 @@ public static partial class Enemies
         // Visual effect shown on the unit from the start (name of a configBinary "statefulEffects" entry, e.g.
         // "tankShield"). Sent in FieldUpdate EFFECTSTATE1; the id is MonoHash.StatefulEffectId(name).
         public string VisualEffect { get; set; } = "";
+        // Left where the unit dies: a unit type, or a game unit (the "*DEATH" models play the death animation, e.g. "ufoDEATH").
+        // It does not move, shoot or take damage, and goes away after deathSeconds (0 = 6 s). Enemies.Wrecks.cs. Empty = nothing.
+        public string DeathUnit { get; set; } = "";
+        public float DeathSeconds { get; set; }
+        // Client effect (statefulEffects) shown on that wreck while it lasts. Empty or "none" = no effect. A deathUnit that is a unit
+        // type with its own visualEffect keeps that one.
+        public string DeathEffect { get; set; } = "";
+        // The wreck's unit state (UnitScript.States, by number or name, e.g. "Siege"): any but Default/Chilling makes the client play
+        // its "maneuvering" animations. Empty = Default. Being tried to find the beams of light of the death animations (/wreck).
+        public string DeathState { get; set; } = "";
+        // The client's instant effects (configBinary "instantEffects") played on the wreck, as "SECONDS EFFECT" ("0 explosionBossInitial",
+        // "2 epicDeath2"...). Null = the game's boss death (DefaultDeathSequence) when the wreck is a "*DEATH" model; empty = none.
+        public List<string>? DeathSequence { get; set; }
 
         // Id of an AI file (ai\brains\<id>.json, made in the launcher's Enemy AI tab). Empty = the built-in "behavior" above.
         // A value that is not text (the old "ai" slot of the map editor) is ignored.
@@ -227,6 +244,17 @@ public static partial class Enemies
         public float Y;
         public float Rot;
         public float Vel;
+        // The heading the unit moves along when it slides (an AI state with spinRate or a locked orbit: it does not move nose
+        // first). NaN = it moves where it points (Rot). Used for the velocity sent to the client.
+        public float MoveDir = float.NaN;
+        // A death wreck (deathUnit, Enemies.Wrecks.cs): it fires its guns (the explosion) until it goes away.
+        public bool Wreck;
+        // The client's UnitScript.States of the unit (FieldUpdate STATE): 0 = Default. Any other but Chilling (45-47) makes the
+        // client's animator play the unit's "maneuvering" animations. StateSent = the last value written.
+        public byte State;
+        public byte StateSent;
+        // Instant effects still to play on the unit (ClientInstantEffect): when and which (Enemies.Wrecks.cs).
+        public List<(double At, string Effect)>? PendingEffects;
         public float HomeX;
         public float HomeY;
 
@@ -248,6 +276,8 @@ public static partial class Enemies
         public bool Homing;
         // The unit that summoned this one (an AI state with "summon"): counted by the "summonsAtMost" condition.
         public Enemy? Summoner;
+        // The type name the summoner's "summon" used (counted by "siblingsAtMost" with a "unit").
+        public string SummonedAs = "";
         // Next point of the route (behavior "route").
         public int RouteIndex = -1;
 
@@ -288,6 +318,8 @@ public static partial class Enemies
         public bool Armed;
         public short BaseEffect;
         public bool EffectChanged;
+        // Entity flags (FieldUpdate FLAGS) the clients were last told about; a change goes in the next UpdateUnitsBatch.
+        public uint FlagsSent;
 
         // Stun (EMP of the bandit): no flight and no shots until this time (Enemies.Allies.cs).
         public double StunUntil;
@@ -572,6 +604,7 @@ public static partial class Enemies
                 log("ENEMY", inst.Role + " " + Describe(enemy) + " destroyed at (" + Num(enemy.X) + ", " + Num(enemy.Y) +
                     ") after " + enemy.Shots + " shot(s) | kills: " + inst.Kills +
                     ", left " + inst.Enemies.Count);
+                LeaveWreck(inst, enemy, now, log);
                 if (enemy.Boss)
                 {
                     Warn(inst, enemy.Type.Name + " was defeated!");
@@ -743,6 +776,13 @@ public static partial class Enemies
                     Reply(inst, added2.Count > 0
                         ? added2.Count + "x " + Describe(added2[0]) + " (health " + Num(added2[0].MaxHp) + ")"
                         : "Could not create: " + FailureReason(type));
+                    break;
+                }
+
+                case "/wreck":
+                {
+                    inst = GetInstance(server, connection, role, now);
+                    WreckCommand(inst, pieces, now, log);
                     break;
                 }
 
