@@ -189,7 +189,7 @@ Work on any server.
 | `/encounter [name]` | Lists the encounters or starts one |
 | `/types` | Lists the types of `enemies.json` and the template of each |
 | `/catalog [filter]` | Searches the game's armed units (up to 15 at a time) |
-| `/brains` | Lists the AI files the server loaded (`server\ai`) and the state of the enemies that use one. Types that use an AI: `/enemy ai_chaser`, `ai_bomber`, `ai_charger`, `ai_skirmisher`, `ai_sentry`, `ai_berserker` |
+| `/brains` | Lists the AI files the server loaded (`server\ai`) and the state of the enemies that use one. Types that use an AI: `/enemy ai_chaser`, `ai_bomber`, `ai_charger`, `ai_skirmisher`, `ai_sentry`, `ai_berserker`, `ai_inquisitor`, `ai_ambassador`, `ambassador_cat`, `ambassador_cat_inner`, `ambassador_cat_outer`, `ambassador_diplomat` |
 | `/wreck UNIT [seconds] [effect\|none] [state]` | Spawns a still wreck of that unit in front of you (20 seconds and the default death effects when the extras are left out). A type with `deathUnit` leaves a wreck when it dies |
 
 ### Stores

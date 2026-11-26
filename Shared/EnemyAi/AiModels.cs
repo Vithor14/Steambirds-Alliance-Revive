@@ -44,7 +44,11 @@ public sealed class AiMove
     public float Angle { get; set; }
     public float SpinRate { get; set; }
     public float FaceOffset { get; set; }
-    // Caps the speed this state asks for. 0 = the unit's own top speed.
+    // orbit with lock: face along the circle, the way the center turns, instead of faceOffset.
+    public bool FaceForward { get; set; }
+    // path: false stops at the last point. True (the default) starts again at the first.
+    public bool Loop { get; set; } = true;
+    // When set, this replaces the unit's own top speed (a unit whose game data says 0 can still move). 0 = the unit's speed.
     public float TopSpeed { get; set; }
     // Multiplies how fast the unit may turn in this state (1 = as the unit says).
     public float TurnMult { get; set; } = 1f;
@@ -52,8 +56,66 @@ public sealed class AiMove
     public float Jitter { get; set; }
     // Seconds of coasting between dashes (zigzag and any other mode). 0 = never.
     public float Pause { get; set; }
-    // path: points relative to where the unit was born, visited in order and then from the start. Each point is [x, y].
-    public List<List<float>>? Points { get; set; }
+    // path: points relative to where the unit was born. Each point is [x, y] or {"x","y"}.
+    [JsonConverter(typeof(AiPointListConverter))]
+    public List<AiPoint>? Points { get; set; }
+}
+
+public sealed class AiPoint
+{
+    public float X { get; set; }
+    public float Y { get; set; }
+}
+
+// Reads a path as [[x, y], ...] or [{"x": x, "y": y}, ...].
+public sealed class AiPointListConverter : JsonConverter<List<AiPoint>>
+{
+    public override List<AiPoint>? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType == JsonTokenType.Null) return null;
+        if (reader.TokenType != JsonTokenType.StartArray) throw new JsonException("points");
+        var list = new List<AiPoint>();
+        while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+        {
+            if (reader.TokenType == JsonTokenType.StartArray)
+            {
+                reader.Read();
+                float x = reader.TokenType == JsonTokenType.Number ? reader.GetSingle() : 0f;
+                reader.Read();
+                float y = reader.TokenType == JsonTokenType.Number ? reader.GetSingle() : 0f;
+                while (reader.TokenType != JsonTokenType.EndArray && reader.Read()) { }
+                list.Add(new AiPoint { X = x, Y = y });
+            }
+            else if (reader.TokenType == JsonTokenType.StartObject)
+            {
+                float x = 0f, y = 0f;
+                while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
+                {
+                    string name = reader.GetString() ?? "";
+                    reader.Read();
+                    float n = reader.TokenType == JsonTokenType.Number ? reader.GetSingle() : 0f;
+                    if (name.Equals("x", StringComparison.OrdinalIgnoreCase)) x = n;
+                    else if (name.Equals("y", StringComparison.OrdinalIgnoreCase)) y = n;
+                }
+                list.Add(new AiPoint { X = x, Y = y });
+            }
+            else reader.Skip();
+        }
+        return list;
+    }
+
+    public override void Write(Utf8JsonWriter writer, List<AiPoint> value, JsonSerializerOptions options)
+    {
+        writer.WriteStartArray();
+        foreach (AiPoint point in value)
+        {
+            writer.WriteStartObject();
+            writer.WriteNumber("x", point.X);
+            writer.WriteNumber("y", point.Y);
+            writer.WriteEndObject();
+        }
+        writer.WriteEndArray();
+    }
 }
 
 public sealed class AiFire

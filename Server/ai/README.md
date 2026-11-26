@@ -137,8 +137,12 @@ any more). Fire rate and guns of a phase are the state's `fire.rateMult` / `fire
 | `healthBelow` / `healthAbove` | health fraction is at or under / over `value` (0–1) |
 | `recentlyHit` | the unit took damage in the last `value` seconds |
 | `facingTarget` | the player is inside `value` degrees in front of the unit |
-| `summonsAtMost` | the units this unit summoned that are still alive number at most `value` (0 = all dead) |
+| `summonsAtMost` | the units this unit summoned that are still alive number at most `value` (0 = all dead). Optional `unit` and `role` count only that kind |
+| `siblingsAtMost` | for a summoned unit, the other live units its summoner summoned number at most `value`. Optional `unit` counts one summon type. True when this unit was not summoned |
+| `legsDone` | this many zigzag dashes have finished in the state, or a path has reached this many points. It resets when the state starts |
 | `chance` | random: `value` is the probability per second |
+
+`move.topSpeed`, when set, replaces the unit's own top speed for that state (a unit whose game data says 0 can still move). `move.spinRate` turns the body by itself: on `hold` the unit stays put and spins; on `path` and on a locked orbit the unit slides straight to the point while the body turns (`AiMotion.Slide`). `move.faceForward` on a locked orbit faces along the circle, the way the center turns. `move.loop` false stops a path at the last point. Path `points` are `[x, y]` or `{"x","y"}`, relative to where the unit was born. Zigzag `pause` and `jitter` apply between dashes only. Summon `place` `around` is the same ring as `ring`.
 
 ## Sharing
 

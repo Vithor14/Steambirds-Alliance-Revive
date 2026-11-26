@@ -76,6 +76,10 @@ public static class AiCatalog
         new AiOption("facingTarget", "Facing the player (degrees)", "True when the player is inside this angle in front of the unit."),
         new AiOption("summonsAtMost", "Own summons alive at most",
             "True when the units this unit summoned that are still alive number at most this value (0 = all of them are dead). Unit and role, when set, count only that kind."),
+        new AiOption("siblingsAtMost", "Summoner's other summons alive at most",
+            "For a summoned unit: the other live units its summoner summoned number at most this value. Unit, when set, counts only that summon type. True when this unit was not summoned."),
+        new AiOption("legsDone", "Dashes done at least",
+            "True after this many zigzag dashes in the state, or after a path has reached this many points."),
         new AiOption("chance", "Chance per second (0-1)", "Every second the transition happens with this probability (0.5 = about once every two seconds).")
     };
 

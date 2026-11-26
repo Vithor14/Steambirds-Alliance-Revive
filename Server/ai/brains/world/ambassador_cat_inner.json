@@ -1,0 +1,30 @@
+{
+  "format": 1,
+  "id": "ambassador_cat_inner",
+  "name": "Ambassador: cat representative (inner ring)",
+  "author": "Steambirds Revive",
+  "description": "Summoned by the Ambassador under 30% health (3 of them, the pink ufosaucer). Fixed to the Ambassador's body 4.5 units from its center, it turns with it. It faces the way it circles (faceForward); in the last phase the boss turns counter-clockwise, so its left side is toward the boss and its side guns (the big slow circles, mounts at -90 and 45 degrees) fire through the boss and out the other side: as the boss turns, the bullets draw a spiral. Shielded until the 3 cats of the outer ring are dead. Reconstruction from a video.",
+  "units": ["ufosaucer", "ufosaucermini"],
+  "initial": "shielded",
+  "states": [
+    {
+      // The outer ring is summoned in the same moment as this one: the half second makes sure it is counted.
+      "id": "shielded",
+      "graphX": 40,
+      "graphY": 40,
+      "move": { "mode": "orbit", "around": "summoner", "lock": true, "distance": 4.5, "faceForward": true, "speed": 0.6 },
+      "fire": { "enabled": true, "range": 40 },
+      "shield": true,
+      "transitions": [
+        { "to": "exposed", "when": [ { "type": "timeInState", "value": 0.5 }, { "type": "siblingsAtMost", "value": 0, "unit": "ambassador_cat_outer" } ] }
+      ]
+    },
+    {
+      "id": "exposed",
+      "graphX": 260,
+      "graphY": 40,
+      "move": { "mode": "orbit", "around": "summoner", "lock": true, "distance": 4.5, "faceForward": true, "speed": 0.6 },
+      "fire": { "enabled": true, "range": 40 }
+    }
+  ]
+}

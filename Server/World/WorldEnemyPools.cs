@@ -83,6 +83,13 @@ public static class WorldEnemyPools
 
     internal static void Log(string text) => logger("WORLD", text);
 
+    private static int SharedStart(string a, string b)
+    {
+        int n = 0;
+        while (n < a.Length && n < b.Length && a[n] == b[n]) n++;
+        return n;
+    }
+
     // Reads the unit files of the configBinary. "skip" = template names the host does not want.
     public static void Build(IEnumerable<string> skip, Action<string, string> log)
     {
@@ -90,7 +97,7 @@ public static class WorldEnemyPools
         var skipped = new HashSet<string>(skip, StringComparer.OrdinalIgnoreCase);
         skippedNames = skipped;
         var built = new Dictionary<string, List<Family>>(StringComparer.Ordinal);
-        var bossUnits = new Dictionary<string, List<(string Name, float Health)>>(StringComparer.Ordinal);   // "folder/number" -> units
+        var bossUnits = new Dictionary<string, List<(string Name, float Health, bool IsBoss)>>(StringComparer.Ordinal);   // "folder/number" -> units
         var byGroup = new Dictionary<string, Family>(StringComparer.Ordinal);
         int units = 0, rejected = 0;
 
@@ -111,12 +118,13 @@ public static class WorldEnemyPools
                 Enemies.UnitSummary? bossInfo = Enemies.FindUnit(bossTemplate);
                 if (bossInfo == null || bossInfo.Wall || bossInfo.Player || bossInfo.Invisible || bossInfo.MaxHealth <= 0f) continue;
                 string bossKey = code + "/" + bossFile.Groups[1].Value;
-                if (!bossUnits.TryGetValue(bossKey, out List<(string Name, float Health)>? unitList))
+                if (!bossUnits.TryGetValue(bossKey, out List<(string Name, float Health, bool IsBoss)>? unitList))
                 {
-                    unitList = new List<(string, float)>();
+                    unitList = new List<(string, float, bool)>();
                     bossUnits[bossKey] = unitList;
                 }
-                if (!unitList.Any(u => u.Name.Equals(bossInfo.Name, StringComparison.OrdinalIgnoreCase))) unitList.Add((bossInfo.Name, bossInfo.MaxHealth));
+                if (!unitList.Any(u => u.Name.Equals(bossInfo.Name, StringComparison.OrdinalIgnoreCase)))
+                    unitList.Add((bossInfo.Name, bossInfo.MaxHealth, bossInfo.Boss));
                 continue;
             }
 
@@ -172,30 +180,36 @@ public static class WorldEnemyPools
             }
         }
 
-        // The bosses of each folder: one per BOS number. The boss is the strongest unit that is not a part; the others (but the death
-        // model, what it fires and the controllers) come with it. A group with no boss unit (only signals, for example) is left out. The
-        // preferred boss of a folder (if any) goes first, then the strongest.
+        // The bosses of each folder. One BOS number is one boss, unless two units in it are marked boss (Solaris and the Ambassador):
+        // then each is its own boss and a part joins the name it shares the longest start with. The death model, what it fires and the
+        // controllers stay out. A group with no boss unit is left out. The preferred boss of a folder goes first, then the strongest.
         var bossesBuilt = new Dictionary<string, List<BossGroup>>(StringComparer.Ordinal);
-        foreach (IGrouping<string, KeyValuePair<string, List<(string Name, float Health)>>> folderGroups in
+        foreach (IGrouping<string, KeyValuePair<string, List<(string Name, float Health, bool IsBoss)>>> folderGroups in
                  bossUnits.GroupBy(p => p.Key.Substring(0, p.Key.IndexOf('/')), StringComparer.Ordinal))
         {
             PreferredBoss.TryGetValue(folderGroups.Key, out string? preferred);
             var groups = new List<(BossGroup Group, float Health)>();
-            foreach (KeyValuePair<string, List<(string Name, float Health)>> pair in folderGroups)
+            foreach (KeyValuePair<string, List<(string Name, float Health, bool IsBoss)>> pair in folderGroups)
             {
-                List<(string Name, float Health)> all = pair.Value;
-                var mains = all.Where(u => !BossPartMarks.Any(m => u.Name.ToLowerInvariant().Contains(m))).ToList();
+                List<(string Name, float Health, bool IsBoss)> all = pair.Value;
+                var mains = all.Where(u => !BossPartMarks.Any(m => u.Name.ToLowerInvariant().Contains(m)))
+                    .OrderByDescending(u => u.Health).ThenBy(u => u.Name, StringComparer.OrdinalIgnoreCase).ToList();
                 if (mains.Count == 0) continue;
-                (string name, float health) = mains.OrderByDescending(u => u.Health).ThenBy(u => u.Name, StringComparer.OrdinalIgnoreCase).First();
-                var group = new BossGroup { Name = name };
-                foreach ((string partName, float _) in all.OrderByDescending(u => u.Health).ThenBy(u => u.Name, StringComparer.OrdinalIgnoreCase))
+                // One BOS number can hold two bosses (Solaris and the Ambassador). Each boss-marked unit is its own boss,
+                // and a part goes to the boss whose name it shares the longest start with.
+                var heads = mains.Where(u => u.IsBoss).ToList();
+                if (heads.Count < 2) heads = new List<(string Name, float Health, bool IsBoss)> { mains[0] };
+                var made = heads.Select(h => (Group: new BossGroup { Name = h.Name }, h.Health)).ToList();
+                foreach ((string partName, float _, bool _) in all.OrderByDescending(u => u.Health).ThenBy(u => u.Name, StringComparer.OrdinalIgnoreCase))
                 {
-                    if (partName.Equals(name, StringComparison.OrdinalIgnoreCase)) continue;
+                    if (made.Any(g => partName.Equals(g.Group.Name, StringComparison.OrdinalIgnoreCase))) continue;
                     string lowerPart = partName.ToLowerInvariant();
                     if (BossNeverMarks.Any(m => lowerPart.Contains(m)) || skipped.Contains(partName)) continue;
-                    if (group.Parts.Count < MaxBossParts) group.Parts.Add(partName);
+                    BossGroup owner = made.Select(g => (g.Group, Shared: SharedStart(lowerPart, g.Group.Name.ToLowerInvariant())))
+                        .Where(g => g.Shared >= 3).OrderByDescending(g => g.Shared).Select(g => g.Group).FirstOrDefault() ?? made[0].Group;
+                    if (owner.Parts.Count < MaxBossParts) owner.Parts.Add(partName);
                 }
-                groups.Add((group, health));
+                groups.AddRange(made);
             }
             bossesBuilt[folderGroups.Key] = groups
                 .OrderByDescending(g => preferred != null && g.Group.Name.Equals(preferred, StringComparison.OrdinalIgnoreCase))

@@ -1,0 +1,54 @@
+{
+  "format": 1,
+  "id": "ambassador_diplomat",
+  "name": "Ambassador: diplomat",
+  "author": "Steambirds Revive",
+  "description": "Summoned by the Ambassador (15 in 3 waves). It darts toward the nearest player in a short zigzag, like a hummingbird: 3 fast dashes of 1.6 units, each one facing the way it goes. The first leaves at once; before each of the others it stops, turns to face the player, then dashes again. The first two go a random 28 to 52 degrees off the line to the player, the third 40. Shielded during the first two dashes, open on the third. Then it stops and is a turret: it stays still, faces the player and shoots. If the player gets more than 9 units away it loses interest and wanders slowly; when a player comes back within 9 units it stops and shoots again. Reconstruction from a video.",
+  "units": ["ufohopper"],
+  "initial": "dart_shielded",
+  "states": [
+    {
+      // Dashes 1 and 2: shielded, not shooting. Each dash is a random 28 to 52 degrees off the line to the player (deviation 40 +- jitter
+      // 12), alternating sides. Between dashes it stops for 0.2 s (or until it faces the player). The ufohopper is slow (1.5 units/s)
+      // and turns 55 degrees a second; the state gives it a top speed of 8 and turns it 10 times faster.
+      "id": "dart_shielded",
+      "graphX": 40,
+      "graphY": 40,
+      "move": { "mode": "zigzag", "distance": 1.6, "deviation": 40, "jitter": 12, "pause": 0.2, "speed": 1, "topSpeed": 8, "turnMult": 10 },
+      "fire": { "enabled": false },
+      "shield": true,
+      "transitions": [ { "to": "dart_open", "when": [ { "type": "legsDone", "value": 2 } ] } ]
+    },
+    {
+      // Dash 3: no shield, no shots yet (it stops and faces the player first, like the others).
+      "id": "dart_open",
+      "graphX": 260,
+      "graphY": 40,
+      "move": { "mode": "zigzag", "distance": 1.6, "deviation": 40, "pause": 0.2, "speed": 1, "topSpeed": 8, "turnMult": 10 },
+      "fire": { "enabled": false },
+      "transitions": [ { "to": "turret", "when": [ { "type": "legsDone", "value": 1 } ] } ]
+    },
+    {
+      // From the end of dash 3: a turret. It stays where it is, faces the player and shoots. (topSpeed only makes it brake fast
+      // after the dash: it does not move here.)
+      "id": "turret",
+      "graphX": 480,
+      "graphY": 40,
+      "move": { "mode": "hold", "face": true, "topSpeed": 8, "turnMult": 4 },
+      "fire": { "enabled": true },
+      "transitions": [
+        { "to": "wander", "when": [ { "type": "hasTarget", "not": true } ] },
+        { "to": "wander", "when": [ { "type": "playerBeyond", "value": 9 } ] }
+      ]
+    },
+    {
+      // Lost aggro: wanders slowly around where it was born, not shooting, until a player comes back within 9 units.
+      "id": "wander",
+      "graphX": 480,
+      "graphY": 200,
+      "move": { "mode": "wander", "distance": 4, "interval": 3, "speed": 0.5, "topSpeed": 2 },
+      "fire": { "enabled": false },
+      "transitions": [ { "to": "turret", "when": [ { "type": "playerWithin", "value": 9 } ] } ]
+    }
+  ]
+}

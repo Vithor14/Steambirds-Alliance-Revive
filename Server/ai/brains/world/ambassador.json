@@ -1,0 +1,203 @@
+{
+  "format": 1,
+  "id": "ambassador",
+  "name": "Ambassador",
+  "author": "Steambirds Revive",
+  "description": "World boss of the Imperial Palace (ufo). It never turns to face the player: its body turns slowly by itself (20 degrees a second), counter-clockwise in phase 1 and the other way at each phase change, and its cat representatives turn with it. Phase 1: shielded, 3 cats close around it (shielded for their first 5.5 s); when they are dead it drops its shield and slides along a small triangle. When it has lost a quarter of its health (or after 13-15 s) it shields again and calls 15 diplomats (5 a second, 3 waves); when they are dead it goes back to the triangle, calling diplomats again every 13-15 s. Under 30% health it goes back to its center, shielded, with 3 cats on an inner ring (shielded until the outer ring dies; their side guns fire through the boss, drawing a spiral) and 3 on an outer ring; when all 6 are dead it slides along a bigger triangle, faster and turning faster, without a shield, to the end. Reconstruction from a video: the original AI was on the server and is lost.",
+  "units": ["ufo"],
+  // Guns of the ufo: 1 = a fast bullet spiral (6 a second), 2-5 = rings of 8-16 bullets every 3-4 s (0 is a dud). Their ranges in the
+  // game data are short (3 to 9 units), so every state that shoots sets fire.range 25. To leave the players room:
+  //   summons alive (cats or diplomats): only the ring of gun 2, once every 4 s (rateMult 0.875 stretches its 3.5 s reload to 4 s);
+  //   open on the triangle: the rings of guns 2 and 3, each every 4 s;
+  //   last stand: the two rings and the spiral, at 60% of their rate.
+  "initial": "wait",
+  "states": [
+    {
+      // Waiting for a player (spawned awake by the open world: it starts as soon as someone comes close or shoots it).
+      "id": "wait",
+      "graphX": 40,
+      "graphY": 40,
+      "move": { "mode": "hold", "face": false },
+      "fire": { "enabled": false },
+      "shield": true,
+      "transitions": [
+        { "to": "intro", "when": [ { "type": "playerWithin", "value": 40 } ] },
+        { "to": "intro", "when": [ { "type": "recentlyHit", "value": 1 }, { "type": "hasTarget" } ] }
+      ]
+    },
+    {
+      // Phase 1 (turning counter-clockwise): 3 cat representatives close around it, fixed to its body. It stays shielded until all
+      // three are dead. (timeInState: the summons only exist from the next tick, so "summonsAtMost 0" would be true at once.)
+      "id": "intro",
+      "graphX": 260,
+      "graphY": 40,
+      "move": { "mode": "hold", "face": false, "spinRate": -20 },
+      "fire": { "enabled": true, "guns": [2], "range": 25, "rateMult": 0.875 },
+      "shield": true,
+      "summon": "ambassador_cat",
+      "summonCount": 3,
+      "summonPlace": "around",
+      "summonDistance": 4.5,
+      "transitions": [
+        { "to": "triangle", "when": [ { "type": "timeInState", "value": 1 }, { "type": "summonsAtMost", "value": 0 } ] }
+      ]
+    },
+    {
+      // Phase 2 (turning clockwise), open to damage: slides along a small triangle (3 units from the spawn) while it turns. The game
+      // gives the ufo a top speed of 0 (its flight lived on the original server), so the state gives it one.
+      // The first diplomats come when it has lost a quarter of its health, whatever the time (or after 13-15 s if that is sooner).
+      "id": "triangle",
+      "graphX": 480,
+      "graphY": 40,
+      "move": {
+        "mode": "path",
+        "points": [ { "x": 0, "y": 3 }, { "x": 2.6, "y": -1.5 }, { "x": -2.6, "y": -1.5 } ],
+        "loop": true,
+        "speed": 1,
+        "topSpeed": 3,
+        "spinRate": 20
+      },
+      "fire": { "enabled": true, "guns": [2, 3], "range": 25, "rateMult": 0.875 },
+      "transitions": [
+        { "to": "diplomats_forced", "when": [ { "type": "healthBelow", "value": 0.75 } ] },
+        { "to": "diplomats", "when": [ { "type": "timeInState", "value": 13, "max": 15 } ] }
+      ]
+    },
+    {
+      // Phase 3 (turning counter-clockwise), shielded: 5 diplomats now and 5 more every second (3 waves: it leaves after 2.2 s).
+      // Called by the timer before the boss lost a quarter of its health: it goes back to the first triangle, which still forces
+      // the diplomats at 75%.
+      "id": "diplomats",
+      "graphX": 480,
+      "graphY": 200,
+      "move": { "mode": "hold", "face": false, "spinRate": -20 },
+      "fire": { "enabled": true, "guns": [2], "range": 25, "rateMult": 0.875 },
+      "shield": true,
+      "summon": "ambassador_diplomat",
+      "summonCount": 5,
+      "summonEvery": 1,
+      "summonMax": 15,
+      "transitions": [
+        { "to": "diplomats_wait", "when": [ { "type": "timeInState", "value": 2.2 } ] }
+      ]
+    },
+    {
+      "id": "diplomats_wait",
+      "graphX": 260,
+      "graphY": 200,
+      "move": { "mode": "hold", "face": false, "spinRate": -20 },
+      "fire": { "enabled": true, "guns": [2], "range": 25, "rateMult": 0.875 },
+      "shield": true,
+      "transitions": [
+        { "to": "triangle", "when": [ { "type": "summonsAtMost", "value": 0 } ] }
+      ]
+    },
+    {
+      // The same diplomats, forced by the loss of a quarter of its health (or called again later): afterwards it goes to the
+      // later triangle, which no longer looks at 75%.
+      "id": "diplomats_forced",
+      "graphX": 700,
+      "graphY": 200,
+      "move": { "mode": "hold", "face": false, "spinRate": -20 },
+      "fire": { "enabled": true, "guns": [2], "range": 25, "rateMult": 0.875 },
+      "shield": true,
+      "summon": "ambassador_diplomat",
+      "summonCount": 5,
+      "summonEvery": 1,
+      "summonMax": 15,
+      "transitions": [
+        { "to": "diplomats_forced_wait", "when": [ { "type": "timeInState", "value": 2.2 } ] }
+      ]
+    },
+    {
+      "id": "diplomats_forced_wait",
+      "graphX": 700,
+      "graphY": 320,
+      "move": { "mode": "hold", "face": false, "spinRate": -20 },
+      "fire": { "enabled": true, "guns": [2], "range": 25, "rateMult": 0.875 },
+      "shield": true,
+      "transitions": [
+        { "to": "triangle_late", "when": [ { "type": "summonsAtMost", "value": 0 } ] }
+      ]
+    },
+    {
+      // Phase 2 again (turning clockwise): the small triangle; diplomats again every 13-15 s, the last phase under 30%.
+      "id": "triangle_late",
+      "graphX": 920,
+      "graphY": 200,
+      "move": {
+        "mode": "path",
+        "points": [ { "x": 0, "y": 3 }, { "x": 2.6, "y": -1.5 }, { "x": -2.6, "y": -1.5 } ],
+        "loop": true,
+        "speed": 1,
+        "topSpeed": 3,
+        "spinRate": 20
+      },
+      "fire": { "enabled": true, "guns": [2, 3], "range": 25, "rateMult": 0.875 },
+      "transitions": [
+        { "to": "final_return", "when": [ { "type": "healthBelow", "value": 0.3 } ] },
+        { "to": "diplomats_forced", "when": [ { "type": "timeInState", "value": 13, "max": 15 } ] }
+      ]
+    },
+    {
+      // Last phase (turning counter-clockwise, the other way from the triangle): back to the center (its spawn point), shielded.
+      "id": "final_return",
+      "graphX": 1140,
+      "graphY": 40,
+      "move": { "mode": "path", "points": [ { "x": 0, "y": 0 } ], "loop": false, "speed": 1, "topSpeed": 6, "spinRate": -20 },
+      "fire": { "enabled": false },
+      "shield": true,
+      "transitions": [
+        { "to": "final_inner", "when": [ { "type": "timeInState", "value": 3.5 } ] }
+      ]
+    },
+    {
+      // The inner ring (3 cats close to it, shielded until the outer ring is dead)...
+      "id": "final_inner",
+      "graphX": 1140,
+      "graphY": 160,
+      "move": { "mode": "hold", "face": false, "spinRate": -20 },
+      "fire": { "enabled": true, "guns": [2], "range": 25, "rateMult": 0.875 },
+      "shield": true,
+      "summon": "ambassador_cat_inner",
+      "summonCount": 3,
+      "summonPlace": "around",
+      "summonDistance": 4.5,
+      "transitions": [ { "to": "final_outer" } ]
+    },
+    {
+      // ...and, in the same moment, the outer ring (3 cats), turned 60 degrees so each outer cat is halfway between two inner ones.
+      // The boss stays shielded until all 6 are dead.
+      "id": "final_outer",
+      "graphX": 1140,
+      "graphY": 280,
+      "move": { "mode": "hold", "face": false, "spinRate": -20 },
+      "fire": { "enabled": true, "guns": [2], "range": 25, "rateMult": 0.875 },
+      "shield": true,
+      "summon": "ambassador_cat_outer",
+      "summonCount": 3,
+      "summonPlace": "around",
+      "summonDistance": 8,
+      "summonAngle": 60,
+      "transitions": [
+        { "to": "final_fight", "when": [ { "type": "timeInState", "value": 1 }, { "type": "summonsAtMost", "value": 0 } ] }
+      ]
+    },
+    {
+      // Desperation (turning clockwise, faster): no more guards, open to damage, it slides along a bigger triangle (4.5 units from
+      // the spawn), faster, to the end.
+      "id": "final_fight",
+      "graphX": 1140,
+      "graphY": 400,
+      "move": {
+        "mode": "path",
+        "points": [ { "x": 0, "y": 4.5 }, { "x": 3.9, "y": -2.25 }, { "x": -3.9, "y": -2.25 } ],
+        "loop": true,
+        "speed": 1,
+        "topSpeed": 4.5,
+        "spinRate": 30
+      },
+      "fire": { "enabled": true, "guns": [1, 2, 3], "range": 25, "rateMult": 0.6 }
+    }
+  ]
+}

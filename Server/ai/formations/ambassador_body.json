@@ -3,7 +3,7 @@
   "id": "ambassador_body",
   "name": "Ambassador body",
   "author": "Steambirds Revive",
-  "description": "Glued body only: three saucers and six minis on rings. bindToUnit is false, so this does not replace a group until an AI names it. Diplomat waves stay on the leader AI, not in this file.",
+  "description": "Optional glued body: three saucers and six minis on rings. bindToUnit is false, so nothing uses it until an AI names it. The shipped Ambassador fight is the AI ambassador (phase summons, orbit lock), not this file. Do not point that AI at this formation or the cats are born twice.",
   "bindToUnit": false,
   "leader": { "unit": "ufo", "ai": "" },
   "members": [

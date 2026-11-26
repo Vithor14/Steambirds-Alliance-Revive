@@ -33,9 +33,9 @@ internal static class AiFields
             EnabledWhen = UsedBy("orbit", "orbitLeader")
         };
         yield return Number("move.distance", "Distance", 14, 0, 500, 1,
-            "orbit: radius of the circle around the player. orbitLeader: radius of the circle around the leader of the group. wander: radius of the area around home.", UsedBy("orbit", "orbitLeader", "wander"));
+            "orbit: radius of the circle. wander: radius around home. zigzag: length of one dash.", UsedBy("orbit", "orbitLeader", "wander", "zigzag"));
         yield return Number("move.deviation", "Deviation (degrees)", 30, 0, 180, 5,
-            "orbit: how many degrees ahead along the circle the unit aims. Small = it spirals in slowly, large = it goes around fast.", UsedBy("orbit", "orbitLeader"));
+            "orbit: how many degrees ahead along the circle the unit aims. zigzag: degrees off the line to the player each dash.", UsedBy("orbit", "orbitLeader", "zigzag"));
         yield return Number("move.farFactor", "Far factor", 1.6, 1, 20, 0.1, "orbit: \"far\" starts at distance x this value.", UsedBy("orbit", "orbitLeader"));
         yield return Number("move.lead", "Lead (s)", 0, 0, 5, 0.05, "approach: seconds of the player's velocity the unit aims ahead (0 = at the player).", UsedBy("approach"));
         yield return Number("move.interval", "Interval (s)", 5, 0.5, 120, 0.5, "wander: seconds between two destinations.", UsedBy("wander"));
@@ -58,6 +58,36 @@ internal static class AiFields
         };
         yield return Number("move.speedMult", "Speed multiplier (builtin)", 1, 0.1, 5, 0.1,
             "builtin: multiplies the speed of the unit (1.2 = a fifth faster than the unit type says).", UsedBy("builtin"));
+        yield return new FieldSpec("move.around", "Circle around", FieldKind.Choice)
+        {
+            Choices = () => new[] { "player", "summoner", "leader", "home" },
+            AllowEmpty = true,
+            Help = "orbit: who the circle is around. Empty = the player.",
+            EnabledWhen = UsedBy("orbit")
+        };
+        yield return new FieldSpec("move.lock", "Lock to the circle", FieldKind.Bool)
+        {
+            Help = "orbit: stay on a fixed place of the circle and turn with the summoner, instead of chasing a point ahead.",
+            EnabledWhen = UsedBy("orbit")
+        };
+        yield return new FieldSpec("move.faceForward", "Face the way it circles", FieldKind.Bool)
+        {
+            Help = "orbit with lock: face along the circle, the way the center turns.",
+            EnabledWhen = UsedBy("orbit")
+        };
+        yield return Number("move.spinRate", "Spin (degrees/s)", 0, -180, 180, 1,
+            "How fast the body turns by itself. On hold, the unit stays put and spins. On a path, the body spins while it slides.",
+            UsedBy("hold", "path", "orbit"));
+        yield return Number("move.topSpeed", "Top speed (units/s)", 0, 0, 40, 0.5,
+            "Replaces the unit's own top speed while this state lasts. 0 = the unit's speed. A unit the game gives speed 0 needs this to move.");
+        yield return Number("move.turnMult", "Turn multiplier", 1, 0.1, 20, 0.1, "Multiplies how fast the unit may turn (1 = as the unit says).");
+        yield return Number("move.jitter", "Dash angle random", 0, 0, 90, 1, "zigzag: the dash angle varies by up to this many degrees.", UsedBy("zigzag"));
+        yield return Number("move.pause", "Pause between dashes (s)", 0, 0, 5, 0.1, "zigzag: it stops and faces the player between dashes.", UsedBy("zigzag"));
+        yield return new FieldSpec("move.loop", "Loop the path", FieldKind.Bool)
+        {
+            DefaultBool = true, Help = "path: off = stop at the last point.",
+            EnabledWhen = UsedBy("path")
+        };
 
         yield return FieldSpec.Header("Weapons");
         yield return new FieldSpec("fire.enabled", "Shoots", FieldKind.Bool) { DefaultBool = true, Help = "Off = the unit does not shoot in this state." };
@@ -103,7 +133,7 @@ internal static class AiFields
         };
         yield return new FieldSpec("summonPlace", "Summon place", FieldKind.Choice)
         {
-            Choices = () => new[] { "behind", "front", "left", "right", "ring" },
+            Choices = () => new[] { "behind", "front", "left", "right", "ring", "around" },
             AllowEmpty = true,
             Help = "Where they appear around the summoner. Empty = behind."
         };

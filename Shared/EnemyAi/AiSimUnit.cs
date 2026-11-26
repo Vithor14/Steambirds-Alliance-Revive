@@ -40,6 +40,7 @@ public sealed class AiSimUnit
     private readonly AiSim world;
     private readonly List<SimGun> guns = new List<SimGun>();
     private AiRuntime? runtime;
+    public int LegsDone => runtime?.LegsDone ?? 0;
     private double respawnAt = -1;
     private double bornAt;
     private double lastHitAt = -1;
@@ -244,7 +245,9 @@ public sealed class AiSimUnit
                 Now = world.Time, Dt = dt, LastHitAt = lastHitAt, SummonsAlive = world.CountSummons(this),
                 CountMatching = (unit, role) => world.CountMatching(this, unit, role),
                 HasSummoner = Summoner != null && !Summoner.Dead,
-                SummonerX = Summoner != null ? Summoner.X : 0f, SummonerY = Summoner != null ? Summoner.Y : 0f
+                SummonerX = Summoner != null ? Summoner.X : 0f, SummonerY = Summoner != null ? Summoner.Y : 0f,
+                SummonerRot = Summoner != null ? Summoner.Rot : 0f,
+                CountSiblings = name => world.CountSiblings(this, name)
             };
             o = runtime.Step(sense);
             if (o.Entered)
@@ -294,7 +297,18 @@ public sealed class AiSimUnit
         }
 
         if (o != null && !Glued)
-            AiMotion.Steer(ref X, ref Y, ref Rot, ref Vel, o.TargetX, o.TargetY, o.TargetVel, velMin, velMax, maxTurn * Math.Max(0.05f, o.TurnMult), o.Hold, dt);
+        {
+            if (o.TopSpeed > 0f)
+            {
+                velMax = o.TopSpeed;
+                velMin = Math.Min(velMin, velMax);
+            }
+            float turn = maxTurn * Math.Max(0.05f, o.TurnMult);
+            if (o.Slide)
+                AiMotion.Slide(ref X, ref Y, ref Rot, ref Vel, out _, o.TargetX, o.TargetY, o.Hold ? 0f : o.TargetVel, velMax, turn, o.SpinRate, o.FaceRot, dt);
+            else
+                AiMotion.Steer(ref X, ref Y, ref Rot, ref Vel, o.TargetX, o.TargetY, o.TargetVel, velMin, velMax, turn, o.Hold, dt);
+        }
 
         Fire(o, hasTarget);
     }

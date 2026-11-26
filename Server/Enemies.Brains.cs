@@ -118,7 +118,8 @@ public static partial class Enemies
             SummonsAlive = ai.Brain.NeedsSummonCount ? CountSummons(inst, enemy, "", "") : 0,
             CountMatching = ai.Brain.NeedsSummonCount ? (unit, role) => CountSummons(inst, enemy, unit, role) : null,
             HasSummoner = enemy.Summoner != null && inst.Enemies.ContainsKey(enemy.Summoner.ShortId),
-            SummonerX = enemy.Summoner?.X ?? 0f, SummonerY = enemy.Summoner?.Y ?? 0f
+            SummonerX = enemy.Summoner?.X ?? 0f, SummonerY = enemy.Summoner?.Y ?? 0f, SummonerRot = enemy.Summoner?.Rot ?? 0f,
+            CountSiblings = name => CountSiblings(inst, enemy, name)
         };
         AiOutput o = ai.Step(sense);
 
@@ -172,6 +173,51 @@ public static partial class Enemies
             alive++;
         }
         return alive;
+    }
+
+    private static int CountSiblings(Instance inst, Enemy enemy, string unit)
+    {
+        if (enemy.Summoner == null) return 0;
+        int alive = 0;
+        foreach (Enemy other in inst.Enemies.Values)
+        {
+            if (ReferenceEquals(other, enemy) || !ReferenceEquals(other.Summoner, enemy.Summoner)) continue;
+            if (unit.Length > 0 && !other.SummonUnit.Equals(unit, StringComparison.OrdinalIgnoreCase)) continue;
+            alive++;
+        }
+        return alive;
+    }
+
+    // An AI in ai\brains\world made for this unit (the Ambassador's "ambassador"), or null.
+    public static string? WorldAiMadeFor(string template)
+    {
+        foreach (KeyValuePair<string, AiBrainFile> pair in aiLibrary.BrainFiles.OrderBy(p => p.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            if (!aiLibrary.BrainOrigins.TryGetValue(pair.Key, out string? origin) ||
+                !string.Equals(origin, AiCatalog.WorldFolder, StringComparison.OrdinalIgnoreCase)) continue;
+            if (!aiLibrary.Brains.ContainsKey(pair.Key)) continue;
+            if (AiLibrary.Applies(false, pair.Value.Units, new[] { template })) return pair.Key;
+        }
+        return null;
+    }
+
+    // Game units an AI summons by itself. A boss that runs this AI does not also spawn those as parts.
+    public static HashSet<string> TemplatesSummonedBy(string? aiId)
+    {
+        var templates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        AiBrain? brain = aiLibrary.Get(aiId);
+        if (brain == null) return templates;
+        foreach (AiCompiledState state in brain.States)
+        {
+            foreach (AiSummonEntry line in state.Summons)
+            {
+                if (line.Unit.Length == 0) continue;
+                EnemyType? type = GetEnemyType(line.Unit);
+                string name = type != null && !string.IsNullOrWhiteSpace(type.Template) ? type.Template.Trim() : line.Unit;
+                if (name.Length > 0) templates.Add(name);
+            }
+        }
+        return templates;
     }
 
     // The type a summon names. A dungeon map keeps its types under "<map>/<name>": the summoner's own map is tried first.
@@ -245,7 +291,7 @@ public static partial class Enemies
             "front" => enemy.Rot + step,
             "left" => enemy.Rot - 90f + step,
             "right" => enemy.Rot + 90f + step,
-            "ring" => order.Angle + (count <= 1 ? 0f : index * 360f / count),
+            "ring" or "around" => order.Angle + (count <= 1 ? 0f : index * 360f / count),
             _ => enemy.Rot + 180f + step
         };
         float rad = facing * Rad;

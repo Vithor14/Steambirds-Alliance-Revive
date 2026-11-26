@@ -122,6 +122,7 @@ internal sealed class FormationTab : UserControl
         root.Controls.Add(editor, 1, 0);
         root.Controls.Add(canvas, 2, 0);
         Controls.Add(root);
+        Controls.Add(BuildMenu());
 
         nameBox.TextChanged += (_, _) => { if (!filling && current != null) current.Name = nameBox.Text; RefreshCanvas(); };
         descriptionBox.TextChanged += (_, _) => { if (!filling && current != null) current.Description = descriptionBox.Text; };
@@ -134,6 +135,45 @@ internal sealed class FormationTab : UserControl
         };
         spacing.ValueChanged += (_, _) => { if (!filling && current != null) { current.Spacing = (float)spacing.Value; RefreshCanvas(); } };
         bindToUnit.CheckedChanged += (_, _) => { if (!filling && current != null) current.BindToUnit = bindToUnit.Checked; };
+    }
+
+    private MenuStrip BuildMenu()
+    {
+        var bar = new MenuStrip { Renderer = new EditorRenderer(), Dock = DockStyle.Top };
+        var help = new ToolStripMenuItem(L.T("Help"));
+        help.DropDownItems.Add(Item(L.T("Help topics..."), () => ShowHelp(0), "F1"));
+        help.DropDownItems.Add(new ToolStripSeparator());
+        IReadOnlyList<HelpTopic> topics = FormationHelp.Topics;
+        for (int i = 0; i < topics.Count; i++)
+        {
+            int index = i;
+            help.DropDownItems.Add(Item(L.T(topics[i].Title), () => ShowHelp(index)));
+        }
+        bar.Items.Add(help);
+        return bar;
+    }
+
+    private static ToolStripMenuItem Item(string text, Action action, string? shortcut = null)
+    {
+        var item = new ToolStripMenuItem(text);
+        if (shortcut != null) item.ShortcutKeyDisplayString = shortcut;
+        item.Click += (_, _) => action();
+        return item;
+    }
+
+    private void ShowHelp(int topic)
+    {
+        HelpWindow.ShowFor(FindForm() ?? (IWin32Window)this, "formation", L.T("Help: Formation editor"), FormationHelp.Topics, topic);
+    }
+
+    protected override bool ProcessCmdKey(ref Message message, Keys keyData)
+    {
+        if (keyData == Keys.F1)
+        {
+            ShowHelp(0);
+            return true;
+        }
+        return base.ProcessCmdKey(ref message, keyData);
     }
 
     private static Control Row(string label, Control box)

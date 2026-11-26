@@ -31,6 +31,7 @@ internal static class AiSimOverlay
         public bool Not;
         public float Value;
         public float Max;
+        public string Unit = "";
         public bool Drawn;
         public bool IsTrue;
         public Color Color;
@@ -64,7 +65,7 @@ internal static class AiSimOverlay
                 AiCondition cond = tr.When[c];
                 var exit = new Exit
                 {
-                    Transition = t, Condition = c, Target = target, Type = cond.Type, Not = cond.Not,
+                    Transition = t, Condition = c, Target = target, Type = cond.Type, Not = cond.Not, Unit = cond.Unit ?? "",
                     Value = cond.Type == "timeInState" ? sim.RolledValue(t, c) : cond.Value,
                     Max = cond.Max ?? 0f, Color = color
                 };
@@ -126,6 +127,8 @@ internal static class AiSimOverlay
             case "timeInState": result = sim.StateTime >= e.Value; break;
             case "hasTarget": result = has; break;
             case "summonsAtMost": result = sim.MinionsAlive <= e.Value; break;
+            case "siblingsAtMost": result = sim.Siblings(e.Unit) <= e.Value; break;
+            case "legsDone": result = sim.LegsDone >= e.Value; break;
             case "facingTarget":
                 result = has && Math.Abs(AiMath.AngleDifference(sim.Rot, AiMath.Heading(sim.X, sim.Y, sim.PlayerX, sim.PlayerY))) <= e.Value;
                 break;
@@ -149,6 +152,8 @@ internal static class AiSimOverlay
             "facingTarget" => L.F("facing the player (within {0} degrees)", v),
             "hasTarget" => L.T("has a player"),
             "summonsAtMost" => L.F("summons alive at most {0}", v),
+            "siblingsAtMost" => L.F("other summons alive at most {0}", v),
+            "legsDone" => L.F("dashes done at least {0}", v),
             "chance" => L.F("chance {0} per second", v),
             _ => e.Type + " " + v
         };

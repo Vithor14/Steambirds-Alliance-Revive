@@ -172,8 +172,11 @@ public static partial class WorldServer
         {
         var attached = new List<int>();
         double offset = random.NextDouble() * Math.PI * 2.0;
+        // Parts the boss's AI summons itself (the Ambassador's cats and diplomats) are not created up front.
+        HashSet<string> summonedByAi = Enemies.TemplatesSummonedBy(BossAi(region.Name, bossGroup.Name, true));
         for (int i = 0; i < bossGroup.Parts.Count; i++)
         {
+            if (summonedByAi.Contains(bossGroup.Parts[i])) continue;
             // Spread on a ring around the boss (a second ring when there are many), on free land when there is some.
             // A boss with a formation file is created above, not here.
             double angle = offset + i * Math.PI * 2.0 / Math.Max(1, Math.Min(bossGroup.Parts.Count, 12));
@@ -204,9 +207,7 @@ public static partial class WorldServer
     // own AI.
     private static string EnsureBossType(string template, WorldSettings.EnemySettings settings, bool boss, string regionName)
     {
-        // The AI of the host, else the one the boss's formation brings (the sergeant waits for its escorts to fall), else the default.
-        string ai = WorldEnemyLists.HostAi(regionName, template) ?? (boss ? Formations.DefaultAi(template) : null) ?? WorldEnemyLists.DefaultAi;
-        if (string.IsNullOrWhiteSpace(ai)) ai = WorldEnemyLists.DefaultAi;
+        string ai = BossAi(regionName, template, boss);
         string key = (boss ? "world/boss/" : "world/part/") + template + (ai.Equals(WorldEnemyLists.DefaultAi, StringComparison.OrdinalIgnoreCase) ? "" : "~" + ai);
         Enemies.RegisterDefaultType(key, new Enemies.EnemyType
         {
@@ -215,9 +216,23 @@ public static partial class WorldServer
             Ai = ai,
             FreeRoam = true,
             Boss = boss,
+            DeathUnit = boss && Enemies.FindUnit(template + "DEATH") != null ? template + "DEATH" : "",
             HealthMultiplier = settings.HealthMultiplier
         });
         return key;
+    }
+
+    // Host's AI, else the formation bound to the unit, else an AI in ai\brains\world made for it (the Ambassador), else chase.
+    private static string BossAi(string regionName, string template, bool boss)
+    {
+        string? ai = WorldEnemyLists.HostAi(regionName, template);
+        if (!string.IsNullOrWhiteSpace(ai)) return ai;
+        if (boss)
+        {
+            ai = Formations.DefaultAi(template) ?? Enemies.WorldAiMadeFor(template);
+            if (!string.IsNullOrWhiteSpace(ai)) return ai;
+        }
+        return WorldEnemyLists.DefaultAi;
     }
 
     // ------------------------------------------------------------------ dungeon carrier

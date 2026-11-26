@@ -157,6 +157,8 @@ public sealed class AiSim
 
     // The units the edited one summoned that are still flying.
     public int MinionsAlive => CountSummons(Main);
+    public int LegsDone => Main.LegsDone;
+    public int Siblings(string unit) => CountSiblings(Main, unit);
 
     // ---- world
     public double Time { get; private set; }
@@ -178,6 +180,19 @@ public sealed class AiSim
             if (u.Role != AiSimUnit.RoleSummon && u.Role != AiSimUnit.RolePart) continue;
             if (unit.Length > 0 && !u.SummonUnit.Equals(unit, StringComparison.OrdinalIgnoreCase)) continue;
             if (role.Length > 0 && !u.SummonRole.Equals(role, StringComparison.OrdinalIgnoreCase)) continue;
+            count++;
+        }
+        return count;
+    }
+
+    internal int CountSiblings(AiSimUnit who, string unit)
+    {
+        if (who.Summoner == null) return 0;
+        int count = 0;
+        foreach (AiSimUnit u in units)
+        {
+            if (u.Dead || ReferenceEquals(u, who) || !ReferenceEquals(u.Summoner, who.Summoner)) continue;
+            if (unit.Length > 0 && !u.SummonUnit.Equals(unit, StringComparison.OrdinalIgnoreCase)) continue;
             count++;
         }
         return count;
@@ -385,7 +400,7 @@ public sealed class AiSim
             "front" => by.Rot,
             "left" => by.Rot - 90f,
             "right" => by.Rot + 90f,
-            "ring" => order.Angle + spread,
+            "ring" or "around" => order.Angle + (count <= 1 ? 0f : index * 360f / count),
             _ => by.Rot + 180f + spread
         };
         float rad = facing * AiMath.Rad;

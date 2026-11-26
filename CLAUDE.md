@@ -77,11 +77,14 @@ Maintained 100% by the community, with some additions and improvements.
   - Host configs (`Server\*.json`, with comments, reread when they change): `progression.json`, `items.json`, `enemies.json`,
     `dungeons.json`, `world.json`, `network.json`, `stores.json`, `social.json` (created with defaults on first start).
     `flocks.json`, `world-map.json` and `world-live.json` are written by the server (gitignored).
-  - Maps: `maps\*.json` (format: `docs/map-format.md`, all field names in English). Loot: `loot_tables\`. Enemy AI: `ai\`.
+  - Maps: `maps\*.json` (format: `docs/map-format.md`, all field names in English). Loot: `loot_tables\`. Enemy AI: `ai\`
+    (`brains\`, `behaviors\`, `formations\`). The Ambassador fight is `brains\world\ambassador*.json` (phase summons, not a birth
+    formation). `formations\ambassador_body.json` is an optional glued body and is not bound to that AI.
   - Game data exported by the plugin (gitignored, copied from the game): `data\`. Item catalog written by the server: `catalog\`.
   - Accounts: `accounts\<key>\` (gitignored). Chat messages of the client: `Game*.cs`; message IDs: `MessageCatalog.cs`.
 - `Launcher\` — WinForms .NET 8 launcher (0.7.1): `Core\`, `UI\` (screens) with `UI\Controls\` (themed controls), `Editor\` (map editor tab),
-  `EnemyAi\` (Enemy AI tab and simulator), `lang\` (English is the default; `pt-BR.json`, `_template.json`).
+  `EnemyAi\` (Enemy AI tab and simulator, Formation tab), `lang\` (English is the default; `pt-BR.json`, `_template.json`).
+  F1 on Enemy AI and on Formation opens the help of that tab (`AiHelp`, `FormationHelp`).
   Docs: `Launcher\README.md`, `Launcher\Editor\README.md`, `Launcher\lang\README.md`.
 - `Shared\EnemyAi\` — enemy AI core (file formats, runtime, flight, gun aim, simulator), compiled into **both** `Server` and `Launcher`
   (`<Compile Include="..\Shared\EnemyAi\*.cs">`). The AI files themselves live in `Server\ai\` (format: `Server\ai\README.md`).

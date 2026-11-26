@@ -267,6 +267,8 @@ internal sealed class AiGraphView : Panel
             "recentlyHit" => L.T("hit in the last") + " " + num + "s",
             "facingTarget" => L.T("facing") + " ≤ " + num + "°",
             "summonsAtMost" => L.T("summons alive") + " ≤ " + num,
+            "siblingsAtMost" => L.T("other summons alive") + " ≤ " + num,
+            "legsDone" => L.T("dashes") + " ≥ " + num,
             "chance" => L.T("chance") + " " + num + "/s",
             _ => type
         };

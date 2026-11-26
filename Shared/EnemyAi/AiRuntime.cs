@@ -23,7 +23,9 @@ public struct AiSense
     public Func<string, string, int>? CountMatching;
     // The unit that summoned this one, when it is still alive (orbit "around": "summoner").
     public bool HasSummoner;
-    public float SummonerX, SummonerY;
+    public float SummonerX, SummonerY, SummonerRot;
+    // siblingsAtMost: other live units this unit's summoner summoned (argument: only that summon type; "" = any).
+    public Func<string, int>? CountSiblings;
 }
 
 // A summon the AI asks for: the caller creates "Count" units of the type near the summoner.
@@ -68,6 +70,13 @@ public sealed class AiOutput
     public string Builtin = "";
     public float SpeedMult = 1f;
     public float TurnMult = 1f;
+    // When set, replaces the unit's own top speed for this tick (a unit the game gives speed 0 can still move).
+    public float TopSpeed;
+    // Slide: moves straight to the destination while the body turns on its own (AiMotion.Slide).
+    public bool Slide;
+    public float SpinRate;
+    // Absolute heading the body turns toward. NaN = spin at SpinRate instead.
+    public float FaceRot = float.NaN;
 
     // The shield of the state is up now (ShieldEffect = the look while it lasts, "" = the default one).
     public bool ShieldOn;
@@ -97,6 +106,21 @@ public sealed class AiRuntime
     private double[] summonAt = Array.Empty<double>();
     private double shieldUntil;
     private int pathIndex;
+    // Zigzag dashes finished in this state, and the path points reached, for legsDone.
+    private int legsDone;
+    public int LegsDone => legsDone;
+    private int legsEver;
+    private bool needLeg = true;
+    private bool pausing;
+    private bool paused;
+    private double pauseUntil;
+    private double legDeadline;
+    private float legX, legY, legHeading;
+    private float zigSide = 1f;
+    // orbit lock: the slot on the circle, kept relative to the summoner's facing.
+    private float lockAngle = float.NaN;
+    private float lastSummonerRot = float.NaN;
+    private float summonerTurn = 1f;
 
     // 1 clockwise, -1 counter-clockwise (when the move does not say).
     private readonly float defaultSpin;
@@ -168,6 +192,14 @@ public sealed class AiRuntime
         enteredAt = now;
         needPatrol = true;
         pathIndex = 0;
+        legsDone = 0;
+        legsEver = 0;
+        needLeg = true;
+        pausing = false;
+        paused = false;
+        lockAngle = float.NaN;
+        lastSummonerRot = float.NaN;
+        summonerTurn = 1f;
 
         AiCompiledState state = Brain.States[index];
         Out.EnteredStates.Add(state);
@@ -286,6 +318,12 @@ public sealed class AiRuntime
                 result = alive <= value;
                 break;
             }
+            case "legsDone":
+                result = legsDone >= value;
+                break;
+            case "siblingsAtMost":
+                result = (s.CountSiblings?.Invoke((c.Unit ?? "").Trim()) ?? 0) <= value;
+                break;
             case "chance":
                 // Probability per second, whatever the tick length.
                 result = rng.NextDouble() < 1.0 - Math.Exp(-Math.Max(0f, value) * Math.Max(0f, s.Dt));
@@ -357,7 +395,11 @@ public sealed class AiRuntime
         o.ShieldOn = s.Now < shieldUntil;
         o.ShieldEffect = state.ShieldEffect;
 
-        float top = Math.Max(0f, s.VelMax);
+        o.TopSpeed = Math.Max(0f, m.TopSpeed);
+        float top = o.TopSpeed > 0f ? o.TopSpeed : Math.Max(0f, s.VelMax);
+        o.SpinRate = m.SpinRate;
+        o.Slide = m.SpinRate != 0f;
+        o.FaceRot = float.NaN;
         float speed = Math.Max(0f, m.Speed);
         float ahead = 8f;
         float forwardX = s.X + MathF.Sin(s.Rot * AiMath.Rad) * ahead;
@@ -368,13 +410,29 @@ public sealed class AiRuntime
             case "orbit":
                 if (OrbitCenter(m.Around, s, out float ox, out float oy))
                 {
-                    if (m.Lock)
+                    if (m.Lock && m.Around.Length > 0 && !m.Around.Equals("player", StringComparison.OrdinalIgnoreCase))
                     {
-                        float ang = (m.Angle + m.SpinRate * (float)s.Now + m.FaceOffset) * AiMath.Rad;
-                        float radius = Math.Max(2f, m.Distance);
-                        o.TargetX = ox + MathF.Sin(ang) * radius;
-                        o.TargetY = oy + MathF.Cos(ang) * radius;
-                        o.TargetVel = top * speed;
+                        // A fixed place on the circle, turning with the summoner's body.
+                        float baseRot = m.Around.Equals("summoner", StringComparison.OrdinalIgnoreCase) && s.HasSummoner ? s.SummonerRot : 0f;
+                        float radius = Math.Max(1f, m.Distance);
+                        if (float.IsNaN(lockAngle)) lockAngle = AiMath.NormalizeAngle(AiMath.Heading(ox, oy, s.X, s.Y) - baseRot);
+                        float slot = baseRot + lockAngle;
+                        o.TargetX = ox + MathF.Sin(slot * AiMath.Rad) * radius;
+                        o.TargetY = oy + MathF.Cos(slot * AiMath.Rad) * radius;
+                        float gap = AiMath.Distance(s.X, s.Y, o.TargetX, o.TargetY);
+                        o.TargetVel = Math.Min(top * Math.Max(0.1f, m.FarSpeed ?? Math.Max(speed, 0.6f)), gap * 4f);
+                        o.Slide = true;
+                        if (m.FaceForward)
+                        {
+                            if (!float.IsNaN(lastSummonerRot))
+                            {
+                                float turned = AiMath.AngleDifference(lastSummonerRot, baseRot);
+                                if (Math.Abs(turned) > 0.001f) summonerTurn = turned > 0f ? 1f : -1f;
+                            }
+                            lastSummonerRot = baseRot;
+                            o.FaceRot = AiMath.NormalizeAngle(slot + 90f * summonerTurn);
+                        }
+                        else o.FaceRot = AiMath.NormalizeAngle(slot + (m.FaceOffset == 0f ? 90f : m.FaceOffset));
                     }
                     else Orbit(s, m, ox, oy, Math.Max(2f, m.Distance), AiMath.Distance(s.X, s.Y, ox, oy), speed, top, o);
                 }
@@ -388,33 +446,103 @@ public sealed class AiRuntime
 
             case "path":
             {
-                List<List<float>>? points = m.Points;
-                if (points == null || points.Count == 0)
+                List<AiPoint>? points = m.Points;
+                int count = points?.Count ?? 0;
+                if (count == 0)
                 {
+                    o.Hold = true;
                     o.TargetX = forwardX;
                     o.TargetY = forwardY;
-                    o.TargetVel = top * speed;
+                    o.TargetVel = 0f;
                     break;
                 }
-                List<float> point = points[pathIndex % points.Count];
-                float px = s.HomeX + (point.Count > 0 ? point[0] : 0f);
-                float py = s.HomeY + (point.Count > 1 ? point[1] : 0f);
-                if (AiMath.Distance(s.X, s.Y, px, py) < 2f) pathIndex++;
+                if (pathIndex >= count) pathIndex = m.Loop ? 0 : count - 1;
+                AiPoint point = points![pathIndex];
+                float px = s.HomeX + point.X;
+                float py = s.HomeY + point.Y;
+                float left = AiMath.Distance(s.X, s.Y, px, py);
+                bool last = !m.Loop && pathIndex == count - 1;
+                float reach = o.Slide ? 0.3f : Math.Max(1.5f, top * speed * 0.35f);
+                if (!last && left < reach)
+                {
+                    legsDone++;
+                    pathIndex = (pathIndex + 1) % count;
+                    point = points[pathIndex];
+                    px = s.HomeX + point.X;
+                    py = s.HomeY + point.Y;
+                    left = AiMath.Distance(s.X, s.Y, px, py);
+                    last = !m.Loop && pathIndex == count - 1;
+                }
+                if (last && left < 1f)
+                {
+                    o.Hold = true;
+                    o.TargetX = s.HasTarget ? s.TargetX : forwardX;
+                    o.TargetY = s.HasTarget ? s.TargetY : forwardY;
+                    o.TargetVel = 0f;
+                    break;
+                }
                 o.TargetX = px;
                 o.TargetY = py;
-                o.TargetVel = top * speed;
+                o.TargetVel = top * speed * (last ? Math.Clamp(left / 4f, 0.25f, 1f) : 1f);
                 break;
             }
 
             case "zigzag":
             {
-                float interval = Math.Max(0.4f, m.Interval <= 0f ? 1.2f : m.Interval);
-                float side = ((int)(s.Now / interval) & 1) == 0 ? 1f : -1f;
-                float aim = s.HasTarget ? AiMath.Heading(s.X, s.Y, s.TargetX, s.TargetY) : s.Rot;
-                float zig = (aim + side * Math.Max(20f, m.Deviation)) * AiMath.Rad;
-                o.TargetX = s.X + MathF.Sin(zig) * 16f;
-                o.TargetY = s.Y + MathF.Cos(zig) * 16f;
-                o.TargetVel = top * speed;
+                // Straight dashes of "distance" units, each "deviation" degrees off the line to the player, then the other side.
+                float legLength = Math.Max(0.5f, m.Distance);
+                float pace = Math.Max(0.1f, top * speed);
+                bool arrived = !needLeg && AiMath.Distance(s.X, s.Y, legX, legY) < 0.3f;
+                if (!needLeg && (arrived || s.Now >= legDeadline))
+                {
+                    legsDone++;
+                    legsEver++;
+                    needLeg = true;
+                    paused = false;
+                }
+                if (needLeg && m.Pause > 0f && legsEver > 0 && !paused)
+                {
+                    if (!pausing)
+                    {
+                        pausing = true;
+                        pauseUntil = s.Now + m.Pause;
+                    }
+                    float faceTo = s.HasTarget ? AiMath.Heading(s.X, s.Y, s.TargetX, s.TargetY) : s.Rot;
+                    bool facing = Math.Abs(AiMath.AngleDifference(s.Rot, faceTo)) < 12f;
+                    if (s.Now < pauseUntil || (!facing && s.Now < pauseUntil + 1.0))
+                    {
+                        o.TargetX = s.X;
+                        o.TargetY = s.Y;
+                        o.TargetVel = 0f;
+                        o.Slide = true;
+                        o.FaceRot = faceTo;
+                        break;
+                    }
+                    pausing = false;
+                    paused = true;
+                }
+                if (needLeg)
+                {
+                    needLeg = false;
+                    float toward = s.HasTarget ? AiMath.Heading(s.X, s.Y, s.TargetX, s.TargetY) : s.Rot;
+                    float jitter = Math.Max(0f, m.Jitter);
+                    float off = Math.Clamp(m.Deviation + (float)(rng.NextDouble() * 2.0 - 1.0) * jitter, 0f, 170f);
+                    if (s.HasTarget && dist < legLength * 1.5f)
+                    {
+                        toward += 90f * defaultSpin;
+                        off = Math.Min(off, 35f);
+                    }
+                    legHeading = AiMath.NormalizeAngle(toward + zigSide * off);
+                    zigSide = -zigSide;
+                    legX = s.X + MathF.Sin(legHeading * AiMath.Rad) * legLength;
+                    legY = s.Y + MathF.Cos(legHeading * AiMath.Rad) * legLength;
+                    legDeadline = s.Now + legLength / pace * 2.0 + 0.5;
+                }
+                o.TargetX = legX;
+                o.TargetY = legY;
+                o.TargetVel = pace;
+                o.Slide = true;
+                o.FaceRot = legHeading;
                 break;
             }
 
@@ -539,14 +667,16 @@ public sealed class AiRuntime
                 break;
         }
 
-        if (m.Pause > 0f && (s.Now % (m.Pause * 2f)) < m.Pause) o.TargetVel = 0f;
-        if (m.Jitter > 0f)
+        if (m.Mode != "zigzag")
         {
-            float j = m.Jitter;
-            o.TargetX += (float)(rng.NextDouble() * 2.0 - 1.0) * j;
-            o.TargetY += (float)(rng.NextDouble() * 2.0 - 1.0) * j;
+            if (m.Pause > 0f && (s.Now % (m.Pause * 2f)) < m.Pause) o.TargetVel = 0f;
+            if (m.Jitter > 0f)
+            {
+                float j = m.Jitter;
+                o.TargetX += (float)(rng.NextDouble() * 2.0 - 1.0) * j;
+                o.TargetY += (float)(rng.NextDouble() * 2.0 - 1.0) * j;
+            }
         }
-        if (m.TopSpeed > 0f) o.TargetVel = Math.Min(o.TargetVel, m.TopSpeed);
         o.TurnMult = m.TurnMult > 0f ? m.TurnMult : 1f;
         o.SpeedMult = m.SpeedMult > 0f ? m.SpeedMult : o.SpeedMult;
 

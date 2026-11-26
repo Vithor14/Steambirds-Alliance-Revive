@@ -299,11 +299,17 @@ public static partial class Enemies
         float targetY = 0f;
         float targetVel = 0f;
         bool brainHold = false;
+        bool slide = false;
         if (enemy.Ai != null)
         {
             // The AI picks the destination itself ("brain"), or hands the flight to one of the built-in ones below.
             AiOutput brain = BrainStep(inst, enemy, now, dt, velMin, velMax, validTarget, log);
             if (brain.TurnMult > 0f) turnRate *= brain.TurnMult;
+            if (brain.TopSpeed > 0f)
+            {
+                velMax = brain.TopSpeed;
+                velMin = Math.Min(velMin, velMax);
+            }
             if (brain.UseBuiltin)
             {
                 string flight = brain.Builtin.Length > 0 ? NormalizeBehavior(brain.Builtin) : enemy.Behavior;
@@ -324,6 +330,7 @@ public static partial class Enemies
                 targetY = brain.TargetY;
                 targetVel = brain.TargetVel;
                 brainHold = brain.Hold;
+                slide = brain.Slide;
             }
         }
 
@@ -432,7 +439,8 @@ public static partial class Enemies
                 break;
         }
 
-        // Separation: enemies do not stack.
+        // Separation: enemies do not stack. A unit that slides (a locked guard, a dash) keeps the place its AI gives it.
+        if (!slide)
         foreach (Enemy outro in inst.Enemies.Values)
         {
             if (outro == enemy) continue;
@@ -473,9 +481,13 @@ public static partial class Enemies
             targetY = Math.Clamp(targetY, arena.CenterY - limit, arena.CenterY + limit);
         }
 
-        // Turn toward the destination and speed up or slow down (Shared\EnemyAi\AiMath.cs, the same code as the launcher's simulator).
-        AiMotion.Steer(ref enemy.X, ref enemy.Y, ref enemy.Rot, ref enemy.Vel, targetX, targetY, targetVel,
-            velMin, velMax, turnRate, mode == "turret" || brainHold, dt);
+        // Turn toward the destination, or slide straight there while the body spins (Shared\EnemyAi\AiMath.cs).
+        if (slide && enemy.Ai != null)
+            AiMotion.Slide(ref enemy.X, ref enemy.Y, ref enemy.Rot, ref enemy.Vel, out _, targetX, targetY,
+                brainHold ? 0f : targetVel, velMax, turnRate, enemy.Ai.Out.SpinRate, enemy.Ai.Out.FaceRot, dt);
+        else
+            AiMotion.Steer(ref enemy.X, ref enemy.Y, ref enemy.Rot, ref enemy.Vel, targetX, targetY, targetVel,
+                velMin, velMax, turnRate, mode == "turret" || brainHold, dt);
 
         if (enemy.FreeRoam) return;
         if (enemy.Area.HasValue)
