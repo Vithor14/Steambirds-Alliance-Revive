@@ -4,7 +4,7 @@ Referência técnica do tutorial refeito (cliente 201219.1413). Escrito em 14/11
 
 ## Mapa em arquivo (v5)
 - Desde a v5, o chão, os muros, os pontos, as áreas, as linhas do roteiro, os portões, os pontos de controle e as placas ficam em `Server\maps\tutorial_walker.json`. O formato está em `docs/map-format.md`.
-- Desde 23/11 o **roteiro também está no arquivo** (seção `script` do `tutorial_walker.json`: aparições, regras, falas, `/step`), rodado pelo motor `Server\Scripting\` (`docs/map-script.md`). `Tutorial.Script.cs` só guarda os portões de caixas, o porta-aviões de saída e a saída automática; `Tutorial.Host.cs` liga o motor à sessão. Mudou de forma, não de comportamento, mas **ainda não foi jogado**: conferir no jogo que o tutorial segue igual (falas, torretas uma a uma, anel, caixa, chefe, portal).
+- Desde 23/11 o **roteiro também está no arquivo** (seção `script` do `tutorial_walker.json`: aparições, regras, falas, `/step`), rodado pelo motor `Server\Scripting\` (`docs/map-script.md`). `Tutorial.Script.cs` só guarda os portões de caixas, o porta-aviões de saída e a saída automática; `Tutorial.Host.cs` liga o motor à sessão. **Jogado em 23/11** por um jogador com conta nova: as 8 etapas rodaram em ordem (hangar, drones, corredor, anel de gás, caixa, portão do chefe, chefe, saída), com checkpoints, saída automática e a dungeon marcada na conta.
 - As medidas abaixo (em tiles a, b) viraram u = 12a, v = 12b no arquivo. O perfil e o pilar estão no "desenho": 84 linhas × 20 colunas, si −8..11, sj 0..83.
 
 ## Sem plugin (3ª versão)

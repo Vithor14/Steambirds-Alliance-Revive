@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 // holds what the host changed; a region that is not in the file keeps the game's lists. For a region in the file:
 //   "groups": the groups of enemies a spawn site of the region picks from. Each group has "leaders" and "members" (a group of one
 //             leader and followers) or "solo": true (one enemy of "members" alone). When "groups" is missing the game's groups stay.
+//             "counts" ({unit: how many}) makes the group exact: how many of each unit it creates each time.
 //   "ai":     {unit: AI id}: the AI file (Serverirains) each unit of the region runs; a unit that is not in it runs generic_chase.
 //   "boss":   the unit that "spawn boss here" (the launcher's map menu) creates in the region. Empty = the default boss of the region.
 // The server also writes world-enemy-defaults.json (the game's lists, the boss choices and the zone names) so the launcher can show
@@ -24,6 +25,10 @@ public static class WorldEnemyLists
         public bool Solo { get; set; }
         public List<string> Leaders { get; set; } = new List<string>();
         public List<string> Members { get; set; } = new List<string>();
+        // How many of each unit the group creates each time (by unit name). Missing = the group is random: a leader and 2 up to
+        // groupSizeMax units picked from "members". With it the group is exact: one leader of "leaders" (picked at random) and every
+        // unit of "members", each as many times as it says here (a unit that is not in it counts as 1; 0 = none).
+        public Dictionary<string, int>? Counts { get; set; }
     }
 
     public sealed class RegionEntry
@@ -33,6 +38,9 @@ public static class WorldEnemyLists
         // The AI of each unit of the region (by the game's unit name). Missing = the default AI of the open world.
         public Dictionary<string, string>? Ai { get; set; }
     }
+
+    // The most units of one kind a group creates each time.
+    public const int MaxCount = 30;
 
     // The AI every open-world unit runs unless the host picked another one.
     public const string DefaultAi = "generic_chase";
@@ -90,6 +98,13 @@ public static class WorldEnemyLists
         return Current.Regions.TryGetValue(regionName, out RegionEntry? entry) ? entry : null;
     }
 
+    // The AI the host picked for a unit in a region (null = none picked).
+    public static string? HostAi(string regionName, string unit)
+    {
+        Dictionary<string, string>? choices = Of(regionName)?.Ai;
+        return choices != null && choices.TryGetValue(unit, out string? id) && !string.IsNullOrWhiteSpace(id) ? id.Trim() : null;
+    }
+
     // The AI a unit of a region runs: the one the host picked for it in that region, or the default.
     public static string AiFor(string regionName, string unit)
     {
@@ -129,6 +144,9 @@ public static class WorldEnemyLists
                     group.Name ??= "";
                     group.Leaders = (group.Leaders ?? new List<string>()).Where(n => !string.IsNullOrWhiteSpace(n)).Select(n => n.Trim()).ToList();
                     group.Members = (group.Members ?? new List<string>()).Where(n => !string.IsNullOrWhiteSpace(n)).Select(n => n.Trim()).ToList();
+                    if (group.Counts != null)
+                        group.Counts = group.Counts.Where(p => !string.IsNullOrWhiteSpace(p.Key))
+                            .ToDictionary(p => p.Key.Trim(), p => Math.Clamp(p.Value, 0, MaxCount), StringComparer.OrdinalIgnoreCase);
                 }
             }
             read.Regions = read.Regions.Where(p => p.Value != null).ToDictionary(p => p.Key, p => p.Value, StringComparer.OrdinalIgnoreCase);

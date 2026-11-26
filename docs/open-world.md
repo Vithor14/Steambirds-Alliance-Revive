@@ -54,15 +54,14 @@ The client has the data structures (`WorldLayout`, `GroundAssetContainer`, `Terr
 
 - The game's units are filed by region: `Units/01 - Beach`, `11/12/13` lowlands, `21/22/23` midlands, `31/32/33` highlands, `41`
   mountains, `51` highmountains. The first digit is the band and the second the variant (`lowlands2` -> `12`). `GRP<n>_x` +
-  `GRP<n>_xleader` are a group, `SLO<n>_x` a solo enemy, `BOS` bosses and their parts (a boss is created only when the host asks, see
+  `GRP<n>_xleader` are a group, `SLO<n>_x` / `SLO-x` / `SOL<n>_x` a solo enemy (so are `SPC`, `HVY`, `XXX_` and `unit_` files: each unit comes alone), `BOS` bosses and their parts (a boss is created only when the host asks, see
   "Lists, bosses and requests" below). Helpers of other units
-  (controllers, grenades, clones, exploders...) are left out by name.
+  (controllers, grenades, clones, exploders...) and what units fire (names ending in missile, bomb, laser, fireball, hammer...) are left out by name.
 - A region has "spawn sites" on a jittered grid (`siteSpacingTiles`). A player within `spawnRadius` makes the site create one
   group (a leader and followers, or one solo) of the region's pool, asleep: it wakes when a player is within `wakeRadius`, or on a hit.
   Farther than `despawnRadius` from every player the group is taken away. After the group dies the site rests
   `secondsPerStandardEnemyIn10x10 x enemies x respawnScale`.
-- The type is `world/<template>` (the game's unit, the generic AI `generic_chase`, free to roam, no area limit). **No world-specific AI was written yet** (`airains\world` is the folder for them): put a type
-  with the same key in `enemies.json`, or an AI file in the Enemy AI tab, to change it.
+- The type is `world/<template>` (the game's unit, free to roam, no area limit). A unit with no AI picked for its biome runs `generic_chase`. Biome lists, exact group counts, `generic_orbit_leader` and the boss formations are in *Lists, bosses and requests* (`world-enemies.json`, `formations.json`, `Server/ai/brains/world`).
 - The server limit is 140 enemies per instance; `maxAlive` (100) stays under it.
 
 ### What each client is told about (`Enemies.Interest.cs`, `viewRadius`)
@@ -125,9 +124,9 @@ The names come from `Texts/lore` (`territory_tile_<tile>_name`) and the ingredie
 itself shows "Now entering: <zone>" when the plane flies over a tile. The positions were read from the picture of the map; Hospital
 Area and Imperial Palace are not labeled in it, so they sit in the unlabeled corners. `sizeScale` is now 1.3333 (radius about 867).
 
-## World map page of the launcher (22/11)
+## World map page of the launcher (22/11; tabs since 0.7.1)
 
-Server tab > World map (`Launcher\UI\WorldMapPage.cs`, `WorldMapView.cs`). The server writes two files in its folder
+Server tab > World map (`Launcher\UI\WorldMapPage.cs`, `WorldMapView.cs`). Since 0.7.1 this screen has four tabs: Map (this section), Enemies, Enemies of each biome, and World settings (the last three are in *Lists, bosses and requests* below; the Enemies tab fills the window). The server writes two files in its folder
 (`Server\World\WorldLive.cs`): `world-map.json` when the world is built (the zone of every cell) and `world-live.json` every second
 while somebody is in it (players, carriers, counts; `"active": false` when empty, also at server start). The page draws the world with
 one color per zone, the spawn point, the carriers and the players (a dot with its heading and name). Hovering a player shows plane,
@@ -144,21 +143,21 @@ launcher starts.
   standby is built at once (a new random seed when `seed` is 0). If the map settings of `world.json` change (seed, size, layout,
   biome scale, land fraction, spawn point, site spacing, skipped units) while nobody is in the world, the standby is built again.
   With players inside nothing changes until the world is empty.
-- **Launcher, Server > World map**: two tabs, Map and World settings. The settings tab edits the scalar keys of `world.json` (on/off, name,
+- **Launcher, Server > World map** (0.7.1): four tabs, Map, Enemies (spawn numbers; this tab fills the window), Enemies of each biome, and World settings. The settings tab edits the scalar keys of `world.json` (on/off, name,
   maximum players, how it is generated, size, seed, build in advance, island size and land fraction for the random layout, edge wall).
   The nested keys (enemies, carriers, spawn point, Nexus portal) stay in the file (Settings tab, Files). **Reroll world** writes a new random
   seed in `world.json`; the server rebuilds the standby world within a second and the Map tab shows it. With players inside it asks first.
 
 ## Lists, bosses and requests (24/11)
 
-Launcher: Server > World map > **Enemies** tab. Server: `World\WorldEnemyLists.cs`, `WorldEnemyPools.cs`, `WorldServer.Requests.cs`.
+Launcher: Server > World map > **Enemies** tab (spawn numbers) and **Enemies of each biome** tab (groups, AI and boss per biome). Server: `World\WorldEnemyLists.cs`, `WorldEnemyPools.cs`, `WorldServer.Requests.cs`.
 
 - **Numbers.** The tab edits `world.json` > `enemies` in place (`JsoncFile.ApplyChangesIn`: the comments stay, a key the object lacks is added):
   `spawnRadius`, `despawnRadius`, `wakeRadius`, `viewRadius`, `maxAlive`, `siteSpacingTiles`, `groupSizeMax`, `respawnScale`,
   `healthMultiplier` and `enabled`. The server rereads them every second (`siteSpacingTiles` only matters when the world is built).
   `tierOffset` is in the file but nothing reads it yet, so the tab does not show it.
 - **Lists per biome.** `world-enemies.json` (written by the launcher, gitignored, reread when it changes) holds what the host changed:
-  `regions.<tile name>` (`beach`, `lowlands`, `lowlands2`...) with `groups`, `boss` and `ai`. `ai` is `{ "<unit>": "<AI id>" }`: the AI file (`Serverirains`) each unit runs in that biome (`WorldEnemyLists.AiFor`); a unit that is not in it runs `generic_chase`. The launcher offers, for each enemy, the AIs made for it (their `units` list) first and then the generic ones. A unit with its own AI is a type of its own (`world/<unit>~<AI id>`). A group is `{ "name", "solo", "leaders", "members" }`:
+  `regions.<tile name>` (`beach`, `lowlands`, `lowlands2`...) with `groups`, `boss` and `ai`. `ai` is `{ "<unit>": "<AI id>" }`: the AI file (`Server\ai\brains`) each unit runs in that biome (`WorldEnemyLists.AiFor`); a unit that is not in it runs `generic_chase`. The launcher offers, for each enemy, the AIs made for it (their `units` list) first and then the generic ones. A unit with its own AI is a type of its own (`world/<unit>~<AI id>`). A group is `{ "name", "solo", "leaders", "members", "counts" }` (`counts` is `{ "<unit>": n }`, see below):
   a leader and its followers, or `solo: true` (a spawn site creates one enemy of `members`). A region with `groups` in the file uses
   them instead of the game's groups; a region that is not in the file keeps the game's (`WorldEnemyPools.For` / `DefaultsFor`). Units
   that are not in the catalog, walls, player planes and the `enemies.skip` of `world.json` are ignored. A site picks the group when it
@@ -166,6 +165,7 @@ Launcher: Server > World map > **Enemies** tab. Server: `World\WorldEnemyLists.c
   (the host may fill them later) and look again every 20 s.
 - **Game's lists.** The server writes `world-enemy-defaults.json` (gitignored) every time it builds the pools: per region the zone name,
   tier, the game's groups and the boss choices. The launcher reads it to show what is default and to go back to it.
+- **Amounts and escorts (25/11).** Without `counts` a spawn site creates a random group (a leader and 2 up to `groupSizeMax` units of the members). With `counts` the group is exact: one leader of `leaders` (at random) and **every** unit of `members`, each as many times as `counts` says (a unit without an entry counts as 1, 0 = none, at most 30). The launcher's *Amount* column and field set it (*Random group* takes it off). The original game's Five Star group was a leader with 5 escorts. The unit created first as the leader is the group's leader (`Enemy.Leader` of the others, `Enemies.SetLeader`), and an AI whose state moves with `orbitLeader` (`generic_orbit_leader`) makes the escorts circle it; without a leader they circle the player. Reconstruction: the ring and the speed are our values, the game's numbers are not known.
 - **Bosses.** The `BOS<n>` units of a folder (`Units/<code> - .../BOS<n>_<unit>`) with the same number are one boss with its parts and
   minions (`WorldEnemyPools.BossGroup`): Gargantua with its fists and laser, Clockboss with its hands and twelve numbers, the train with
   its cars, the Hypnotist with its minion and pet... The boss is the strongest unit of the group that is not a part (by name: hands, fists,
@@ -173,10 +173,11 @@ Launcher: Server > World map > **Enemies** tab. Server: `World\WorldEnemyLists.c
   clones and the controllers/masters of the original scripts, and the invisible units (the claws of the Berserker are attack boxes).
   A region offers the bosses of its folder, the strongest first, except Egyptian Dig (`pharaoh`), Noble Estates (`hypnotist`) and Imperial
   Palace (`notra`) first, which `PreferredBoss` sets; the first is the biome's boss. The host picks another (any unit of the game, which
-  then comes alone if it is not a boss of the game) per region in the tab (`regions.<tile>.boss`). Reconstruction: no original boss AI: the
-  boss is the unit with the `generic_chase` AI (type `world/boss/<unit>`) and each part or minion another one with `chase` too
-  (`world/part/<unit>`), all replaceable in `enemies.json` like the others. The server writes the groups with their parts in
-  `world-enemy-defaults.json` (`bosses`).
+  then comes alone if it is not a boss of the game) per region in the tab (`regions.<tile>.boss`). Reconstruction: no original boss AI. Unless a formation names `leaderAi` (the Sergeant Pup uses `world_podleader`), the
+  boss is the unit with the `generic_chase` AI (type `world/boss/<unit>`) and each part or minion another one with `generic_chase` too
+  (`world/part/<unit>`). The host can replace either AI in the biome list. The server writes the groups with their parts in
+  `world-enemy-defaults.json` (`bosses`). The *Enemies of each biome* tab lists the bosses of the biome (and their parts) after the groups so each can be given an AI (`regions.<tile>.ai`, by unit name, used for the boss and for its parts).
+- **Bosses with units attached (26/11).** Formations live in `Server\ai\formations\` (see `docs/enemy-ai.md`). `shield_convoy` is the train (`trainA01`, cars, tip): everyone but the tip is shielded while the tip lives, with no `tankShield` bubble, and the tip's death kills the convoy. `sergeant_pup` locks four pods in a row; the leader wears `tankShield` until the last pod dies, then `world_podleader` goes to Alone (`summonsAtMost` with `role` `pod`). `five_star` puts five `fivestar` on a ring around `fivestarleader` and replaces the random escorts of that world group. A generic AI still picks the formation bound to the unit; a specific AI brings one only when it names it. An old `formations.json` next to the server is still imported. Reconstruction: spacing 1.7, the pod slots and the ring radius are ours.
 - **Requests from the launcher.** Right click on the map (a cross marks the point): *Spawn boss here* (submenu with the bosses of the biome
   under the mouse, each with how many parts come along, the biome's boss marked) and *Spawn dungeon carrier here* (submenu with the active
   dungeons of `dungeons.json`); the *Spawn dungeon* button creates a carrier at a random place. The

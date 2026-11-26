@@ -1,0 +1,16 @@
+{
+  "format": 1,
+  "id": "world_formation_turret",
+  "name": "Formation piece",
+  "author": "Steambirds Revive",
+  "description": "A piece glued to a formation leader. It does not fly (the formation places it) and it shoots.",
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": { "mode": "builtin", "builtin": "turret" },
+      "fire": { "enabled": true }
+    }
+  ],
+  "units": ["pod", "tailtrain01", "tailtrain02", "tailtrain03", "trainA02", "fivestar", "ufosaucer", "ufosaucermini"]
+}

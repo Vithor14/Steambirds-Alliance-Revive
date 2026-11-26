@@ -1,0 +1,16 @@
+{
+  "format": 1,
+  "id": "ambassador_body",
+  "name": "Ambassador body",
+  "author": "Steambirds Revive",
+  "description": "Glued body only: three saucers and six minis on rings. bindToUnit is false, so this does not replace a group until an AI names it. Diplomat waves stay on the leader AI, not in this file.",
+  "bindToUnit": false,
+  "leader": { "unit": "ufo", "ai": "" },
+  "members": [
+    { "id": "inner", "unit": "ufosaucer", "ai": "world_formation_turret", "role": "inner", "place": { "kind": "ring", "count": 3, "radius": 4, "spin": 20 } },
+    { "id": "outer", "unit": "ufosaucermini", "ai": "world_formation_turret", "role": "outer", "place": { "kind": "ring", "count": 6, "radius": 8, "spin": -15, "angle": 30 } }
+  ],
+  "links": [
+    { "shield": ["role:inner"], "whileRole": "outer", "effect": "tankShield" }
+  ]
+}

@@ -1,8 +1,7 @@
 # Stores, purchases and slots
 
 Written 22/11/2026 (client build 201219.1413). Code in `Server\Stores\`. Settings in `stores.json`.
-This replaces the old "stores open empty, purchase answers an error" state. **Not tested in the game yet**: the
-server side was exercised with a test client that speaks the same messages (see "Tests").
+This replaces the old "stores open empty, purchase answers an error" state. The server side was exercised with a test client that speaks the same messages (see "Tests"). In the game on 23/11, paint and the paladin EpicA variant were bought; the Variant menu did not send `ServerRequestChangePlaneVariant` `15910`, so the plane stayed on `default`. The other shelves are still unplayed.
 
 ## What the client already has, and what the server had to rebuild
 

@@ -1,0 +1,17 @@
+{
+  "format": 1,
+  "id": "world_fivestar_leader",
+  "name": "Five Star",
+  "author": "Steambirds Revive",
+  "description": "The Five Star leader. Five stars sit on a ring from the five_star formation.",
+  "initial": "main",
+  "formation": "five_star",
+  "states": [
+    {
+      "id": "main",
+      "move": { "mode": "builtin", "builtin": "chase" },
+      "fire": { "enabled": true }
+    }
+  ],
+  "units": ["fivestarleader"]
+}

@@ -23,14 +23,24 @@ public static class WorldEnemyPools
         public bool Solo;
         public readonly List<string> Leaders = new List<string>();
         public readonly List<string> Members = new List<string>();
+        // How many of each unit the group creates each time (the host's world-enemies.json). Null = the random group of the game.
+        public Dictionary<string, int>? Counts;
     }
 
     private static readonly Regex FolderCode = new Regex(@"^(\d)(\d)(?= |-)");
-    private static readonly Regex FileRole = new Regex(@"^(GRP|SLO)(\d+)_(.+)$");
+    // GRP<n>_ = a group; SLO<n>_ / SLO-, SOL<n>_ (a typo of SLO in the game's files) = a solo enemy; SPC, HVY (special and heavy enemies),
+    // XXX_ and unit_ (files that were never renamed) also hold ordinary enemies and each one comes alone.
+    private static readonly Regex FileRole = new Regex(@"^(GRP|SLO|SOL|SPC|HVY|XXX|unit)(\d*)[_-](.+)$", RegexOptions.IgnoreCase);
     private static readonly Regex BossRole = new Regex(@"^BOS(\d*)_(.+)$");
 
     // Parts of a unit name that mark a helper the original game spawned from another unit (controllers, grenades, clones...).
     private static readonly string[] HelperMarks = { "controller", "grenade", "exploder", "clone", "neck", "ghost1", "bug", "death", "spawner" };
+
+    // What a unit fires or carries (missiles, bombs, lasers, fireballs, hammers): the end of its name. Never an enemy of its own.
+    private static readonly string[] ProjectileEnds = { "missile", "bomb", "laser", "magicbullet", "fireball", "_hammer", "hammer" };
+
+    // Parts of the Tesla towers and Robo towers of the XXX_ files: scenery of a boss fight, not a roaming enemy.
+    private static readonly string[] SceneryMarks = { "tower", "tesla" };
 
     // Parts of a boss unit that are not the boss itself: its death model, hands, hour marks, shell, mines and missiles...
     private static readonly string[] BossPartMarks =
@@ -116,7 +126,10 @@ public static class WorldEnemyPools
             string template = file.Value["templateName"].AsString(role.Groups[3].Value);
             if (template.Length == 0 || skipped.Contains(template)) continue;
             string lower = template.ToLowerInvariant();
-            if (HelperMarks.Any(m => lower.Contains(m)) || lower.EndsWith("pre", StringComparison.Ordinal))
+            string roleKind = role.Groups[1].Value.ToUpperInvariant();
+            if (HelperMarks.Any(m => lower.Contains(m)) || lower.EndsWith("pre", StringComparison.Ordinal) ||
+                ProjectileEnds.Any(m => lower.EndsWith(m, StringComparison.Ordinal)) ||
+                (roleKind == "XXX" && SceneryMarks.Any(m => lower.Contains(m))))
             {
                 rejected++;
                 continue;
@@ -128,7 +141,7 @@ public static class WorldEnemyPools
                 continue;
             }
 
-            bool solo = role.Groups[1].Value == "SLO";
+            bool solo = roleKind != "GRP";
             string family = solo ? code + "/" + template : code + "/GRP" + role.Groups[2].Value;
             if (!byGroup.TryGetValue(family, out Family? f))
             {
@@ -240,8 +253,18 @@ public static class WorldEnemyPools
     {
         string band = BandOf(region);
         if (band.Length == 0) return new List<BossGroup>();
-        if (bosses.TryGetValue(band + region.Variant, out List<BossGroup>? exact) && exact.Count > 0) return exact.ToList();
-        return bosses.Where(p => p.Key.StartsWith(band, StringComparison.Ordinal)).SelectMany(p => p.Value).ToList();
+        if (bosses.TryGetValue(band + region.Variant, out List<BossGroup>? exact) && exact.Count > 0) return exact.Select(WithFormation).ToList();
+        return bosses.Where(p => p.Key.StartsWith(band, StringComparison.Ordinal)).SelectMany(p => p.Value).Select(WithFormation).ToList();
+    }
+
+    // A boss that flies with units attached (formations.json) comes with the parts that file lists, not the ones of the game files.
+    private static BossGroup WithFormation(BossGroup boss)
+    {
+        SteambirdsAi.FormationFile? formation = Formations.For(boss.Name);
+        if (formation == null) return boss;
+        var copy = new BossGroup { Name = boss.Name };
+        copy.Parts.AddRange(formation.Expand().Select(s => s.Unit));
+        return copy;
     }
 
     // The boss group of a unit name: the one of the region's choices, else any in the game; a unit that is not a boss of the game
@@ -250,7 +273,7 @@ public static class WorldEnemyPools
     {
         BossGroup? found = BossChoicesFor(region).FirstOrDefault(b => b.Name.Equals(unitName, StringComparison.OrdinalIgnoreCase)) ??
                            bosses.Values.SelectMany(l => l).FirstOrDefault(b => b.Name.Equals(unitName, StringComparison.OrdinalIgnoreCase));
-        return found ?? new BossGroup { Name = unitName };
+        return found != null ? WithFormation(found) : WithFormation(new BossGroup { Name = unitName });
     }
 
     private static string BandOf(WorldData.Region region)
@@ -289,6 +312,7 @@ public static class WorldEnemyPools
             var family = new Family { Name = group.Name.Length > 0 ? group.Name : "group", Solo = group.Solo };
             family.Leaders.AddRange(leaders);
             family.Members.AddRange(members);
+            if (group.Counts != null) family.Counts = new Dictionary<string, int>(group.Counts, StringComparer.OrdinalIgnoreCase);
             result.Add(family);
         }
         return result;

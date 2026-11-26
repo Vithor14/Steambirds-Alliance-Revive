@@ -108,10 +108,11 @@ internal sealed class MainForm : Form
             newNav.AddPage(L.T("Map editor"), editor, MainNav.Side.Left, dividerBefore: true, icon: Icons.MapEditor);
             newNav.AddPage(L.T("Enemy AI"), ai, icon: Icons.EnemyAi);
             aiIndex = 3;
+            newNav.AddPage(L.T("Formation"), BuildFormationTab(), icon: Icons.Formation);
 
             newNav.AddPage(L.T("Settings"), new SettingsTab(context, OnLanguageChanged) { Dock = DockStyle.Fill }, MainNav.Side.Right, icon: Icons.Settings);
-            settingsIndex = 4;
-            newNav.Select(selected >= 0 && selected < 5 ? selected : 0);
+            settingsIndex = 5;
+            newNav.Select(selected >= 0 && selected < 6 ? selected : 0);
             newNav.SetStatus(0, "", "", TextRole.Muted);
 
             Controls.Add(newNav);
@@ -164,7 +165,7 @@ internal sealed class MainForm : Form
     // Selects the Enemy AI tab (on one AI when its id is given).
     private void OpenAi(string? id)
     {
-        if (nav == null || nav.PageCount < 5) return;
+        if (nav == null || nav.PageCount < 6) return;
         nav.Select(aiIndex);
         if (!string.IsNullOrWhiteSpace(id)) aiTab?.OpenBrain(id);
     }
@@ -173,9 +174,33 @@ internal sealed class MainForm : Form
     // (an empty name just goes to the tab).
     private void OpenAiForType(string typeName, System.Text.Json.Nodes.JsonObject type)
     {
-        if (nav == null || nav.PageCount < 5) return;
+        if (nav == null || nav.PageCount < 6) return;
         nav.Select(aiIndex);
         if (typeName.Length > 0) aiTab?.OpenType(typeName, type);
+    }
+
+    private Control BuildFormationTab()
+    {
+        try
+        {
+            if (!aiStoreLoaded)
+            {
+                aiStore.Reload();
+                aiStoreLoaded = true;
+            }
+            return new FormationTab(context, aiStore) { Dock = DockStyle.Fill };
+        }
+        catch (Exception error)
+        {
+            CrashLog.Report(error, showDialog: false);
+            return new Label
+            {
+                Dock = DockStyle.Fill,
+                Padding = new Padding(16),
+                Tag = TextRole.Bad,
+                Text = L.F("The Formation tab could not open:\n\n{0}\n\nThe details were saved in {1}.", error.Message, LauncherPaths.ErrorLogFile)
+            };
+        }
     }
 
     // The map editor is the newest part of the launcher. If it fails to open, the error goes to

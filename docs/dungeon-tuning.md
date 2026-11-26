@@ -1,7 +1,7 @@
 # Dungeon tuning, Mission Transport and Nexus collision (22/11/2026)
 
-Compiled, not yet tested in the game. Written after the test report of 22/11 (Nexus and the dungeons Iron Lair, Bomb Factory,
-Laser Playground, The Arena and Home for Special Children).
+Written after the test report of 22/11 (Nexus and the dungeons Iron Lair, Bomb Factory,
+Laser Playground, The Arena and Home for Special Children). On 23/11, with the 4× smaller maps, Bomb Factory, Crypt of Cathulhu, Laser Playground and The Arena were finished, and the Command Center was played up to the boss room. The Mission Transport list opened and nobody entered a mission through it. Nexus collision is still untested in the game.
 
 ## Host settings (`Server\dungeons.json`, also in the launcher: Server tab, "Maps and dungeons")
 

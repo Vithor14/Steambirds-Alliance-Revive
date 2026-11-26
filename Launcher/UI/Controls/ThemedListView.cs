@@ -24,6 +24,22 @@ internal sealed class ThemedListView : ListView
     // Stretch the last column to fill the control.
     public bool FillLastColumn { get; set; } = true;
 
+    // Height of a row (device-independent pixels, 26 by default). A list with pictures can make its rows taller and ask for a bigger picture.
+    private int rowHeight = 26;
+
+    public int RowHeight
+    {
+        get => rowHeight;
+        set
+        {
+            rowHeight = Math.Clamp(value, 16, 200);
+            SmallImageList = new ImageList { ImageSize = new Size(1, LogicalToDeviceUnits(rowHeight)) };
+        }
+    }
+
+    // Side of the picture of PictureColumn (device-independent pixels, 24 by default; never taller than the row).
+    public int PictureSize { get; set; } = 24;
+
     protected override void OnHandleCreated(EventArgs e)
     {
         base.OnHandleCreated(e);
@@ -130,7 +146,7 @@ internal sealed class ThemedListView : ListView
         text.Inflate(-Dpi.Px(this, 8), 0);
         if (column == PictureColumn && PictureOf != null)
         {
-            int size = Math.Max(8, Math.Min(bounds.Height - Dpi.Px(this, 4), Dpi.Px(this, 24)));
+            int size = Math.Max(8, Math.Min(bounds.Height - Dpi.Px(this, 4), Dpi.Px(this, PictureSize)));
             Image? picture = PictureOf(item, size);
             if (picture != null)
             {

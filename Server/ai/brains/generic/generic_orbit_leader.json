@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "id": "generic_orbit_leader",
+  "name": "Generic: Orbit the group leader",
+  "author": "Steambirds Revive",
+  "description": "Circles the leader of its group and shoots (the escorts of a group in the open world, like the Five Stars around their leader). Without a leader it circles the player.",
+  "initial": "main",
+  "states": [
+    {
+      "id": "main",
+      "move": {
+        "mode": "orbitLeader",
+        "distance": 9,
+        "deviation": 30,
+        "speed": 0.7,
+        "farSpeed": 1,
+        "farFactor": 1.6,
+        "spin": 1
+      },
+      "fire": {
+        "enabled": true
+      }
+    }
+  ]
+}

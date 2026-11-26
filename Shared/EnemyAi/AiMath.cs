@@ -74,11 +74,14 @@ public static class AiGunAim
 {
     // "relative" = angle from the unit's front to the player. Returns false when the player is outside the arc.
     // "rotation" is the direction of the shot relative to the unit's front.
+    //
+    // "anyDirection" (see IsAnyDirection): the mount shoots all around, turning a little between shots, like a sprinkler.
     public static bool TryAim(int mode, float center, float arc, int burst, int ammo, ref float turn, bool freeAim, float relative,
-        double now, out float rotation)
+        double now, out float rotation, bool anyDirection = false)
     {
         float halfArc = arc > 0.5f ? arc * 0.5f : 30f;
         float deviation = AiMath.AngleDifference(center, relative);
+        if (anyDirection) mode = 5;
 
         switch (mode)
         {
@@ -133,6 +136,14 @@ public static class AiGunAim
         }
         rotation = center + Math.Clamp(deviation, -8f, 8f);
         return true;
+    }
+
+    // The guns the game names "anydir" and files as JustShootDammit with a 360 degree arc (the Five Star, the Solaris planets and rings,
+    // the Meowza mounts) shoot in every direction: on the original server the unit told the mount where to point, and no build has that
+    // code. Reconstruction: they turn between shots like a sprinkler. Guns of the same mode with other names keep shooting where they point.
+    public static bool IsAnyDirection(int mode, float arc, string name)
+    {
+        return mode == 7 && arc >= 359f && name.StartsWith("anydir", StringComparison.OrdinalIgnoreCase);
     }
 
     // How far, to each side of the direction the mount points, the player can be for the mount to fire (the same limits as TryAim).

@@ -1,0 +1,17 @@
+{
+  "format": 1,
+  "id": "world_train_head",
+  "name": "Shield convoy",
+  "author": "Steambirds Revive",
+  "description": "The head of the shield convoy. The cars and the tip come from the shield_convoy formation.",
+  "initial": "main",
+  "formation": "shield_convoy",
+  "states": [
+    {
+      "id": "main",
+      "move": { "mode": "builtin", "builtin": "chase" },
+      "fire": { "enabled": true }
+    }
+  ],
+  "units": ["trainA01"]
+}

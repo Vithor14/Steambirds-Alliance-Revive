@@ -52,8 +52,10 @@ internal static class AiUnitOrigins
             string name = Path.GetFileNameWithoutExtension(path).Substring("dungeon_".Length);
             var group = new AiUnitGroup(name);
             foreach (AiUnitChoice type in ReadMapTypes(path, L.T("dungeon") + " " + name, armedOnly)) group.Units.Add(type);
+            foreach (AiUnitChoice type in group.Units) type.AiFolder = "dungeons/" + SteambirdsAi.AiCatalog.CleanId(name);
             if (group.Units.Count > 0) dungeons.Children.Add(group);
         }
+        foreach (AiUnitChoice type in tutorial.Units) type.AiFolder = "dungeons/tutorial";
         if (tutorial.Units.Count > 0) dungeons.Children.Insert(0, tutorial);
         if (dungeons.Children.Count > 0) groups.Add(dungeons);
 
@@ -112,6 +114,35 @@ internal static class AiUnitOrigins
         return found.OrderBy(c => c.OwnAi.StartsWith("generic_", StringComparison.OrdinalIgnoreCase) ? 1 : 0).ThenBy(c => c.TypeId, StringComparer.OrdinalIgnoreCase).ToList();
     }
 
+    // One enemy of a biome as the simulator runs it: the AI the host picked for it there, or the default of the open world.
+    private static AiUnitChoice WorldChoice(string unit, WorldEnemyRegion region, WorldEnemyRegion? edit)
+    {
+        string ai = WorldEnemyFiles.DefaultAiOf(unit);
+        if (edit?.Ai != null)
+        {
+            foreach (KeyValuePair<string, string> pair in edit.Ai)
+            {
+                if (pair.Key.Equals(unit, StringComparison.OrdinalIgnoreCase) && pair.Value.Length > 0) ai = pair.Value;
+            }
+        }
+        var type = new JsonObject { ["name"] = unit, ["template"] = unit, [EnemyAiEditors.AiField] = ai };
+        AiUnitChoice choice = AiUnits.FromType(unit, type, L.T("world") + " " + region.Key);
+        choice.AiFolder = SteambirdsAi.AiCatalog.WorldFolder;
+        return choice;
+    }
+
+    // The leader of the first group of the biome where the unit is a follower ("" when it is nobody's follower).
+    private static string LeaderOf(List<WorldEnemyGroup> groups, string unit)
+    {
+        foreach (WorldEnemyGroup g in groups)
+        {
+            if (g.Solo || g.Leaders.Count == 0) continue;
+            if (g.Leaders.Contains(unit, StringComparer.OrdinalIgnoreCase)) continue;
+            if (g.Members.Contains(unit, StringComparer.OrdinalIgnoreCase)) return g.Leaders[0];
+        }
+        return "";
+    }
+
     // The enemies of each biome: the lists of world-enemies.json, or the game's own (world-enemy-defaults.json).
     private static AiUnitGroup? BuildWorld(bool armedOnly)
     {
@@ -139,16 +170,10 @@ internal static class AiUnitOrigins
             foreach (string unit in names.Where(n => n.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(n => n, StringComparer.OrdinalIgnoreCase))
             {
                 if (armedOnly && EditorAssets.Current.Units.TryGetValue(unit, out GameUnit? known) && !known.Armed) continue;
-                string ai = WorldEnemyFiles.DefaultAi;
-                if (edit?.Ai != null)
-                {
-                    foreach (KeyValuePair<string, string> pair in edit.Ai)
-                    {
-                        if (pair.Key.Equals(unit, StringComparison.OrdinalIgnoreCase) && pair.Value.Length > 0) ai = pair.Value;
-                    }
-                }
-                var type = new JsonObject { ["name"] = unit, ["template"] = unit, [EnemyAiEditors.AiField] = ai };
-                group.Units.Add(AiUnits.FromType(unit, type, L.T("world") + " " + region.Key));
+                AiUnitChoice choice = WorldChoice(unit, region, edit);
+                string leader = LeaderOf(lists, unit);
+                if (leader.Length > 0) choice.LeaderChoice = WorldChoice(leader, region, edit);
+                group.Units.Add(choice);
             }
             if (group.Units.Count > 0) world.Children.Add(group);
         }

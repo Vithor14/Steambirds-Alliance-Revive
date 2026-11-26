@@ -29,7 +29,8 @@ public sealed class AiCompiledState
     public bool SelfDestruct;
     public string Message = "";
     public string Bark = "";
-    // Summons (SummonType empty = none), shield, look and homing bullets of the state (see AiStateFile).
+    // Summons of the state (empty = none). SummonType is the first line, kept so older readers still see something.
+    public AiSummonEntry[] Summons = Array.Empty<AiSummonEntry>();
     public string SummonType = "";
     public int SummonCount = 1;
     public float SummonEvery;
@@ -53,6 +54,8 @@ public sealed class AiBrain
 {
     public string Id = "";
     public string Name = "";
+    // ai\formations file this AI brings with it. Empty = none.
+    public string Formation = "";
     public int Initial;
     // Some state summons units or a condition counts them: the caller must fill AiSense.SummonsAlive.
     public bool NeedsSummonCount;
@@ -143,7 +146,7 @@ public sealed class AiLibrary
         int count = 0;
         try
         {
-            foreach (string sub in new[] { BehaviorsPath(folder), BrainsPath(folder) })
+            foreach (string sub in new[] { BehaviorsPath(folder), BrainsPath(folder), Path.Combine(folder, AiCatalog.FormationsFolder) })
             {
                 if (!Directory.Exists(sub)) continue;
                 foreach (string file in Directory.EnumerateFiles(sub, "*.json", SearchOption.AllDirectories))
@@ -253,13 +256,67 @@ public sealed class AiLibrary
         return problems;
     }
 
+    private static AiSummonEntry[] CompileSummons(AiStateFile state, List<AiProblem> problems, string where)
+    {
+        var lines = new List<AiSummonEntry>();
+        if (state.Summons != null && state.Summons.Count > 0)
+        {
+            foreach (AiSummonEntry line in state.Summons)
+            {
+                if (line == null || string.IsNullOrWhiteSpace(line.Unit)) continue;
+                lines.Add(NormalizeSummon(line, problems, where));
+            }
+        }
+        else if (!string.IsNullOrWhiteSpace(state.Summon))
+        {
+            lines.Add(NormalizeSummon(new AiSummonEntry
+            {
+                Unit = state.Summon!.Trim(),
+                Ai = state.SummonAi ?? "",
+                Role = state.SummonRole ?? "",
+                Place = string.IsNullOrWhiteSpace(state.SummonPlace) ? "behind" : state.SummonPlace!.Trim(),
+                Count = state.SummonCount,
+                Every = state.SummonEvery,
+                Max = state.SummonMax,
+                Distance = state.SummonDistance > 0f ? state.SummonDistance : 5f,
+                Angle = state.SummonAngle
+            }, problems, where));
+        }
+        return lines.ToArray();
+    }
+
+    private static AiSummonEntry NormalizeSummon(AiSummonEntry line, List<AiProblem> problems, string where)
+    {
+        int count = line.Count <= 0 ? 1 : line.Count;
+        if (count > 30)
+        {
+            problems.Add(new AiProblem(false, where, "summons at most 30 units at a time: 30 are used"));
+            count = 30;
+        }
+        float every = Math.Max(0f, line.Every);
+        if (every > 0f && every < 0.5f) every = 0.5f;
+        return new AiSummonEntry
+        {
+            Id = line.Id ?? "",
+            Unit = (line.Unit ?? "").Trim(),
+            Ai = (line.Ai ?? "").Trim(),
+            Role = (line.Role ?? "").Trim(),
+            Place = string.IsNullOrWhiteSpace(line.Place) ? "behind" : line.Place.Trim().ToLowerInvariant(),
+            Count = count,
+            Every = every,
+            Max = Math.Max(0, line.Max),
+            Distance = line.Distance <= 0f ? 5f : line.Distance,
+            Angle = line.Angle
+        };
+    }
+
     private static void CheckMove(List<AiProblem> problems, string where, AiMove? move)
     {
         if (move == null) return;
         if (!AiCatalog.IsMoveMode(move.Mode))
             problems.Add(new AiProblem(true, where, "unknown move mode \"" + move.Mode + "\""));
         if (move.Speed < 0f) problems.Add(new AiProblem(false, where, "negative speed"));
-        if (string.Equals(move.Mode, "orbit", StringComparison.Ordinal) && move.Distance <= 0f)
+        if ((string.Equals(move.Mode, "orbit", StringComparison.Ordinal) || string.Equals(move.Mode, "orbitLeader", StringComparison.Ordinal)) && move.Distance <= 0f)
             problems.Add(new AiProblem(false, where, "orbit with distance 0 or less"));
         if (string.Equals(move.Mode, "builtin", StringComparison.Ordinal) && !string.IsNullOrWhiteSpace(move.Builtin) &&
             !AiCatalog.BuiltinFlights.Contains((move.Builtin ?? "").Trim().ToLowerInvariant()))
@@ -306,7 +363,12 @@ public sealed class AiLibrary
         Func<string, AiBehaviorFile?> sharedBehaviors = behaviors;
         behaviors = name => embedded.TryGetValue(AiCatalog.CleanId(name), out AiBehaviorFile? hit) ? hit : sharedBehaviors(name);
 
-        var brain = new AiBrain { Id = id, Name = string.IsNullOrWhiteSpace(file.Name) ? id : file.Name };
+        var brain = new AiBrain
+        {
+            Id = id,
+            Name = string.IsNullOrWhiteSpace(file.Name) ? id : file.Name,
+            Formation = (file.Formation ?? "").Trim()
+        };
         brain.States = new AiCompiledState[states.Count];
         for (int i = 0; i < states.Count; i++)
         {
@@ -319,10 +381,11 @@ public sealed class AiLibrary
                 SelfDestruct = s.SelfDestruct,
                 Message = s.Message ?? "",
                 Bark = s.Bark ?? "",
-                SummonType = (s.Summon ?? "").Trim(),
-                SummonCount = Math.Clamp(s.SummonCount, 1, 10),
-                SummonEvery = Math.Max(0f, s.SummonEvery),
-                SummonMax = Math.Max(0, s.SummonMax),
+                Summons = CompileSummons(s, problems, stateWhere),
+                SummonType = "",
+                SummonCount = 1,
+                SummonEvery = 0f,
+                SummonMax = 0,
                 Shield = s.Shield,
                 ShieldSeconds = Math.Max(0f, s.ShieldSeconds),
                 ShieldEffect = (s.ShieldEffect ?? "").Trim(),
@@ -330,8 +393,13 @@ public sealed class AiLibrary
                 Homing = string.Equals(s.Homing?.Trim(), "on", StringComparison.OrdinalIgnoreCase) ? true
                     : string.Equals(s.Homing?.Trim(), "off", StringComparison.OrdinalIgnoreCase) ? false : null
             };
-            if (s.SummonCount > 10) problems.Add(new AiProblem(false, stateWhere, "summons at most 10 units at a time: 10 are used"));
-            if (run.SummonEvery > 0f && run.SummonEvery < 0.5f) run.SummonEvery = 0.5f;
+            if (run.Summons.Length > 0)
+            {
+                run.SummonType = run.Summons[0].Unit;
+                run.SummonCount = run.Summons[0].Count;
+                run.SummonEvery = run.Summons[0].Every;
+                run.SummonMax = run.Summons[0].Max;
+            }
 
             AiMove? move = s.Move;
             AiFire? fire = s.Fire;
@@ -393,7 +461,7 @@ public sealed class AiLibrary
             brain.States[i].Transitions = list.ToArray();
         }
 
-        brain.NeedsSummonCount = brain.States.Any(st => st.SummonType.Length > 0 || st.Transitions.Any(tr => tr.When.Any(c => c.Type == "summonsAtMost")));
+        brain.NeedsSummonCount = brain.States.Any(st => st.Summons.Length > 0 || st.Transitions.Any(tr => tr.When.Any(c => c.Type == "summonsAtMost")));
         brain.Initial = brain.IndexOf(file.Initial ?? "");
         if (brain.Initial < 0)
         {

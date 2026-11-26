@@ -1,0 +1,19 @@
+{
+  "format": 1,
+  "id": "five_star",
+  "name": "Five Star",
+  "author": "Steambirds Revive",
+  "description": "Five stars on a firm ring around the leader, in world space. They are not orbit-leader escorts.",
+  "bindToUnit": true,
+  "leader": { "unit": "fivestarleader", "ai": "world_fivestar_leader" },
+  "members": [
+    {
+      "id": "star",
+      "unit": "fivestar",
+      "ai": "world_formation_turret",
+      "role": "star",
+      "place": { "kind": "ring", "count": 5, "radius": 6, "spin": 25 }
+    }
+  ],
+  "links": []
+}

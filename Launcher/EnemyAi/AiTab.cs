@@ -31,6 +31,7 @@ internal sealed class AiTab : Panel
     private readonly ToolStripMenuItem deleteItem;
     private readonly ToolStripMenuItem saveItem;
     private readonly ToolStripMenuItem saveAllItem;
+    private readonly ToolStripMenuItem saveAsItem;
     private readonly ToolStripMenuItem revertItem;
     private readonly ToolStripMenuItem exportItem;
     private readonly MenuStrip menu;
@@ -57,6 +58,10 @@ internal sealed class AiTab : Panel
     private bool placed;
     private bool refreshing;
     private bool building;
+    // A generic AI was edited: the edits went to this new AI (shown in the banner until it is saved); the switch is queued.
+    private AiDoc? divertedTo;
+    private string divertedFrom = "";
+    private bool diverting;
 
     public AiTab(LauncherContext context, AiStore store)
     {
@@ -69,6 +74,8 @@ internal sealed class AiTab : Panel
         // ---- menu (the same kind of menu bar as the map editor's)
         saveItem = Item(L.T("Save"), SaveCurrent, "Ctrl+S");
         saveAllItem = Item(L.T("Save all"), SaveAll, "Ctrl+Shift+S");
+        saveAsItem = Item(L.T("Save as..."), SaveAs);
+        saveAsItem.ToolTipText = L.T("Saves what is open under a new name. A generic AI is never overwritten: it is saved as a new AI made for the unit.");
         revertItem = Item(L.T("Revert"), Revert);
         duplicateItem = Item(L.T("Duplicate"), DuplicateCurrent);
         renameItem = Item(L.T("Rename..."), RenameCurrent);
@@ -181,6 +188,7 @@ internal sealed class AiTab : Panel
         // ---- right: the simulator
         simView = new AiSimView(context);
         simView.RunningStateChanged += id => brainEditor.SetRunningState(id);
+        simView.SummonResolver = ResolveSummon;
 
         inner = new SplitContainer { Dock = DockStyle.Fill, SplitterWidth = 5 };
         inner.Panel1.Controls.Add(middle);
@@ -223,6 +231,7 @@ internal sealed class AiTab : Panel
         file.DropDownItems.Add(Item(L.T("New behavior"), () => NewDoc(AiKind.Behavior)));
         file.DropDownItems.Add(new ToolStripSeparator());
         file.DropDownItems.Add(saveItem);
+        file.DropDownItems.Add(saveAsItem);
         file.DropDownItems.Add(saveAllItem);
         file.DropDownItems.Add(revertItem);
         file.DropDownItems.Add(new ToolStripSeparator());
@@ -473,9 +482,36 @@ internal sealed class AiTab : Panel
             building = false;
         }
         if (unit != null) lastChoiceLabel = unit.Label;
-        simView.SetUnit(unit);
+        simView.SetUnit(unit, unit?.LeaderChoice == null ? null : AiSimSetups.Build(unit.LeaderChoice, BrainOf));
         AiUnits.CurrentGuns = simView.UnitGuns.ToList();
         Rebind();
+    }
+
+    // The compiled AI with this id (null when there is no such file or it does not compile): for the units the simulator adds
+    // next to the edited one (its leader, what it summons).
+    private AiBrain? BrainOf(string id)
+    {
+        AiDoc? doc = store.Find(AiKind.Brain, id);
+        return doc == null || doc.LoadError != null ? null : store.Compile(doc, new List<AiProblem>());
+    }
+
+    // A unit the AI summons, by the name it gives: a type of the same group as the edited unit (same dungeon or biome) first, then any type,
+    // then a game unit of that name. Null when there is none.
+    private AiSimSetup? ResolveSummon(string name)
+    {
+        AiUnitChoice? found = null;
+        if (choice != null)
+            found = unitGroups.SelectMany(LeafGroups).FirstOrDefault(g => g.Units.Contains(choice))?.Units
+                .FirstOrDefault(u => u.TypeId.Equals(name, StringComparison.OrdinalIgnoreCase));
+        found ??= unitGroups.SelectMany(g => g.AllUnits()).FirstOrDefault(u => u.TypeId.Equals(name, StringComparison.OrdinalIgnoreCase));
+        if (found == null && EditorAssets.Current.Units.ContainsKey(name)) found = new AiUnitChoice { Label = name, UnitName = name };
+        return found == null ? null : AiSimSetups.Build(found, BrainOf);
+    }
+
+    private static IEnumerable<AiUnitGroup> LeafGroups(AiUnitGroup group)
+    {
+        yield return group;
+        foreach (AiUnitGroup child in group.Children.SelectMany(LeafGroups)) yield return child;
     }
 
     // The AI file the enemy type of the unit really uses (null for a plain unit or a missing file).
@@ -525,7 +561,7 @@ internal sealed class AiTab : Panel
     // ------------------------------------------------------------------ what the editor shows
 
     // The editors, the banner and the simulator follow the file that runs on the unit: the loaded one, else its own AI.
-    private void Rebind()
+    private void Rebind(bool restart = true)
     {
         AiDoc? own = OwnDoc();
         current = loaded ?? own;
@@ -547,7 +583,7 @@ internal sealed class AiTab : Panel
         UpdateHint();
         UpdateButtons();
         UpdateAiBox();
-        Simulate(true);
+        Simulate(restart);
     }
 
     // ------------------------------------------------------------------ the AI of the unit
@@ -665,7 +701,7 @@ internal sealed class AiTab : Panel
                 return;
             }
             // The file goes into the list as new, unsaved files (nothing is written to the ai folder until you save them).
-            List<AiDoc> added = store.Import(contents, false);
+            List<AiDoc> added = store.Import(contents, false, (FolderForAi(), UnitForAi()));
             AiDoc? brain = added.FirstOrDefault(d => d.Kind == AiKind.Brain);
             if (brain == null) return;
             SelectNode(brain);
@@ -685,6 +721,11 @@ internal sealed class AiTab : Panel
         if (choice == null)
         {
             text = "";
+        }
+        else if (loaded != null && ReferenceEquals(loaded, divertedTo) && loaded.IsNew)
+        {
+            text = L.F("\"{0}\" is a generic AI and is never overwritten, so your changes went to a new AI, \"{1}\", made for {2}. Save it (Ctrl+S) to keep it; the generic AI is as it was.", divertedFrom, loaded.Id, unit);
+            role = TextRole.Warn;
         }
         else if (loaded != null)
         {
@@ -735,10 +776,12 @@ internal sealed class AiTab : Panel
         bool has = picked != null;
         bool pickedOk = has && picked!.LoadError == null;
         bool editing = current != null && current.LoadError == null;
+        bool locked = has && store.IsProtected(picked!);
         duplicateItem.Enabled = pickedOk;
-        renameItem.Enabled = has;
-        moveItem.Enabled = has && picked!.Kind == AiKind.Brain;
-        deleteItem.Enabled = has;
+        renameItem.Enabled = has && !locked;
+        moveItem.Enabled = has && picked!.Kind == AiKind.Brain && !locked;
+        deleteItem.Enabled = has && !locked;
+        saveAsItem.Enabled = editing;
         exportItem.Enabled = pickedOk;
         loadButton.Enabled = pickedOk && !ReferenceEquals(picked, current);
         backButton.Visible = loaded != null;
@@ -750,10 +793,47 @@ internal sealed class AiTab : Panel
     private void OnEdited()
     {
         if (current == null) return;
+        if (store.IsProtected(current))
+        {
+            // A generic AI is never changed: the edit is moved to a new AI made for the unit once the field that raised it is done.
+            if (diverting) return;
+            diverting = true;
+            if (IsHandleCreated) BeginInvoke(new Action(DivertToCopy));
+            else DivertToCopy();
+            return;
+        }
         current.Dirty = true;
         UpdateNode(current);
         UpdateButtons();
         Simulate(false);
+    }
+
+    // The unit the new AIs are made for (the game unit of the type, else its name) and the folder they go to.
+    private string UnitForAi() => choice == null ? "" : choice.UnitName.Length > 0 ? choice.UnitName : choice.IsType ? choice.TypeName : "";
+
+    private string FolderForAi() => choice != null && choice.AiFolder.Length > 0 ? choice.AiFolder : AiCatalog.WorldFolder;
+
+    // The open file is generic (or a behavior one uses) and was changed in memory: the changes become "new <unit> AI" (unsaved, in the
+    // folder of the unit, offered to the unit) and the generic file is read from the disk again. The simulation goes on.
+    private void DivertToCopy()
+    {
+        diverting = false;
+        AiDoc? source = current;
+        if (source == null || !store.IsProtected(source)) return;
+        try
+        {
+            AiDoc copy = store.DivertEdits(source, UnitForAi(), FolderForAi());
+            divertedFrom = source.Id;
+            divertedTo = copy;
+            loaded = copy;
+            UpdateNode(source);
+            SelectNode(copy);
+            Rebind(false);
+        }
+        catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is System.Text.Json.JsonException)
+        {
+            Ui.ShowError(this, L.F("Could not keep the generic AI as it was: {0}", e.Message));
+        }
     }
 
     // Compiles what is open and shows the problems. Another AI (restart = true) starts the simulator again; an edit of the
@@ -793,7 +873,10 @@ internal sealed class AiTab : Panel
         try
         {
             JsonObject root = kind == AiKind.Brain ? AiFields.NewBrain(name) : AiFields.NewBehavior(name);
-            AiDoc doc = store.Add(kind, name, root, true);
+            string unit = UnitForAi();
+            // A new AI is made for the unit in the simulator and goes to its folder (a generic AI is protected, so none is made by accident).
+            if (kind == AiKind.Brain && unit.Length > 0) root["units"] = new JsonArray(unit);
+            AiDoc doc = store.Add(kind, name, root, true, kind == AiKind.Brain ? FolderForAi() : null);
             SelectNode(doc);
             LoadPicked();
         }
@@ -806,7 +889,7 @@ internal sealed class AiTab : Panel
     private void DuplicateCurrent()
     {
         if (picked == null) return;
-        AiDoc copy = store.Duplicate(picked);
+        AiDoc copy = store.Duplicate(picked, UnitForAi(), FolderForAi());
         SelectNode(copy);
         LoadPicked();
     }
@@ -822,6 +905,7 @@ internal sealed class AiTab : Panel
     private void RenameCurrent()
     {
         if (picked == null) return;
+        if (Protected(picked)) return;
         string? id = AiPrompt.Ask(this, L.T("Rename"), L.T("New id (lowercase letters, digits and _):"), picked.Id);
         if (string.IsNullOrWhiteSpace(id)) return;
         List<string> types = TypesUsing(picked).ToList();
@@ -842,6 +926,7 @@ internal sealed class AiTab : Panel
     private void MoveCurrent()
     {
         if (picked == null || picked.Kind != AiKind.Brain) return;
+        if (Protected(picked)) return;
         string? typed = AiPrompt.Ask(this, L.T("Move to folder"),
             L.T("Folder: generic, world or dungeons/<name> (the tutorial is a dungeon):"), picked.Origin.Length > 0 ? picked.Origin : AiCatalog.GenericFolder);
         if (string.IsNullOrWhiteSpace(typed)) return;
@@ -856,15 +941,24 @@ internal sealed class AiTab : Panel
             store.Move(picked, origin);
             SelectNode(picked);
         }
-        catch (IOException e)
+        catch (Exception e) when (e is IOException || e is InvalidOperationException)
         {
             Ui.ShowError(this, e.Message);
         }
     }
 
+    // A generic AI (or a behavior one uses) is never renamed, moved or deleted from here: says so and returns true.
+    private bool Protected(AiDoc doc)
+    {
+        if (!store.IsProtected(doc)) return false;
+        Ui.ShowInfo(this, L.T(AiStore.ProtectedText));
+        return true;
+    }
+
     private void DeleteCurrent()
     {
         if (picked == null) return;
+        if (Protected(picked)) return;
         string extra = picked.Kind == AiKind.Behavior && store.UsedBy(picked).Any()
             ? "\n\n" + L.F("These AIs use it and will have a state with a missing behavior: {0}", string.Join(", ", store.UsedBy(picked)))
             : "";
@@ -892,10 +986,34 @@ internal sealed class AiTab : Panel
         {
             store.Save(current);
             UpdateNode(current);
+            UpdateBanner(OwnDoc());
             UpdateButtons();
             Simulate(false);
         }
         catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is InvalidOperationException)
+        {
+            Ui.ShowError(this, L.F("Could not save the file: {0}", e.Message));
+        }
+    }
+
+    // "Save as...": the open file under a new name, saved now in the folder of the unit (a generic AI becomes an AI made for the unit).
+    private void SaveAs()
+    {
+        if (current == null || current.LoadError != null) return;
+        string unit = UnitForAi();
+        bool generic = current.Kind == AiKind.Brain && AiLibrary.IsGenericOrigin(current.Origin);
+        string suggestion = generic || store.IsProtected(current) ? AiStore.SpecificName(current.Kind, unit) : current.DisplayName + " " + L.T("(copy)");
+        string? name = AiPrompt.Ask(this, L.T("Save as"), L.T("Name (the file name is made from it):"), suggestion);
+        if (string.IsNullOrWhiteSpace(name)) return;
+        try
+        {
+            AiDoc made = store.SaveAs(current, name, unit, FolderForAi());
+            loaded = ReferenceEquals(made, OwnDoc()) ? null : made;
+            divertedTo = null;
+            SelectNode(made);
+            Rebind(false);
+        }
+        catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is InvalidOperationException || e is System.Text.Json.JsonException)
         {
             Ui.ShowError(this, L.F("Could not save the file: {0}", e.Message));
         }
@@ -977,9 +1095,10 @@ internal sealed class AiTab : Panel
         if (dialog.ShowDialog(this) != DialogResult.OK) return;
         try
         {
-            store.Export(picked, dialog.FileName);
+            // A generic AI is exported as an AI made for the unit in the simulator, never as the generic one.
+            string exported = store.Export(picked, dialog.FileName, UnitForAi(), FolderForAi());
             int behaviors = picked.Kind == AiKind.Brain ? AiPackage.UsedBehaviors(picked.Root).Count(id => store.Find(AiKind.Behavior, id) != null) : 0;
-            Ui.ShowInfo(this, L.F("Saved {0}\n\nIt holds \"{1}\"{2}.", dialog.FileName, picked.Id,
+            Ui.ShowInfo(this, L.F("Saved {0}\n\nIt holds \"{1}\"{2}.", dialog.FileName, exported,
                 behaviors > 0 ? " " + L.F("and {0} behavior(s) it uses", behaviors) : ""));
         }
         catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
@@ -998,7 +1117,7 @@ internal sealed class AiTab : Panel
             string what = string.Join(", ", contents.Brains.Select(b => b.Id).Concat(contents.Behaviors.Select(b => b.Id)));
             if (!Ui.Confirm(this, L.F("Add {0} AI(s) and {1} behavior(s) to your files?\n\n{2}\n\nNothing of yours is overwritten: a file with the same id gets a new one.",
                     contents.Brains.Count, contents.Behaviors.Count, what))) return;
-            List<AiDoc> added = store.Import(contents);
+            List<AiDoc> added = store.Import(contents, true, (FolderForAi(), UnitForAi()));
             AiDoc? first = added.FirstOrDefault(d => d.Kind == AiKind.Brain) ?? added.FirstOrDefault();
             if (first != null)
             {

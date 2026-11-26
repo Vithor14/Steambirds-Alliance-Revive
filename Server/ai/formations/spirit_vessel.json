@@ -1,0 +1,17 @@
+{
+  "format": 1,
+  "id": "spirit_vessel",
+  "name": "Spirit vessel",
+  "author": "Steambirds Revive",
+  "description": "Two vessels. The second stays shielded while the first lives, and loses that shield when the first living vessel of the role drops to 33% health. bindToUnit is false so it does not attach to the pod leader.",
+  "bindToUnit": false,
+  "leader": { "unit": "podleader", "ai": "" },
+  "members": [
+    { "id": "v1", "unit": "pod", "ai": "world_formation_turret", "role": "vessel", "place": { "kind": "slot", "x": -4, "y": -6 } },
+    { "id": "v2", "unit": "pod", "ai": "world_formation_turret", "role": "vessel", "place": { "kind": "slot", "x": 4, "y": -6 } }
+  ],
+  "links": [
+    { "shield": ["v2"], "whileAlive": "v1", "effect": "tankShield" },
+    { "when": { "role": "vessel", "which": "firstAlive", "healthBelow": 33 }, "do": { "unshield": "next" } }
+  ]
+}

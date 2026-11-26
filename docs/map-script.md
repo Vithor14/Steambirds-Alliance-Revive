@@ -1,7 +1,7 @@
 # Map scripts (`"script"` in a map file)
 
 Written on 23/11/2026 (server 0.5.0). Compiled and checked with a simulated host (the whole tutorial script runs from the first rule to the
-exit portal); **not played in the game yet**.
+exit portal). The walker tutorial script was played in the game on 23/11, from the hangar to the exit portal. Dungeon maps can use the same engine; none of the 17 shipped dungeons has a `script` section yet.
 
 A map file holds not only the floor and the points but also **what happens in it**: which units appear, who wakes up when, who says what,
 which gates unlock. Before, the walker tutorial's script was C# code (`Tutorial.Script.cs`); now it is the `script` section of

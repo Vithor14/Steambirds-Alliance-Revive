@@ -76,6 +76,13 @@ public static partial class Enemies
                 continue;
             }
 
+            if (enemy.Wreck)
+            {
+                enemy.Vel = 0f;
+                FireWreck(inst, enemy, now);
+                continue;
+            }
+
             FocusNearest(inst, enemy);
             Think(inst, enemy, dt, now, log);
             Fire(inst, enemy, now);
@@ -104,11 +111,16 @@ public static partial class Enemies
                 log("ENEMY", inst.Role + " " + Describe(enemy) + " exploded on the player at (" + Num(enemy.X) + ", " + Num(enemy.Y) + ")");
         }
 
+        // Units attached to a leader: shields and places them.
+        UpdateFormations(inst, now);
+
         // Turrets and mines of the players.
         UpdateAllies(inst, now, log);
 
         // Open world: each player is told about the units near them (and only those) before the updates go out.
         UpdateInterest(inst, now);
+        SendDueEffects(inst, now);
+        RemoveExpired(inst, now);
 
         if (now - inst.LastSend >= SendInterval)
         {
@@ -261,6 +273,15 @@ public static partial class Enemies
         else if (!validTarget) enemy.Aggro = false;
         else if (!enemy.Aggro && (enemy.Type.AggroRadius <= 0f || dist <= enemy.Type.AggroRadius)) enemy.Aggro = true;
 
+        // Glued to a leader (a train car, a pod, a ring piece): UpdateFormations places it. The AI still runs so it can shoot.
+        if (enemy.Formation != null && enemy.PartIndex >= 0)
+        {
+            if (enemy.Ai != null)
+                BrainStep(inst, enemy, now, dt, Math.Min(enemy.VelMin, enemy.VelMax), enemy.VelMax, validTarget, log);
+            enemy.Vel = enemy.Formation.Leader.Vel;
+            return;
+        }
+
         // Fixed cannon: does not move or turn; it fires straight where it points (see Fire). A mine does not move either.
         if ((enemy.Behavior == "fixed" || enemy.Behavior == "mine") && enemy.Ai == null)
         {
@@ -270,6 +291,7 @@ public static partial class Enemies
 
         float velMax = enemy.VelMax;
         float velMin = Math.Min(enemy.VelMin, velMax);
+        float turnRate = enemy.MaxTurn;
         string mode = FlightMode(enemy, enemy.Behavior, velMax);
         float preferred = Math.Max(2f, enemy.Type.PreferredDistance);
 
@@ -281,6 +303,7 @@ public static partial class Enemies
         {
             // The AI picks the destination itself ("brain"), or hands the flight to one of the built-in ones below.
             AiOutput brain = BrainStep(inst, enemy, now, dt, velMin, velMax, validTarget, log);
+            if (brain.TurnMult > 0f) turnRate *= brain.TurnMult;
             if (brain.UseBuiltin)
             {
                 string flight = brain.Builtin.Length > 0 ? NormalizeBehavior(brain.Builtin) : enemy.Behavior;
@@ -413,6 +436,7 @@ public static partial class Enemies
         foreach (Enemy outro in inst.Enemies.Values)
         {
             if (outro == enemy) continue;
+            if (enemy.Formation != null && ReferenceEquals(outro.Formation, enemy.Formation)) continue;   // its own cars and pods
             float ox = enemy.X - outro.X;
             float oy = enemy.Y - outro.Y;
             float d2 = ox * ox + oy * oy;
@@ -451,7 +475,7 @@ public static partial class Enemies
 
         // Turn toward the destination and speed up or slow down (Shared\EnemyAi\AiMath.cs, the same code as the launcher's simulator).
         AiMotion.Steer(ref enemy.X, ref enemy.Y, ref enemy.Rot, ref enemy.Vel, targetX, targetY, targetVel,
-            velMin, velMax, enemy.MaxTurn, mode == "turret" || brainHold, dt);
+            velMin, velMax, turnRate, mode == "turret" || brainHold, dt);
 
         if (enemy.FreeRoam) return;
         if (enemy.Area.HasValue)
@@ -620,7 +644,8 @@ public static partial class Enemies
     private static bool AimGun(GunState gun, bool freeAim, float relative, double now, out float rotation)
     {
         GameGun m = gun.Model;
-        return AiGunAim.TryAim(m.Mode, m.Angle, m.Arc, m.Burst, gun.Ammo, ref gun.Turn, freeAim, relative, now, out rotation);
+        return AiGunAim.TryAim(m.Mode, m.Angle, m.Arc, m.Burst, gun.Ammo, ref gun.Turn, freeAim, relative, now, out rotation,
+            AiGunAim.IsAnyDirection(m.Mode, m.Arc, m.Name));
     }
 
     private static float GunRange(GameGun m)

@@ -1,4 +1,4 @@
-# Enemy AI editor and AI files (22/11/2026; summons, shields and phases 24/11/2026)
+# Enemy AI editor and AI files (22/11/2026; summons, shields and phases 24/11/2026; generic AIs protected and the multi-unit simulator 25/11/2026)
 
 The original enemy AI only ran on the servers (`AI.cs` and `ModalAI.cs` are empty in every client build), so the built-in
 behaviors of `Enemies.Ai.cs` are reconstructions. This adds a **data-driven AI**: the community can build, test, share and
@@ -60,7 +60,7 @@ They are fields of a **state** (`Server\ai\README.md` has the table), done by `B
 - **Look:** `effect` sets `Enemy.BaseEffect` from this state on. **Homing:** `homing` sets `Enemy.Homing`.
 - **Phases:** a phase is a state that a `healthBelow` transition leads to; nothing else is special. The old `phases` of the unit
   types (`BossPhase`, `ApplyPhases`, `barks.phase` of the dungeon server) are gone: a one-off script converted the 24 bosses of
-  `maps\*.json` and `enemies.json` into `ai\brains\<map>_<type>.json` (`main` = the old flight with the `builtin` move, then
+  `maps\*.json` and `enemies.json` into `ai/brains/dungeons/<dungeon>/` (`main` = the old flight with the `builtin` move, then
   `phase1`, `phase2`... with the same summons, messages, speech, shield, effect, guns and fire rate). Only `periodicSummon`
   (dungeon rooms, with `countsForRoomClear`) stays as a unit type field.
 - **Limit:** the AI files are shared by id (`ai\` is one folder for every map), so a community dungeon that uses a boss AI must
@@ -109,16 +109,24 @@ to get it. Every gun of the unit has a color (HUD list, dimmed when the current 
 that color, so it is clear which gun fired what (`AiSimBullet.Gun`).
 Editing does **not** restart the simulation (24/11/2026): the new version takes over and the unit goes on from where it is (`AiSim.ReplaceBrain` → `AiRuntime.Rebind`: it keeps the state it is in, and the time spent there, when the new version still has a state with that id; otherwise it starts from the initial state). An edit that does not compile leaves the last good version running. Only the Restart button, or picking another AI or unit, starts it again; a behavior alone is simulated as a one-state AI.
 
+**Generic AIs are protected (25/11/2026).** An AI in `brains\generic` (and a behavior file one of them uses) is never changed from the editor: `AiStore.IsProtected` is true for it (it exists on the disk), and `Save`, `Rename`, `Move` and `Delete` refuse it. Loading a unit opens its generic AI as it is; when an edit comes in (`AiTab.OnEdited`), the tab queues `DivertToCopy`, which calls `AiStore.DivertEdits`: the edited tree is cloned into a new unsaved AI **"new {unit} AI"** (id `new_<unit>_ai`, `units` = the unit, origin = `AiUnitChoice.AiFolder`: `dungeons/<dungeon>` for dungeon types, `world` otherwise), and the generic file is read from the disk again (`RestoreFromDisk`). The copy is loaded on the unit and the simulation goes on (`Rebind(restart: false)`). *Save as...* (`AiStore.SaveAs`), *Duplicate*, *Export* (`AiStore.Export(forUnit)`), *New AI* and *Import* (`place`) make the same kind of AI: made for the selected unit, in its folder, never generic.
+
+In *Behavior values* (`AiFields.Behavior`) a movement field is greyed out when the selected `move.mode` does not read it (`EnabledWhen = UsedBy(...)`, the "Uses:" list of each mode in `AiCatalog.MoveModes`; an empty mode counts as `orbit`). The `orbitLeader` move (circles the leader of the unit's group, `AiSense.HasLeader/LeaderX/LeaderY`, filled by `Enemies.BrainStep` from `Enemy.Leader`) also runs in the simulator when that unit has a leader (see *Several units in the simulator* below). `AiGunAim.IsAnyDirection` (0.8.0, in progress): a gun the game names `anydir`, in shoot-where-it-points mode with a 360 degree arc, turns between shots and fires all around, in the simulator and on the server. Before that it only fired forward. Reconstruction: the original unit told the mount where to point. `JsonForm.SetEnabled` applies these dependencies again, so a state's own values form does not wake them up when it is switched on.
+
 Unsaved files are kept when the language changes (the tab is rebuilt) and the launcher asks to save before closing.
 
 ## Limits
 
 - Units in the original have gun patterns chosen by a state machine we do not have; the AI can pick `guns` per state, which
   is the closest the data allows.
-- The simulator has no walls, rooms or other enemies (the server adds separation and room limits after the AI).
+- The simulator has no walls or rooms (the server adds separation and room limits after the AI). It runs the group leader, the units a state summons, and, when the AI names a formation, the glued pieces (chain, slot, ring) with the same placement and links as the server (`FormationMotion`, `FormationRules`).
+
+**Formations (26/11/2026).** `Server\ai\formations\<id>.json` is composition, not flight. The leader AI has `"formation": "<id>"`. Places: `chain` (behind, along the path, `spacing`), `slot` (x right, y front), `ring` (`count`, `radius`, `spin`, `angle`), `free` (flies with its own AI). Links: `shield` while `whileAlive` / `whileRole` / `whileAnyAlive` (empty `effect` means no damage and no `tankShield` bubble; `effect` names the look), `when.died` + `do: killAll`, `when` role `firstAlive` `healthBelow` 33 + `do.unshield: next`, `do.heal`. `bindToUnit: true` also applies when the AI is empty or `generic_*`. The map, a world site and a dungeon spawn only the leader; `Enemies.SpawnFormationMembers` adds the rest. A state's `summons` list (unit, ai, role, place, count, every, max of that line, up to 30) replaces the single `summon` fields when it is not empty. `summonsAtMost` takes optional `unit` and `role`. Move modes `path` and `zigzag`, and orbit `around` the summoner, home or leader, live on the move. A type with `deathUnit` leaves a wreck (`Enemies.Wrecks.cs`, `/wreck`); the death look is `ClientInstantEffect` (58535), not a bit in FieldUpdate.
 - Bullets in the simulator are plain (no homing bullets, no gun mount offsets).
-- Summoned units are only counted in the simulator (they are not flown and fall after 12 s), and the `builtin` flights are only
+- The `builtin` flights are only
   approximated there (circle and chase orbit, charge goes straight at the player, turrets stand still).
 - Not done yet: an undo history in the AI editor (use *Revert*), and per-state changes of health or damage.
+
+**Several units in the simulator (25/11/2026).** `AiSim` now holds a list of `AiSimUnit` (`Shared\EnemyAi\AiSimUnit.cs`): the edited unit (`AiSim.Main`, whose members `AiSim` still forwards), the **leader** of its group and the **summoned units**. Each one runs its own AI and guns against the scripted player. The leader exists when the unit is an escort in the open world (`AiUnitChoice.LeaderChoice`: the first leader of a biome group where the unit is a follower, with the AI the host picked for it); the launcher's *Leader* box makes it run its AI, fly to the point of a Ctrl+click (`AiSimControl.Goal`), stand still, or be taken away. A summon is made from the type the state names (`AiSim.SummonResolver`, answered by the tab: a type of the same group, any type, or a game unit; unknown names come as a dummy), stays until destroyed (at most 40) and cannot outlive a restart. A **right click** on any unit takes the percent of the *Right click takes %* box from it (a right drag still moves the view). The `orbitLeader` move uses `AiSense.HasLeader`/`LeaderX`/`LeaderY`, which the simulator fills from `AiSimUnit.Leader`, so *generic_orbit_leader* can be tried there. The AI editor still edits the main unit only: a leader or a summon runs the AI file as it was when it was created (it is not rebound while editing).
 
 The simulator overlay (24/11/2026, `Launcher\EnemyAi\AiSimOverlay.cs`): *Show ways out of the state* draws the transitions of the current state (`AiSim.CurrentState`, with the random time of `timeInState` from `AiRuntime.Rolled`) and a legend; *Show weapon range* draws the reach of `AiSim.ActiveGuns()` (`AiSim.WeaponRange`) and the area where the player must be for a mount to fire (`AiGunAim.FiringHalfWidth`, the same limits as `TryAim`).

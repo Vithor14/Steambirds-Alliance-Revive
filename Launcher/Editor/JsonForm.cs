@@ -281,6 +281,8 @@ internal sealed class JsonForm : Panel
             row.Editor.Enabled = enabled && !(row.Spec.ReadOnly && row.Spec.Kind != FieldKind.Bool && row.Editor is not TextBox);
             if (row.Caption != null) row.Caption.Enabled = enabled;
         }
+        // Switching the whole form on must not wake the fields that depend on another one (or that are off for good).
+        ApplyDependencies();
     }
 
     // Shows the values of this object (null = nothing selected: the fields are disabled and empty).

@@ -12,7 +12,7 @@ community-made project. The game itself is **not** included: you need your own c
 
 - **Server**: login, one account per player (saved on the host's PC), planes and hangar, XP and permadeath, skills,
   items, loot, workshop, stores, Rebel City (the Nexus), the walker tutorial, 17 recreated dungeons, an **open world**
-  generated from a seed (regions, enemy spawns, dungeon carriers) and **friends and flocks**.
+  of the twelve original zones, or a random layout from a seed (regions, enemy spawns, dungeon carriers) and **friends and flocks**.
 - **Multiplayer**: host for LAN or a VPN (Radmin, Hamachi) or over the internet; players share the Nexus, the open world and
   the dungeons, can whisper, talk in their flock, and teleport to or join a friend. New to VPNs? Follow the
   [Radmin VPN step-by-step guide](docs/radmin-vpn-guide.md).
@@ -22,9 +22,10 @@ community-made project. The game itself is **not** included: you need your own c
 - **Enemy AI editor**: builds enemy behavior (states, summons, shields, boss phases) as data files, with a graph view and a simulator.
 
 Not done yet: quests and missions, the Combat Sim, the original boss AI and most dungeon-specific scripts (only
-Iron Lair and Bomb Factory are switched on; the others are ready to try in `dungeons.json`). Several recent features (stores,
-friends and flocks, safe trade, plane variants, dungeon keys) were tested only with a test client, not in the game yet: please report
-anything odd. See [CHECKLIST.md](CHECKLIST.md) for the full status and [what is new in 0.7.0](docs/release-notes-0.7.0.md).
+Iron Lair and Bomb Factory are switched on in `dungeons.json`; the others are ready to try). The last big in-game test is 23/11/2026:
+friends, the default flock, loot, and six dungeons. Whisper, flock chat, teleport, safe trade, most store shelves, dungeon keys and the
+0.6.0–0.8.0 editor work still need a game test. See [CHECKLIST.md](CHECKLIST.md), [0.7.1](docs/release-notes-0.7.1.md) and
+[what is in progress for 0.8.0](docs/update-notes-0.8.0.md).
 
 ## Play or host
 

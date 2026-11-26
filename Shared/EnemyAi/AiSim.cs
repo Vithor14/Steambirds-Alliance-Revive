@@ -76,33 +76,48 @@ public sealed class AiSimBullet
 
 // A small flight arena where an AI runs against a scripted player plane. Headless: the launcher only draws it.
 // The movement and the AI are the server's code (AiMotion, AiRuntime); the guns repeat Enemies.Fire (burst, reload, arcs).
+// The arena holds the edited unit ("Main"), optionally the leader of its group, and the units the AI summons; each one is an AiSimUnit.
 public sealed class AiSim
 {
-    private sealed class SimGun
-    {
-        public AiGunStats Model = null!;
-        public int Ammo;
-        public double NextShot;
-        public double ReloadUntil;
-        public float Turn;
-    }
+    // The most summoned units alive at once (a summon loop would otherwise fill the arena).
+    public const int MaxSummons = 40;
+    // Seconds a destroyed summon stays on screen (as a wreck) before it is gone.
+    private const double WreckSeconds = 1.0;
 
-    private readonly Random rng;
-    private readonly List<SimGun> guns = new List<SimGun>();
     private readonly List<string> events = new List<string>();
-    private AiRuntime? runtime;
-    private double respawnAt = -1;
-    private double bornAt;
+    private readonly List<AiSimUnit> units = new List<AiSimUnit>();
+    private bool leaderEnabled = true;
+    internal readonly Random Rng;
 
     public AiSim(int seed = 12345)
     {
-        rng = new Random(seed);
+        Rng = new Random(seed);
+        Main = new AiSimUnit(this, AiSimUnit.RoleUnit, "");
+        units.Add(Main);
     }
 
+    // ---- units
+    // The edited unit; the forwarding members below are its.
+    public AiSimUnit Main { get; }
+    public IReadOnlyList<AiSimUnit> Units => units;
+    public AiSimUnit? Leader => units.FirstOrDefault(u => u.Role == AiSimUnit.RoleLeader);
+
+    // How a summoned unit is made (by the name the AI gives): null = the type is not known, a dummy comes instead.
+    public Func<string, AiSimSetup?>? SummonResolver { get; set; }
+
+    // Pieces glued to the edited unit. Set before SetBrain / Reset. Null = the unit is alone.
+    public FormationFile? Formation { get; set; }
+    private readonly List<(float X, float Y)> formationTrail = new List<(float X, float Y)>();
+    private readonly HashSet<string> formationSeen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> formationFired = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+    // The leader of the edited unit's group (null = it has none). Applied by the next Reset.
+    public AiSimSetup? LeaderSetup { get; set; }
+
     // ---- setup
-    public AiUnitStats Unit { get; set; } = new AiUnitStats();
-    public AiSimTuning Tuning { get; set; } = new AiSimTuning();
-    public AiBrain? Brain { get; set; }
+    public AiUnitStats Unit { get => Main.Unit; set => Main.Unit = value; }
+    public AiSimTuning Tuning { get => Main.Tuning; set => Main.Tuning = value; }
+    public AiBrain? Brain { get => Main.Brain; set => Main.Brain = value; }
     public bool AutoRespawn { get; set; } = true;
 
     // ---- player
@@ -115,73 +130,67 @@ public sealed class AiSim
     public bool PlayerAlive { get; set; } = true;
     public bool PlayerVisible { get; set; } = true;
 
-    // ---- enemy
-    public float X, Y, Rot, Vel;
-    public float HomeX, HomeY;
-    public float Health, MaxHealth;
-    public bool Dead;
-    public bool Exploded;
-    public float HealthDrainPerSecond;
-    private double lastHitAt = -1;
+    // ---- the edited unit
+    public float X => Main.X;
+    public float Y => Main.Y;
+    public float Rot => Main.Rot;
+    public float Vel => Main.Vel;
+    public float HomeX => Main.HomeX;
+    public float HomeY => Main.HomeY;
+    public float Health => Main.Health;
+    public float MaxHealth => Main.MaxHealth;
+    public bool Dead => Main.Dead;
+    public bool Exploded => Main.Exploded;
+    public float HealthDrainPerSecond { get => Main.HealthDrainPerSecond; set => Main.HealthDrainPerSecond = value; }
+    public bool Shielded => Main.Shielded;
+    public int TotalSummoned => Main.TotalSummoned;
+    public string VisualEffect => Main.VisualEffect;
+    public bool Homing => Main.Homing;
+    public int ShotsFired => Main.ShotsFired;
+    public AiOutput? Last => Main.Last;
+    public string StateId => Main.StateId;
+    public AiCompiledState? CurrentState => Main.CurrentState;
+    public double StateTime => Main.StateTime;
+    public float RolledValue(int transition, int condition) => Main.RolledValue(transition, condition);
+    public float WeaponRange(AiGunStats m) => Main.WeaponRange(m);
+    public IEnumerable<AiGunStats> ActiveGuns() => Main.ActiveGuns();
 
-    // The units this one summoned (the simulator does not fly them: they only count, and fall after MinionLife seconds or when
-    // KillMinions is called), and whether the shield of the state is up.
-    public const float MinionLife = 12f;
-    private readonly List<double> minionDeaths = new List<double>();
-    public bool Shielded { get; private set; }
-    public int MinionsAlive => minionDeaths.Count;
-    public int TotalSummoned { get; private set; }
-    public string VisualEffect { get; private set; } = "";
-    public bool Homing { get; private set; }
+    // The units the edited one summoned that are still flying.
+    public int MinionsAlive => CountSummons(Main);
 
     // ---- world
     public double Time { get; private set; }
     public int PlayerHits { get; private set; }
-    public int ShotsFired { get; private set; }
     public readonly List<AiSimBullet> Bullets = new List<AiSimBullet>();
     public IReadOnlyList<string> Events => events;
-    public AiOutput? Last => runtime?.Out;
-    public string StateId => runtime == null ? "" : runtime.State.Id;
-    public AiCompiledState? CurrentState => runtime?.State;
-    public float RolledValue(int transition, int condition) => runtime == null ? 0f : runtime.Rolled(transition, condition);
-
-    // How far a gun reaches now (the state's range, the unit type's, or the gun's own).
-    public float WeaponRange(AiGunStats m)
-    {
-        AiOutput? o = Last;
-        return o != null && o.Range > 0f ? o.Range : (Tuning.ShotRange > 0f ? Tuning.ShotRange : AiGunAim.Range(m.Speed, m.Duration, m.Range));
-    }
-
-    // The guns the current state lets fire (all of the unit's guns with damage when the state does not pick some).
-    public IEnumerable<AiGunStats> ActiveGuns()
-    {
-        AiOutput? o = Last;
-        if (o == null || !o.FireEnabled) yield break;
-        foreach (AiGunStats m in Unit.Guns)
-        {
-            if (m.Damage <= 0f) continue;
-            if (o.Guns.Length > 0 && Array.IndexOf(o.Guns, m.Index) < 0) continue;
-            yield return m;
-        }
-    }
-    public double StateTime => runtime == null ? 0 : runtime.StateTime(Time);
 
     public event Action<string>? EventAdded;
 
-    // Starts again: the enemy at the center, the player in its start place. The brain and the unit are kept.
+    // How many live units were summoned by this one.
+    internal int CountSummons(AiSimUnit by) => CountMatching(by, "", "");
+
+    internal int CountMatching(AiSimUnit by, string unit, string role)
+    {
+        int count = 0;
+        foreach (AiSimUnit u in units)
+        {
+            if (u.Dead || !ReferenceEquals(u.Summoner, by)) continue;
+            if (u.Role != AiSimUnit.RoleSummon && u.Role != AiSimUnit.RolePart) continue;
+            if (unit.Length > 0 && !u.SummonUnit.Equals(unit, StringComparison.OrdinalIgnoreCase)) continue;
+            if (role.Length > 0 && !u.SummonRole.Equals(role, StringComparison.OrdinalIgnoreCase)) continue;
+            count++;
+        }
+        return count;
+    }
+
+    // Starts again: the edited unit next to its leader (when it has one), the player in its start place. The brain and the unit are kept.
     public void Reset()
     {
         Time = 0;
         PlayerHits = 0;
-        ShotsFired = 0;
         Bullets.Clear();
         events.Clear();
-        minionDeaths.Clear();
-        TotalSummoned = 0;
-        Shielded = false;
-        VisualEffect = "";
-        Homing = false;
-        respawnAt = -1;
+        units.RemoveAll(u => !ReferenceEquals(u, Main));
         PlayerAlive = true;
 
         circleAngle = 200f;
@@ -202,29 +211,86 @@ public sealed class AiSim
             GoalY = PlayerY;
         }
 
-        SpawnEnemy(0f, 0f);
+        Main.ResetCounters();
+        Main.Leader = null;
+        bool withLeader = LeaderSetup != null && leaderEnabled;
+        Main.Spawn(withLeader ? 10f : 0f, 0f);
+        if (withLeader) AddLeader();
+        SpawnFormation();
     }
 
-    private void SpawnEnemy(float x, float y)
+    public void RespawnFormation()
     {
-        X = x;
-        Y = y;
-        HomeX = x;
-        HomeY = y;
-        Rot = AiMath.Heading(x, y, PlayerX, PlayerY);
-        MaxHealth = Math.Max(1f, Unit.MaxHealth * Math.Max(0.01f, Tuning.HealthMult));
-        Health = MaxHealth;
-        Dead = false;
-        Exploded = false;
-        lastHitAt = -1;
-        bornAt = Time;
-        Vel = (Unit.VelMin + Unit.VelMax) * 0.5f * Math.Max(0.01f, Tuning.SpeedMult);
-
-        guns.Clear();
-        foreach (AiGunStats g in Unit.Guns) guns.Add(new SimGun { Model = g, Ammo = Math.Max(1, g.Burst) });
-        runtime = Brain == null ? null : new AiRuntime(Brain, rng);
-        if (runtime != null) Log("start in state \"" + runtime.State.Id + "\"");
+        units.RemoveAll(u => u.Role == AiSimUnit.RolePart);
+        formationTrail.Clear();
+        formationSeen.Clear();
+        formationFired.Clear();
+        SpawnFormation();
     }
+
+    private void SpawnFormation()
+    {
+        FormationFile? file = Formation;
+        if (file == null) return;
+        formationTrail.Clear();
+        formationSeen.Clear();
+        formationFired.Clear();
+        foreach (FormationSlot slot in file.Expand())
+        {
+            AiSimSetup? setup = SummonResolver?.Invoke(slot.Unit);
+            var unit = new AiSimUnit(this, AiSimUnit.RolePart, slot.Id)
+            {
+                Unit = setup?.Unit ?? new AiUnitStats { Name = slot.Unit, MaxHealth = 40f, VelMin = 0f, VelMax = 8f, Radius = 1.2f },
+                Tuning = setup?.Tuning ?? new AiSimTuning(),
+                Brain = setup?.Brain,
+                Summoner = Main,
+                Leader = Main,
+                Glued = slot.Glued,
+                SlotId = slot.Id,
+                SummonRole = slot.Role,
+                SummonUnit = slot.Unit,
+                Slot = slot
+            };
+            units.Add(unit);
+            FormationMotion.Pose pose = FormationMotion.Start(slot, Main.X, Main.Y, Main.Rot, file.Spacing);
+            unit.Spawn(pose.X, pose.Y);
+            unit.Rot = pose.Rot;
+        }
+    }
+
+    private void AddLeader()
+    {
+        AiSimSetup? setup = LeaderSetup;
+        if (setup == null || Leader != null) return;
+        var leader = new AiSimUnit(this, AiSimUnit.RoleLeader, setup.Label.Length > 0 ? setup.Label : "leader")
+        {
+            Unit = setup.Unit,
+            Tuning = setup.Tuning,
+            Brain = setup.Brain
+        };
+        units.Add(leader);
+        leader.Spawn(0f, 0f);
+        Main.Leader = leader;
+    }
+
+    // Shows or hides the leader of the unit's group (it comes back at the center, or goes away).
+    public void SetLeaderEnabled(bool enabled)
+    {
+        leaderEnabled = enabled;
+        AiSimUnit? leader = Leader;
+        if (!enabled && leader != null)
+        {
+            units.Remove(leader);
+            Main.Leader = null;
+            Log("the leader was taken away");
+        }
+        else if (enabled && leader == null && LeaderSetup != null)
+        {
+            AddLeader();
+        }
+    }
+
+    public bool LeaderEnabled => leaderEnabled;
 
     // Changes how the player plane moves, keeping it where it is (a circle is drawn around the place it is now).
     public void SetPlayerMode(AiPlayerMode mode)
@@ -242,7 +308,7 @@ public sealed class AiSim
 
     public void SetBrain(AiBrain? brain)
     {
-        Brain = brain;
+        Main.Brain = brain;
         Reset();
     }
 
@@ -250,47 +316,171 @@ public sealed class AiSim
     // to take over from (no AI was running) it starts, as SetBrain does.
     public void ReplaceBrain(AiBrain brain)
     {
-        if (Brain == null || runtime == null)
+        if (Main.Brain == null || Main.Last == null)
         {
             SetBrain(brain);
             return;
         }
-        Brain = brain;
-        runtime.Rebind(brain);
+        Main.ReplaceBrain(brain);
     }
 
-    // Removes the units the AI summoned (to test "own summons alive" conditions).
+    // Removes the units the edited unit summoned (to test "own summons alive" conditions).
     public void KillMinions()
     {
-        if (minionDeaths.Count == 0) return;
-        Log(minionDeaths.Count + " summoned unit(s) destroyed");
-        minionDeaths.Clear();
-    }
-
-    public void Damage(float fraction)
-    {
-        if (Dead) return;
-        // A shield ignores damage (the drain of the simulator and the Hit button too), as the server does.
-        if (Shielded && fraction > 0f)
+        int destroyed = 0;
+        foreach (AiSimUnit u in units)
         {
-            if (fraction >= 0.02f) Log("hit ignored: shield");
-            return;
+            if (u.Role != AiSimUnit.RoleSummon || u.Dead) continue;
+            u.Die(false);
+            destroyed++;
         }
-        Health = Math.Clamp(Health - MaxHealth * fraction, 0f, MaxHealth);
-        if (fraction > 0f) lastHitAt = Time;
-        if (Health <= 0f) Die(false);
+        if (destroyed > 0) Log(destroyed + " summoned unit(s) destroyed");
     }
 
-    private void Die(bool exploded)
+    // The edited unit loses (or, negative, gets back) a fraction of its health.
+    public void Damage(float fraction) => Main.Damage(fraction);
+
+    // Called when the edited unit comes back: what it summoned before is gone.
+    internal void ClearSummons()
     {
-        Dead = true;
-        Exploded = exploded;
-        Vel = 0f;
-        respawnAt = Time + 1.5;
-        Log(exploded ? "exploded" : "destroyed");
+        units.RemoveAll(u => u.Role == AiSimUnit.RoleSummon);
     }
 
-    private void Log(string text)
+    // Creates "count" units the summoner asked for, behind it (they stay in the arena until they are destroyed).
+    internal void Summon(AiSimUnit by, AiSummonOrder order)
+    {
+        AiSimSetup? setup = SummonResolver?.Invoke(order.Type);
+        int count = Math.Clamp(order.Count, 1, 30);
+        for (int i = 0; i < count; i++)
+        {
+            if (units.Count(u => u.Role == AiSimUnit.RoleSummon && !u.Dead) >= MaxSummons)
+            {
+                Log("too many summoned units: " + MaxSummons + " is the limit of the simulator");
+                return;
+            }
+            SummonPoint(by, order, i, count, out float x, out float y);
+            var unit = new AiSimUnit(this, AiSimUnit.RoleSummon, order.Type)
+            {
+                Unit = setup?.Unit ?? new AiUnitStats { Name = order.Type, MaxHealth = 20f, VelMin = 0f, VelMax = 0f, Radius = 1.2f },
+                Tuning = setup?.Tuning ?? new AiSimTuning(),
+                Brain = setup?.Brain,
+                Summoner = by,
+                Leader = by.Leader ?? by,
+                SummonUnit = order.Type,
+                SummonRole = order.Role
+            };
+            if (setup == null && i == 0) Log("the summoned type '" + order.Type + "' is not known here: a dummy that stands still takes its place");
+            units.Add(unit);
+            unit.Spawn(x, y);
+        }
+    }
+
+    private static void SummonPoint(AiSimUnit by, AiSummonOrder order, int index, int count, out float x, out float y)
+    {
+        string place = (order.Place ?? "behind").ToLowerInvariant();
+        float distance = order.Distance <= 0f ? 5f : order.Distance;
+        float spread = count <= 1 ? 0f : (index - (count - 1) * 0.5f) * (place == "ring" ? 360f / count : 40f);
+        float facing = place switch
+        {
+            "front" => by.Rot,
+            "left" => by.Rot - 90f,
+            "right" => by.Rot + 90f,
+            "ring" => order.Angle + spread,
+            _ => by.Rot + 180f + spread
+        };
+        float rad = facing * AiMath.Rad;
+        x = by.X + MathF.Sin(rad) * distance;
+        y = by.Y + MathF.Cos(rad) * distance;
+    }
+
+    private void PlaceFormation()
+    {
+        FormationFile? file = Formation;
+        if (file == null || Main.Dead) return;
+        List<AiSimUnit> parts = units.Where(u => u.Role == AiSimUnit.RolePart).ToList();
+        if (parts.Count == 0) return;
+        if (formationTrail.Count == 0 || AiMath.Distance(formationTrail[^1].X, formationTrail[^1].Y, Main.X, Main.Y) >= 0.5f)
+            formationTrail.Add((Main.X, Main.Y));
+        float needed = (parts.Count + 1) * Math.Max(0.4f, file.Spacing) + 6f;
+        TrimTrail(needed);
+
+        var actors = new List<FormationActor>();
+        var byId = new Dictionary<string, AiSimUnit>(StringComparer.OrdinalIgnoreCase) { [ "leader" ] = Main };
+        actors.Add(new FormationActor
+        {
+            Id = "leader", IsLeader = true, Alive = !Main.Dead,
+            HealthFraction = Main.MaxHealth > 0f ? Main.Health / Main.MaxHealth : 1f,
+            ShieldSuppressed = Main.ShieldSuppressed
+        });
+        var roleCount = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (AiSimUnit part in parts)
+        {
+            string role = part.SummonRole;
+            roleCount.TryGetValue(role, out int n);
+            roleCount[role] = n + 1;
+            byId[part.SlotId] = part;
+            actors.Add(new FormationActor
+            {
+                Id = part.SlotId, Role = role, RoleOrder = n, IsLeader = false, Alive = !part.Dead,
+                HealthFraction = part.MaxHealth > 0f ? part.Health / part.MaxHealth : 0f,
+                ShieldSuppressed = part.ShieldSuppressed
+            });
+        }
+        var orders = new List<FormationOrder>();
+        FormationRules.Evaluate(file, actors, formationSeen, formationFired, orders);
+        foreach (FormationOrder order in orders)
+        {
+            if (!byId.TryGetValue(order.ActorId, out AiSimUnit? who) || who.Dead) continue;
+            if (order.ClearShield) { who.ShieldSuppressed = true; who.SetShield(false); }
+            if (order.HealFraction > 0f) who.Damage(-order.HealFraction);
+            if (order.Kill) { who.ShieldSuppressed = true; who.SetShield(false); who.Damage(2f); }
+        }
+        ApplyShieldFlags(Main, "leader", orders);
+        foreach (AiSimUnit part in parts) ApplyShieldFlags(part, part.SlotId, orders);
+
+        foreach (AiSimUnit part in parts)
+        {
+            if (part.Dead || part.Slot == null || !part.Glued) continue;
+            FormationSlot slot = part.Slot;
+            FormationMotion.Pose pose;
+            if (slot.Kind == "chain")
+            {
+                float behind = (slot.ChainIndex + 1) * Math.Max(0.4f, file.Spacing);
+                pose = FormationMotion.AlongTrail(Main.X, Main.Y, Main.Rot, Main.Vel, formationTrail, behind);
+            }
+            else if (slot.Kind == "ring")
+                pose = FormationMotion.Ring(Main.X, Main.Y, Main.Rot, Main.Vel, slot.Radius, slot.Angle, slot.Spin, (float)Time);
+            else
+                pose = FormationMotion.Slot(Main.X, Main.Y, Main.Rot, Main.Vel, slot.X, slot.Y);
+            part.X = pose.X;
+            part.Y = pose.Y;
+            part.Rot = pose.Rot;
+            part.Vel = pose.Speed;
+        }
+    }
+
+    private static void ApplyShieldFlags(AiSimUnit who, string id, List<FormationOrder> orders)
+    {
+        if (orders.Any(o => o.ClearShield && o.ActorId.Equals(id, StringComparison.OrdinalIgnoreCase)))
+            who.ShieldSuppressed = true;
+        bool want = !who.ShieldSuppressed && orders.Any(o => o.Shield && o.ActorId.Equals(id, StringComparison.OrdinalIgnoreCase));
+        if (want || who.ShieldSuppressed) who.SetShield(want);
+    }
+
+    private void TrimTrail(float needed)
+    {
+        if (formationTrail.Count == 0) return;
+        float length = AiMath.Distance(formationTrail[^1].X, formationTrail[^1].Y, Main.X, Main.Y);
+        int keepFrom = formationTrail.Count - 1;
+        while (keepFrom > 0 && length < needed)
+        {
+            length += AiMath.Distance(formationTrail[keepFrom].X, formationTrail[keepFrom].Y, formationTrail[keepFrom - 1].X, formationTrail[keepFrom - 1].Y);
+            keepFrom--;
+        }
+        if (keepFrom > 0) formationTrail.RemoveRange(0, keepFrom);
+    }
+
+    internal void Log(string text)
     {
         string line = Time.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture).PadLeft(5) + "s  " + text;
         events.Add(line);
@@ -308,15 +498,10 @@ public sealed class AiSim
 
         StepPlayer(dt);
 
-        if (Dead)
-        {
-            if (AutoRespawn && respawnAt >= 0 && Time >= respawnAt) SpawnEnemy(0f, 0f);
-        }
-        else
-        {
-            if (HealthDrainPerSecond > 0f) Damage(HealthDrainPerSecond * dt);
-            if (!Dead) StepEnemy(dt);
-        }
+        // A copy: a unit that summons adds to the list while it is stepped.
+        foreach (AiSimUnit u in units.ToList()) u.Step(dt);
+        PlaceFormation();
+        units.RemoveAll(u => u.Role == AiSimUnit.RoleSummon && u.Dead && Time - u.DiedAt > WreckSeconds);
 
         StepBullets(dt);
     }
@@ -352,164 +537,6 @@ public sealed class AiSim
         PlayerVX = (PlayerX - oldX) / dt;
         PlayerVY = (PlayerY - oldY) / dt;
         if (PlayerVX * PlayerVX + PlayerVY * PlayerVY > 1f) PlayerRot = AiMath.Heading(0f, 0f, PlayerVX, PlayerVY);
-    }
-
-    private void StepEnemy(float dt)
-    {
-        bool hasTarget = PlayerAlive && PlayerVisible;
-        float speedMult = Math.Max(0.01f, Tuning.SpeedMult);
-        float velMax = Unit.VelMax * speedMult;
-        float velMin = Math.Min(Unit.VelMin * speedMult, velMax);
-        float maxTurn = (Unit.Turn > 1f ? Unit.Turn : 120f) * Math.Max(0.01f, Tuning.TurnMult);
-
-        minionDeaths.RemoveAll(t => t <= Time);
-
-        AiOutput? o = null;
-        if (runtime != null)
-        {
-            var sense = new AiSense
-            {
-                X = X, Y = Y, Rot = Rot, Vel = Vel, VelMin = velMin, VelMax = velMax,
-                HomeX = HomeX, HomeY = HomeY, HealthFraction = Health / MaxHealth,
-                HasTarget = hasTarget, TargetX = PlayerX, TargetY = PlayerY, TargetVX = PlayerVX, TargetVY = PlayerVY,
-                Now = Time, Dt = dt, LastHitAt = lastHitAt, SummonsAlive = minionDeaths.Count
-            };
-            o = runtime.Step(sense);
-            if (o.Entered)
-            {
-                Log((o.PreviousState == null ? "state \"" : "state \"" + o.PreviousState.Id + "\" -> \"") + o.State.Id + "\"" +
-                    (o.State.BehaviorId.Length > 0 ? "  (behavior " + o.State.BehaviorId + ")" : ""));
-                foreach (AiCompiledState entered in o.EnteredStates)
-                {
-                    if (entered.Message.Length > 0) Log("message: " + entered.Message);
-                    if (entered.Bark.Length > 0) Log("bark: " + entered.Bark);
-                    if (entered.Effect.Length > 0) VisualEffect = entered.Effect;
-                    if (entered.Homing.HasValue) Homing = entered.Homing.Value;
-                }
-            }
-            foreach (AiSummonOrder order in o.Summons)
-            {
-                for (int i = 0; i < order.Count; i++) minionDeaths.Add(Time + MinionLife);
-                TotalSummoned += order.Count;
-                Log("summons " + order.Count + " x " + order.Type);
-            }
-            if (o.ShieldOn != Shielded)
-            {
-                Shielded = o.ShieldOn;
-                Log(Shielded ? "shield up" + (o.ShieldEffect.Length > 0 ? " (" + o.ShieldEffect + ")" : "") : "shield down");
-            }
-            if (o.Explode)
-            {
-                Die(true);
-                return;
-            }
-            if (o.UseBuiltin) ApproximateBuiltin(o, velMax, hasTarget);
-        }
-
-        if (o != null)
-            AiMotion.Steer(ref X, ref Y, ref Rot, ref Vel, o.TargetX, o.TargetY, o.TargetVel, velMin, velMax, maxTurn, o.Hold, dt);
-
-        Fire(o, hasTarget);
-    }
-
-    // The server's built-in flights are not in the shared core: the simulator only draws something close, so a state that
-    // uses one can still be tried (circle and chase orbit, charge goes straight at the player, turrets stand still).
-    private void ApproximateBuiltin(AiOutput o, float velMax, bool hasTarget)
-    {
-        string flight = o.Builtin.Length > 0 ? o.Builtin : Tuning.Builtin;
-        o.Hold = false;
-        switch (flight)
-        {
-            case "turret":
-            case "fixed":
-            case "idle":
-            case "mine":
-                o.Hold = true;
-                o.TargetVel = 0f;
-                break;
-            case "charge":
-            case "kamikaze":
-                o.TargetVel = velMax * o.SpeedMult;
-                break;
-            case "circle":
-            case "chase":
-            default:
-            {
-                if (hasTarget)
-                {
-                    float heading = AiMath.Heading(PlayerX, PlayerY, X, Y);
-                    float a = (heading + (flight == "circle" ? 75f : 30f)) * AiMath.Rad;
-                    o.TargetX = PlayerX + MathF.Sin(a) * 12f;
-                    o.TargetY = PlayerY + MathF.Cos(a) * 12f;
-                }
-                o.TargetVel = velMax * 0.75f * o.SpeedMult;
-                break;
-            }
-        }
-    }
-
-    // Same rules as Enemies.Fire of the server: burst of shots at the fire rate, then the reload.
-    private void Fire(AiOutput? o, bool hasTarget)
-    {
-        if (o == null || !o.FireEnabled || !hasTarget) return;
-        if (Time < bornAt + 0.3 + Math.Max(0f, Tuning.FirstShotDelay)) return;
-
-        float rateMult = Tuning.FireRateMult > 0f ? Tuning.FireRateMult : 1f;
-        rateMult *= o.RateMult > 0f ? o.RateMult : 0.0001f;
-        float lead = o.AimLead >= 0f ? o.AimLead : Tuning.AimLead;
-
-        foreach (SimGun gun in guns)
-        {
-            AiGunStats m = gun.Model;
-            if (o.Guns.Length > 0 && Array.IndexOf(o.Guns, m.Index) < 0) continue;
-            if (m.Damage <= 0f) continue;
-
-            if (gun.Ammo <= 0)
-            {
-                if (Time < gun.ReloadUntil) continue;
-                gun.Ammo = Math.Max(1, m.Burst);
-            }
-            if (Time < gun.NextShot) continue;
-
-            float tx = PlayerX;
-            float ty = PlayerY;
-            float dist = AiMath.Distance(X, Y, tx, ty);
-            float range = o.Range > 0f ? o.Range : (Tuning.ShotRange > 0f ? Tuning.ShotRange : AiGunAim.Range(m.Speed, m.Duration, m.Range));
-            if (dist > range) continue;
-
-            if (lead > 0f && m.Speed > 0.5f)
-            {
-                float t = dist / m.Speed * lead;
-                tx += PlayerVX * t;
-                ty += PlayerVY * t;
-            }
-            float relative = AiMath.AngleDifference(Rot, AiMath.Heading(X, Y, tx, ty));
-            if (!AiGunAim.TryAim(m.Mode, m.Angle, m.Arc, m.Burst, gun.Ammo, ref gun.Turn, Tuning.FreeAim, relative, Time, out float rotation))
-                continue;
-
-            int bullets = Math.Max(1, m.Multi);
-            for (int i = 0; i < bullets; i++)
-            {
-                float spread = (i - (bullets - 1) * 0.5f) * 6f;
-                float heading = (Rot + rotation + spread) * AiMath.Rad;
-                Bullets.Add(new AiSimBullet
-                {
-                    X = X, Y = Y,
-                    VX = MathF.Sin(heading) * Math.Max(1f, m.Speed),
-                    VY = MathF.Cos(heading) * Math.Max(1f, m.Speed),
-                    Life = m.Duration > 0.05f ? m.Duration : 1.5f,
-                    Gun = m.Index
-                });
-            }
-            ShotsFired++;
-            gun.Ammo--;
-
-            float fireRate = (m.FireRate > 0.05f ? m.FireRate : 2f) * rateMult;
-            double between = 1.0 / Math.Max(0.05f, fireRate);
-            gun.NextShot = Time + between;
-            double reload = Math.Max(0f, m.Reload) / Math.Max(0.05f, rateMult);
-            gun.ReloadUntil = Time + Math.Max(reload, between);
-        }
     }
 
     private void StepBullets(float dt)

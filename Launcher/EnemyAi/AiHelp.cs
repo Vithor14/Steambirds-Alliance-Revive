@@ -92,7 +92,7 @@ internal static class AiHelp
             "## Look and weapons",
             "- Visual effect from here on: a client effect (statefulEffects, for example detectionZone_1) the unit shows from this state on. It stays until another state changes it.",
             "- Homing bullets: on or off from this state on. Empty keeps what the unit has.",
-            "The simulator shows the summons as a counter (they are not flown: each one falls after 12 seconds, or press Destroy summons), draws the shield as a ring and shows the effect in its HUD."),
+            "The simulator flies the summons as real units (they run their own AI, shoot, and a right click hits them; Destroy summons removes them), draws the shield as a ring and shows the effect in its HUD."),
 
         new HelpTopic("Phases inside an AI",
             "A boss with phases is an AI with a state per phase. There is no special \"phase\" object: a phase is a state that something leads to when the health drops.",
@@ -179,6 +179,14 @@ internal static class AiHelp
             "The aggro radius of the old built-in behaviors is ignored: an enemy with an AI is awake when a live player exists, and the states decide when it fights.",
             "If the id does not exist the server writes a warning in its log and the unit uses its normal built-in behavior. The map check also warns about it.",
             "Typing /brains in the game chat lists the AIs the server loaded."),
+
+        new HelpTopic("Generic AIs are protected",
+            "## Never overwritten",
+            "The AIs of the generic folder (and the behavior files they use) run for every unit that has no AI of its own, so the editor never changes them. A unit that runs one opens it as it is.",
+            "## Editing one",
+            "Change anything and the AI in the editor becomes \"new <unit> AI\": a new AI made for the unit in the simulator, with what you changed, in the folder of that unit (a dungeon, or world). The generic AI stays as it was. The new AI is unsaved until you save it; Save writes it in its folder and the unit is offered it in the AI box.",
+            "## Save as, Duplicate, Export and New",
+            "Save as... saves what is open under the name you type; for a generic AI the result is an AI made for the unit. Duplicate, Export and New AI do the same: what comes out of a generic AI is made for the unit in the simulator, never generic. A generic AI cannot be renamed, moved or deleted from the editor."),
 
         new HelpTopic("Sharing files: import and export",
             "## Export...",
