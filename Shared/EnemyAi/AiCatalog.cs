@@ -22,6 +22,7 @@ public static class AiCatalog
     public const int FormatVersion = 1;
     public const string BehaviorsFolder = "behaviors";
     public const string BrainsFolder = "brains";
+    public const string FormationsFolder = "formations";
     // Inside brains\: generic\ (AIs that work for any unit), world\ (AIs of open-world units) and dungeons\<name>\ (one folder
     // per dungeon; the tutorial is a dungeon too). Every brain file name (without the folder) is its id and must be unique.
     public const string GenericFolder = "generic";
@@ -33,6 +34,8 @@ public static class AiCatalog
     {
         new AiOption("orbit", "Orbit the player",
             "Flies to a circle around the player and goes around it. Far away it approaches in a straight line. Uses: distance, deviation, speed, farSpeed, farFactor, spin."),
+        new AiOption("orbitLeader", "Orbit the group leader",
+            "Flies to a circle around the leader of its group and goes around it (the escorts of a group of the open world). Without a leader it circles the player on a wider circle. Uses: distance, deviation, speed, farSpeed, farFactor, spin."),
         new AiOption("approach", "Go for the player",
             "Flies straight at the player, a little ahead of where the plane is going. Uses: speed, lead."),
         new AiOption("straight", "Keep going straight",
@@ -45,6 +48,10 @@ public static class AiCatalog
             "Flies away from the player. Uses: speed."),
         new AiOption("home", "Go back home",
             "Flies to the place where the unit was born and circles there. Uses: speed."),
+        new AiOption("path", "Follow a path",
+            "Flies through the points of \"points\" (each one [x, y] relative to where the unit was born) and starts again. Uses: points, speed."),
+        new AiOption("zigzag", "Zigzag toward the player",
+            "Flies toward the player, swapping side every few seconds. Uses: deviation (how wide), interval, speed."),
         new AiOption("builtin", "Built-in flight",
             "Runs one of the server's built-in flights (the \"behavior\" of the unit type, or the one named in \"builtin\": chase, circle, charge, turret, route, kamikaze, patrol, escort). Uses: builtin, speedMult. In the simulator it is only an approximation.")
     };
@@ -68,7 +75,7 @@ public static class AiCatalog
         new AiOption("recentlyHit", "Was hit in the last (s)", "True when the unit took damage in the last value seconds."),
         new AiOption("facingTarget", "Facing the player (degrees)", "True when the player is inside this angle in front of the unit."),
         new AiOption("summonsAtMost", "Own summons alive at most",
-            "True when the units this unit summoned that are still alive number at most this value (0 = all of them are dead)."),
+            "True when the units this unit summoned that are still alive number at most this value (0 = all of them are dead). Unit and role, when set, count only that kind."),
         new AiOption("chance", "Chance per second (0-1)", "Every second the transition happens with this probability (0.5 = about once every two seconds).")
     };
 

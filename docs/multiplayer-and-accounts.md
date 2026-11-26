@@ -1,6 +1,6 @@
-# Multiplayer, contas por jogador e launcher 0.3.0
+# Multiplayer, contas por jogador e launcher
 
-Servidor **v11** e launcher **0.3.0** (16/11/2026, testados em 22/11 com dois PCs), revisado em 23/11/2026 para o launcher **0.5.0**. O que existe: vários PCs entram no mesmo servidor, cada jogador com a própria conta, e os jogadores se veem no Nexus, no mundo aberto e nas dungeons (`PlayerRelay`; o tutorial segue privado). O que não existe: troca de servidor entre hosts diferentes, limite de jogadores por dungeon e fila. As partes de amigos e flocks estão em `docs/social.md`; o mundo aberto, em `docs/open-world.md`.
+Login, contas e relay abaixo. O launcher atual é o **0.7.1** (0.8.0 em andamento); a seção de telas para na 0.5.0 e o que veio depois está em `Launcher/README.md` e nas notas `docs/update-notes-0.6.0.md` em diante. Servidor **v11** e launcher **0.3.0** (16/11/2026, testados em 22/11 com dois PCs), revisado em 23/11/2026 para o launcher **0.5.0**. O que existe: vários PCs entram no mesmo servidor, cada jogador com a própria conta, e os jogadores se veem no Nexus, no mundo aberto e nas dungeons (`PlayerRelay`; o tutorial segue privado). O que não existe: troca de servidor entre hosts diferentes, limite de jogadores por dungeon e fila. As partes de amigos e flocks estão em `docs/social.md`; o mundo aberto, em `docs/open-world.md`.
 
 ## Fluxo de login
 
@@ -49,9 +49,9 @@ Servidor **v11** e launcher **0.3.0** (16/11/2026, testados em 22/11 com dois PC
 - Conectar por IP: `GET http://<ip>:<porta>/revive/info` (5 s); servidor antigo cai no `/ozy/alive`.
 - `GET /revive/info` (`infoVersion` 2) também traz `playerDetails`: uma entrada por jogador online com `name`, `plane` (id da classe), `planeLevel`, `pilotLevel`, `place` (`nexus`, `tutorial`, `world` ou `dungeon`) e `where` (nome do lugar), montada em `Network\PlayerStatus.cs`. É o que o launcher usa no Discord Rich Presence. A resposta UDP da busca **não** leva `playerDetails` (tem que caber num datagrama). Nenhum endereço, chave de conta ou Steam ID sai nesses dados.
 
-## Launcher 0.3.0 (e o que mudou até a 0.5.0)
+## Launcher até a 0.5.0
 
-O visual do launcher foi refeito na 0.5.0 (cabeçalho, abas agrupadas Client / Server | Map editor / Enemy AI | Settings, sub-abas); o que segue descreve o que cada parte faz, e o `Launcher\README.md` descreve as telas atuais.
+O visual do launcher foi refeito na 0.5.0 (cabeçalho, abas agrupadas Client / Server | Map editor / Enemy AI | Settings, sub-abas). As telas de 0.6.0 em diante (chat do servidor, Play test, Discord, comandos de console, mapas do Nexus e do tutorial, abas do mundo) estão em `Launcher/README.md`. O que segue descreve o que cada parte fazia na 0.5.0.
 
 - **Client**: nome do jogador (vazio = nome da Steam, lido do `loginusers.vdf` e do registro `ActiveProcess\ActiveUser`), lista de servidores (este PC + achados + digitados), Conectar por IP, *Remove from list*, busca sozinha a cada minuto. Com outro PC escolhido, "Start the server of this PC with the game" fica desmarcado e acinzentado (a preferência salva volta quando "este PC" é escolhido).
 - **Download the game with Steam** (`UI\DepotDownloadForm.cs`, `Core\DepotDownload.cs`): copia o `download_depot`, abre `steam://open/console`, acompanha `Steam\logs\console_log.txt` (`Depot download complete` / `failed`) e o tamanho da pasta `depot_386011`; no fim usa a pasta e cria `steam_appid.txt` (386010). A Steam não aceita comandos de console de fora: o jogador cola e aperta Enter.

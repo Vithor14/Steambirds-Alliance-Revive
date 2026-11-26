@@ -1,6 +1,6 @@
 # Nexus = Rebel City (`Server\Nexus.cs`)
 
-Remontagem do Rebel City do Open Beta (cliente 201219.1413). Criado em 14/11/2026 (4ª versão; ajustes na 4.1 a 4.4); atualizado em 23/11/2026 (0.5.0).
+Remontagem do Rebel City do Open Beta (cliente 201219.1413). Criado em 14/11/2026 (4ª versão; ajustes na 4.1 a 4.4); atualizado em 23/11/2026. A planta não mudou nas 0.6.0–0.8.0. A colisão do chão (`collisions` no mapa) continua sem teste no jogo (`docs/dungeon-tuning.md`).
 
 **Desde a v5, a planta fica em `Server\maps\nexus.json`** (formato em `docs/map-format.md`).
 - O arquivo usa u = A + 3 e v = B + 3 em relação às coordenadas (A, B) desta página.

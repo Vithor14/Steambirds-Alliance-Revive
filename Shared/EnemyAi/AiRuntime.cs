@@ -9,12 +9,21 @@ public struct AiSense
     public float HealthFraction;
     public bool HasTarget;
     public float TargetX, TargetY, TargetVX, TargetVY;
+    // The leader of the unit's group (open world: the leader of a group of enemies), when it has one that is alive.
+    public bool HasLeader;
+    public float LeaderX, LeaderY;
     public double Now;
     public float Dt;
     // Time of the last damage the unit took (negative = never).
     public double LastHitAt;
-    // How many of the units this one summoned are still alive.
+    // How many of the units this one summoned are still alive (every kind).
     public int SummonsAlive;
+    // (unit, role) -> how many of those summons are alive. Empty unit and empty role means all of them.
+    // Null when the caller did not count: a filtered condition then uses SummonsAlive.
+    public Func<string, string, int>? CountMatching;
+    // The unit that summoned this one, when it is still alive (orbit "around": "summoner").
+    public bool HasSummoner;
+    public float SummonerX, SummonerY;
 }
 
 // A summon the AI asks for: the caller creates "Count" units of the type near the summoner.
@@ -22,6 +31,11 @@ public sealed class AiSummonOrder
 {
     public string Type = "";
     public int Count;
+    public string Ai = "";
+    public string Role = "";
+    public string Place = "behind";
+    public float Distance = 5f;
+    public float Angle;
 }
 
 // What the AI decided this tick. The caller turns toward (TargetX, TargetY), speeds toward TargetVel (AiMotion.Steer) and
@@ -53,6 +67,7 @@ public sealed class AiOutput
     public bool UseBuiltin;
     public string Builtin = "";
     public float SpeedMult = 1f;
+    public float TurnMult = 1f;
 
     // The shield of the state is up now (ShieldEffect = the look while it lasts, "" = the default one).
     public bool ShieldOn;
@@ -78,9 +93,10 @@ public sealed class AiRuntime
     private double nextPatrol;
     private bool needPatrol = true;
 
-    // summons and shield of the current state
-    private double nextSummonAt = double.MaxValue;
+    // summons and shield of the current state (one clock per summon line)
+    private double[] summonAt = Array.Empty<double>();
     private double shieldUntil;
+    private int pathIndex;
 
     // 1 clockwise, -1 counter-clockwise (when the move does not say).
     private readonly float defaultSpin;
@@ -151,6 +167,7 @@ public sealed class AiRuntime
         stateIndex = index;
         enteredAt = now;
         needPatrol = true;
+        pathIndex = 0;
 
         AiCompiledState state = Brain.States[index];
         Out.EnteredStates.Add(state);
@@ -158,15 +175,35 @@ public sealed class AiRuntime
         // Shield: for a number of seconds, or for as long as the state lasts.
         shieldUntil = !state.Shield ? 0.0 : state.ShieldSeconds > 0f ? now + state.ShieldSeconds : double.MaxValue;
 
-        // Summons: at once when the state starts (no limit check against "max" when it is 0), then every "every" seconds.
-        nextSummonAt = double.MaxValue;
-        if (state.SummonType.Length > 0)
+        // Summons: at once when the state starts, then every "every" seconds, each line on its own clock and its own cap.
+        summonAt = new double[state.Summons.Length];
+        for (int i = 0; i < state.Summons.Length; i++)
         {
-            if (state.SummonMax <= 0 || s.SummonsAlive < state.SummonMax) Out.Summons.Add(new AiSummonOrder { Type = state.SummonType, Count = state.SummonCount });
-            if (state.SummonEvery > 0f) nextSummonAt = now + state.SummonEvery;
+            QueueSummon(state.Summons[i], s);
+            summonAt[i] = state.Summons[i].Every > 0f ? now + state.Summons[i].Every : double.MaxValue;
         }
 
         Roll(state);
+    }
+
+    private void QueueSummon(AiSummonEntry line, in AiSense s)
+    {
+        if (line.Unit.Length == 0) return;
+        if (line.Max > 0)
+        {
+            int alive = s.CountMatching != null ? s.CountMatching(line.Unit, line.Role) : s.SummonsAlive;
+            if (alive >= line.Max) return;
+        }
+        Out.Summons.Add(new AiSummonOrder
+        {
+            Type = line.Unit,
+            Count = Math.Max(1, line.Count),
+            Ai = line.Ai,
+            Role = line.Role,
+            Place = line.Place.Length == 0 ? "behind" : line.Place,
+            Distance = line.Distance <= 0f ? 5f : line.Distance,
+            Angle = line.Angle
+        });
     }
 
     // The numbers the conditions of a state wait for (a timeInState with a maximum is a random time between the two).
@@ -204,7 +241,8 @@ public sealed class AiRuntime
         stateIndex = index;
         Out.State = next.States[index];
         Roll(next.States[index]);
-        if (next.States[index].SummonType.Length == 0) nextSummonAt = double.MaxValue;
+        summonAt = new double[next.States[index].Summons.Length];
+        for (int i = 0; i < summonAt.Length; i++) summonAt[i] = double.MaxValue;
         if (!next.States[index].Shield) shieldUntil = 0.0;
     }
 
@@ -242,8 +280,12 @@ public sealed class AiRuntime
                     Math.Abs(AiMath.AngleDifference(s.Rot, AiMath.Heading(s.X, s.Y, s.TargetX, s.TargetY))) <= value;
                 break;
             case "summonsAtMost":
-                result = s.SummonsAlive <= value;
+            {
+                int alive = s.SummonsAlive;
+                if ((c.Unit.Length > 0 || c.Role.Length > 0) && s.CountMatching != null) alive = s.CountMatching(c.Unit, c.Role);
+                result = alive <= value;
                 break;
+            }
             case "chance":
                 // Probability per second, whatever the tick length.
                 result = rng.NextDouble() < 1.0 - Math.Exp(-Math.Max(0f, value) * Math.Max(0f, s.Dt));
@@ -256,6 +298,41 @@ public sealed class AiRuntime
     }
 
     // ------------------------------------------------------------------ what the state does
+
+    private static bool OrbitCenter(string around, in AiSense s, out float cx, out float cy)
+    {
+        switch ((around ?? "").Trim().ToLowerInvariant())
+        {
+            case "summoner":
+                cx = s.SummonerX;
+                cy = s.SummonerY;
+                return s.HasSummoner;
+            case "home":
+                cx = s.HomeX;
+                cy = s.HomeY;
+                return true;
+            case "leader":
+                cx = s.LeaderX;
+                cy = s.LeaderY;
+                return s.HasLeader;
+            default:
+                cx = s.TargetX;
+                cy = s.TargetY;
+                return s.HasTarget;
+        }
+    }
+
+    // Flies to a circle of "radius" around (cx, cy) and goes around it; far from the circle it goes at "farSpeed".
+    private void Orbit(in AiSense s, AiMove m, float cx, float cy, float radius, float distance, float speed, float top, AiOutput o)
+    {
+        float spin = m.Spin > 0 ? 1f : m.Spin < 0 ? -1f : defaultSpin;
+        float heading = AiMath.Heading(cx, cy, s.X, s.Y);
+        float a = (heading + spin * m.Deviation) * AiMath.Rad;
+        o.TargetX = cx + MathF.Sin(a) * radius;
+        o.TargetY = cy + MathF.Cos(a) * radius;
+        float far = m.FarSpeed ?? speed;
+        o.TargetVel = top * (distance > radius * Math.Max(1f, m.FarFactor) ? far : speed);
+    }
 
     private void Compute(in AiSense s, float dist)
     {
@@ -270,12 +347,12 @@ public sealed class AiRuntime
         o.Builtin = "";
         o.SpeedMult = 1f;
 
-        // Periodic summons of the state.
-        if (state.SummonType.Length > 0 && state.SummonEvery > 0f && s.Now >= nextSummonAt)
+        // Periodic summons of the state, one clock per line.
+        for (int i = 0; i < state.Summons.Length && i < summonAt.Length; i++)
         {
-            nextSummonAt = s.Now + state.SummonEvery;
-            if (state.SummonMax <= 0 || s.SummonsAlive < state.SummonMax)
-                o.Summons.Add(new AiSummonOrder { Type = state.SummonType, Count = state.SummonCount });
+            if (state.Summons[i].Every <= 0f || s.Now < summonAt[i]) continue;
+            summonAt[i] = s.Now + state.Summons[i].Every;
+            QueueSummon(state.Summons[i], s);
         }
         o.ShieldOn = s.Now < shieldUntil;
         o.ShieldEffect = state.ShieldEffect;
@@ -289,16 +366,68 @@ public sealed class AiRuntime
         switch (m.Mode)
         {
             case "orbit":
-                if (s.HasTarget)
+                if (OrbitCenter(m.Around, s, out float ox, out float oy))
                 {
-                    float spin = m.Spin > 0 ? 1f : m.Spin < 0 ? -1f : defaultSpin;
-                    float radius = Math.Max(2f, m.Distance);
-                    float heading = AiMath.Heading(s.TargetX, s.TargetY, s.X, s.Y);
-                    float a = (heading + spin * m.Deviation) * AiMath.Rad;
-                    o.TargetX = s.TargetX + MathF.Sin(a) * radius;
-                    o.TargetY = s.TargetY + MathF.Cos(a) * radius;
-                    float far = m.FarSpeed ?? speed;
-                    o.TargetVel = top * (dist > radius * Math.Max(1f, m.FarFactor) ? far : speed);
+                    if (m.Lock)
+                    {
+                        float ang = (m.Angle + m.SpinRate * (float)s.Now + m.FaceOffset) * AiMath.Rad;
+                        float radius = Math.Max(2f, m.Distance);
+                        o.TargetX = ox + MathF.Sin(ang) * radius;
+                        o.TargetY = oy + MathF.Cos(ang) * radius;
+                        o.TargetVel = top * speed;
+                    }
+                    else Orbit(s, m, ox, oy, Math.Max(2f, m.Distance), AiMath.Distance(s.X, s.Y, ox, oy), speed, top, o);
+                }
+                else
+                {
+                    o.TargetX = forwardX;
+                    o.TargetY = forwardY;
+                    o.TargetVel = top * speed;
+                }
+                break;
+
+            case "path":
+            {
+                List<List<float>>? points = m.Points;
+                if (points == null || points.Count == 0)
+                {
+                    o.TargetX = forwardX;
+                    o.TargetY = forwardY;
+                    o.TargetVel = top * speed;
+                    break;
+                }
+                List<float> point = points[pathIndex % points.Count];
+                float px = s.HomeX + (point.Count > 0 ? point[0] : 0f);
+                float py = s.HomeY + (point.Count > 1 ? point[1] : 0f);
+                if (AiMath.Distance(s.X, s.Y, px, py) < 2f) pathIndex++;
+                o.TargetX = px;
+                o.TargetY = py;
+                o.TargetVel = top * speed;
+                break;
+            }
+
+            case "zigzag":
+            {
+                float interval = Math.Max(0.4f, m.Interval <= 0f ? 1.2f : m.Interval);
+                float side = ((int)(s.Now / interval) & 1) == 0 ? 1f : -1f;
+                float aim = s.HasTarget ? AiMath.Heading(s.X, s.Y, s.TargetX, s.TargetY) : s.Rot;
+                float zig = (aim + side * Math.Max(20f, m.Deviation)) * AiMath.Rad;
+                o.TargetX = s.X + MathF.Sin(zig) * 16f;
+                o.TargetY = s.Y + MathF.Cos(zig) * 16f;
+                o.TargetVel = top * speed;
+                break;
+            }
+
+            case "orbitLeader":
+                if (s.HasLeader)
+                {
+                    // Circles the leader of its group (the escorts of a group in the open world).
+                    Orbit(s, m, s.LeaderX, s.LeaderY, Math.Max(2f, m.Distance), AiMath.Distance(s.X, s.Y, s.LeaderX, s.LeaderY), speed, top, o);
+                }
+                else if (s.HasTarget)
+                {
+                    // No leader (it died, or the unit has none): goes for the player, on a wider circle than the leader's.
+                    Orbit(s, m, s.TargetX, s.TargetY, Math.Max(14f, m.Distance * 2f), dist, speed, top, o);
                 }
                 else
                 {
@@ -409,6 +538,17 @@ public sealed class AiRuntime
                 o.TargetVel = 0f;
                 break;
         }
+
+        if (m.Pause > 0f && (s.Now % (m.Pause * 2f)) < m.Pause) o.TargetVel = 0f;
+        if (m.Jitter > 0f)
+        {
+            float j = m.Jitter;
+            o.TargetX += (float)(rng.NextDouble() * 2.0 - 1.0) * j;
+            o.TargetY += (float)(rng.NextDouble() * 2.0 - 1.0) * j;
+        }
+        if (m.TopSpeed > 0f) o.TargetVel = Math.Min(o.TargetVel, m.TopSpeed);
+        o.TurnMult = m.TurnMult > 0f ? m.TurnMult : 1f;
+        o.SpeedMult = m.SpeedMult > 0f ? m.SpeedMult : o.SpeedMult;
 
         o.FireEnabled = f.Enabled;
         o.Guns = f.Guns is { Count: > 0 } ? f.Guns.ToArray() : Array.Empty<int>();

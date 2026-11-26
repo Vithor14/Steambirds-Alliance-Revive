@@ -109,6 +109,13 @@ public static partial class Enemies
         // A value that is not text (the old "ai" slot of the map editor) is ignored.
         [JsonConverter(typeof(AiReferenceConverter))]
         public string Ai { get; set; } = "";
+
+        // Death wreck (Enemies.Wrecks.cs). Empty DeathUnit = the normal explosion. DeathSequence lines are "SECONDS EFFECT".
+        public string DeathUnit { get; set; } = "";
+        public float DeathSeconds { get; set; }
+        public string[]? DeathSequence { get; set; }
+        public string DeathEffect { get; set; } = "";
+        public byte DeathState { get; set; }
     }
 
     // Reads the "ai" field as an id; anything that is not text is skipped instead of making the whole type unreadable.
@@ -248,6 +255,23 @@ public static partial class Enemies
         public bool Homing;
         // The unit that summoned this one (an AI state with "summon"): counted by the "summonsAtMost" condition.
         public Enemy? Summoner;
+        // The unit name and the role a summon or a formation piece was given, so "summonsAtMost" can count one kind.
+        public string SummonUnit = "";
+        public string SummonRole = "";
+        // The formation this unit belongs to (Enemies.Formations.cs). PartIndex >= 0 means it is glued to the leader.
+        private FormationState? formation;
+        public FormationState? Formation { get => formation; set => formation = value; }
+        public int PartIndex = -1;
+        public string FormationMemberId = "";
+        public SteambirdsAi.FormationSlot? FormationSlot;
+        // A formation link took the shield off. The AI is not allowed to put it back.
+        public bool ShieldSuppressed;
+        // A death wreck (Enemies.Wrecks.cs): stands still, plays instant effects, then is destroyed.
+        public bool Wreck;
+        public byte State;
+        public List<(double At, string Effect)>? PendingEffects;
+        // The leader of the group this unit escorts (open world groups): the "orbitLeader" move circles it. Null = none.
+        public Enemy? Leader;
         // Next point of the route (behavior "route").
         public int RouteIndex = -1;
 
@@ -564,10 +588,11 @@ public static partial class Enemies
             enemy.LastDamagedAt = now;
             enemy.HealthChanged = true;
 
-            if (enemy.Health <= 0f)
+                if (enemy.Health <= 0f)
             {
                 enemy.Health = 0f;
                 if (enemy.Team == EnemyTeam) inst.Kills++;
+                if (!string.IsNullOrWhiteSpace(enemy.Type.DeathUnit)) LeaveWreck(inst, enemy, now, log);
                 Remove(inst, new List<Enemy> { enemy }, ReasonDestroyedByDamage, ResultDamage, now);
                 log("ENEMY", inst.Role + " " + Describe(enemy) + " destroyed at (" + Num(enemy.X) + ", " + Num(enemy.Y) +
                     ") after " + enemy.Shots + " shot(s) | kills: " + inst.Kills +
@@ -598,6 +623,8 @@ public static partial class Enemies
                                 enemy.Boss || enemy.Model.Boss, enemy.X, enemy.Y, now, log);
                     }
                 }
+                // The tip of a train takes the rest of the train with it.
+                FormationMemberKilled(inst, enemy, connection, now, log);
                 return "enemy " + Describe(enemy) + " DESTROYED";
             }
 
@@ -652,7 +679,7 @@ public static partial class Enemies
                 case "/enemyhelp":
                     inst = GetInstance(server, connection, role, now);
                     Reply(inst, "Commands: /wave N, /next, /boss, /enemy TYPE [count], /spawn TEMPLATE [count], " +
-                        "/clear, /reset, /encounter [name], /types, /catalog [filter], /brains");
+                        "/clear, /reset, /encounter [name], /types, /catalog [filter], /brains, /wreck UNIT [seconds] [effect|none] [state]");
                     Reply(inst, "Tutorial: /step N, /portal, /restart (help: /tutorialhelp)");
                     Reply(inst, "Now: " + StateText(inst));
                     break;
@@ -797,6 +824,13 @@ public static partial class Enemies
                 {
                     inst = GetInstance(server, connection, role, now);
                     ReplyBrains(inst);
+                    break;
+                }
+
+                case "/wreck":
+                {
+                    inst = GetInstance(server, connection, role, now);
+                    WreckCommand(inst, pieces, now, log);
                     break;
                 }
 

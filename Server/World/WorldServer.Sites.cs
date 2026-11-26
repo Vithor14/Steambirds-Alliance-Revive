@@ -151,15 +151,56 @@ public static partial class WorldServer
         }
         WorldEnemyPools.Family family = pool[random.Next(pool.Count)];
 
-        var templates = new List<string>();
-        int size = family.Solo ? 1 : random.Next(Math.Min(2, settings.GroupSizeMax), settings.GroupSizeMax + 1);
-        if (!family.Solo && family.Leaders.Count > 0) templates.Add(family.Leaders[random.Next(family.Leaders.Count)]);
-        while (templates.Count < size && family.Members.Count > 0) templates.Add(family.Members[random.Next(family.Members.Count)]);
-        if (templates.Count == 0 && family.Leaders.Count > 0) templates.Add(family.Leaders[0]);
+        // The units of the group, the leader first. "Leader" ones are the group's leader (the others escort it).
+        var templates = new List<(string Template, bool Leader)>();
+        if (family.Counts != null)
+        {
+            // An exact group (the host set how many of each): one leader picked at random, every member, each as many times as said.
+            int Count(string unit) => family.Counts.TryGetValue(unit, out int n) ? Math.Clamp(n, 0, WorldEnemyLists.MaxCount) : 1;
+            if (!family.Solo && family.Leaders.Count > 0)
+            {
+                string leader = family.Leaders[random.Next(family.Leaders.Count)];
+                for (int i = Count(leader); i > 0; i--) templates.Add((leader, true));
+            }
+            if (family.Solo && family.Members.Count > 0)
+            {
+                string alone = family.Members[random.Next(family.Members.Count)];
+                for (int i = Count(alone); i > 0; i--) templates.Add((alone, false));
+            }
+            else
+            {
+                foreach (string member in family.Members)
+                    for (int i = Count(member); i > 0; i--) templates.Add((member, false));
+            }
+        }
+        else
+        {
+            int size = family.Solo ? 1 : random.Next(Math.Min(2, settings.GroupSizeMax), settings.GroupSizeMax + 1);
+            if (!family.Solo && family.Leaders.Count > 0) templates.Add((family.Leaders[random.Next(family.Leaders.Count)], true));
+            while (templates.Count < size && family.Members.Count > 0) templates.Add((family.Members[random.Next(family.Members.Count)], false));
+            if (templates.Count == 0 && family.Leaders.Count > 0) templates.Add((family.Leaders[0], true));
+        }
+
+        // A formation (the Five Star ring, and any other leader that has one) replaces the random escorts:
+        // only the leader is created here, and it brings its pieces with it.
+        string? lead = null;
+        foreach ((string template, bool isLeader) in templates)
+        {
+            if (!isLeader || lead != null) continue;
+            lead = template;
+        }
+        bool formationOwns = false;
+        if (lead != null)
+        {
+            string? host = WorldEnemyLists.HostAi(site.Region.Name, lead);
+            formationOwns = host != null ? Formations.ForAi(host) != null : Formations.For(lead) != null;
+            if (formationOwns) templates = new List<(string Template, bool Leader)> { (lead, true) };
+        }
 
         string group = "site:" + site.Index;
         int created = 0;
-        foreach (string template in templates)
+        int leaderId = 0;
+        foreach ((string template, bool isLeader) in templates)
         {
             string key = EnsureType(template, settings, site.Region.Name);
             float x = site.X, y = site.Y;
@@ -179,8 +220,16 @@ public static partial class WorldServer
             int id = Enemies.CreateFromScript(s.Server, handle, Role, key, x, y, rotation, group, null, null, now, log);
             if (id == 0) continue;
             Enemies.SetAsleep(handle, id, true, settings.WakeRadius);
+            // The first leader of the group is the one the others circle (an AI with the "orbitLeader" move).
+            if (isLeader && leaderId == 0) leaderId = id;
+            else if (leaderId != 0) Enemies.SetLeader(handle, id, leaderId);
             site.Units.Add(id);
             created++;
+        }
+        if (formationOwns && leaderId != 0)
+        {
+            int extra = Enemies.SpawnFormationMembers(handle, leaderId, now, log);
+            created += extra;
         }
 
         site.LastCount = created;
@@ -194,7 +243,7 @@ public static partial class WorldServer
         if (s.Spawned <= 6)
         {
             log("WORLD", "[world] site " + site.Index + " (" + site.Region.Name + ", tier " + site.Region.Tier + ", at " + site.X.ToString("0") + ", " +
-                site.Y.ToString("0") + ") spawned " + string.Join(", ", templates.Take(created)) + " (asleep until a player is within " +
+                site.Y.ToString("0") + ") spawned " + string.Join(", ", templates.Select(u => u.Template).Take(created)) + " (asleep until a player is within " +
                 settings.WakeRadius.ToString("0") + " units)");
         }
         return created;
@@ -206,6 +255,8 @@ public static partial class WorldServer
     {
         // The AI the host picked for this unit in this biome (world-enemies.json). A unit with its own AI is a type of its own.
         string ai = WorldEnemyLists.AiFor(regionName, template);
+        if (ai.Equals(WorldEnemyLists.DefaultAi, StringComparison.OrdinalIgnoreCase))
+            ai = Formations.DefaultAi(template) ?? ai;
         string key = "world/" + template + (ai.Equals(WorldEnemyLists.DefaultAi, StringComparison.OrdinalIgnoreCase) ? "" : "~" + ai);
         Enemies.RegisterDefaultType(key, new Enemies.EnemyType
         {

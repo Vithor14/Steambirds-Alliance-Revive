@@ -62,6 +62,17 @@ public static partial class Enemies
         }
     }
 
+    // Makes a unit the escort of another one (both by shortId): an AI with the "orbitLeader" move circles its leader.
+    public static void SetLeader(NetConnection connection, int followerId, int leaderId)
+    {
+        lock (Game.Lock)
+        {
+            if (!instances.TryGetValue(connection.RemoteUniqueIdentifier, out Instance? inst)) return;
+            if (inst.Enemies.TryGetValue(followerId, out Enemy? follower) && inst.Enemies.TryGetValue(leaderId, out Enemy? leader) && follower != leader)
+                follower.Leader = leader;
+        }
+    }
+
     // How many units of the group still exist on this connection.
     public static int CountAlive(NetConnection connection, string group)
     {

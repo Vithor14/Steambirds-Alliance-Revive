@@ -92,7 +92,7 @@ internal static class AiHelp
             "## Look and weapons",
             "- Visual effect from here on: a client effect (statefulEffects, for example detectionZone_1) the unit shows from this state on. It stays until another state changes it.",
             "- Homing bullets: on or off from this state on. Empty keeps what the unit has.",
-            "The simulator shows the summons as a counter (they are not flown: each one falls after 12 seconds, or press Destroy summons), draws the shield as a ring and shows the effect in its HUD."),
+            "The simulator flies the summons as real units (they run their own AI, shoot, and a right click hits them; Destroy summons removes them), draws the shield as a ring and shows the effect in its HUD."),
 
         new HelpTopic("Phases inside an AI",
             "A boss with phases is an AI with a state per phase. There is no special \"phase\" object: a phase is a state that something leads to when the health drops.",

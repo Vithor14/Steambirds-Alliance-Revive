@@ -1,6 +1,6 @@
 # Dungeons da build 190828 (recriadas)
 
-Escrito em 15/11/2026, revisado em 23/11/2026. Os mapas ficam em `Server\maps\dungeon_*.json`. Foram gerados em 15/11 por scripts Python que **não estão mais no repositório** (`tools\dungeons-190828`, removida); hoje o `.json` é a fonte e se edita no editor de mapas do launcher. Em 22/11 todos foram reduzidos à metade da largura e da altura (`tools\scale_dungeon_maps.py`, `"scaled": 0.5`; `docs/dungeon-tuning.md`). O formato está em `docs/map-format.md`. Eles rodam no servidor de dungeon (`docs/dungeon-server.md`); só Iron Lair e Bomb Factory estão ligadas no `dungeons.json` (testadas em 15/11; as correções posteriores não foram retestadas).
+Escrito em 15/11/2026, revisado em 26/11/2026. Os mapas ficam em `Server\maps\dungeon_*.json`. Foram gerados em 15/11 por scripts Python que **não estão mais no repositório** (`tools\dungeons-190828`, removida); hoje o `.json` é a fonte e se edita no editor de mapas do launcher. Em 22/11 todos foram reduzidos à metade da largura e da altura (`tools\scale_dungeon_maps.py`, `"scaled": 0.5`; `docs/dungeon-tuning.md`). O formato está em `docs/map-format.md`. Eles rodam no servidor de dungeon (`docs/dungeon-server.md`). O `dungeons.json` que acompanha o servidor liga só Iron Lair e Bomb Factory; no teste de 23/11 as 17 foram abertas e quatro foram concluídas (Bomb Factory, Crypt of Cathulhu, Laser Playground, The Arena), a Command Center chegou à sala do chefe e a Iron Lair foi reprovada. Desde a 0.7.0 cada tipo usa `"ai"`, não `behavior`, e as fases de chefe são estados da IA.
 
 ## O que se achou no configBinary
 
@@ -62,7 +62,7 @@ Dificuldade: vida e dano seguem os tiers originais da 190828 (healthTiers 1…90
 
 ## Próximos passos
 
-1. Retestar a Bomb Factory (barris, reação em cadeia) e ir até o fim; depois ligar as outras no `dungeons.json` uma por uma, conferindo o tamanho das salas (agora 4× menores) e as unidades invisíveis acima.
+1. A Bomb Factory foi concluída em 23/11 (barris e reação em cadeia conferidos), já no mapa 4× menor. Falta jogar as 11 que não entraram nesse teste, conferindo as unidades invisíveis acima, e religá-las no `dungeons.json` uma por uma.
 2. `nextDungeon` (Meowza → Three Brothers → Inner Sanctum); as chaves `key_*` já levam à dungeon (`Dungeons\DungeonKeys.cs`), falta testar.
 3. Mecânicas especiais (broca, chave das Vaults, altares, emboscada, esteiras, trilhos, respiros).
 4. IA original a partir dos estados da 190426.

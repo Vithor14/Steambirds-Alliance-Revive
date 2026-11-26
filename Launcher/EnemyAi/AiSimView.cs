@@ -23,6 +23,8 @@ internal sealed class AiSimView : Panel
     private readonly ComboBox playerSpriteBox;
     private AssetPicture? playerPicture;
     private readonly NumberBox drain;
+    private readonly ComboBox leaderBox;
+    private readonly NumberBox clickDamage;
     private readonly CheckBox respawn;
     private readonly NumberBox speedMult;
     private readonly NumberBox turnMult;
@@ -77,6 +79,10 @@ internal sealed class AiSimView : Panel
         Button hit = Ui.Button(L.T("Hit -25%"), (_, _) => sim.Damage(0.25f));
         Button heal = Ui.Button(L.T("Heal"), (_, _) => sim.Damage(-1f));
         Button killMinions = Ui.Button(L.T("Destroy summons"), (_, _) => sim.KillMinions());
+        leaderBox = Combo(new[] { L.T("Runs its AI"), L.T("Goes where I Ctrl+click"), L.T("Stands still"), L.T("Taken away") }, 0, 170);
+        leaderBox.Enabled = false;
+        leaderBox.SelectedIndexChanged += (_, _) => ApplyLeaderMode();
+        clickDamage = Number(25, 1, 100, 5, 64);
         respawn = new ThemedCheckBox { Text = L.T("Comes back after dying"), AutoSize = true, Checked = true };
         respawn.CheckedChanged += (_, _) => sim.AutoRespawn = respawn.Checked;
 
@@ -97,7 +103,9 @@ internal sealed class AiSimView : Panel
         tip.SetToolTip(playerSpriteBox, L.T("The picture of the player's plane in the test (a 2D picture of a plane of the game; it only changes how it looks)."));
         tip.SetToolTip(playerVisible, L.T("Off = there is no player to look at (to test what the AI does when the player is gone)."));
         tip.SetToolTip(drain, L.T("The unit loses this percent of its health every second (to test health conditions and phases)."));
-        tip.SetToolTip(killMinions, L.T("Removes the units the AI summoned (the simulator does not fly them: they only count, and fall after 12 seconds by themselves)."));
+        tip.SetToolTip(killMinions, L.T("Destroys the units the AI summoned. They are real units here: they fly, shoot and can be hit with a right click."));
+        tip.SetToolTip(leaderBox, L.T("The leader of the group the unit belongs to in the open world (a unit that has one shows it here, running its own AI). \"Goes where I Ctrl+click\" flies it to the point you Ctrl+click; \"Stands still\" parks it (still shooting); \"Taken away\" removes it."));
+        tip.SetToolTip(clickDamage, L.T("How much health a right click takes from the unit under the mouse (percent of its maximum)."));
         tip.SetToolTip(speedMult, L.T("\"speedMultiplier\" of the unit type."));
         tip.SetToolTip(turnMult, L.T("\"turnMultiplier\" of the unit type."));
         tip.SetToolTip(fireMult, L.T("\"fireRateMultiplier\" of the unit type."));
@@ -111,7 +119,7 @@ internal sealed class AiSimView : Panel
         {
             playButton, restart, Pair(L.T("Speed"), speedBox),
             Pair(L.T("Player"), playerBox), Pair(L.T("Plane"), playerSpriteBox), Pair(L.T("speed"), playerSpeed), Pair(L.T("circle"), playerRadius), playerVisible,
-            Pair(L.T("Health lost %/s"), drain), hit, heal, killMinions, respawn,
+            Pair(L.T("Health lost %/s"), drain), hit, heal, killMinions, Pair(L.T("Right click takes %"), clickDamage), Pair(L.T("Leader"), leaderBox), respawn,
             Pair(L.T("Speed x"), speedMult), Pair(L.T("Turn x"), turnMult), Pair(L.T("Fire x"), fireMult), Pair(L.T("Aim lead"), aimLead), freeAim, showExits, showRanges
         });
 
@@ -162,12 +170,28 @@ internal sealed class AiSimView : Panel
 
     // ------------------------------------------------------------------ what is simulated
 
+    private void BindFormation(AiBrain? next)
+    {
+        sim.Formation = null;
+        if (next == null || string.IsNullOrWhiteSpace(next.Formation)) return;
+        try
+        {
+            FormationLibrary library = FormationLibrary.Load(LauncherPaths.AiFolder);
+            sim.Formation = library.Get(next.Formation);
+        }
+        catch (IOException)
+        {
+            sim.Formation = null;
+        }
+    }
+
     // Starts simulating this AI (null = nothing to simulate). Called again whenever the file is edited.
     public void SetBrain(AiBrain? newBrain, string newTitle)
     {
         brain = newBrain;
         title = newTitle;
         ApplyUnit();
+        BindFormation(brain);
         sim.SetBrain(brain);
         trail.Clear();
         log.Clear();
@@ -181,15 +205,22 @@ internal sealed class AiSimView : Panel
     {
         brain = newBrain;
         title = newTitle;
+        string before = sim.Formation?.Id ?? "";
+        BindFormation(brain);
         sim.ReplaceBrain(newBrain);
+        if (!string.Equals(before, sim.Formation?.Id ?? "", StringComparison.OrdinalIgnoreCase)) sim.RespawnFormation();
         UpdateStatus();
         canvas.Invalidate();
     }
 
     // What the tab chose: the game unit that is flown and drawn, and what the enemy type says about it (speed, aim...).
     // A plain game unit has no type, so its settings are the neutral ones.
-    public void SetUnit(AiUnitChoice? choice)
+    public void SetUnit(AiUnitChoice? choice, AiSimSetup? leader = null)
     {
+        sim.LeaderSetup = leader;
+        leaderBox.Enabled = leader != null;
+        if (leaderBox.SelectedIndex != 0) leaderBox.SelectedIndex = 0;
+        sim.SetLeaderEnabled(true);
         unitName = choice?.UnitName ?? "";
         builtinFlight = string.IsNullOrWhiteSpace(choice?.BuiltInBehavior) ? "chase" : choice!.BuiltInBehavior.Trim().ToLowerInvariant();
         unitCaption = choice == null ? "" : choice.IsType ? choice.TypeName + " (" + (unitName.Length > 0 ? unitName : L.T("test plane")) + ")" : unitName.Length > 0 ? unitName : L.T("test plane");
@@ -203,6 +234,25 @@ internal sealed class AiSimView : Panel
         trail.Clear();
         log.Clear();
         canvas.Invalidate();
+    }
+
+    // How the AI's summons are made (by the name it gives).
+    public Func<string, AiSimSetup?>? SummonResolver
+    {
+        get => sim.SummonResolver;
+        set => sim.SummonResolver = value;
+    }
+
+    // The leader box follows the state of the arena: it only works when the unit has a leader.
+    private void ApplyLeaderMode()
+    {
+        int mode = leaderBox.SelectedIndex;
+        sim.SetLeaderEnabled(mode != 3);
+        AiSimUnit? leader = sim.Leader;
+        if (leader == null) return;
+        leader.Control = mode == 1 ? AiSimControl.Goal : mode == 2 ? AiSimControl.Still : AiSimControl.Ai;
+        leader.GoalX = leader.X;
+        leader.GoalY = leader.Y;
     }
 
     // The weapons of the unit in the simulator (what the weapons checklist of the editors shows).
@@ -261,12 +311,7 @@ internal sealed class AiSimView : Panel
     }
 
     // When there is no game data (units_config.txt): a plane with one gun, so the AI can still be tried.
-    private static AiUnitStats TestPlane()
-    {
-        var stats = new AiUnitStats { Name = "test plane", MaxHealth = 100f, VelMin = 4f, VelMax = 9f, Turn = 120f, Radius = 1.2f };
-        stats.Guns.Add(new AiGunStats { Index = 0, Name = "gun0", FireRate = 3f, Burst = 3, Reload = 1.5f, Damage = 1f, Speed = 18f, Duration = 1.4f, Range = 22f, Multi = 1 });
-        return stats;
-    }
+    private static AiUnitStats TestPlane() => AiSimSetups.TestPlane();
 
     private void TuningChanged()
     {
@@ -301,6 +346,7 @@ internal sealed class AiSimView : Panel
     private void Restart()
     {
         sim.Reset();
+        ApplyLeaderMode();
         trail.Clear();
         log.Clear();
     }
@@ -398,6 +444,9 @@ internal sealed class AiSimView : Panel
         private float panY;
         private bool panning;
         private bool aiming;
+        private bool aimingLeader;
+        private bool rightMoved;
+        private Point rightDown;
         private Point lastMouse;
 
         public SimCanvas(AiSimView view)
@@ -415,7 +464,12 @@ internal sealed class AiSimView : Panel
         {
             Focus();
             lastMouse = e.Location;
-            if (e.Button == MouseButtons.Left)
+            if (e.Button == MouseButtons.Left && (ModifierKeys & Keys.Control) != 0 && view.sim.Leader != null)
+            {
+                aimingLeader = true;
+                SetLeaderGoal(e.Location);
+            }
+            else if (e.Button == MouseButtons.Left)
             {
                 aiming = true;
                 SetGoal(e.Location);
@@ -423,6 +477,8 @@ internal sealed class AiSimView : Panel
             else
             {
                 panning = true;
+                rightMoved = false;
+                rightDown = e.Location;
             }
             base.OnMouseDown(e);
         }
@@ -431,8 +487,17 @@ internal sealed class AiSimView : Panel
         {
             if (panning)
             {
-                panX += e.X - lastMouse.X;
-                panY += e.Y - lastMouse.Y;
+                // A right click that hardly moves is a hit on the unit under the mouse; a drag moves the view.
+                if (Math.Abs(e.X - rightDown.X) + Math.Abs(e.Y - rightDown.Y) > 4) rightMoved = true;
+                if (rightMoved)
+                {
+                    panX += e.X - lastMouse.X;
+                    panY += e.Y - lastMouse.Y;
+                }
+            }
+            else if (aimingLeader)
+            {
+                SetLeaderGoal(e.Location);
             }
             else if (aiming)
             {
@@ -444,7 +509,9 @@ internal sealed class AiSimView : Panel
 
         protected override void OnMouseUp(MouseEventArgs e)
         {
+            if (panning && e.Button != MouseButtons.Left && !rightMoved) HitUnitAt(e.Location);
             aiming = false;
+            aimingLeader = false;
             panning = false;
             base.OnMouseUp(e);
         }
@@ -458,6 +525,42 @@ internal sealed class AiSimView : Panel
             panX = (e.X - Width / 2f) - (e.X - Width / 2f - panX) * k;
             panY = (e.Y - Height / 2f) - (e.Y - Height / 2f - panY) * k;
             base.OnMouseWheel(e);
+        }
+
+        // The leader flies to the point (the box says so).
+        private void SetLeaderGoal(Point at)
+        {
+            AiSimUnit? leader = view.sim.Leader;
+            if (leader == null) return;
+            if (view.leaderBox.SelectedIndex != 1) view.leaderBox.SelectedIndex = 1;
+            leader = view.sim.Leader;
+            if (leader == null) return;
+            PointF world = ToWorld(at.X, at.Y);
+            leader.GoalX = world.X;
+            leader.GoalY = world.Y;
+        }
+
+        // Right click on a unit of the arena: it loses the percent of the box (a shield ignores it, like the server's).
+        private void HitUnitAt(Point at)
+        {
+            AiSim sim = view.sim;
+            PointF world = ToWorld(at.X, at.Y);
+            AiSimUnit? best = null;
+            float bestDistance = float.MaxValue;
+            foreach (AiSimUnit u in sim.Units)
+            {
+                if (u.Dead) continue;
+                float reach = Math.Max(1.2f, u.Unit.Radius) + 4f / zoom;
+                float d = AiMath.Distance(u.X, u.Y, world.X, world.Y);
+                if (d <= reach && d < bestDistance)
+                {
+                    best = u;
+                    bestDistance = d;
+                }
+            }
+            if (best == null) return;
+            best.Damage((float)view.clickDamage.Value / 100f);
+            Invalidate();
         }
 
         private void SetGoal(Point at)
@@ -505,7 +608,7 @@ internal sealed class AiSimView : Panel
             DrawTarget(g, p);
             DrawBullets(g);
             DrawPlayer(g);
-            DrawEnemy(g, p);
+            DrawUnits(g, p);
             if (view.showExits.Checked && view.brain != null)
             {
                 float unitRadius = Math.Max(6f, sim.Unit.Radius * zoom);
@@ -606,13 +709,26 @@ internal sealed class AiSimView : Panel
             g.Restore(state);
         }
 
-        private void DrawEnemy(Graphics g, Theme.Palette p)
+        // The picture of a unit: the edited one has its own; the others come from the game's art.
+        private AssetPicture? PictureOf(AiSimUnit u)
         {
-            AiSim sim = view.sim;
-            PointF at = ToScreen(sim.X, sim.Y);
-            float r = Math.Max(6f, sim.Unit.Radius * zoom);
+            if (u.IsMain) return view.picture;
+            return u.Unit.Art.Length > 0 && EditorAssets.Current.HasPictures ? EditorAssets.Current.UnitPicture(u.Unit.Art) : null;
+        }
 
-            if (sim.Dead)
+        // The leader and the summoned units first, the edited unit on top.
+        private void DrawUnits(Graphics g, Theme.Palette p)
+        {
+            foreach (AiSimUnit u in view.sim.Units.Where(x => !x.IsMain).ToList()) DrawUnit(g, p, u);
+            DrawUnit(g, p, view.sim.Main);
+        }
+
+        private void DrawUnit(Graphics g, Theme.Palette p, AiSimUnit u)
+        {
+            PointF at = ToScreen(u.X, u.Y);
+            float r = Math.Max(6f, u.Unit.Radius * zoom);
+
+            if (u.Dead)
             {
                 using var pen = new Pen(Color.FromArgb(200, 230, 90, 40), 2f);
                 g.DrawEllipse(pen, at.X - r * 1.6f, at.Y - r * 1.6f, r * 3.2f, r * 3.2f);
@@ -623,8 +739,8 @@ internal sealed class AiSimView : Panel
 
             GraphicsState state = g.Save();
             g.TranslateTransform(at.X, at.Y);
-            g.RotateTransform(sim.Rot);
-            AssetPicture? pic = view.picture;
+            g.RotateTransform(u.Rot);
+            AssetPicture? pic = PictureOf(u);
             if (pic != null)
             {
                 float half = (float)(pic.Half * zoom);
@@ -638,7 +754,7 @@ internal sealed class AiSimView : Panel
             }
             g.Restore(state);
 
-            if (sim.Shielded)
+            if (u.Shielded)
             {
                 using var ring = new Pen(Color.FromArgb(200, 90, 200, 255), 2.5f);
                 using var glow = new SolidBrush(Color.FromArgb(45, 90, 200, 255));
@@ -647,13 +763,23 @@ internal sealed class AiSimView : Panel
             }
 
             // Health bar.
-            float width = Math.Max(view.showExits.Checked ? 64f : 26f, r * 2f);
-            float fraction = sim.MaxHealth > 0f ? Math.Clamp(sim.Health / sim.MaxHealth, 0f, 1f) : 0f;
+            bool detailed = u.IsMain && view.showExits.Checked;
+            float width = Math.Max(detailed ? 64f : 26f, r * 2f);
+            float fraction = u.MaxHealth > 0f ? Math.Clamp(u.Health / u.MaxHealth, 0f, 1f) : 0f;
             RectangleF bar = new RectangleF(at.X - width / 2f, at.Y - r - 12f, width, 4f);
             using (var back = new SolidBrush(Color.FromArgb(160, 20, 20, 20))) g.FillRectangle(back, bar);
             using (var fill = new SolidBrush(fraction > 0.5f ? Color.LimeGreen : fraction > 0.25f ? Color.Gold : Color.OrangeRed))
                 g.FillRectangle(fill, bar.X, bar.Y, bar.Width * fraction, bar.Height);
-            if (view.showExits.Checked && view.brain != null) AiSimOverlay.DrawHealthMarks(g, sim, bar, Font);
+            if (detailed && view.brain != null) AiSimOverlay.DrawHealthMarks(g, view.sim, bar, Font);
+
+            // The others say who they are: the leader and the summoned units.
+            if (!u.IsMain)
+            {
+                string name = u.Role == AiSimUnit.RoleLeader ? L.T("leader") + " " + u.Label : u.Label;
+                using var small = new Font(Font.FontFamily, 7.5f);
+                Size size = TextRenderer.MeasureText(name, small);
+                TextRenderer.DrawText(g, name, small, new Point((int)(at.X - size.Width / 2f), (int)(bar.Y - size.Height - 1)), p.Muted);
+            }
         }
 
         private void DrawHud(Graphics g, Theme.Palette p)
@@ -687,8 +813,16 @@ internal sealed class AiSimView : Panel
                 TextRenderer.DrawText(g, extra.TrimEnd(), Font, new Point(10, y), p.Warn);
                 y += 18;
             }
+            AiSimUnit? leader = sim.Leader;
+            if (leader != null)
+            {
+                string how = leader.Control == AiSimControl.Goal ? L.T("goes where you Ctrl+click") : leader.Control == AiSimControl.Still ? L.T("stands still") : L.T("runs its AI");
+                TextRenderer.DrawText(g, L.T("Leader") + ": " + leader.Label + " (" + (leader.Dead ? L.T("destroyed") : leader.StateId + ", " + L.F("health {0:0}%", leader.MaxHealth > 0 ? leader.Health / leader.MaxHealth * 100f : 0f)) + ", " + how + ")",
+                    Font, new Point(10, y), p.Muted);
+                y += 18;
+            }
             DrawGunList(g, p, y + 2);
-            TextRenderer.DrawText(g, L.T("Left click: send the player there    Right drag: move the view    Wheel: zoom"), Font,
+            TextRenderer.DrawText(g, L.T("Left click: send the player there    Ctrl+click: send the leader    Right click on a unit: hit it    Right drag: move the view    Wheel: zoom"), Font,
                 new Point(10, Height - 20), p.Muted);
         }
 

@@ -37,6 +37,23 @@ public sealed class AiMove
     public string Builtin { get; set; } = "";
     // builtin: multiplier of the unit's own speed (1 = as the type says; 1.2 = a fifth faster).
     public float SpeedMult { get; set; } = 1f;
+    // orbit: who the circle is around. Empty = the player. "leader", "summoner" or "home".
+    public string Around { get; set; } = "";
+    // orbit: stay on a fixed angle of the circle (spinRate degrees per second, angle where it starts) instead of chasing a point ahead.
+    public bool Lock { get; set; }
+    public float Angle { get; set; }
+    public float SpinRate { get; set; }
+    public float FaceOffset { get; set; }
+    // Caps the speed this state asks for. 0 = the unit's own top speed.
+    public float TopSpeed { get; set; }
+    // Multiplies how fast the unit may turn in this state (1 = as the unit says).
+    public float TurnMult { get; set; } = 1f;
+    // Random shove of the destination, in units. 0 = none.
+    public float Jitter { get; set; }
+    // Seconds of coasting between dashes (zigzag and any other mode). 0 = never.
+    public float Pause { get; set; }
+    // path: points relative to where the unit was born, visited in order and then from the start. Each point is [x, y].
+    public List<List<float>>? Points { get; set; }
 }
 
 public sealed class AiFire
@@ -75,8 +92,28 @@ public sealed class AiCondition
     public float Value { get; set; }
     // timeInState: the time is random between value and max.
     public float? Max { get; set; }
+    // summonsAtMost: count only the summons of this unit name. Empty = every summon.
+    public string Unit { get; set; } = "";
+    // summonsAtMost: count only the summons with this role (a formation piece or a summon line). Empty = every role.
+    public string Role { get; set; } = "";
     // The condition is true when it is NOT met.
     public bool Not { get; set; }
+}
+
+// One line of a state's "summons" list. The old summon/summonCount fields are the same thing as a list of one.
+public sealed class AiSummonEntry
+{
+    public string Id { get; set; } = "";
+    public string Unit { get; set; } = "";
+    public string Ai { get; set; } = "";
+    public string Role { get; set; } = "";
+    // behind, front, left, right, ring.
+    public string Place { get; set; } = "behind";
+    public int Count { get; set; } = 1;
+    public float Every { get; set; }
+    public int Max { get; set; }
+    public float Distance { get; set; } = 5f;
+    public float Angle { get; set; }
 }
 
 public sealed class AiTransition
@@ -101,13 +138,18 @@ public sealed class AiStateFile
     // Speech bubble (a bark key of the client) when the state starts.
     public string? Bark { get; set; }
 
-    // Summons units of this type (a type of enemies.json or of the map the unit is in) when the state starts...
+    // Summons units of this type when the state starts. A "summons" list replaces these four fields.
     public string? Summon { get; set; }
     public int SummonCount { get; set; } = 1;
-    // ...and again every this many seconds while the state lasts (0 = only when it starts).
     public float SummonEvery { get; set; }
-    // No new summons while this many of its own summons are alive (0 = no limit).
     public int SummonMax { get; set; }
+    public string? SummonAi { get; set; }
+    public string? SummonRole { get; set; }
+    public string? SummonPlace { get; set; }
+    public float SummonDistance { get; set; }
+    public float SummonAngle { get; set; }
+    // Several lines: a phase can call different units, each with its own cap, AI and place.
+    public List<AiSummonEntry>? Summons { get; set; }
 
     // The unit ignores damage in this state: for ShieldSeconds, or the whole state when it is 0.
     public bool Shield { get; set; }
@@ -135,6 +177,8 @@ public sealed class AiBrainFile
     public string Author { get; set; } = "";
     public string Description { get; set; } = "";
     public string Initial { get; set; } = "";
+    // Id of a file in ai\formations. Spawning a unit that runs this AI also spawns that formation.
+    public string? Formation { get; set; }
     // The units this AI was made for: names of game units (the "template" of a unit type, e.g. "swarmboss"). Used to offer the AI
     // only to those units. Ignored in airains\generic: an AI there works for any unit.
     public List<string>? Units { get; set; }

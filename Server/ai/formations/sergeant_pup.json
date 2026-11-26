@@ -1,0 +1,18 @@
+{
+  "format": 1,
+  "id": "sergeant_pup",
+  "name": "Sergeant Pup",
+  "author": "Steambirds Revive",
+  "description": "Four pods locked in a row behind the leader. The leader wears tankShield until the last pod dies. The Alone state is the leader AI, not this file.",
+  "bindToUnit": true,
+  "leader": { "unit": "podleader", "ai": "world_podleader" },
+  "members": [
+    { "id": "pod1", "unit": "pod", "ai": "world_formation_turret", "role": "pod", "place": { "kind": "slot", "x": -3, "y": -4.5 } },
+    { "id": "pod2", "unit": "pod", "ai": "world_formation_turret", "role": "pod", "place": { "kind": "slot", "x": -1, "y": -4.5 } },
+    { "id": "pod3", "unit": "pod", "ai": "world_formation_turret", "role": "pod", "place": { "kind": "slot", "x": 1, "y": -4.5 } },
+    { "id": "pod4", "unit": "pod", "ai": "world_formation_turret", "role": "pod", "place": { "kind": "slot", "x": 3, "y": -4.5 } }
+  ],
+  "links": [
+    { "shield": ["leader"], "whileRole": "pod", "effect": "tankShield" }
+  ]
+}

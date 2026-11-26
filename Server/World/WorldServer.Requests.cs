@@ -167,22 +167,30 @@ public static partial class WorldServer
             message = "The server could not create " + bossGroup.Name + " (enemy limit or a unit that is not in the catalog).";
             return false;
         }
-        int created = 0;
+        int created = Enemies.SpawnFormationMembers(handle, id, now, log);
+        if (created == 0)
+        {
+        var attached = new List<int>();
         double offset = random.NextDouble() * Math.PI * 2.0;
         for (int i = 0; i < bossGroup.Parts.Count; i++)
         {
             // Spread on a ring around the boss (a second ring when there are many), on free land when there is some.
+            // A boss with a formation file is created above, not here.
             double angle = offset + i * Math.PI * 2.0 / Math.Max(1, Math.Min(bossGroup.Parts.Count, 12));
             float distance = 9f + 6f * (i / 12);
-            float px = x + (float)Math.Sin(angle) * distance, py = y + (float)Math.Cos(angle) * distance;
+            float px = x + (float)Math.Sin(angle) * distance;
+            float py = y + (float)Math.Cos(angle) * distance;
             if (!map.IsFreeLand(px, py))
             {
                 px = x;
                 py = y;
             }
             float partRotation = (float)(random.NextDouble() * 360.0 - 180.0);
-            if (Enemies.CreateFromScript(s.Server, handle, Role, EnsureBossType(bossGroup.Parts[i], settings, false, region.Name), px, py, partRotation, group, null, null, now, log) != 0)
-                created++;
+            int partId = Enemies.CreateFromScript(s.Server, handle, Role, EnsureBossType(bossGroup.Parts[i], settings, false, region.Name), px, py, partRotation, group, null, null, now, log);
+            if (partId == 0) continue;
+            created++;
+            attached.Add(partId);
+        }
         }
 
         message = bossGroup.Name + (created > 0 ? " with " + created + " part(s)/minion(s)" : "") + " appeared in " + region.ZoneName + " at " +
@@ -196,7 +204,9 @@ public static partial class WorldServer
     // own AI.
     private static string EnsureBossType(string template, WorldSettings.EnemySettings settings, bool boss, string regionName)
     {
-        string ai = WorldEnemyLists.AiFor(regionName, template);
+        // The AI of the host, else the one the boss's formation brings (the sergeant waits for its escorts to fall), else the default.
+        string ai = WorldEnemyLists.HostAi(regionName, template) ?? (boss ? Formations.DefaultAi(template) : null) ?? WorldEnemyLists.DefaultAi;
+        if (string.IsNullOrWhiteSpace(ai)) ai = WorldEnemyLists.DefaultAi;
         string key = (boss ? "world/boss/" : "world/part/") + template + (ai.Equals(WorldEnemyLists.DefaultAi, StringComparison.OrdinalIgnoreCase) ? "" : "~" + ai);
         Enemies.RegisterDefaultType(key, new Enemies.EnemyType
         {

@@ -1,6 +1,6 @@
 # Friends, flocks and teleport to players
 
-Status (23/11/2026): built and tested with a test client that speaks the game's messages (two accounts, the Nexus and the open world; 72 checks). **Not tested in the game yet.**
+Status (26/11/2026): built and tested with a test client that speaks the game's messages (two accounts, the Nexus and the open world; 72 checks). In the game on 23/11, the friend list, joining the default flock and proximity chat worked. Whisper, flock chat, creating and managing flocks, removing or blocking friends, teleport and "Join Server" are still unplayed. Safe trade is below (the 0.7.0 early-decline fix is also unplayed).
 Code in `Server\Social\`, host settings in `Server\social.json`, flocks in `Server\flocks.json`, each account's friends in `accounts\<key>\social.json`.
 
 ## What the client does and what the server does

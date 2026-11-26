@@ -41,6 +41,7 @@ public static partial class DungeonServer
         int id = Enemies.CreateFromScript(s.Server, s.Connection, Role, s.Data.Key(type), x, y, rotation, group, room.Area,
             null, now, log);
         if (id == 0) return 0;
+        Enemies.SpawnFormationMembers(s.Connection, id, now, log);
         if (waiting) Enemies.SetAsleep(s.Connection, id, true, 0f);
         else if (counts) Enemies.ForceAggro(s.Connection, id);   // waves and summons hunt the player at once
 
@@ -189,10 +190,11 @@ public static partial class DungeonServer
                 if (leaves.EndsWith("DEATH", StringComparison.OrdinalIgnoreCase))
                 {
                     int wreck = id;
+                    Enemies.StartDeathSequence(s.Connection, wreck, now);
                     Schedule(s, now + WreckSeconds, "wreck", time =>
                     {
                         if (s.Units.TryGetValue(wreck, out Tracked? w)) w.Removed = true;
-                        Enemies.RemoveUnit(s.Connection, wreck, false, time);
+                        Enemies.RemoveUnit(s.Connection, wreck, true, time);
                     });
                 }
             }

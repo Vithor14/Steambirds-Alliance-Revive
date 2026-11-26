@@ -11,7 +11,10 @@ ai\
     generic\<id>.json                 AIs that work for any unit (the generic_* ones and other all-round AIs)
     world\<id>.json                   AIs made for units of the open world
     dungeons\<dungeon>\<id>.json      AIs made for units of one dungeon (arena, ice, ... and tutorial: the tutorial is a dungeon)
+  formations\<id>.json                who is born with a leader, where they sit, and the shield / death / heal links
 ```
+
+A **formation** is not an AI. The leader's AI names it with `"formation": "<id>"`. Pieces that are glued (chain, slot, ring) do not fly; their AI only shoots. A formation with `"bindToUnit": true` also attaches when the leader's AI is generic (the train, the Sergeant Pup, the Five Star). `"bindToUnit": false` waits until an AI names the file (the Ambassador body, the spirit vessel example). The Formation tab of the launcher edits these files. The old `formations.json` next to the server is still read; a file in this folder wins for the same leader unit.
 
 An **AI** is a state machine whose states act like behaviors and change to each other. Its **origin** is the folder it lives in. The server and
 the launcher read every folder inside `brains\` (and `behaviors\`), so a file can be moved between them; the id (the file name) must be
@@ -26,7 +29,7 @@ The **file name is the id** (lowercase letters, digits and `_`); an `"ai"` writt
 `enemies.json` or in the `types` of a map (map editor: *Units → Enemy AI*). **Every unit runs an AI:** a type without `ai`
 (an old or community map) gets `generic_<behavior>` of its old `"behavior"` field (`generic_chase` when it has none). The maps and
 `enemies.json` shipped here already name their AI and no longer have the `behavior` field. The `generic_*` AIs (`generic_chase`, `generic_circle`, `generic_charge`, `generic_turret`, `generic_patrol`, `generic_escort`, `generic_idle`,
-`generic_fixed`, `generic_kamikaze`, `generic_mine`, `generic_route`) are the old built-in flights as one-state AI files (`builtin` move), one per
+`generic_fixed`, `generic_kamikaze`, `generic_mine`, `generic_route`, plus `generic_orbit_leader`, which circles the group leader) are the old built-in flights as one-state AI files (`builtin` move), one per
 old behavior, so no unit lost its movement. They still use the type's `aggroRadius`, `preferredDistance` and, for bombs and mines, `contactRadius`.
 In a `builtin` move an empty `builtin` name means the type's old `behavior`; the shipped boss AIs name their flight themselves. A boss with **phases** is an AI with a state per phase (see *Summons, shield, look and phases*).
 `/brains` in the game chat lists what the server loaded; problems of a file go to the server log (`[ENEMY] ai: ...`).
@@ -53,6 +56,7 @@ Files accept `//` comments and trailing commas. Unknown fields are ignored (and 
 | mode | what the unit does | fields it uses |
 |---|---|---|
 | `orbit` | goes to a circle around the player and goes around it; far away it approaches in a straight line | `distance`, `deviation`, `speed`, `farSpeed`, `farFactor`, `spin` |
+| `orbitLeader` | goes to a circle around the leader of its group (open world groups: the unit the site created first as leader) and goes around it; without a leader it circles the player on a wider circle. Server only: the simulator has no leader, so it shows the player circle | `distance`, `deviation`, `speed`, `farSpeed`, `farFactor`, `spin` |
 | `approach` | flies at the player, aiming a little ahead of where the plane is going | `speed`, `lead` |
 | `straight` | keeps flying where it points (a pass through the player) | `speed` |
 | `wander` | random points around where it was born | `distance` (radius), `interval`, `speed` |

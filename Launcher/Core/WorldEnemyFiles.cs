@@ -16,13 +16,31 @@ public sealed class WorldEnemyGroup
     public bool Solo { get; set; }
     public List<string> Leaders { get; set; } = new List<string>();
     public List<string> Members { get; set; } = new List<string>();
+    // How many of each unit (by name) the group creates each time. Null = a random group (a leader and a few units of the members, the
+    // size comes from world.json). With it the group is exact: one leader (picked at random) and every member, each as many times as
+    // its entry says (a unit without an entry counts as 1).
+    public Dictionary<string, int>? Counts { get; set; }
+
+    public const int MaxCount = 30;
+
+    // How many of a unit the group creates (1 when the group says nothing about it).
+    public int CountOf(string unit)
+    {
+        if (Counts == null) return 1;
+        foreach (KeyValuePair<string, int> pair in Counts)
+        {
+            if (pair.Key.Equals(unit, StringComparison.OrdinalIgnoreCase)) return Math.Clamp(pair.Value, 0, MaxCount);
+        }
+        return 1;
+    }
 
     public WorldEnemyGroup Copy() => new WorldEnemyGroup
     {
         Name = Name,
         Solo = Solo,
         Leaders = Leaders.ToList(),
-        Members = Members.ToList()
+        Members = Members.ToList(),
+        Counts = Counts == null ? null : new Dictionary<string, int>(Counts, StringComparer.OrdinalIgnoreCase)
     };
 }
 
@@ -116,6 +134,31 @@ public sealed class WorldEnemyFiles
 
     // The AI every open-world unit runs unless one is picked for it (Server\World\WorldEnemyLists.DefaultAi).
     public const string DefaultAi = "generic_chase";
+
+    // The AI a unit of the open world runs when the host picked none: the default one, except for a boss with a formation (formations.json:
+    // the train, the Sergeant Pup), whose file names the AI it brings. The server writes the file when it builds the world.
+    public static string DefaultAiOf(string unit)
+    {
+        try
+        {
+            string path = LauncherPaths.ServerFile("formations.json");
+            if (!File.Exists(path)) return DefaultAi;
+            if (System.Text.Json.Nodes.JsonNode.Parse(TextFiles.ReadShared(path), null, JsoncFile.ParseOptions) is not System.Text.Json.Nodes.JsonObject root ||
+                root["formations"] is not System.Text.Json.Nodes.JsonObject formations)
+                return DefaultAi;
+            foreach (KeyValuePair<string, System.Text.Json.Nodes.JsonNode?> pair in formations)
+            {
+                if (!pair.Key.Equals(unit, StringComparison.OrdinalIgnoreCase) || pair.Value is not System.Text.Json.Nodes.JsonObject formation) continue;
+                string ai = formation["leaderAi"]?.GetValue<string>() ?? "";
+                return ai.Trim().Length > 0 ? ai.Trim() : DefaultAi;
+            }
+        }
+        catch (Exception)
+        {
+            // An unreadable file: the default AI.
+        }
+        return DefaultAi;
+    }
 
     private sealed class EditsFile
     {

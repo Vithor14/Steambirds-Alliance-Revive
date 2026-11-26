@@ -26,8 +26,10 @@ Maintained 100% by the community, with some additions and improvements.
 
 ## Where things stand
 
-- Version at the last update (24/11/2026): server and launcher **0.7.1**, plugin Steambirds Quieter **1.22.0**, client build
-  **201219.1413**. Release notes: `docs/release-notes-0.7.0.md` (short, for GitHub) and `docs/update-notes-0.7.0.md` (full, English and Portuguese). Patch 0.7.1: `docs/update-notes-0.7.1.md` (full) and `docs/release-notes-0.7.1.md` (short, for GitHub).
+- Version at the last release (24/11/2026): server and launcher **0.7.1**, plugin Steambirds Quieter **1.22.0**, client build
+  **201219.1413**. **0.8.0 is in progress** (`docs/update-notes-0.8.0.md`). Closed notes: `docs/update-notes-0.7.0.md` and
+  `docs/update-notes-0.7.1.md` (full, English and Portuguese), `docs/release-notes-0.7.0.md` and `docs/release-notes-0.7.1.md` (short, for GitHub).
+  When a design note and a later update note disagree, the later note is the one to follow, then the code.
 - **`CHECKLIST.md` (repo root) is the source of truth**: done / partial / missing per area, and the suggested MVP order.
   Update it when a feature changes state (keep its Portuguese style) and recompute its summary table (a bullet counts as
   done `- [x]`, partial `- [ ] 🟡` or missing `- [ ]`).
@@ -37,7 +39,7 @@ Maintained 100% by the community, with some additions and improvements.
 
 | File | Topic |
 |---|---|
-| `docs/multiplayer-and-accounts.md` | login flow, one account per player, `network.json`, server search, launcher 0.3.0, player relay, shared dungeons |
+| `docs/multiplayer-and-accounts.md` | login flow, one account per player, `network.json`, server search, player relay, shared dungeons (launcher screens in that note stop at 0.5.0; later screens are in `Launcher/README.md`) |
 | `docs/dungeon-server.md` | dungeon server (port 1113): architecture, flow, Iron Lair / Bomb Factory test |
 | `docs/dungeons-190828.md` | the 17 recreated dungeons of build 190828; what is original and what is rebuilt |
 | `docs/dungeon-enemies-and-loot.md` | kamikaze bombs, weapon reach vs orbit distance, dungeon loot tables |
@@ -54,9 +56,11 @@ Maintained 100% by the community, with some additions and improvements.
 | `docs/open-world.md` | open world (`Basic`, port 1114): map generator, regions, enemy spawn sites, carriers, `world.json` (English) |
 | `docs/social.md` | friends, flocks (Flock Hall), whispers, flock chat, teleport and "Join Server", `social.json`, `flocks.json` (English) |
 | `docs/admin-tools.md` | admin and debug tools: debug settings, sounds, screenshots, server stats, inventory audit, password accounts (English) |
-| `docs/update-notes-0.5.0.md` | release notes of 0.5.0 (English and Portuguese) |
+| `docs/update-notes-0.5.0.md`, `docs/release-description-0.5.0.md` | release notes of 0.5.0: full (English and Portuguese) and the short GitHub text |
 | `docs/update-notes-0.6.0.md`, `docs/release-notes-0.6.0.md` | release notes of 0.6.0: full (English and Portuguese) and the short one for GitHub |
 | `docs/update-notes-0.7.0.md`, `docs/release-notes-0.7.0.md` | release notes of 0.7.0: full (English and Portuguese) and the short one for GitHub |
+| `docs/update-notes-0.7.1.md`, `docs/release-notes-0.7.1.md` | patch 0.7.1: full (English and Portuguese) and the short one for GitHub |
+| `docs/update-notes-0.8.0.md` | 0.8.0, open until release: every later change is written here (English and Portuguese) |
 | `docs/radmin-vpn-guide.md` | player-facing guide: install Radmin VPN, join the `Steambirds_Revive` network, host or join a server (English) |
 | `docs/discord-server.md`, `docs/discord-start-here.md` | plan of the community Discord server and the ready-to-paste `#start-here` texts (not code) |
 

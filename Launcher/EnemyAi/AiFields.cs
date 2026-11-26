@@ -26,23 +26,23 @@ internal static class AiFields
             Help = string.Join("\n", AiCatalog.MoveModes.Select(o => o.Id + ": " + L.T(o.Help)))
         };
         yield return Number("move.speed", "Speed (fraction of top speed)", 0.7, 0, 3, 0.05,
-            "1 = the unit's top speed. Most modes use it.", UsedBy("orbit", "approach", "straight", "wander", "flee", "home"));
+            "1 = the unit's top speed. Most modes use it.", UsedBy("orbit", "orbitLeader", "approach", "straight", "wander", "flee", "home"));
         yield return new FieldSpec("move.farSpeed", "Speed when far (orbit)", FieldKind.OptionalNumber)
         {
             Help = "orbit: speed while the player is farther than distance x \"far factor\". Empty = the same speed.",
-            EnabledWhen = UsedBy("orbit")
+            EnabledWhen = UsedBy("orbit", "orbitLeader")
         };
         yield return Number("move.distance", "Distance", 14, 0, 500, 1,
-            "orbit: radius of the circle around the player. wander: radius of the area around home.", UsedBy("orbit", "wander"));
+            "orbit: radius of the circle around the player. orbitLeader: radius of the circle around the leader of the group. wander: radius of the area around home.", UsedBy("orbit", "orbitLeader", "wander"));
         yield return Number("move.deviation", "Deviation (degrees)", 30, 0, 180, 5,
-            "orbit: how many degrees ahead along the circle the unit aims. Small = it spirals in slowly, large = it goes around fast.", UsedBy("orbit"));
-        yield return Number("move.farFactor", "Far factor", 1.6, 1, 20, 0.1, "orbit: \"far\" starts at distance x this value.", UsedBy("orbit"));
+            "orbit: how many degrees ahead along the circle the unit aims. Small = it spirals in slowly, large = it goes around fast.", UsedBy("orbit", "orbitLeader"));
+        yield return Number("move.farFactor", "Far factor", 1.6, 1, 20, 0.1, "orbit: \"far\" starts at distance x this value.", UsedBy("orbit", "orbitLeader"));
         yield return Number("move.lead", "Lead (s)", 0, 0, 5, 0.05, "approach: seconds of the player's velocity the unit aims ahead (0 = at the player).", UsedBy("approach"));
         yield return Number("move.interval", "Interval (s)", 5, 0.5, 120, 0.5, "wander: seconds between two destinations.", UsedBy("wander"));
         yield return new FieldSpec("move.spin", "Spin (1 right, -1 left, 0 random)", FieldKind.Int)
         {
             Min = -1, Max = 1, Help = "orbit: 1 goes around clockwise, -1 counter-clockwise, 0 picks at random for each unit.",
-            EnabledWhen = UsedBy("orbit")
+            EnabledWhen = UsedBy("orbit", "orbitLeader")
         };
         yield return new FieldSpec("move.face", "Face the player (hold)", FieldKind.Bool)
         {
@@ -87,12 +87,28 @@ internal static class AiFields
             Choices = typeNames,
             Help = "Unit type this unit calls when the state starts: a type of enemies.json or of the map the unit is in. Empty = no summons."
         };
-        yield return new FieldSpec("summonCount", "Amount each time", FieldKind.Int) { Min = 1, Max = 10, Default = 1, Help = "How many units appear each time (1 to 10)." };
+        yield return new FieldSpec("summonCount", "Amount each time", FieldKind.Int) { Min = 1, Max = 30, Default = 1, Help = "How many units appear each time (1 to 30)." };
         yield return Number("summonEvery", "Again every (s)", 0, 0, 600, 0.5, "0 = only when the state starts. Otherwise it summons again every this many seconds while the state lasts.");
         yield return new FieldSpec("summonMax", "At most alive", FieldKind.Int)
         {
-            Min = 0, Max = 100, Help = "No new summons while this many of its own summons are alive. 0 = no limit."
+            Min = 0, Max = 100, Help = "No new summons of this line while this many of them are alive. 0 = no limit."
         };
+        yield return new FieldSpec("summonAi", "Summon AI", FieldKind.Text)
+        {
+            Help = "AI the summoned units run. Empty = the AI of the unit type."
+        };
+        yield return new FieldSpec("summonRole", "Summon role", FieldKind.Text)
+        {
+            Help = "Role name, so a summonsAtMost condition can count only this kind."
+        };
+        yield return new FieldSpec("summonPlace", "Summon place", FieldKind.Choice)
+        {
+            Choices = () => new[] { "behind", "front", "left", "right", "ring" },
+            AllowEmpty = true,
+            Help = "Where they appear around the summoner. Empty = behind."
+        };
+        yield return Number("summonDistance", "Summon distance", 5, 0, 80, 0.5, "How far from the summoner they appear. 0 = 5.");
+        yield return Number("summonAngle", "Summon angle", 0, -360, 360, 5, "Where a ring starts, in degrees.");
 
         yield return FieldSpec.Header("Shield");
         yield return new FieldSpec("shield", "Shield", FieldKind.Bool) { Help = "The unit ignores all damage while the shield is up." };
@@ -173,6 +189,14 @@ internal static class AiFields
             Help = "timeInState only: the time is picked at random between value and this number, each time the state starts."
         };
         yield return new FieldSpec("not", "Not (the opposite)", FieldKind.Bool) { Help = "The condition is true when it is NOT met." };
+        yield return new FieldSpec("unit", "Count only this unit", FieldKind.Text)
+        {
+            Help = "summonsAtMost only: count summons of this unit name. Empty = every unit."
+        };
+        yield return new FieldSpec("role", "Count only this role", FieldKind.Text)
+        {
+            Help = "summonsAtMost only: count summons with this role. Empty = every role."
+        };
     }
 
     private static FieldSpec Number(string key, string label, double def, double min, double max, double step, string help, Func<JsonObject, bool>? enabledWhen = null)

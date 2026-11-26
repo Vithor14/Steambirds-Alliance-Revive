@@ -188,6 +188,7 @@ internal sealed class AiTab : Panel
         // ---- right: the simulator
         simView = new AiSimView(context);
         simView.RunningStateChanged += id => brainEditor.SetRunningState(id);
+        simView.SummonResolver = ResolveSummon;
 
         inner = new SplitContainer { Dock = DockStyle.Fill, SplitterWidth = 5 };
         inner.Panel1.Controls.Add(middle);
@@ -481,9 +482,36 @@ internal sealed class AiTab : Panel
             building = false;
         }
         if (unit != null) lastChoiceLabel = unit.Label;
-        simView.SetUnit(unit);
+        simView.SetUnit(unit, unit?.LeaderChoice == null ? null : AiSimSetups.Build(unit.LeaderChoice, BrainOf));
         AiUnits.CurrentGuns = simView.UnitGuns.ToList();
         Rebind();
+    }
+
+    // The compiled AI with this id (null when there is no such file or it does not compile): for the units the simulator adds
+    // next to the edited one (its leader, what it summons).
+    private AiBrain? BrainOf(string id)
+    {
+        AiDoc? doc = store.Find(AiKind.Brain, id);
+        return doc == null || doc.LoadError != null ? null : store.Compile(doc, new List<AiProblem>());
+    }
+
+    // A unit the AI summons, by the name it gives: a type of the same group as the edited unit (same dungeon or biome) first, then any type,
+    // then a game unit of that name. Null when there is none.
+    private AiSimSetup? ResolveSummon(string name)
+    {
+        AiUnitChoice? found = null;
+        if (choice != null)
+            found = unitGroups.SelectMany(LeafGroups).FirstOrDefault(g => g.Units.Contains(choice))?.Units
+                .FirstOrDefault(u => u.TypeId.Equals(name, StringComparison.OrdinalIgnoreCase));
+        found ??= unitGroups.SelectMany(g => g.AllUnits()).FirstOrDefault(u => u.TypeId.Equals(name, StringComparison.OrdinalIgnoreCase));
+        if (found == null && EditorAssets.Current.Units.ContainsKey(name)) found = new AiUnitChoice { Label = name, UnitName = name };
+        return found == null ? null : AiSimSetups.Build(found, BrainOf);
+    }
+
+    private static IEnumerable<AiUnitGroup> LeafGroups(AiUnitGroup group)
+    {
+        yield return group;
+        foreach (AiUnitGroup child in group.Children.SelectMany(LeafGroups)) yield return child;
     }
 
     // The AI file the enemy type of the unit really uses (null for a plain unit or a missing file).

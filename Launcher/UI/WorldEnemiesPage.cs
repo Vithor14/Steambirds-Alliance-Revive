@@ -68,6 +68,9 @@ internal sealed class WorldEnemiesPage : UserControl
     private readonly ThemedComboBox aiBox;
     private readonly ThemedButton aiEditButton;
     private readonly Label aiNote;
+    private readonly NumberBox countBox;
+    private readonly ThemedButton randomGroupButton;
+    private bool fillingCount;
     private AiLibrary aiLibrary = new AiLibrary();
     private string aiSignature = "";
     private bool fillingAi;
@@ -194,7 +197,7 @@ internal sealed class WorldEnemiesPage : UserControl
         listStatus = Ui.Wrapping("", 640, gray: true);
         listStatus.Dock = DockStyle.Top;
 
-        list = Ui.Grid((L.T("Group"), 180), (L.T("Role"), 80), (L.T("Enemy"), 150), (L.T("AI"), 180), (L.T("Tier"), 45), (L.T("Health"), 70));
+        list = Ui.Grid((L.T("Group"), 180), (L.T("Role"), 80), (L.T("Enemy"), 150), (L.T("AI"), 180), (L.T("Amount"), 70), (L.T("Tier"), 45), (L.T("Health"), 70));
         list.MultiSelect = true;
         // The picture of each enemy, before its name.
         list.PictureColumn = 2;
@@ -218,6 +221,14 @@ internal sealed class WorldEnemiesPage : UserControl
         aiNote = Ui.Wrapping("", 640, gray: true);
         FlowLayoutPanel aiRow = Ui.WrapFlow(Ui.Text(L.T("AI of the selected enemy:")), aiBox, aiEditButton);
         aiRow.Dock = DockStyle.Bottom;
+
+        countBox = new NumberBox { Minimum = 0, Maximum = WorldEnemyGroup.MaxCount, DecimalPlaces = 0, Value = 1, Width = 70, TextAlign = HorizontalAlignment.Right, Enabled = false };
+        countBox.ValueChanged += (_, _) => CountPicked();
+        tip.SetToolTip(countBox, L.T("How many of the selected enemy the group creates each time (0 = none). Once a group has amounts it is exact: one leader and every member, as many as said. The original game's Five Star group, for example, is 1 leader and 5 escorts."));
+        randomGroupButton = Ui.Button(L.T("Random group"), (_, _) => RandomGroups());
+        tip.SetToolTip(randomGroupButton, L.T("Takes the amounts off the selected groups: they go back to a leader and a random number of members (the group size of world.json)."));
+        FlowLayoutPanel countRow = Ui.WrapFlow(Ui.Text(L.T("Amount of the selected enemy per spawn:")), countBox, randomGroupButton);
+        countRow.Dock = DockStyle.Bottom;
         aiNote.Dock = DockStyle.Bottom;
 
         addButton = Ui.Button(L.T("Add enemy..."), (_, _) => AddEnemies());
@@ -247,6 +258,7 @@ internal sealed class WorldEnemiesPage : UserControl
         listsBody.Controls.Add(hint);
         listsBody.Controls.Add(aiNote);
         listsBody.Controls.Add(aiRow);
+        listsBody.Controls.Add(countRow);
         listsBody.Controls.Add(saveButtons);
         listsBody.Controls.Add(editButtons);
         listsBody.Controls.Add(listStatus);
@@ -491,12 +503,12 @@ internal sealed class WorldEnemiesPage : UserControl
             WorldEnemyGroup group = groups[g];
             if (group.Leaders.Count == 0 && group.Members.Count == 0)
             {
-                AddRow(g, GroupName(group, g), "", true, "", "");
+                AddRow(g, GroupName(group, g), "", true, "", "", "");
                 continue;
             }
-            foreach (string leader in group.Leaders) AddRow(g, GroupName(group, g), L.T("Leader"), true, leader, leader);
+            foreach (string leader in group.Leaders) AddRow(g, GroupName(group, g), L.T("Leader"), true, leader, leader, CountText(group, leader));
             foreach (string member in group.Members)
-                AddRow(g, GroupName(group, g), group.Solo ? L.T("Alone") : L.T("Follower"), false, member, member);
+                AddRow(g, GroupName(group, g), group.Solo ? L.T("Alone") : L.T("Follower"), false, member, member, CountText(group, member));
         }
         AddBossRows(region);
         foreach (ListViewItem item in list.Items)
@@ -535,19 +547,23 @@ internal sealed class WorldEnemiesPage : UserControl
         {
             if (boss.Name.Length == 0) continue;
             string label = L.F("Boss: {0}", boss.Name);
-            AddRow(BossRowGroup, label, L.T("Boss"), true, boss.Name, boss.Name);
+            AddRow(BossRowGroup, label, L.T("Boss"), true, boss.Name, boss.Name, "");
             foreach (string part in boss.Parts.Distinct(StringComparer.OrdinalIgnoreCase))
-                AddRow(BossRowGroup, label, L.T("Part"), false, part, part);
+                AddRow(BossRowGroup, label, L.T("Part"), false, part, part, "");
         }
     }
 
-    private void AddRow(int group, string groupName, string role, bool leader, string enemy, string name)
+    // "random" while the group has no amounts, else how many of the unit it creates each time.
+    private static string CountText(WorldEnemyGroup group, string unit) => group.Counts == null ? L.T("random") : group.CountOf(unit).ToString();
+
+    private void AddRow(int group, string groupName, string role, bool leader, string enemy, string name, string count)
     {
         GameUnit? unit = enemy.Length > 0 && EditorAssets.Current.Units.TryGetValue(enemy, out GameUnit? found) ? found : null;
         var item = new ListViewItem(groupName) { Tag = (group, leader, name) };
         item.SubItems.Add(role);
         item.SubItems.Add(enemy.Length > 0 ? enemy : L.T("(empty group)"));
         item.SubItems.Add(enemy.Length > 0 ? AiLabel(enemy) : "");
+        item.SubItems.Add(count);
         item.SubItems.Add(unit != null ? unit.Tier.ToString() : "");
         item.SubItems.Add(unit != null ? unit.MaxHealth.ToString("0") : "");
         list.Items.Add(item);
@@ -564,6 +580,7 @@ internal sealed class WorldEnemiesPage : UserControl
     private void UpdateListButtons()
     {
         UpdateAiBox();
+        UpdateCountControls();
         bool has = Current != null;
         addButton.Enabled = has;
         bool anyGroupRow = SelectedRows().Any(r => r.Group >= 0);
@@ -701,6 +718,82 @@ internal sealed class WorldEnemiesPage : UserControl
         Fill();
     }
 
+    // ------------------------------------------------------------------ how many of each enemy a group creates
+
+    // The rows of the host's groups that are selected (the bosses have no amount).
+    private List<(int Group, bool Leader, string Name)> SelectedGroupRows() => SelectedRows().Where(r => r.Group >= 0 && r.Name.Length > 0).ToList();
+
+    private void UpdateCountControls()
+    {
+        WorldEnemyRegion? region = Current;
+        List<(int Group, bool Leader, string Name)> rows = region == null ? new List<(int Group, bool Leader, string Name)>() : SelectedGroupRows();
+        fillingCount = true;
+        try
+        {
+            countBox.Enabled = rows.Count > 0;
+            randomGroupButton.Enabled = false;
+            if (region == null || rows.Count == 0) return;
+            List<WorldEnemyGroup> groups = EffectiveGroups(region);
+            var amounts = new List<int>();
+            foreach ((int g, _, string name) in rows)
+            {
+                if (g >= groups.Count) continue;
+                amounts.Add(groups[g].CountOf(name));
+                if (groups[g].Counts != null) randomGroupButton.Enabled = true;
+            }
+            if (amounts.Count > 0) countBox.Value = Math.Clamp(amounts[0], 0, WorldEnemyGroup.MaxCount);
+        }
+        finally
+        {
+            fillingCount = false;
+        }
+    }
+
+    // A new amount for the selected enemies. The group becomes exact: every entry that had no amount counts as 1.
+    private void CountPicked()
+    {
+        if (fillingCount) return;
+        WorldEnemyRegion? region = Current;
+        if (region == null) return;
+        List<(int Group, bool Leader, string Name)> rows = SelectedGroupRows();
+        if (rows.Count == 0) return;
+        int amount = (int)countBox.Value;
+
+        List<WorldEnemyGroup> groups = EffectiveGroups(region);
+        bool changed = rows.Any(r => r.Group < groups.Count && (groups[r.Group].Counts == null || groups[r.Group].CountOf(r.Name) != amount));
+        if (!changed) return;
+
+        groups = Customize(region);
+        foreach ((int g, _, string name) in rows)
+        {
+            if (g >= groups.Count) continue;
+            WorldEnemyGroup group = groups[g];
+            if (group.Counts == null)
+            {
+                group.Counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                foreach (string unit in group.Leaders.Concat(group.Members)) group.Counts[unit] = 1;
+            }
+            group.Counts[name] = amount;
+        }
+        MarkDirty();
+    }
+
+    private void RandomGroups()
+    {
+        WorldEnemyRegion? region = Current;
+        if (region == null) return;
+        List<int> indexes = SelectedGroupRows().Select(r => r.Group).Distinct().ToList();
+        List<WorldEnemyGroup> groups = Customize(region);
+        bool changed = false;
+        foreach (int index in indexes)
+        {
+            if (index < 0 || index >= groups.Count || groups[index].Counts == null) continue;
+            groups[index].Counts = null;
+            changed = true;
+        }
+        if (changed) MarkDirty();
+    }
+
     // ------------------------------------------------------------------ the AI of each enemy
 
     // The AI an enemy runs in the biome now: the host's choice, or the default of the open world.
@@ -714,7 +807,7 @@ internal sealed class WorldEnemiesPage : UserControl
                 if (pair.Key.Equals(unit, StringComparison.OrdinalIgnoreCase) && pair.Value.Length > 0) return pair.Value;
             }
         }
-        return WorldEnemyFiles.DefaultAi;
+        return WorldEnemyFiles.DefaultAiOf(unit);
     }
 
     private string AiLabel(string unit)
@@ -722,7 +815,7 @@ internal sealed class WorldEnemiesPage : UserControl
         WorldEnemyRegion? region = Current;
         if (region == null) return "";
         string id = AiOf(region, unit);
-        return id.Equals(WorldEnemyFiles.DefaultAi, StringComparison.OrdinalIgnoreCase) ? id + " (" + L.T("default") + ")" : id;
+        return id.Equals(WorldEnemyFiles.DefaultAiOf(unit), StringComparison.OrdinalIgnoreCase) ? id + " (" + L.T("default") + ")" : id;
     }
 
     private sealed class AiChoice
@@ -818,7 +911,7 @@ internal sealed class WorldEnemiesPage : UserControl
             string before = AiOf(region, unit);
             if (before.Equals(choice.Id, StringComparison.OrdinalIgnoreCase)) continue;
             // The default is not written: the biome keeps following the default AI of the open world.
-            if (choice.Id.Equals(WorldEnemyFiles.DefaultAi, StringComparison.OrdinalIgnoreCase)) edit.Ai.Remove(unit);
+            if (choice.Id.Equals(WorldEnemyFiles.DefaultAiOf(unit), StringComparison.OrdinalIgnoreCase)) edit.Ai.Remove(unit);
             else edit.Ai[unit] = choice.Id;
             changed = true;
         }

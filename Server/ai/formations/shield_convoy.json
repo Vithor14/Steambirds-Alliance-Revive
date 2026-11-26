@@ -1,0 +1,20 @@
+{
+  "format": 1,
+  "id": "shield_convoy",
+  "name": "Shield convoy",
+  "author": "Steambirds Revive",
+  "description": "Train: cars in a line behind the head. Everyone but the tip is shielded while the tip lives. No tankShield bubble. The tip's death destroys the convoy.",
+  "bindToUnit": true,
+  "spacing": 1.7,
+  "leader": { "unit": "trainA01", "ai": "world_train_head" },
+  "members": [
+    { "id": "car1", "unit": "tailtrain01", "ai": "world_formation_turret", "role": "car", "place": { "kind": "chain" } },
+    { "id": "car2", "unit": "tailtrain02", "ai": "world_formation_turret", "role": "car", "place": { "kind": "chain" } },
+    { "id": "car3", "unit": "tailtrain03", "ai": "world_formation_turret", "role": "car", "place": { "kind": "chain" } },
+    { "id": "tip", "unit": "trainA02", "ai": "world_formation_turret", "role": "tip", "place": { "kind": "chain" } }
+  ],
+  "links": [
+    { "shield": ["leader", "car1", "car2", "car3"], "whileAlive": "tip" },
+    { "when": { "died": "tip" }, "do": "killAll" }
+  ]
+}

@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using SteambirdsAi;
 using SteambirdsLauncher.Core;
 using SteambirdsLauncher.UI;
 
@@ -131,6 +132,26 @@ internal sealed class UnitTypesPage : EditorPage
             : behavior.Length > 0
                 ? L.F("This type has no AI. It keeps the built-in behavior \"{0}\" of the map (not edited here). Pick an AI above, or open the AI editor, to control how it moves and shoots.", behavior)
                 : L.T("This type has no AI. Pick one above, or open the AI editor, to control how it moves and shoots.");
+        int members = FormationMembers(type);
+        if (members > 0)
+            aiState.Text += " " + L.F("This AI brings {0} formation member(s).", members);
+    }
+
+    private static int FormationMembers(JsonObject type)
+    {
+        try
+        {
+            FormationLibrary library = FormationLibrary.Load(LauncherPaths.AiFolder);
+            string ai = Json.Str(type, EnemyAiEditors.AiField);
+            FormationFile? file = library.ForAi(ai);
+            bool generic = ai.Length == 0 || ai.StartsWith("generic_", StringComparison.OrdinalIgnoreCase);
+            if (file == null && generic) file = library.ForUnit(Json.Str(type, "template"));
+            return file?.Expand().Count ?? 0;
+        }
+        catch (IOException)
+        {
+            return 0;
+        }
     }
 
     private void EditAi()

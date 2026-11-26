@@ -30,6 +30,7 @@ public static partial class Enemies
 
             AiLibrary fresh = AiLibrary.Load(folder);
             aiLibrary = fresh;
+            Formations.Reload(folder, fresh);
             reportedBrainFailures.Clear();
             log("ENEMY", folder + ": " + fresh.Brains.Count + " AI(s), " + fresh.Behaviors.Count + " behavior(s)");
             foreach (AiProblem problem in fresh.Problems) log("ENEMY", "ai: " + problem);
@@ -111,8 +112,13 @@ public static partial class Enemies
             HealthFraction = enemy.MaxHp > 0f ? enemy.Health / enemy.MaxHp : 1f,
             HasTarget = validTarget,
             TargetX = inst.PlayerX, TargetY = inst.PlayerY, TargetVX = inst.PlayerVX, TargetVY = inst.PlayerVY,
+            HasLeader = enemy.Leader != null && inst.Enemies.ContainsKey(enemy.Leader.ShortId),
+            LeaderX = enemy.Leader?.X ?? 0f, LeaderY = enemy.Leader?.Y ?? 0f,
             Now = now, Dt = dt, LastHitAt = enemy.LastDamagedAt,
-            SummonsAlive = ai.Brain.NeedsSummonCount ? CountSummons(inst, enemy) : 0
+            SummonsAlive = ai.Brain.NeedsSummonCount ? CountSummons(inst, enemy, "", "") : 0,
+            CountMatching = ai.Brain.NeedsSummonCount ? (unit, role) => CountSummons(inst, enemy, unit, role) : null,
+            HasSummoner = enemy.Summoner != null && inst.Enemies.ContainsKey(enemy.Summoner.ShortId),
+            SummonerX = enemy.Summoner?.X ?? 0f, SummonerY = enemy.Summoner?.Y ?? 0f
         };
         AiOutput o = ai.Step(sense);
 
@@ -140,7 +146,7 @@ public static partial class Enemies
         }
 
         // Shield: renewed every tick while the state asks for it; UpdateInstance puts the normal look back when it stops.
-        if (o.ShieldOn)
+        if (o.ShieldOn && !enemy.ShieldSuppressed)
         {
             enemy.ShieldUntil = now + 0.35;
             short effect = MonoHash.StatefulEffectId(o.ShieldEffect.Length > 0 ? o.ShieldEffect : "tankShield");
@@ -151,15 +157,20 @@ public static partial class Enemies
             }
         }
 
-        foreach (AiSummonOrder order in o.Summons) SummonUnits(inst, enemy, order.Type, order.Count, now, log);
+        foreach (AiSummonOrder order in o.Summons) SummonUnits(inst, enemy, order, now, log);
         return o;
     }
 
-    private static int CountSummons(Instance inst, Enemy enemy)
+    private static int CountSummons(Instance inst, Enemy enemy, string unit, string role)
     {
         int alive = 0;
         foreach (Enemy other in inst.Enemies.Values)
-            if (ReferenceEquals(other.Summoner, enemy)) alive++;
+        {
+            if (!ReferenceEquals(other.Summoner, enemy)) continue;
+            if (unit.Length > 0 && !other.SummonUnit.Equals(unit, StringComparison.OrdinalIgnoreCase)) continue;
+            if (role.Length > 0 && !other.SummonRole.Equals(role, StringComparison.OrdinalIgnoreCase)) continue;
+            alive++;
+        }
         return alive;
     }
 
@@ -178,8 +189,9 @@ public static partial class Enemies
     }
 
     // Creates "count" units behind the summoner (they stay in its group and room, so a script counts them together).
-    private static void SummonUnits(Instance inst, Enemy enemy, string typeName, int count, double now, Action<string, string>? log)
+    private static void SummonUnits(Instance inst, Enemy enemy, AiSummonOrder order, double now, Action<string, string>? log)
     {
+        string typeName = order.Type;
         EnemyType? type = FindSummonType(enemy, typeName, out string key);
         if (type == null)
         {
@@ -187,25 +199,58 @@ public static partial class Enemies
                 log("ENEMY", "the AI of '" + enemy.TypeKey + "' summons the type '" + typeName + "', which does not exist");
             return;
         }
+        if (order.Ai.Length > 0 && !string.Equals(type.Ai, order.Ai, StringComparison.OrdinalIgnoreCase))
+        {
+            string alt = key + "~" + order.Ai;
+            if (GetEnemyType(alt) == null)
+            {
+                RegisterDefaultType(alt, new EnemyType
+                {
+                    Name = type.Name, Template = type.Template, Ai = order.Ai, FreeRoam = type.FreeRoam,
+                    HealthMultiplier = type.HealthMultiplier, Boss = type.Boss
+                });
+            }
+            EnemyType? swapped = GetEnemyType(alt);
+            if (swapped != null) { type = swapped; key = alt; }
+        }
 
         var summoned = new List<Enemy>();
-        count = Math.Clamp(count, 1, 10);
+        int count = Math.Clamp(order.Count, 1, 30);
         for (int i = 0; i < count; i++)
         {
-            float a = (enemy.Rot + 180f + (i - (count - 1) * 0.5f) * 40f) * Rad;
-            float x = enemy.X + MathF.Sin(a) * 5f;
-            float y = enemy.Y + MathF.Cos(a) * 5f;
+            SummonOffset(enemy, order, i, count, out float x, out float y);
             ConfineTo(enemy.Area, false, ref x, ref y, DestMargin);
             Enemy? fresh = CreateEnemy(inst, key, type, x, y, enemy.FromWave, now, log ?? ((_, _) => { }));
             if (fresh == null) continue;
             fresh.Group = enemy.Group;
             fresh.Area = enemy.Area;
             fresh.Summoner = enemy;
+            fresh.SummonUnit = typeName;
+            fresh.SummonRole = order.Role ?? "";
+            fresh.Leader = enemy;
             summoned.Add(fresh);
         }
         if (summoned.Count == 0) return;
         SendSpawns(inst, summoned, now);
         log?.Invoke("ENEMY", inst.Role + " " + Describe(enemy) + " summoned " + summoned.Count + " x " + key);
+    }
+
+    private static void SummonOffset(Enemy enemy, AiSummonOrder order, int index, int count, out float x, out float y)
+    {
+        string place = (order.Place ?? "behind").ToLowerInvariant();
+        float distance = order.Distance <= 0f ? 5f : order.Distance;
+        float step = count <= 1 ? 0f : (index - (count - 1) * 0.5f) * 40f;
+        float facing = place switch
+        {
+            "front" => enemy.Rot + step,
+            "left" => enemy.Rot - 90f + step,
+            "right" => enemy.Rot + 90f + step,
+            "ring" => order.Angle + (count <= 1 ? 0f : index * 360f / count),
+            _ => enemy.Rot + 180f + step
+        };
+        float rad = facing * Rad;
+        x = enemy.X + MathF.Sin(rad) * distance;
+        y = enemy.Y + MathF.Cos(rad) * distance;
     }
 
     // /brains: the AIs of the folder and the state of the ones flying now.

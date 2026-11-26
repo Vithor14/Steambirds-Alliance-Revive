@@ -31,6 +31,10 @@ internal sealed class AiUnitChoice
     // The folder of server\ai\brains where a new AI made for this unit goes ("dungeons/arena", "world"); set by the unit picker's groups.
     public string AiFolder { get; set; } = "";
 
+    // The leader of the group this unit escorts in the open world (a unit of the biome's groups that is a follower), with the AI it runs
+    // there. The simulator shows it next to the unit. Null for any other unit.
+    public AiUnitChoice? LeaderChoice { get; set; }
+
     public bool IsType => TypeId.Length > 0;
 }
 
