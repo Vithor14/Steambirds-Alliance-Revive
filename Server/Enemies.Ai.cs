@@ -117,6 +117,9 @@ public static partial class Enemies
         // Turrets and mines of the players.
         UpdateAllies(inst, now, log);
 
+        // Shield paint and the other status flags, from the type and from a shield that is up right now.
+        SyncStatusFlags(inst, now);
+
         // Open world: each player is told about the units near them (and only those) before the updates go out.
         UpdateInterest(inst, now);
         SendDueEffects(inst, now);

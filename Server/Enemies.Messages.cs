@@ -40,10 +40,11 @@ public static partial class Enemies
                 m.Write((short)0);                                      // artReplacement
                 m.Write(inst.Server.UniqueIdentifier);                // authority = server
                 m.WriteVariableInt32(0);                                // null unitOptions (GenericUnit does not read options)
-                WriteFields(m, enemy, true, enemy.EffectId != 0);
+                WriteFields(m, enemy, true, enemy.EffectId != 0, enemy.StatusFlags != 0 || enemy.FlagsChanged);
                 if (only == null)
                 {
                     enemy.EffectChanged = false;
+                    enemy.FlagsChanged = false;
                     enemy.HealthChanged = false;
                     enemy.LastHealthSent = now;
                 }
@@ -78,8 +79,12 @@ public static partial class Enemies
         {
             bool withHealth = enemy.HealthChanged || now - enemy.LastHealthSent > 2.0;
             bool withEffect = enemy.EffectChanged;
-            items.Add(new UnitUpdate(enemy, withHealth, withEffect, BuildGunSignal(inst, enemy, now)));
+            // Non-zero flags go out on every update, so a client that missed the change still paints them.
+            // A change to 0 goes out once (FlagsChanged), which is what turns the paint off.
+            bool withFlags = enemy.FlagsChanged || enemy.StatusFlags != 0;
+            items.Add(new UnitUpdate(enemy, withHealth, withEffect, withFlags, BuildGunSignal(inst, enemy, now)));
             enemy.EffectChanged = false;
+            enemy.FlagsChanged = false;
             if (withHealth)
             {
                 enemy.HealthChanged = false;
@@ -101,7 +106,7 @@ public static partial class Enemies
         }
     }
 
-    private readonly record struct UnitUpdate(Enemy Enemy, bool WithHealth, bool WithEffect, byte[]? Guns);
+    private readonly record struct UnitUpdate(Enemy Enemy, bool WithHealth, bool WithEffect, bool WithFlags, byte[]? Guns);
 
     private static void WriteUpdateBatch(Instance inst, NetConnection? only, List<UnitUpdate> items, double now)
     {
@@ -112,7 +117,7 @@ public static partial class Enemies
         {
             m.WriteVariableInt32(item.Enemy.ShortId);
             m.Write((byte)0);
-            WriteFields(m, item.Enemy, item.WithHealth, item.WithEffect, item.Guns);
+            WriteFields(m, item.Enemy, item.WithHealth, item.WithEffect, item.WithFlags, item.Guns);
         }
         m.Write((float)now);
         Broadcast(inst, m, only);
@@ -123,9 +128,8 @@ public static partial class Enemies
     // the order of FieldUpdateSerializer: position, velocity, rotation, (aim, state), health, flags, guns, effect state 1.
     // flags: FIELDMASK_FLAGS (2048), the status bits. Bit 0x800 is the enemy shield paint (it is not a statefulEffects name).
     // guns: FIELDMASK_GUNS (4096), the angle of each turret (Enemies.Guns.cs); null = nothing to say.
-    private static void WriteFields(NetBuffer m, Enemy enemy, bool withHealth, bool withEffect = false, byte[]? guns = null)
+    private static void WriteFields(NetBuffer m, Enemy enemy, bool withHealth, bool withEffect = false, bool withFlags = false, byte[]? guns = null)
     {
-        bool withFlags = enemy.StatusFlags != 0;
         uint mask = 1u | 2u | 4u | (withHealth ? 8u : 0u) | (withFlags ? 2048u : 0u) | (guns != null ? 4096u : 0u) | (withEffect ? 8192u : 0u);
         float vx = MathF.Sin(enemy.Rot * Rad) * enemy.Vel;
         float vy = MathF.Cos(enemy.Rot * Rad) * enemy.Vel;
@@ -144,6 +148,23 @@ public static partial class Enemies
             m.Write(guns);
         }
         if (withEffect) m.Write(enemy.EffectId);
+    }
+
+    // Enemy shield paint. While ShieldUntil is in the future the bit is on, on top of the type's statusEffect.
+    private const uint FlagShielded = 2048;
+
+    // Current flags for every unit: the type's statusEffect, plus the shield paint while a shield is up.
+    // Called after the AI and the formations have renewed or dropped shields, and before the updates go out.
+    private static void SyncStatusFlags(Instance inst, double now)
+    {
+        foreach (Enemy enemy in inst.Enemies.Values)
+        {
+            uint flags = StatusFlagsOf(enemy.Type.StatusEffect);
+            if (enemy.ShieldUntil > now) flags |= FlagShielded;
+            if (flags == enemy.StatusFlags) continue;
+            enemy.StatusFlags = flags;
+            enemy.FlagsChanged = true;
+        }
     }
 
     // Bit of a client status paint (UnitScript flags). "shielded" paints the unit itself; the others spawn a prefab.

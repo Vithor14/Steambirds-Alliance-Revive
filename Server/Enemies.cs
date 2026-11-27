@@ -318,6 +318,8 @@ public static partial class Enemies
         public short EffectId;
         // Unit flags (FieldUpdate FIELDMASK_FLAGS). Bit 0x800 is the enemy shield paint (EffectType.Shielded).
         public uint StatusFlags;
+        // The clients have not been told the current flags yet (including a change back to 0).
+        public bool FlagsChanged;
         // Behavior "mine": false while dormant. It arms itself once no player is inside its contact radius, so a mine
         // that is dropped on top of a player (or a player that spawns on it) does not go off by itself.
         public bool Armed;

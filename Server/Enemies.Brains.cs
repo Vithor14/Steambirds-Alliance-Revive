@@ -157,7 +157,8 @@ public static partial class Enemies
         if (o.ShieldOn && !enemy.ShieldSuppressed)
         {
             enemy.ShieldUntil = now + 0.35;
-            // Empty look: the unit takes no damage and keeps its own sprite. tankShield is the player tank's bubble.
+            // Empty look: no extra bubble. The shield paint (flag shielded) is sent while ShieldUntil is in the future.
+            // tankShield is the player tank's bubble.
             if (o.ShieldEffect.Length > 0)
             {
                 short effect = MonoHash.StatefulEffectId(o.ShieldEffect);
