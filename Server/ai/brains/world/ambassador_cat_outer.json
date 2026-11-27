@@ -4,7 +4,7 @@
   "name": "Ambassador: cat representative (outer ring)",
   "author": "Steambirds Revive",
   "description": "Summoned by the Ambassador under 30% health (3 of them, the orange ufosaucermini). Fixed to the Ambassador's body 8 units from its center, it turns with it, facing the way it circles (faceForward: it flips when the boss turns the other way), shooting. No shield: while it lives, the inner ring and the Ambassador are shielded. Reconstruction from a video.",
-  "units": ["ufosaucer", "ufosaucermini"],
+  "units": ["ufosaucermini", "ufosaucer"],
   "initial": "guard",
   "states": [
     {

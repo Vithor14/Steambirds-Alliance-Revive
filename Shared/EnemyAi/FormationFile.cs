@@ -20,6 +20,8 @@ public sealed class FormationFile
     public FormationWho Leader { get; set; } = new FormationWho();
     // Chain pieces sit this many units behind the one in front (a train car is about 1.2 units wide).
     public float Spacing { get; set; } = 1.7f;
+    // Points around the leader (x to the right, y in front). A member with place "points" walks them, stays on one, or orbits one.
+    public List<FormationPoint> Points { get; set; } = new List<FormationPoint>();
     public List<FormationMember> Members { get; set; } = new List<FormationMember>();
     public List<FormationLink> Links { get; set; } = new List<FormationLink>();
 
@@ -36,7 +38,7 @@ public sealed class FormationFile
             if (member == null || string.IsNullOrWhiteSpace(member.Unit)) continue;
             FormationPlace place = member.Place ?? new FormationPlace();
             string kind = (place.Kind ?? "slot").Trim().ToLowerInvariant();
-            if (kind != "chain" && kind != "slot" && kind != "ring" && kind != "free") kind = "slot";
+            if (kind != "chain" && kind != "slot" && kind != "ring" && kind != "free" && kind != "points") kind = "slot";
             int count = kind == "ring" ? Math.Clamp(place.Count <= 0 ? 1 : place.Count, 1, 30) : Math.Clamp(place.Count <= 0 ? 1 : place.Count, 1, 30);
             string role = string.IsNullOrWhiteSpace(member.Role) ? (member.Id ?? "").Trim() : member.Role.Trim();
             if (role.Length == 0) role = (member.Unit ?? "").Trim();
@@ -58,9 +60,14 @@ public sealed class FormationFile
                     Y = place.Y,
                     Radius = place.Radius <= 0f ? 8f : place.Radius,
                     Spin = place.Spin,
-                    Angle = place.Angle + (count > 1 ? 360f * i / count : 0f),
+                    Angle = place.Angle + (count > 1 && kind != "points" ? 360f * i / count : 0f),
                     RingIndex = i,
-                    RingCount = count
+                    RingCount = count,
+                    Motion = (place.Motion ?? "").Trim().ToLowerInvariant(),
+                    Point = (place.Point ?? "").Trim(),
+                    Pause = place.Pause,
+                    TravelSpeed = place.Speed,
+                    OrbitRadius = place.OrbitRadius
                 });
             }
         }
@@ -86,8 +93,9 @@ public sealed class FormationMember
 public sealed class FormationPlace
 {
     // chain: behind the leader along the path it flew. slot: fixed x (right) and y (front), turns with the leader.
-    // ring: count pieces on a circle (radius, spin degrees per second, angle where the first sits). free: born in the
-    // group and flies with its own AI (not glued).
+    // ring: count pieces on a circle (radius, spin degrees per second, angle where the first sits).
+    // points: use the formation's points. motion is patrol (vertex to vertex), fixed, toward or orbit.
+    // free: born in the group and flies with its own AI (not glued).
     public string Kind { get; set; } = "slot";
     public float X { get; set; }
     public float Y { get; set; }
@@ -95,6 +103,28 @@ public sealed class FormationPlace
     public float Spin { get; set; }
     public float Angle { get; set; }
     public int Count { get; set; } = 1;
+    // points: patrol, fixed, toward, orbit. Empty on a points place means patrol.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public string Motion { get; set; } = "";
+    // points: which point id (fixed, toward, orbit). Empty uses this piece's index.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public string Point { get; set; } = "";
+    // points patrol: seconds standing still at a vertex, turning.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public float Pause { get; set; }
+    // points: units per second along an edge, toward a point, or around one.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public float Speed { get; set; }
+    // points orbit: radius around the chosen point.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public float OrbitRadius { get; set; }
+}
+
+public sealed class FormationPoint
+{
+    public string Id { get; set; } = "";
+    public float X { get; set; }
+    public float Y { get; set; }
 }
 
 // shield: who is protected, and while whom. when + do: something that happens once (a death, a health line).
@@ -198,7 +228,13 @@ public sealed class FormationSlot
     public int ChainIndex = -1;
     public float X, Y, Radius = 8f, Spin, Angle;
     public int RingIndex, RingCount = 1;
-    public bool Glued => Kind == "chain" || Kind == "slot" || Kind == "ring";
+    public string Motion = "";
+    public string Point = "";
+    public float Pause, TravelSpeed, OrbitRadius;
+    public bool Glued => Kind == "chain" || Kind == "slot" || Kind == "ring" || Kind == "points";
+    // Chain and slot are bolted to the leader (the Pup's pods, the train). Points and rings are only based on the
+    // leader's position: they keep the world's axes, and the piece flies to the point at its own speed.
+    public bool FaceLocked => Kind == "chain" || Kind == "slot";
 }
 
 // The formation files of ai\formations, plus the old formations.json (one object keyed by the boss unit) so a server that
@@ -266,6 +302,7 @@ public sealed class FormationLibrary
         file.Leader ??= new FormationWho();
         file.Members ??= new List<FormationMember>();
         file.Links ??= new List<FormationLink>();
+        file.Points ??= new List<FormationPoint>();
         ById[file.Id] = file;
         string unit = (file.Leader.Unit ?? "").Trim();
         if (file.BindToUnit && unit.Length > 0) ByLeaderUnit[unit] = file;

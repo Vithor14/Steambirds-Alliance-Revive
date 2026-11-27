@@ -1,0 +1,9 @@
+{
+  "format": 1,
+  "id": "face_player",
+  "name": "Face the player and shoot",
+  "author": "Steambirds Revive",
+  "description": "Stays where it is, turns to face the player and shoots. It does not orbit or spin on its own.",
+  "move": { "mode": "hold", "face": true },
+  "fire": { "enabled": true, "range": 80 }
+}

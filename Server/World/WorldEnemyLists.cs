@@ -9,6 +9,7 @@ using System.Text.Json.Serialization;
 //             leader and followers) or "solo": true (one enemy of "members" alone). When "groups" is missing the game's groups stay.
 //             "counts" ({unit: how many}) makes the group exact: how many of each unit it creates each time.
 //   "ai":     {unit: AI id}: the AI file (Serverirains) each unit of the region runs; a unit that is not in it runs generic_chase.
+//   "formations": {unit: formation id}: the formation born with that unit when it leads a group or spawns alone.
 //   "boss":   the unit that "spawn boss here" (the launcher's map menu) creates in the region. Empty = the default boss of the region.
 // The server also writes world-enemy-defaults.json (the game's lists, the boss choices and the zone names) so the launcher can show
 // what is default, add to it and go back to it. The key of a region is the tile name of the map: beach, lowlands, lowlands2...
@@ -37,6 +38,9 @@ public static class WorldEnemyLists
         public List<GroupEntry>? Groups { get; set; }
         // The AI of each unit of the region (by the game's unit name). Missing = the default AI of the open world.
         public Dictionary<string, string>? Ai { get; set; }
+        // The formation born with each unit when that unit leads a group or spawns alone. Missing = the AI's formation,
+        // or the one bound to the unit when the AI is generic.
+        public Dictionary<string, string>? Formations { get; set; }
     }
 
     // The most units of one kind a group creates each time.
@@ -113,6 +117,13 @@ public static class WorldEnemyLists
         return DefaultAi;
     }
 
+    // The formation the host picked for a unit in a region (null = none picked; the AI or the unit binding decides).
+    public static string? HostFormation(string regionName, string unit)
+    {
+        Dictionary<string, string>? choices = Of(regionName)?.Formations;
+        return choices != null && choices.TryGetValue(unit, out string? id) && !string.IsNullOrWhiteSpace(id) ? id.Trim() : null;
+    }
+
     private static void ReloadIfChanged()
     {
         try
@@ -136,6 +147,9 @@ public static class WorldEnemyLists
                 entry.Boss = (entry.Boss ?? "").Trim();
                 if (entry.Ai != null)
                     entry.Ai = new Dictionary<string, string>(entry.Ai.Where(p => !string.IsNullOrWhiteSpace(p.Key) && !string.IsNullOrWhiteSpace(p.Value))
+                        .ToDictionary(p => p.Key.Trim(), p => p.Value.Trim(), StringComparer.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
+                if (entry.Formations != null)
+                    entry.Formations = new Dictionary<string, string>(entry.Formations.Where(p => !string.IsNullOrWhiteSpace(p.Key) && !string.IsNullOrWhiteSpace(p.Value))
                         .ToDictionary(p => p.Key.Trim(), p => p.Value.Trim(), StringComparer.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
                 if (entry.Groups == null) continue;
                 entry.Groups.RemoveAll(g => g == null);

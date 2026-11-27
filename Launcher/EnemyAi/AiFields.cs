@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json.Nodes;
 using SteambirdsAi;
 using SteambirdsLauncher.Core;
@@ -88,6 +89,13 @@ internal static class AiFields
             DefaultBool = true, Help = "path: off = stop at the last point.",
             EnabledWhen = UsedBy("path")
         };
+        yield return new FieldSpec("move.points", "Path points (x y)", FieldKind.MultiText)
+        {
+            Help = "path: one point per line, \"x y\", relative to where the unit was born. The unit slides from point to point.",
+            EnabledWhen = UsedBy("path"),
+            Reader = ReadPathPoints,
+            Writer = WritePathPoints
+        };
 
         yield return FieldSpec.Header("Weapons");
         yield return new FieldSpec("fire.enabled", "Shoots", FieldKind.Bool) { DefaultBool = true, Help = "Off = the unit does not shoot in this state." };
@@ -146,7 +154,7 @@ internal static class AiFields
         yield return new FieldSpec("shieldEffect", "Shield look (effect)", FieldKind.Choice)
         {
             Choices = Editor.EditorAssets.EffectChoices,
-            Help = "Name of a client effect (statefulEffects) shown while the shield is up. Empty = tankShield."
+            Help = "Name of a client effect shown while the shield is up. Empty = no bubble, the unit still takes no damage. tankShield is the player tank's bubble: leave it for that plane."
         };
 
         yield return FieldSpec.Header("Look and weapons");
@@ -353,5 +361,36 @@ internal static class AiFields
                     })
                 })
         };
+    }
+
+    private static string ReadPathPoints(JsonObject state)
+    {
+        if (state["move"] is not JsonObject move || move["points"] is not JsonArray points) return "";
+        var lines = new List<string>();
+        foreach (JsonNode? node in points)
+        {
+            if (node is JsonObject point)
+                lines.Add(point["x"]?.ToString() + " " + point["y"]?.ToString());
+            else if (node is JsonArray pair && pair.Count >= 2)
+                lines.Add(pair[0]?.ToString() + " " + pair[1]?.ToString());
+        }
+        return string.Join("\r\n", lines);
+    }
+
+    private static void WritePathPoints(JsonObject state, string text)
+    {
+        JsonObject move = state["move"] as JsonObject ?? new JsonObject();
+        state["move"] = move;
+        var points = new JsonArray();
+        foreach (string line in text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+        {
+            string[] parts = line.Split(new[] { ' ', ',', '\t', ';' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length < 2) continue;
+            if (!float.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float x)) continue;
+            if (!float.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float y)) continue;
+            points.Add(new JsonObject { ["x"] = x, ["y"] = y });
+        }
+        if (points.Count == 0) move.Remove("points");
+        else move["points"] = points;
     }
 }

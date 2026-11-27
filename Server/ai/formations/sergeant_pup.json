@@ -3,7 +3,7 @@
   "id": "sergeant_pup",
   "name": "Sergeant Pup",
   "author": "Steambirds Revive",
-  "description": "Four pods locked in a row behind the leader. The leader wears tankShield until the last pod dies. The Alone state is the leader AI, not this file.",
+  "description": "Four pods locked in a row behind the leader. The leader takes no damage until the last pod dies and shows enemyShieldZone_1, the small purple enemy bubble (tankShield is the player tank). The Alone state is the leader AI, not this file.",
   "bindToUnit": true,
   "leader": { "unit": "podleader", "ai": "world_podleader" },
   "members": [
@@ -13,6 +13,6 @@
     { "id": "pod4", "unit": "pod", "ai": "world_formation_turret", "role": "pod", "place": { "kind": "slot", "x": 3, "y": -4.5 } }
   ],
   "links": [
-    { "shield": ["leader"], "whileRole": "pod", "effect": "tankShield" }
+    { "shield": ["leader"], "whileRole": "pod", "effect": "enemyShieldZone_1" }
   ]
 }

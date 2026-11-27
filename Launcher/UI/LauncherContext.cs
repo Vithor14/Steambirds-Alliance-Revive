@@ -190,6 +190,9 @@ internal sealed class LauncherContext : IDisposable
     // Set by the main window: selects the Enemy AI tab, on the AI with this id when it exists (the map editor uses it).
     public Action<string?>? OpenAiTab { get; set; }
 
+    // Set by the main window: selects the Formation tab, on the formation with this id when it exists.
+    public Action<string?>? OpenFormationTab { get; set; }
+
     // Opens a map file of the server in the Map editor tab and goes to it (set by MainForm; the argument is the map id,
     // the file name without .json). Null when the editor could not be built.
     public Action<string>? OpenMapInEditor { get; set; }

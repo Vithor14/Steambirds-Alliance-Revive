@@ -15,6 +15,7 @@ internal sealed class UnitTypesPage : EditorPage
     private readonly JsonForm deathForm;
     private readonly JsonForm aiForm;
     private readonly Button aiButton;
+    private readonly Button formationButton;
     private readonly Label aiState;
     private readonly ThemedTabControl inner;
 
@@ -26,6 +27,8 @@ internal sealed class UnitTypesPage : EditorPage
         aiState = Ui.Wrapping("", 400, true);
         aiButton = Ui.Primary(L.T("Load unit in the AI editor"), (_, _) => EditAi());
         Context.Tip.SetToolTip(aiButton, L.T("Goes to the Enemy AI tab with this unit type loaded in the simulator (its game unit, speed, fire rate and AI), ready to edit."));
+        formationButton = Ui.Button(L.T("Open formation"), (_, _) => OpenFormationEditor());
+        Context.Tip.SetToolTip(formationButton, L.T("Opens this formation in the Formation tab."));
         aiForm = new JsonForm(AiFieldSpecs(), Session.Checkpoint, TabFieldChanged);
         // One field in a row of its own: a scroll bar here would only be in the way.
         aiForm.AutoScroll = false;
@@ -96,13 +99,13 @@ internal sealed class UnitTypesPage : EditorPage
         table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        table.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
+        table.RowStyles.Add(new RowStyle(SizeType.Absolute, 76));
         table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         table.Controls.Add(title, 0, 0);
         table.Controls.Add(text, 0, 1);
         table.Controls.Add(aiForm, 0, 2);
-        table.Controls.Add(aiButton, 0, 3);
+        table.Controls.Add(Ui.Flow(aiButton, formationButton), 0, 3);
         table.Controls.Add(aiState, 0, 4);
         page.Controls.Add(table);
         return page;
@@ -115,6 +118,49 @@ internal sealed class UnitTypesPage : EditorPage
             Choices = () => EnemyAiEditors.Current?.ApplicableBrainIds(EnemyAiEditors.UnitNamesOf(CurrentType)) ?? Enumerable.Empty<string>(),
             Help = "Id of an AI file of the server's ai\\brains folder. The list shows the AIs made for this unit first, then the generic ones; you can also type another id. Empty = the unit gets the generic chase AI."
         };
+        yield return new FieldSpec("formation", "Formation", FieldKind.EditableChoice)
+        {
+            Choices = FormationIds,
+            OnChanged = FormationChosen,
+            Help = "Id of a formation file in server\\ai\\formations. When it is set, this unit is born with every piece of that formation, not only itself. Empty = the formation the AI names, or the one bound to this unit when the AI is generic."
+        };
+    }
+
+    private static IEnumerable<string> FormationIds()
+    {
+        try
+        {
+            return FormationLibrary.Load(LauncherPaths.AiFolder).ById.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList();
+        }
+        catch (IOException)
+        {
+            return Array.Empty<string>();
+        }
+    }
+
+    // Picking a formation fills an empty game unit and a generic AI from that formation's leader.
+    private void FormationChosen(JsonObject type, string oldId, string newId)
+    {
+        if (newId.Length > 0 && !newId.Equals(oldId, StringComparison.OrdinalIgnoreCase))
+        {
+            FormationFile? file = null;
+            try { file = FormationLibrary.Load(LauncherPaths.AiFolder).Get(newId); }
+            catch (IOException) { file = null; }
+            if (file != null)
+            {
+                string leaderUnit = file.Leader?.Unit ?? "";
+                if (Json.Str(type, "template").Length == 0 && leaderUnit.Length > 0)
+                {
+                    type["template"] = leaderUnit;
+                    FollowTemplate(type, "", leaderUnit);
+                    types.PropertyForm.RefreshValues();
+                }
+                string ai = Json.Str(type, EnemyAiEditors.AiField);
+                bool generic = ai.Length == 0 || ai.StartsWith("generic_", StringComparison.OrdinalIgnoreCase);
+                if (generic && file.LeaderAi.Length > 0) type[EnemyAiEditors.AiField] = file.LeaderAi;
+            }
+        }
+        UpdateAiState();
     }
 
     private void UpdateAiState()
@@ -124,6 +170,7 @@ internal sealed class UnitTypesPage : EditorPage
         if (type == null)
         {
             aiState.Text = "";
+            formationButton.Enabled = false;
             return;
         }
         string behavior = Json.Str(type, "behavior");
@@ -132,9 +179,13 @@ internal sealed class UnitTypesPage : EditorPage
             : behavior.Length > 0
                 ? L.F("This type has no AI. It keeps the built-in behavior \"{0}\" of the map (not edited here). Pick an AI above, or open the AI editor, to control how it moves and shoots.", behavior)
                 : L.T("This type has no AI. Pick one above, or open the AI editor, to control how it moves and shoots.");
+        string formation = Json.Str(type, "formation");
         int members = FormationMembers(type);
-        if (members > 0)
+        if (formation.Length > 0)
+            aiState.Text += " " + L.F("This type brings the formation \"{0}\" ({1} piece(s)).", formation, members);
+        else if (members > 0)
             aiState.Text += " " + L.F("This AI brings {0} formation member(s).", members);
+        formationButton.Enabled = Context.OpenFormation != null && FormationIdOf(type).Length > 0;
     }
 
     private static int FormationMembers(JsonObject type)
@@ -142,8 +193,10 @@ internal sealed class UnitTypesPage : EditorPage
         try
         {
             FormationLibrary library = FormationLibrary.Load(LauncherPaths.AiFolder);
+            string named = Json.Str(type, "formation");
+            FormationFile? file = named.Length > 0 ? library.Get(named) : null;
             string ai = Json.Str(type, EnemyAiEditors.AiField);
-            FormationFile? file = library.ForAi(ai);
+            file ??= library.ForAi(ai);
             bool generic = ai.Length == 0 || ai.StartsWith("generic_", StringComparison.OrdinalIgnoreCase);
             if (file == null && generic) file = library.ForUnit(Json.Str(type, "template"));
             return file?.Expand().Count ?? 0;
@@ -152,6 +205,33 @@ internal sealed class UnitTypesPage : EditorPage
         {
             return 0;
         }
+    }
+
+    private static string FormationIdOf(JsonObject? type)
+    {
+        if (type == null) return "";
+        string named = Json.Str(type, "formation");
+        if (named.Length > 0) return named;
+        try
+        {
+            FormationLibrary library = FormationLibrary.Load(LauncherPaths.AiFolder);
+            string ai = Json.Str(type, EnemyAiEditors.AiField);
+            FormationFile? file = library.ForAi(ai);
+            bool generic = ai.Length == 0 || ai.StartsWith("generic_", StringComparison.OrdinalIgnoreCase);
+            if (file == null && generic) file = library.ForUnit(Json.Str(type, "template"));
+            return file?.Id ?? "";
+        }
+        catch (IOException)
+        {
+            return "";
+        }
+    }
+
+    private void OpenFormationEditor()
+    {
+        string id = FormationIdOf(CurrentType);
+        if (id.Length == 0) return;
+        Context.OpenFormation?.Invoke(id);
     }
 
     private void EditAi()

@@ -3,7 +3,7 @@
   "id": "world_podleader",
   "name": "Sergeant Pup",
   "author": "Steambirds Revive",
-  "description": "The Sergeant Pup: while its pods (the sergeant_pup formation) are alive it keeps its distance and shoots only the aimed gun. The formation puts tankShield on the leader until the last pod falls. Then it goes around the player shooting everything, the spinning gun included.",
+  "description": "The Sergeant Pup: while its pods (the sergeant_pup formation) are alive it keeps its distance and shoots only the aimed gun. The formation shows the purple enemy shield (enemyShieldZone_1) until the last pod falls. Then it stays put, faces the player and shoots (behavior face_player).",
   "initial": "Escorted",
   "formation": "sergeant_pup",
   "states": [
@@ -17,8 +17,7 @@
     },
     {
       "id": "Alone",
-      "move": {"mode": "orbit", "distance": 14, "deviation": 40, "speed": 0.8, "farSpeed": 1, "farFactor": 1.6},
-      "fire": {"enabled": true}
+      "behavior": "face_player"
     }
   ],
   "units": ["podleader"]

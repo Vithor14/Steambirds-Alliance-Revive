@@ -52,7 +52,7 @@ internal sealed class MapEditorTab : UserControl
         EditorAssets.Load(context.GameFolder);
         session = existing ?? new MapSession(MapFactory.Blank("new_dungeon", L.T("New dungeon"), "DungeonBomb", 41));
         canvas = new MapCanvas(session) { Dock = DockStyle.Fill };
-        editor = new EditorContext(session, canvas, context.ToolTip);
+        editor = new EditorContext(session, canvas, context.ToolTip) { OpenFormation = id => context.OpenFormationTab?.Invoke(id) };
 
         // ---- pages (right side)
         var mapPage = new MapSettingsPage(editor);

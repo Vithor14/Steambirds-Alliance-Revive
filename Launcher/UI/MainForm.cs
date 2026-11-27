@@ -26,6 +26,8 @@ internal sealed class MainForm : Form
     // The Enemy AI tab keeps its files (and what is not saved yet) in the same way.
     private readonly AiStore aiStore = new AiStore(LauncherPaths.AiFolder);
     private AiTab? aiTab;
+    private FormationTab? formationTab;
+    private int formationIndex;
     private bool aiStoreLoaded;
 
     public MainForm()
@@ -108,6 +110,7 @@ internal sealed class MainForm : Form
             newNav.AddPage(L.T("Map editor"), editor, MainNav.Side.Left, dividerBefore: true, icon: Icons.MapEditor);
             newNav.AddPage(L.T("Enemy AI"), ai, icon: Icons.EnemyAi);
             aiIndex = 3;
+            formationIndex = 4;
             newNav.AddPage(L.T("Formation"), BuildFormationTab(), icon: Icons.Formation);
 
             newNav.AddPage(L.T("Settings"), new SettingsTab(context, OnLanguageChanged) { Dock = DockStyle.Fill }, MainNav.Side.Right, icon: Icons.Settings);
@@ -170,6 +173,14 @@ internal sealed class MainForm : Form
         if (!string.IsNullOrWhiteSpace(id)) aiTab?.OpenBrain(id);
     }
 
+    // Selects the Formation tab (on one formation when its id is given).
+    private void OpenFormation(string? id)
+    {
+        if (nav == null) return;
+        nav.Select(formationIndex);
+        if (!string.IsNullOrWhiteSpace(id)) formationTab?.ShowId(id);
+    }
+
     // "Load unit in the AI editor" of the map editor: the Enemy AI tab with this unit type of the map already in the simulator
     // (an empty name just goes to the tab).
     private void OpenAiForType(string typeName, System.Text.Json.Nodes.JsonObject type)
@@ -188,10 +199,14 @@ internal sealed class MainForm : Form
                 aiStore.Reload();
                 aiStoreLoaded = true;
             }
-            return new FormationTab(context, aiStore) { Dock = DockStyle.Fill };
+            formationTab = new FormationTab(context, aiStore) { Dock = DockStyle.Fill };
+            context.OpenFormationTab = OpenFormation;
+            return formationTab;
         }
         catch (Exception error)
         {
+            formationTab = null;
+            context.OpenFormationTab = null;
             CrashLog.Report(error, showDialog: false);
             return new Label
             {

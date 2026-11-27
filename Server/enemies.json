@@ -197,14 +197,10 @@
     "ai_charger":    { "name": "AI Charger",    "template": "auto:medium", "ai": "charger" },
     "ai_skirmisher": { "name": "AI Skirmisher", "template": "auto:medium", "ai": "skirmisher", "freeAim": true },
     "ai_sentry":     { "name": "AI Sentry",     "template": "auto:turret", "ai": "sentry", "freeAim": true },
-    "ai_berserker":  { "name": "AI Berserker",  "template": "auto:strong", "ai": "berserker", "freeAim": true },
-    // Ambassador: the fight is the AI (phase summons). deathUnit plays ufoDEATH. Do not point this AI at ambassador_body.
-    "ai_inquisitor": { "name": "AI Inquisitor", "template": "highmountainhunter", "ai": "inquisitor_chase" },
-    "ai_ambassador":        { "name": "Ambassador", "template": "ufo", "ai": "ambassador", "boss": true, "deathUnit": "ufoDEATH" },
-    "ambassador_cat":       { "name": "Cat Representative", "template": "ufosaucer", "ai": "ambassador_cat" },
-    "ambassador_cat_inner": { "name": "Cat Representative", "template": "ufosaucer", "ai": "ambassador_cat_inner" },
-    "ambassador_cat_outer": { "name": "Cat Representative", "template": "ufosaucermini", "ai": "ambassador_cat_outer" },
-    "ambassador_diplomat":  { "name": "Diplomat", "template": "ufohopper", "ai": "ambassador_diplomat" }
+    "ai_berserker":  { "name": "AI Berserker",  "template": "auto:strong", "ai": "berserker", "freeAim": true }
+    // Ambassador, Inquisitor and the cats are not types here. An AI in ai\brains\world whose "units" list names
+    // exactly one game unit is what that unit runs (Enemy AI tab, Made for). A new type, with deathUnit, is made
+    // in the launcher (Enemy AI, Enemy types).
   },
 
   // Encounters: sequences of waves. In the tutorial none starts by itself (the Tutorial script is in charge);

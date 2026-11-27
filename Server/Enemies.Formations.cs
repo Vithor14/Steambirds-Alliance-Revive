@@ -14,6 +14,9 @@ public static partial class Enemies
         public readonly HashSet<string> SeenAlive = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         public readonly HashSet<string> Fired = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         public double BornAt;
+        public double PlacedAt;
+        public bool Frozen;
+        public float AnchorX, AnchorY, AnchorRot;
     }
 
     // After the leader exists: creates the pieces its AI (or its unit, when the AI is generic) asks for.
@@ -50,7 +53,8 @@ public static partial class Enemies
         var made = new List<(int Id, FormationSlot Slot)>();
         foreach (FormationSlot slot in slots)
         {
-            FormationMotion.Pose pose = FormationMotion.Start(slot, x, y, rot, file.Spacing);
+            FormationMotion.Pose pose = FormationMotion.Place(slot, x, y, rot, 0f, file.Spacing,
+                Array.Empty<(float, float)>(), file.Points, 0f);
             string key = EnsureMemberType(leader, slot, freeRoam, healthMult);
             int id = CreateFromScript(server, connection, role, key, pose.X, pose.Y, pose.Rot, group, area, null, now, log);
             if (id == 0) continue;
@@ -63,10 +67,22 @@ public static partial class Enemies
 
     private static FormationFile? ResolveFormation(Enemy leader)
     {
+        string forced = (leader.Type.Formation ?? "").Trim();
+        if (forced.Length > 0)
+        {
+            FormationFile? chosen = Formations.Library.Get(forced);
+            if (chosen != null) return chosen;
+        }
         string ai = leader.Ai?.Brain.Id ?? leader.Type.Ai ?? "";
         string named = leader.Ai?.Brain.Formation ?? "";
         bool generic = ai.Length == 0 || ai.StartsWith("generic_", StringComparison.OrdinalIgnoreCase);
-        return Formations.Resolve(ai, named, leader.Type.Name, generic);
+        string template = (leader.Type.Template ?? "").Trim();
+        bool realTemplate = template.Length > 0 && !template.StartsWith("auto:", StringComparison.OrdinalIgnoreCase);
+        string unit = realTemplate ? template : leader.Type.Name;
+        FormationFile? resolved = Formations.Resolve(ai, named, unit, generic);
+        if (resolved == null && generic && realTemplate && !template.Equals(leader.Type.Name, StringComparison.OrdinalIgnoreCase))
+            resolved = Formations.Library.ForUnit(leader.Type.Name);
+        return resolved;
     }
 
     private static string EnsureMemberType(Enemy leader, FormationSlot slot, bool freeRoam, float healthMult)
@@ -163,23 +179,26 @@ public static partial class Enemies
         foreach (FormationState f in states)
         {
             bool leaderAlive = inst.Enemies.ContainsKey(f.Leader.ShortId);
-            if (!leaderAlive)
+            if (!leaderAlive && !f.Frozen)
             {
-                foreach (Enemy part in f.Parts)
-                {
-                    if (!inst.Enemies.ContainsKey(part.ShortId)) continue;
-                    part.Formation = null;
-                    part.PartIndex = -1;
-                    part.Summoner = null;
-                }
-                continue;
+                // The pieces keep the leader's last place as their base (the Five Stars keep walking that pentagon).
+                f.Frozen = true;
+                f.AnchorX = f.Leader.X;
+                f.AnchorY = f.Leader.Y;
+                f.AnchorRot = f.Leader.Rot;
+            }
+            else if (leaderAlive)
+            {
+                f.AnchorX = f.Leader.X;
+                f.AnchorY = f.Leader.Y;
+                f.AnchorRot = f.Leader.Rot;
             }
 
             var actors = new List<FormationActor>
             {
                 new FormationActor
                 {
-                    Id = "leader", IsLeader = true, Alive = true,
+                    Id = "leader", IsLeader = true, Alive = leaderAlive,
                     HealthFraction = f.Leader.MaxHp > 0f ? f.Leader.Health / f.Leader.MaxHp : 1f,
                     ShieldSuppressed = f.Leader.ShieldSuppressed
                 }
@@ -217,7 +236,7 @@ public static partial class Enemies
                 if (order.Kill) kill.Add(who);
                 if (order.Shield) ShieldLook(who, now, order.Effect);
             }
-            PlaceParts(f, inst);
+            PlaceParts(f, inst, now);
             if (kill.Count == 0) continue;
             foreach (Enemy who in kill)
             {
@@ -228,12 +247,12 @@ public static partial class Enemies
         }
     }
 
-    private static void PlaceParts(FormationState f, Instance inst)
+    private static void PlaceParts(FormationState f, Instance inst, double now)
     {
         Enemy leader = f.Leader;
         FormationFile def = f.Def;
         bool anyChain = f.Parts.Any(p => p.FormationSlot != null && p.FormationSlot.Kind == "chain");
-        if (anyChain)
+        if (anyChain && !f.Frozen)
         {
             (float X, float Y) last = f.Trail.Count > 0 ? f.Trail[^1] : (leader.X + 1000f, leader.Y);
             if (Distance(last.X, last.Y, leader.X, leader.Y) >= 0.5f) f.Trail.Add((leader.X, leader.Y));
@@ -252,23 +271,29 @@ public static partial class Enemies
         {
             if (!inst.Enemies.ContainsKey(part.ShortId) || part.FormationSlot == null || !part.FormationSlot.Glued) continue;
             FormationSlot slot = part.FormationSlot;
-            FormationMotion.Pose pose;
-            if (slot.Kind == "chain")
+            double age = Math.Max(0, NowFor(inst) - f.BornAt);
+            float dt = f.PlacedAt <= 0 ? 0.05f : (float)Math.Clamp(now - f.PlacedAt, 0, 0.25);
+            FormationMotion.Pose pose = FormationMotion.Place(slot, f.AnchorX, f.AnchorY, f.AnchorRot, leader.Vel, def.Spacing,
+                f.Trail, def.Points, (float)age);
+            if (slot.FaceLocked)
             {
-                float behind = (slot.ChainIndex + 1) * Math.Max(0.4f, def.Spacing);
-                pose = FormationMotion.AlongTrail(leader.X, leader.Y, leader.Rot, leader.Vel, f.Trail, behind);
+                part.X = pose.X;
+                part.Y = pose.Y;
+                part.Rot = pose.Rot;
+                part.Vel = pose.Speed;
             }
-            else if (slot.Kind == "ring")
+            else
             {
-                double age = Math.Max(0, NowFor(inst) - f.BornAt);
-                pose = FormationMotion.Ring(leader.X, leader.Y, leader.Rot, leader.Vel, slot.Radius, slot.Angle, slot.Spin, (float)age);
+                float x = part.X, y = part.Y, rot = part.Rot, vel = part.Vel;
+                float speed = slot.TravelSpeed > 0.05f ? slot.TravelSpeed : Math.Max(1f, part.VelMax);
+                FormationMotion.StepToward(ref x, ref y, ref rot, ref vel, pose, speed, dt);
+                part.X = x;
+                part.Y = y;
+                part.Rot = rot;
+                part.Vel = vel;
             }
-            else pose = FormationMotion.Slot(leader.X, leader.Y, leader.Rot, leader.Vel, slot.X, slot.Y);
-            part.X = pose.X;
-            part.Y = pose.Y;
-            part.Rot = pose.Rot;
-            part.Vel = pose.Speed;
         }
+        f.PlacedAt = now;
     }
 
     private static void ShieldLook(Enemy enemy, double now, string effect)

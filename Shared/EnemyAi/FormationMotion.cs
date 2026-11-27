@@ -96,6 +96,166 @@ public static class FormationMotion
             Speed = leaderSpeed
         };
     }
+
+    // One place for every kind. points walks the formation's points (a pentagon is patrol: straight to the next vertex,
+    // wait and turn, then the next). local points are x right and y in front of the leader.
+    public static Pose Place(FormationSlot slot, float leaderX, float leaderY, float leaderRot, float leaderSpeed,
+        float spacing, IReadOnlyList<(float X, float Y)> trail, IReadOnlyList<FormationPoint>? points, float time)
+    {
+        if (slot.Kind == "chain")
+        {
+            float behind = (slot.ChainIndex + 1) * Math.Max(0.4f, spacing);
+            return AlongTrail(leaderX, leaderY, leaderRot, leaderSpeed, trail, behind);
+        }
+        if (slot.Kind == "ring")
+            return Ring(leaderX, leaderY, leaderRot, leaderSpeed, slot.Radius, slot.Angle, slot.Spin, time);
+        if (slot.Kind == "points")
+            return OnPoints(leaderX, leaderY, slot.FaceLocked ? leaderRot : 0f, slot, points, time);
+        if (slot.Kind == "free")
+            return Start(slot, leaderX, leaderY, leaderRot, spacing);
+        return Slot(leaderX, leaderY, leaderRot, leaderSpeed, slot.X, slot.Y);
+    }
+
+    public static Pose OnPoints(float leaderX, float leaderY, float leaderRot, FormationSlot slot,
+        IReadOnlyList<FormationPoint>? points, float time)
+    {
+        var local = new List<(float X, float Y)>();
+        if (points != null)
+            foreach (FormationPoint point in points)
+                if (point != null) local.Add((point.X, point.Y));
+        if (local.Count == 0) return Slot(leaderX, leaderY, leaderRot, 0f, 0f, 0f);
+
+        var world = new List<(float X, float Y)>(local.Count);
+        foreach ((float x, float y) in local)
+        {
+            Pose at = Slot(leaderX, leaderY, leaderRot, 0f, x, y);
+            world.Add((at.X, at.Y));
+        }
+        int n = world.Count;
+        int index = PointIndex(slot, points, n);
+        string motion = slot.Motion.Length == 0 ? "patrol" : slot.Motion;
+        float speed = slot.TravelSpeed > 0.05f ? slot.TravelSpeed : 4f;
+        if (motion == "fixed") return Still(world[index], Heading(leaderX, leaderY, world[index].X, world[index].Y));
+        if (motion == "toward") return Toward(leaderX, leaderY, world[index].X, world[index].Y, speed, time);
+        if (motion == "orbit")
+        {
+            (float cx, float cy) = world[index];
+            float radius = slot.OrbitRadius > 0.2f ? slot.OrbitRadius : 2f;
+            float spin = Math.Abs(slot.Spin) < 0.01f ? 40f : slot.Spin;
+            return Ring(cx, cy, 0f, 0f, radius, slot.RingIndex * (360f / n), spin, time);
+        }
+        return Patrol(world, index, speed, Math.Max(0f, slot.Pause), slot.Spin, time);
+    }
+
+    // Leader-local offset of a world point (x right, y in front).
+    public static void ToLocal(float leaderX, float leaderY, float leaderRot, float worldX, float worldY, out float localX, out float localY)
+    {
+        float rad = leaderRot * AiMath.Rad;
+        float dx = worldX - leaderX;
+        float dy = worldY - leaderY;
+        float rx = MathF.Cos(rad), ry = -MathF.Sin(rad);
+        float fx = MathF.Sin(rad), fy = MathF.Cos(rad);
+        localX = dx * rx + dy * ry;
+        localY = dx * fx + dy * fy;
+    }
+
+    private static int PointIndex(FormationSlot slot, IReadOnlyList<FormationPoint>? points, int count)
+    {
+        if (slot.Point.Length > 0 && points != null)
+        {
+            for (int i = 0; i < points.Count; i++)
+                if (points[i] != null && slot.Point.Equals(points[i].Id ?? "", StringComparison.OrdinalIgnoreCase))
+                    return i % count;
+        }
+        int index = slot.RingIndex;
+        if (index < 0) index = 0;
+        return index % count;
+    }
+
+    private static Pose Toward(float fromX, float fromY, float toX, float toY, float speed, float time)
+    {
+        float dist = AiMath.Distance(fromX, fromY, toX, toY);
+        float travel = speed * Math.Max(0f, time);
+        if (dist < 0.05f || travel >= dist) return Still((toX, toY), Heading(fromX, fromY, toX, toY));
+        float t = travel / dist;
+        float x = fromX + (toX - fromX) * t;
+        float y = fromY + (toY - fromY) * t;
+        return new Pose { X = x, Y = y, Rot = Heading(fromX, fromY, toX, toY), Speed = speed };
+    }
+
+    private static Pose Patrol(List<(float X, float Y)> world, int start, float speed, float pause, float spin, float time)
+    {
+        int n = world.Count;
+        if (n == 1) return Still(world[0], 0f);
+        float cycle = 0f;
+        var edges = new List<(int From, float Length, float Travel)>(n);
+        for (int i = 0; i < n; i++)
+        {
+            int from = (start + i) % n;
+            int to = (from + 1) % n;
+            float length = AiMath.Distance(world[from].X, world[from].Y, world[to].X, world[to].Y);
+            float travel = length / speed;
+            edges.Add((from, length, travel));
+            cycle += travel + pause;
+        }
+        if (cycle < 0.001f) return Still(world[start], 0f);
+        float t = time % cycle;
+        if (t < 0f) t += cycle;
+        foreach ((int from, float length, float travel) in edges)
+        {
+            int to = (from + 1) % n;
+            float face = Heading(world[from].X, world[from].Y, world[to].X, world[to].Y);
+            if (t <= travel)
+            {
+                float u = travel <= 0.0001f ? 1f : t / travel;
+                float x = world[from].X + (world[to].X - world[from].X) * u;
+                float y = world[from].Y + (world[to].Y - world[from].Y) * u;
+                return new Pose { X = x, Y = y, Rot = face, Speed = length <= 0.05f ? 0f : speed };
+            }
+            t -= travel;
+            if (t <= pause)
+            {
+                float turned = Math.Abs(spin) < 0.01f ? 90f : spin;
+                return new Pose
+                {
+                    X = world[to].X,
+                    Y = world[to].Y,
+                    Rot = AiMath.NormalizeAngle(face + turned * t),
+                    Speed = 0f
+                };
+            }
+            t -= pause;
+        }
+        return Still(world[start], 0f);
+    }
+
+    // Moves toward the place the formation computed, at the piece's own speed. A rigid piece is placed on the point
+    // instead; this is for a point that is only a destination (the Five Star walking its pentagon).
+    public static void StepToward(ref float x, ref float y, ref float rot, ref float vel, Pose target, float speed, float dt)
+    {
+        speed = Math.Max(0.2f, speed);
+        float dist = AiMath.Distance(x, y, target.X, target.Y);
+        float step = speed * Math.Max(0f, dt);
+        if (dist <= Math.Max(0.2f, step))
+        {
+            x = target.X;
+            y = target.Y;
+            rot = target.Rot;
+            vel = target.Speed;
+            return;
+        }
+        float heading = AiMath.Heading(x, y, target.X, target.Y);
+        float rad = heading * AiMath.Rad;
+        x += MathF.Sin(rad) * step;
+        y += MathF.Cos(rad) * step;
+        rot = heading;
+        vel = speed;
+    }
+
+    private static Pose Still((float X, float Y) at, float rot) => new Pose { X = at.X, Y = at.Y, Rot = rot, Speed = 0f };
+
+    private static float Heading(float x, float y, float tx, float ty) =>
+        AiMath.Distance(x, y, tx, ty) > 0.01f ? AiMath.Heading(x, y, tx, ty) : 0f;
 }
 
 // One living (or just-dead) piece the link rules can see.

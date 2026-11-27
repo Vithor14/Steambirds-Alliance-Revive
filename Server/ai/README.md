@@ -142,7 +142,7 @@ any more). Fire rate and guns of a phase are the state's `fire.rateMult` / `fire
 | `legsDone` | this many zigzag dashes have finished in the state, or a path has reached this many points. It resets when the state starts |
 | `chance` | random: `value` is the probability per second |
 
-`move.topSpeed`, when set, replaces the unit's own top speed for that state (a unit whose game data says 0 can still move). `move.spinRate` turns the body by itself: on `hold` the unit stays put and spins; on `path` and on a locked orbit the unit slides straight to the point while the body turns (`AiMotion.Slide`). `move.faceForward` on a locked orbit faces along the circle, the way the center turns. `move.loop` false stops a path at the last point. Path `points` are `[x, y]` or `{"x","y"}`, relative to where the unit was born. Zigzag `pause` and `jitter` apply between dashes only. Summon `place` `around` is the same ring as `ring`.
+`move.points` is one `{x,y}` (or `[x,y]`) per vertex, relative to where the unit was born. The launcher edits them as one `x y` per line. `move.topSpeed`, when set, replaces the unit's own top speed for that state (a unit whose game data says 0 can still move). `move.spinRate` turns the body by itself: on `hold` the unit stays put and spins; on `path` and on a locked orbit the unit slides straight to the point while the body turns (`AiMotion.Slide`). `move.faceForward` on a locked orbit faces along the circle, the way the center turns. `move.loop` false stops a path at the last point. Path `points` are `[x, y]` or `{"x","y"}`, relative to where the unit was born. Zigzag `pause` and `jitter` apply between dashes only. Summon `place` `around` is the same ring as `ring`.
 
 ## Sharing
 

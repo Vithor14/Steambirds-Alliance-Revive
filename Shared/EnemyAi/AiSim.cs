@@ -267,7 +267,8 @@ public sealed class AiSim
                 Slot = slot
             };
             units.Add(unit);
-            FormationMotion.Pose pose = FormationMotion.Start(slot, Main.X, Main.Y, Main.Rot, file.Spacing);
+            FormationMotion.Pose pose = FormationMotion.Place(slot, Main.X, Main.Y, Main.Rot, 0f, file.Spacing,
+                Array.Empty<(float, float)>(), file.Points, 0f);
             unit.Spawn(pose.X, pose.Y);
             unit.Rot = pose.Rot;
         }
@@ -408,10 +409,10 @@ public sealed class AiSim
         y = by.Y + MathF.Cos(rad) * distance;
     }
 
-    private void PlaceFormation()
+    private void PlaceFormation(float dt)
     {
         FormationFile? file = Formation;
-        if (file == null || Main.Dead) return;
+        if (file == null) return;
         List<AiSimUnit> parts = units.Where(u => u.Role == AiSimUnit.RolePart).ToList();
         if (parts.Count == 0) return;
         if (formationTrail.Count == 0 || AiMath.Distance(formationTrail[^1].X, formationTrail[^1].Y, Main.X, Main.Y) >= 0.5f)
@@ -457,20 +458,25 @@ public sealed class AiSim
         {
             if (part.Dead || part.Slot == null || !part.Glued) continue;
             FormationSlot slot = part.Slot;
-            FormationMotion.Pose pose;
-            if (slot.Kind == "chain")
+            FormationMotion.Pose pose = FormationMotion.Place(slot, Main.X, Main.Y, Main.Rot, Main.Vel, file.Spacing,
+                formationTrail, file.Points, (float)Time);
+            if (slot.FaceLocked)
             {
-                float behind = (slot.ChainIndex + 1) * Math.Max(0.4f, file.Spacing);
-                pose = FormationMotion.AlongTrail(Main.X, Main.Y, Main.Rot, Main.Vel, formationTrail, behind);
+                part.X = pose.X;
+                part.Y = pose.Y;
+                part.Rot = pose.Rot;
+                part.Vel = pose.Speed;
             }
-            else if (slot.Kind == "ring")
-                pose = FormationMotion.Ring(Main.X, Main.Y, Main.Rot, Main.Vel, slot.Radius, slot.Angle, slot.Spin, (float)Time);
             else
-                pose = FormationMotion.Slot(Main.X, Main.Y, Main.Rot, Main.Vel, slot.X, slot.Y);
-            part.X = pose.X;
-            part.Y = pose.Y;
-            part.Rot = pose.Rot;
-            part.Vel = pose.Speed;
+            {
+                float x = part.X, y = part.Y, rot = part.Rot, vel = part.Vel;
+                float speed = slot.TravelSpeed > 0.05f ? slot.TravelSpeed : Math.Max(1f, part.Unit.VelMax);
+                FormationMotion.StepToward(ref x, ref y, ref rot, ref vel, pose, speed, dt);
+                part.X = x;
+                part.Y = y;
+                part.Rot = rot;
+                part.Vel = vel;
+            }
         }
     }
 
@@ -515,7 +521,7 @@ public sealed class AiSim
 
         // A copy: a unit that summons adds to the list while it is stepped.
         foreach (AiSimUnit u in units.ToList()) u.Step(dt);
-        PlaceFormation();
+        PlaceFormation(dt);
         units.RemoveAll(u => u.Role == AiSimUnit.RoleSummon && u.Dead && Time - u.DiedAt > WreckSeconds);
 
         StepBullets(dt);

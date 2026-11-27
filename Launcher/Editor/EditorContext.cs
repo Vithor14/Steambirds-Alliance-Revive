@@ -18,6 +18,9 @@ internal sealed class EditorContext
     public MapSession Session { get; }
     public MapCanvas Canvas { get; }
     public ToolTip Tip { get; }
+
+    // Opens a formation in the Formation tab (set by the map editor from the launcher).
+    public Action<string?>? OpenFormation { get; set; }
     public MapDocument Document => Session.Document;
     public JsonObject Root => Session.Document.Root;
 

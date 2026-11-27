@@ -189,11 +189,15 @@ public static partial class WorldServer
             if (!isLeader || lead != null) continue;
             lead = template;
         }
+        // A solo enemy is the only unit of the site, so it can carry a formation the same way a leader does.
+        if (lead == null && family.Solo && templates.Count > 0) lead = templates[0].Template;
         bool formationOwns = false;
         if (lead != null)
         {
+            string? hostFormation = WorldEnemyLists.HostFormation(site.Region.Name, lead);
             string? host = WorldEnemyLists.HostAi(site.Region.Name, lead);
-            formationOwns = host != null ? Formations.ForAi(host) != null : Formations.For(lead) != null;
+            formationOwns = !string.IsNullOrWhiteSpace(hostFormation)
+                || (host != null ? Formations.ForAi(host) != null : Formations.For(lead) != null);
             if (formationOwns) templates = new List<(string Template, bool Leader)> { (lead, true) };
         }
 
@@ -256,13 +260,17 @@ public static partial class WorldServer
         // The AI the host picked for this unit in this biome (world-enemies.json). A unit with its own AI is a type of its own.
         string ai = WorldEnemyLists.AiFor(regionName, template);
         if (ai.Equals(WorldEnemyLists.DefaultAi, StringComparison.OrdinalIgnoreCase))
-            ai = Formations.DefaultAi(template) ?? ai;
-        string key = "world/" + template + (ai.Equals(WorldEnemyLists.DefaultAi, StringComparison.OrdinalIgnoreCase) ? "" : "~" + ai);
+            ai = Formations.DefaultAi(template) ?? Enemies.WorldAiMadeFor(template) ?? ai;
+        string formation = WorldEnemyLists.HostFormation(regionName, template) ?? "";
+        string key = "world/" + template
+            + (ai.Equals(WorldEnemyLists.DefaultAi, StringComparison.OrdinalIgnoreCase) ? "" : "~" + ai)
+            + (formation.Length == 0 ? "" : "~f-" + formation);
         Enemies.RegisterDefaultType(key, new Enemies.EnemyType
         {
             Name = template,
             Template = template,
             Ai = ai,
+            Formation = formation,
             FreeRoam = true,
             HealthMultiplier = settings.HealthMultiplier
         });

@@ -110,6 +110,10 @@ public static partial class Enemies
         [JsonConverter(typeof(AiReferenceConverter))]
         public string Ai { get; set; } = "";
 
+        // Id of a formation file (ai\formations). When set, this unit is born with every piece of that formation.
+        // Empty = the formation the AI names, or the one bound to the unit when the AI is generic.
+        public string Formation { get; set; } = "";
+
         // Death wreck (Enemies.Wrecks.cs). Empty DeathUnit = the normal explosion. DeathSequence lines are "SECONDS EFFECT".
         public string DeathUnit { get; set; } = "";
         public float DeathSeconds { get; set; }
@@ -750,10 +754,12 @@ public static partial class Enemies
                     else
                     {
                         key = arg;
-                        type = GetEnemyType(arg);
+                        type = GetEnemyType(arg) ?? TypeFromAi(arg, out key);
                         if (type == null)
                         {
-                            Reply(inst, "Type '" + arg + "' does not exist. Types: " + string.Join(", ", config.Types.Keys));
+                            Reply(inst, "Type '" + arg + "' does not exist. It can be a type of enemies.json or an AI id " +
+                                "(ai_ambassador, ambassador, ai_inquisitor, inquisitor_chase). Types: " +
+                                string.Join(", ", config.Types.Keys));
                             break;
                         }
                     }

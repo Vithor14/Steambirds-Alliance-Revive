@@ -3,16 +3,23 @@
   "id": "five_star",
   "name": "Five Star",
   "author": "Steambirds Revive",
-  "description": "Five stars on a firm ring around the leader, in world space. They are not orbit-leader escorts.",
+  "description": "Five stars walk a pentagon around the leader: a straight line to the next vertex, a pause while they turn, then the next vertex. They are not a spinning ring.",
   "bindToUnit": true,
   "leader": { "unit": "fivestarleader", "ai": "world_fivestar_leader" },
+  "points": [
+    { "id": "p1", "x": 0, "y": 6 },
+    { "id": "p2", "x": 5.71, "y": 1.85 },
+    { "id": "p3", "x": 3.53, "y": -4.85 },
+    { "id": "p4", "x": -3.53, "y": -4.85 },
+    { "id": "p5", "x": -5.71, "y": 1.85 }
+  ],
   "members": [
     {
       "id": "star",
       "unit": "fivestar",
       "ai": "world_formation_turret",
       "role": "star",
-      "place": { "kind": "ring", "count": 5, "radius": 6, "spin": 25 }
+      "place": { "kind": "points", "motion": "patrol", "count": 5, "speed": 4, "pause": 1.5, "spin": 80 }
     }
   ],
   "links": []

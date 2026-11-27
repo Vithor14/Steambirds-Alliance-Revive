@@ -150,11 +150,15 @@ public static partial class Enemies
         if (o.ShieldOn && !enemy.ShieldSuppressed)
         {
             enemy.ShieldUntil = now + 0.35;
-            short effect = MonoHash.StatefulEffectId(o.ShieldEffect.Length > 0 ? o.ShieldEffect : "tankShield");
-            if (effect != enemy.EffectId)
+            // Empty look: the unit takes no damage and keeps its own sprite. tankShield is the player tank's bubble.
+            if (o.ShieldEffect.Length > 0)
             {
-                enemy.EffectId = effect;
-                enemy.EffectChanged = true;
+                short effect = MonoHash.StatefulEffectId(o.ShieldEffect);
+                if (effect != enemy.EffectId)
+                {
+                    enemy.EffectId = effect;
+                    enemy.EffectChanged = true;
+                }
             }
         }
 
@@ -188,17 +192,21 @@ public static partial class Enemies
         return alive;
     }
 
-    // An AI in ai\brains\world made for this unit (the Ambassador's "ambassador"), or null.
+    // The one AI in ai\brains\world whose units list names this template (the Ambassador for ufo, the Inquisitor for
+    // highmountainhunter). Null when none do, or when more than one does: the host picks among those in the launcher.
     public static string? WorldAiMadeFor(string template)
     {
+        string? found = null;
         foreach (KeyValuePair<string, AiBrainFile> pair in aiLibrary.BrainFiles.OrderBy(p => p.Key, StringComparer.OrdinalIgnoreCase))
         {
             if (!aiLibrary.BrainOrigins.TryGetValue(pair.Key, out string? origin) ||
                 !string.Equals(origin, AiCatalog.WorldFolder, StringComparison.OrdinalIgnoreCase)) continue;
             if (!aiLibrary.Brains.ContainsKey(pair.Key)) continue;
-            if (AiLibrary.Applies(false, pair.Value.Units, new[] { template })) return pair.Key;
+            if (!AiLibrary.Applies(false, pair.Value.Units, new[] { template })) continue;
+            if (found != null) return null;
+            found = pair.Key;
         }
-        return null;
+        return found;
     }
 
     // Game units an AI summons by itself. A boss that runs this AI does not also spawn those as parts.
@@ -231,7 +239,53 @@ public static partial class Enemies
             if (local != null) return local;
         }
         key = name;
-        return GetEnemyType(name);
+        EnemyType? named = GetEnemyType(name);
+        if (named != null) return named;
+        return TypeFromAi(name, out key);
+    }
+
+    // /enemy and a summon can name an AI file instead of a type in enemies.json. The unit is the first one in that
+    // AI's "units" list (so ambassador_cat_outer must list ufosaucermini first). "ai_inquisitor" also finds
+    // inquisitor_chase. The type is remembered for the rest of the run; a type of the same key in enemies.json still wins.
+    internal static EnemyType? TypeFromAi(string reference, out string key)
+    {
+        key = "";
+        AiBrain? brain = BrainForCommand(reference);
+        if (brain == null || !aiLibrary.BrainFiles.TryGetValue(brain.Id, out AiBrainFile? file)) return null;
+        string template = file.Units?.FirstOrDefault(u => !string.IsNullOrWhiteSpace(u))?.Trim() ?? "";
+        if (template.Length == 0) return null;
+        UnitSummary? unit = FindUnit(template);
+        var type = new EnemyType
+        {
+            Name = string.IsNullOrWhiteSpace(file.Name) ? brain.Id : file.Name.Trim(),
+            Template = template,
+            Ai = brain.Id,
+            Boss = unit?.Boss ?? false,
+            DeathUnit = FindUnit(template + "DEATH") != null ? template + "DEATH" : ""
+        };
+        key = brain.Id;
+        RegisterDefaultType(key, type);
+        if (!key.StartsWith("ai_", StringComparison.OrdinalIgnoreCase)) RegisterDefaultType("ai_" + key, type);
+        return type;
+    }
+
+    private static AiBrain? BrainForCommand(string reference)
+    {
+        string id = AiCatalog.IdOfReference(reference);
+        if (id.Length == 0) return null;
+        if (aiLibrary.Brains.TryGetValue(id, out AiBrain? exact)) return exact;
+        string stem = id.StartsWith("ai_", StringComparison.OrdinalIgnoreCase) ? id.Substring(3) : id;
+        if (stem.Length > 0 && !stem.Equals(id, StringComparison.OrdinalIgnoreCase) &&
+            aiLibrary.Brains.TryGetValue(stem, out AiBrain? stripped)) return stripped;
+        AiBrain? prefixed = null;
+        foreach (KeyValuePair<string, AiBrain> pair in aiLibrary.Brains)
+        {
+            if (!pair.Key.Equals(stem, StringComparison.OrdinalIgnoreCase) &&
+                !pair.Key.StartsWith(stem + "_", StringComparison.OrdinalIgnoreCase)) continue;
+            if (prefixed != null) return null;
+            prefixed = pair.Value;
+        }
+        return prefixed;
     }
 
     // Creates "count" units behind the summoner (they stay in its group and room, so a script counts them together).

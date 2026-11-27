@@ -67,6 +67,11 @@ internal sealed class WorldEnemiesPage : UserControl
     private readonly ThemedButton resetButton;
     private readonly ThemedComboBox aiBox;
     private readonly ThemedButton aiEditButton;
+    private readonly ThemedComboBox formationBox;
+    private readonly ThemedButton formationEditButton;
+    private bool fillingFormation;
+    private FormationLibrary formations = new FormationLibrary();
+    private DateTime formationsStamp = DateTime.MinValue;
     private readonly Label aiNote;
     private readonly NumberBox countBox;
     private readonly ThemedButton randomGroupButton;
@@ -197,7 +202,7 @@ internal sealed class WorldEnemiesPage : UserControl
         listStatus = Ui.Wrapping("", 640, gray: true);
         listStatus.Dock = DockStyle.Top;
 
-        list = Ui.Grid((L.T("Group"), 180), (L.T("Role"), 80), (L.T("Enemy"), 150), (L.T("AI"), 180), (L.T("Amount"), 70), (L.T("Tier"), 45), (L.T("Health"), 70));
+        list = Ui.Grid((L.T("Group"), 160), (L.T("Role"), 72), (L.T("Enemy"), 140), (L.T("AI"), 150), (L.T("Formation"), 130), (L.T("Amount"), 70), (L.T("Tier"), 45), (L.T("Health"), 64));
         list.MultiSelect = true;
         // The picture of each enemy, before its name.
         list.PictureColumn = 2;
@@ -221,6 +226,14 @@ internal sealed class WorldEnemiesPage : UserControl
         aiNote = Ui.Wrapping("", 640, gray: true);
         FlowLayoutPanel aiRow = Ui.WrapFlow(Ui.Text(L.T("AI of the selected enemy:")), aiBox, aiEditButton);
         aiRow.Dock = DockStyle.Bottom;
+
+        formationBox = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 280, Enabled = false };
+        formationBox.SelectedIndexChanged += (_, _) => FormationPicked();
+        tip.SetToolTip(formationBox, L.T("The formation born with this enemy when it leads a group or spawns alone. The whole formation is created, not only this unit. \"(from the AI or the unit)\" uses the formation the AI names, or the one bound to the unit when the AI is generic."));
+        formationEditButton = Ui.Button(L.T("Open formation"), (_, _) => OpenFormation());
+        tip.SetToolTip(formationEditButton, L.T("Opens this formation in the Formation tab."));
+        FlowLayoutPanel formationRow = Ui.WrapFlow(Ui.Text(L.T("Formation of the selected enemy:")), formationBox, formationEditButton);
+        formationRow.Dock = DockStyle.Bottom;
 
         countBox = new NumberBox { Minimum = 0, Maximum = WorldEnemyGroup.MaxCount, DecimalPlaces = 0, Value = 1, Width = 70, TextAlign = HorizontalAlignment.Right, Enabled = false };
         countBox.ValueChanged += (_, _) => CountPicked();
@@ -249,13 +262,15 @@ internal sealed class WorldEnemiesPage : UserControl
 
         hint = Ui.Wrapping(L.T("Each spawn site of a biome picks one of these groups at random: a leader with followers, or one enemy of a solo group. " +
                                "The enemies are the game's units with the generic chase AI; pick another AI for an enemy below (one made for it, or a generic one) and edit AIs in the Enemy AI tab. " +
-                               "The bosses of the biome are listed after the groups, each with its parts and minions; they take an AI the same way."), 640, gray: true);
+                               "The bosses of the biome are listed after the groups, each with its parts and minions; they take an AI the same way.") +
+                               " " + L.T("A formation picked below is born whole with that enemy when it leads the group or spawns alone."), 640, gray: true);
         hint.Dock = DockStyle.Bottom;
 
         var listsBody = new Panel { Dock = DockStyle.Fill };
         // Fill first, then the others (WinForms docks the last added control first).
         listsBody.Controls.Add(Ui.Framed(list));
         listsBody.Controls.Add(hint);
+        listsBody.Controls.Add(formationRow);
         listsBody.Controls.Add(aiNote);
         listsBody.Controls.Add(aiRow);
         listsBody.Controls.Add(countRow);
@@ -563,6 +578,7 @@ internal sealed class WorldEnemiesPage : UserControl
         item.SubItems.Add(role);
         item.SubItems.Add(enemy.Length > 0 ? enemy : L.T("(empty group)"));
         item.SubItems.Add(enemy.Length > 0 ? AiLabel(enemy) : "");
+        item.SubItems.Add(enemy.Length > 0 ? FormationLabel(enemy) : "");
         item.SubItems.Add(count);
         item.SubItems.Add(unit != null ? unit.Tier.ToString() : "");
         item.SubItems.Add(unit != null ? unit.MaxHealth.ToString("0") : "");
@@ -580,6 +596,7 @@ internal sealed class WorldEnemiesPage : UserControl
     private void UpdateListButtons()
     {
         UpdateAiBox();
+        UpdateFormationBox();
         UpdateCountControls();
         bool has = Current != null;
         addButton.Enabled = has;
@@ -918,6 +935,161 @@ internal sealed class WorldEnemiesPage : UserControl
         if (changed) MarkDirty();
     }
 
+    // ------------------------------------------------------------------ the formation born with an enemy
+
+    private FormationLibrary Formations()
+    {
+        DateTime stamp = DateTime.MinValue;
+        try
+        {
+            string dir = Path.Combine(LauncherPaths.AiFolder, "formations");
+            if (Directory.Exists(dir))
+            {
+                foreach (string file in Directory.EnumerateFiles(dir, "*.json"))
+                {
+                    DateTime write = File.GetLastWriteTimeUtc(file);
+                    if (write > stamp) stamp = write;
+                }
+            }
+        }
+        catch (IOException)
+        {
+            stamp = DateTime.MinValue;
+        }
+        if (stamp != formationsStamp)
+        {
+            try { formations = FormationLibrary.Load(LauncherPaths.AiFolder); }
+            catch (IOException) { formations = new FormationLibrary(); }
+            formationsStamp = stamp;
+        }
+        return formations;
+    }
+
+    // The formation the host wrote for this unit. Empty = the AI or the unit binding decides.
+    private string FormationOf(WorldEnemyRegion region, string unit)
+    {
+        Dictionary<string, string>? chosen = EditOf(region)?.Formations;
+        if (chosen == null) return "";
+        foreach (KeyValuePair<string, string> pair in chosen)
+        {
+            if (pair.Key.Equals(unit, StringComparison.OrdinalIgnoreCase) && pair.Value.Length > 0) return pair.Value;
+        }
+        return "";
+    }
+
+    private string FormationLabel(string unit)
+    {
+        WorldEnemyRegion? region = Current;
+        if (region == null) return "";
+        string id = FormationOf(region, unit);
+        if (id.Length > 0) return id;
+        FormationFile? bound = Formations().ForUnit(unit);
+        return bound != null && bound.BindToUnit ? bound.Id + " (" + L.T("bound") + ")" : "";
+    }
+
+    private sealed class FormationChoice
+    {
+        public FormationChoice(string id, string text)
+        {
+            Id = id;
+            Text = text;
+        }
+
+        public string Id { get; }
+        public string Text { get; }
+        public override string ToString() => Text;
+    }
+
+    private void UpdateFormationBox()
+    {
+        WorldEnemyRegion? region = Current;
+        List<string> units = region == null ? new List<string>() : SelectedUnits();
+        fillingFormation = true;
+        try
+        {
+            formationBox.Items.Clear();
+            formationBox.Enabled = false;
+            formationEditButton.Enabled = false;
+            if (region == null || units.Count == 0) return;
+
+            formationBox.Items.Add(new FormationChoice("", L.T("(from the AI or the unit)")));
+            foreach (string id in Formations().ById.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase))
+                formationBox.Items.Add(new FormationChoice(id, id));
+
+            List<string> currents = units.Select(u => FormationOf(region, u)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            if (currents.Count != 1) formationBox.SelectedIndex = -1;
+            else
+            {
+                int index = formationBox.Items.Cast<FormationChoice>().ToList().FindIndex(c => c.Id.Equals(currents[0], StringComparison.OrdinalIgnoreCase));
+                formationBox.SelectedIndex = index >= 0 ? index : 0;
+            }
+            formationBox.Enabled = true;
+            string openId = units.Count == 1 ? EffectiveFormationId(region, units[0]) : "";
+            formationEditButton.Enabled = openId.Length > 0 && context.OpenFormationTab != null;
+        }
+        finally
+        {
+            fillingFormation = false;
+        }
+    }
+
+    private string EffectiveFormationId(WorldEnemyRegion region, string unit)
+    {
+        string id = FormationOf(region, unit);
+        if (id.Length > 0) return id;
+        FormationFile? bound = Formations().ForUnit(unit);
+        return bound != null && bound.BindToUnit ? bound.Id : "";
+    }
+
+    private void FormationPicked()
+    {
+        if (fillingFormation || formationBox.SelectedItem is not FormationChoice choice) return;
+        WorldEnemyRegion? region = Current;
+        if (region == null) return;
+        List<string> units = SelectedUnits();
+        if (units.Count == 0) return;
+
+        WorldEnemyRegion? edit = EditOf(region);
+        if (edit == null)
+        {
+            edit = new WorldEnemyRegion { Key = region.Key };
+            edits[region.Key] = edit;
+        }
+        edit.Formations ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        edit.Ai ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        bool changed = false;
+        FormationFile? file = choice.Id.Length == 0 ? null : Formations().Get(choice.Id);
+        foreach (string unit in units)
+        {
+            string before = FormationOf(region, unit);
+            if (!before.Equals(choice.Id, StringComparison.OrdinalIgnoreCase))
+            {
+                if (choice.Id.Length == 0) edit.Formations.Remove(unit);
+                else edit.Formations[unit] = choice.Id;
+                changed = true;
+            }
+            // A formation names the AI its leader should run. Apply it when this enemy still has the default AI.
+            if (units.Count == 1 && file != null && file.LeaderAi.Length > 0 &&
+                AiOf(region, unit).Equals(WorldEnemyFiles.DefaultAiOf(unit), StringComparison.OrdinalIgnoreCase) &&
+                !file.LeaderAi.Equals(AiOf(region, unit), StringComparison.OrdinalIgnoreCase))
+            {
+                edit.Ai[unit] = file.LeaderAi;
+                changed = true;
+            }
+        }
+        if (changed) MarkDirty();
+    }
+
+    private void OpenFormation()
+    {
+        WorldEnemyRegion? region = Current;
+        List<string> units = SelectedUnits();
+        if (region == null || units.Count != 1 || context.OpenFormationTab == null) return;
+        string id = EffectiveFormationId(region, units[0]);
+        if (id.Length == 0) return;
+        context.OpenFormationTab(id);
+    }
+
     private void LoadInAiEditor()
     {
         WorldEnemyRegion? region = Current;
@@ -940,7 +1112,8 @@ internal sealed class WorldEnemiesPage : UserControl
             BossEdited();
             // A region with nothing changed (no groups of its own, the game's boss) is not written.
             foreach (string key in edits.Where(p => p.Value.Groups == null && string.IsNullOrWhiteSpace(p.Value.Boss) &&
-                         (p.Value.Ai == null || p.Value.Ai.Count == 0)).Select(p => p.Key).ToList())
+                         (p.Value.Ai == null || p.Value.Ai.Count == 0) &&
+                         (p.Value.Formations == null || p.Value.Formations.Count == 0)).Select(p => p.Key).ToList())
                 edits.Remove(key);
             WorldEnemyFiles.SaveEdits(edits);
             listsDirty = false;

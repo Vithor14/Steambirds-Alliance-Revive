@@ -1,0 +1,9 @@
+{
+  "format": 1,
+  "id": "spin_ignore",
+  "name": "Spin (ignores the player)",
+  "author": "Steambirds Revive",
+  "description": "Stays where it is and turns slowly by itself. It does not chase the player and does not turn to face them. It keeps shooting at any distance.",
+  "move": { "mode": "hold", "face": false, "spinRate": 18 },
+  "fire": { "enabled": true, "range": 400 }
+}

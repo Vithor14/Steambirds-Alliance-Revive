@@ -173,11 +173,18 @@ internal sealed class AiSimView : Panel
     private void BindFormation(AiBrain? next)
     {
         sim.Formation = null;
-        if (next == null || string.IsNullOrWhiteSpace(next.Formation)) return;
+        if (next == null) return;
         try
         {
             FormationLibrary library = FormationLibrary.Load(LauncherPaths.AiFolder);
-            sim.Formation = library.Get(next.Formation);
+            FormationFile? file = string.IsNullOrWhiteSpace(next.Formation) ? null : library.Get(next.Formation);
+            file ??= library.ForAi(next.Id);
+            if (file == null && !string.IsNullOrWhiteSpace(sim.Unit.Name))
+            {
+                FormationFile? bound = library.ForUnit(sim.Unit.Name);
+                if (bound != null && bound.BindToUnit) file = bound;
+            }
+            sim.Formation = file;
         }
         catch (IOException)
         {

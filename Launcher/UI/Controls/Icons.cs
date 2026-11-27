@@ -12,7 +12,7 @@ internal static class Icons
     public const string Server = "";
     public const string MapEditor = "";
     public const string EnemyAi = "";
-    public const string Formation = "";
+    public const string Formation = "\uE902";
     public const string Settings = "";
 
     // Sub-tabs and pages.

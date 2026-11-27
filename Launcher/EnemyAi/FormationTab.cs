@@ -7,139 +7,346 @@ using SteambirdsLauncher.UI;
 namespace SteambirdsLauncher.EnemyAi;
 
 // Formation editor: who is born with a leader, where they sit, and the links between them. Each piece still has its own AI.
+// The file list, the tabs and the simulator share one window. Members, links, points and summons are edited in the tabs.
 internal sealed class FormationTab : UserControl
 {
     private readonly LauncherContext context;
     private readonly AiStore aiStore;
     private readonly FormationStore store;
-    private readonly ListBox list = new ListBox { IntegralHeight = false, Width = 180, Dock = DockStyle.Fill };
+    private readonly ListBox list = new ListBox { IntegralHeight = false, HorizontalScrollbar = true, Dock = DockStyle.Fill };
     private readonly ThemedTextBox nameBox = new ThemedTextBox();
     private readonly ThemedTextBox descriptionBox = new ThemedTextBox();
-    private readonly ThemedTextBox leaderUnit = new ThemedTextBox();
-    private readonly ThemedTextBox leaderAi = new ThemedTextBox();
-    private readonly NumberBox spacing = new NumberBox { Minimum = 0.4m, Maximum = 20m, Increment = 0.1m, DecimalPlaces = 1, Value = 1.7m, Width = 70 };
-    private readonly CheckBox bindToUnit = new CheckBox { AutoSize = true };
-    private readonly ListBox members = new ListBox { IntegralHeight = false, Height = 110 };
-    private readonly ListBox links = new ListBox { IntegralHeight = false, Height = 90 };
-    private readonly ComboBox phases = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 160 };
-    private readonly ListBox summons = new ListBox { IntegralHeight = false, Height = 70 };
-    private readonly Label status = new Label { AutoSize = true, Tag = TextRole.Muted };
+    private readonly ThemedComboBox leaderUnit;
+    private readonly ThemedComboBox leaderAi;
+    private readonly NumberBox spacing = FormationFields.Number(1.7m, 0.4m, 20m, 0.1m);
+    private readonly ThemedCheckBox bindToUnit = new ThemedCheckBox { AutoSize = true };
+    private readonly ListBox members = new ListBox { IntegralHeight = false, Height = 120, Dock = DockStyle.Top };
+    private readonly ListBox links = new ListBox { IntegralHeight = false, Height = 120, Dock = DockStyle.Top };
+    private readonly ThemedComboBox phases = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 180 };
+    private readonly ListBox summons = new ListBox { IntegralHeight = false, Height = 100, Dock = DockStyle.Top };
+    private readonly ListBox pointList = new ListBox { IntegralHeight = false, Height = 120, Dock = DockStyle.Top };
+    private readonly ThemedCheckBox editPoints = new ThemedCheckBox { AutoSize = true };
+    private readonly NumberBox polygonCount = FormationFields.Number(5, 3, 16, 1);
+    private readonly NumberBox polygonRadius = FormationFields.Number(6, 1, 40, 0.5m);
+    private readonly Label status = new Label { AutoSize = false, Height = 32, Dock = DockStyle.Fill, Tag = TextRole.Muted };
+    private readonly MemberEditor memberEditor;
+    private readonly LinkEditor linkEditor;
+    private readonly PointEditor pointEditor;
+    private readonly SummonEditor summonEditor;
     private readonly FormationCanvas canvas;
+    private readonly SplitContainer fileSplit = new SplitContainer { Dock = DockStyle.Fill, SplitterWidth = 6 };
+    private readonly SplitContainer editorSplit = new SplitContainer { Dock = DockStyle.Fill, SplitterWidth = 6 };
+    private readonly HashSet<string> dirtyIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    private Button pauseButton = null!;
+    private ToolStripMenuItem saveItem = null!;
+    private ToolStripMenuItem duplicateItem = null!;
+    private ToolStripMenuItem renameItem = null!;
+    private ToolStripMenuItem deleteItem = null!;
     private FormationFile? current;
     private bool filling;
+    private bool splittersPlaced;
 
     public FormationTab(LauncherContext context, AiStore aiStore)
     {
         this.context = context;
         this.aiStore = aiStore;
         store = new FormationStore(LauncherPaths.AiFolder);
+        if (EditorAssets.Current.Folder.Length == 0) EditorAssets.Load(context.GameFolder);
         canvas = new FormationCanvas { Dock = DockStyle.Fill };
+        leaderUnit = FormationFields.TypedChoice(UnitNames());
+        leaderAi = FormationFields.TypedChoice(AiNames());
+        memberEditor = new MemberEditor(UnitNames(), AiNames(), context.ToolTip);
+        linkEditor = new LinkEditor(context.ToolTip);
+        pointEditor = new PointEditor(context.ToolTip);
+        summonEditor = new SummonEditor(UnitNames(), AiNames());
         Dock = DockStyle.Fill;
         Build();
-        Reload();
+        SizeChanged += (_, _) => PlaceSplitters();
+        LoadFiles(null);
+    }
+
+    // The world list and the map editor open a formation here.
+    public void ShowId(string? id)
+    {
+        if (string.IsNullOrWhiteSpace(id)) return;
+        int index = store.Files.FindIndex(f => f.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+        if (index < 0 && dirtyIds.Count == 0)
+        {
+            store.Reload();
+            RefreshList(id);
+            return;
+        }
+        if (index >= 0) list.SelectedIndex = index;
     }
 
     private void Build()
     {
-        var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, Padding = new Padding(8) };
-        root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200));
-        root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 46));
-        root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 54));
-        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-
-        var left = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3 };
-        left.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
-        left.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        left.RowStyles.Add(new RowStyle(SizeType.Absolute, 72));
-        var fileButtons = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false, AutoSize = true };
-        fileButtons.Controls.Add(Ui.Button(L.T("New"), (_, _) => NewFile()));
-        fileButtons.Controls.Add(Ui.Button(L.T("Duplicate"), (_, _) => Duplicate()));
-        fileButtons.Controls.Add(Ui.Button(L.T("Reload"), (_, _) => Reload()));
-        var fileButtons2 = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false };
-        fileButtons2.Controls.Add(Ui.Button(L.T("Rename"), (_, _) => Rename()));
-        fileButtons2.Controls.Add(Ui.Danger(L.T("Delete"), (_, _) => Delete()));
-        fileButtons2.Controls.Add(Ui.Primary(L.T("Save"), (_, _) => Save()));
-        var bottom = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 2 };
-        bottom.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
-        bottom.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
-        bottom.Controls.Add(fileButtons2, 0, 0);
-        bottom.Controls.Add(status, 0, 1);
-        left.Controls.Add(fileButtons, 0, 0);
-        left.Controls.Add(list, 0, 1);
-        left.Controls.Add(bottom, 0, 2);
-        list.SelectedIndexChanged += (_, _) => SelectListed();
-
-        var editor = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
-        var stack = new FlowLayoutPanel { Dock = DockStyle.Top, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoSize = true, Width = 460 };
-        stack.Controls.Add(Ui.Bold(L.T("Formation")));
-        stack.Controls.Add(Row(L.T("Name"), nameBox));
-        descriptionBox.Width = 280;
-        stack.Controls.Add(Row(L.T("Description"), descriptionBox));
+        descriptionBox.Multiline = true;
+        descriptionBox.Height = 52;
+        descriptionBox.MinimumSize = new Size(160, 52);
+        descriptionBox.ScrollBars = ScrollBars.Vertical;
         bindToUnit.Text = L.T("Use this formation for the leader unit when its AI is generic");
-        stack.Controls.Add(bindToUnit);
-        stack.Controls.Add(Row(L.T("Spacing"), spacing));
-        stack.Controls.Add(Row(L.T("Leader unit"), leaderUnit));
-        stack.Controls.Add(Row(L.T("Leader AI"), leaderAi));
-        var open = Ui.Button(L.T("Open in Enemy AI"), (_, _) => OpenLeader());
-        stack.Controls.Add(open);
 
-        stack.Controls.Add(Ui.Bold(L.T("Members")));
-        members.Width = 420;
-        stack.Controls.Add(members);
-        var memberButtons = new FlowLayoutPanel { AutoSize = true, WrapContents = false };
-        memberButtons.Controls.Add(Ui.Button(L.T("Add"), (_, _) => AddMember()));
-        memberButtons.Controls.Add(Ui.Button(L.T("Edit member"), (_, _) => EditMember()));
-        memberButtons.Controls.Add(Ui.Danger(L.T("Delete"), (_, _) => RemoveMember()));
-        memberButtons.Controls.Add(Ui.Button(L.T("Create AI"), (_, _) => CreateMemberAi()));
-        stack.Controls.Add(memberButtons);
+        var left = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(8, 4, 4, 8) };
+        left.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        left.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
+        left.Controls.Add(list, 0, 0);
+        left.Controls.Add(status, 0, 1);
+        list.SelectedIndexChanged += (_, _) => SelectListed();
+        list.MouseUp += OnListMouseUp;
+        context.ToolTip.SetToolTip(list, L.T("Right-click for New, Duplicate, Rename, Delete, Save and Reload."));
 
-        stack.Controls.Add(Ui.Bold(L.T("Links")));
-        links.Width = 420;
-        stack.Controls.Add(links);
-        var linkButtons = new FlowLayoutPanel { AutoSize = true, WrapContents = true, Width = 440 };
-        linkButtons.Controls.Add(Ui.Button(L.T("Shield while someone lives"), (_, _) => AddShield()));
-        linkButtons.Controls.Add(Ui.Button(L.T("Kill all on death"), (_, _) => AddKill()));
-        linkButtons.Controls.Add(Ui.Button(L.T("Unshield the next at a health %"), (_, _) => AddUnshield()));
-        linkButtons.Controls.Add(Ui.Button(L.T("Heal the leader on death"), (_, _) => AddHeal()));
-        linkButtons.Controls.Add(Ui.Danger(L.T("Delete"), (_, _) => RemoveLink()));
-        stack.Controls.Add(linkButtons);
+        var tabs = new ThemedTabControl { Dock = DockStyle.Fill };
+        tabs.TabPages.Add(BuildFormationPage());
+        tabs.TabPages.Add(BuildMembersPage());
+        tabs.TabPages.Add(BuildLinksPage());
+        tabs.TabPages.Add(BuildPointsPage());
+        tabs.TabPages.Add(BuildSummonsPage());
 
-        stack.Controls.Add(Ui.Bold(L.T("Phase summons (leader AI)")));
-        stack.Controls.Add(phases);
-        summons.Width = 420;
-        stack.Controls.Add(summons);
-        var summonButtons = new FlowLayoutPanel { AutoSize = true };
-        summonButtons.Controls.Add(Ui.Button(L.T("Add"), (_, _) => AddSummon()));
-        summonButtons.Controls.Add(Ui.Danger(L.T("Delete"), (_, _) => RemoveSummon()));
-        summonButtons.Controls.Add(Ui.Button(L.T("Save"), (_, _) => SaveSummons()));
-        stack.Controls.Add(summonButtons);
-        phases.SelectedIndexChanged += (_, _) => FillSummons();
-
-        editor.Controls.Add(stack);
-        canvas.MinimumSize = new Size(280, 200);
-
-        root.Controls.Add(left, 0, 0);
-        root.Controls.Add(editor, 1, 0);
-        root.Controls.Add(canvas, 2, 0);
-        Controls.Add(root);
+        editorSplit.Panel1.Controls.Add(tabs);
+        editorSplit.Panel2.Controls.Add(BuildPreview());
+        fileSplit.Panel1.Controls.Add(left);
+        fileSplit.Panel2.Controls.Add(editorSplit);
+        Controls.Add(fileSplit);
         Controls.Add(BuildMenu());
 
-        nameBox.TextChanged += (_, _) => { if (!filling && current != null) current.Name = nameBox.Text; RefreshCanvas(); };
-        descriptionBox.TextChanged += (_, _) => { if (!filling && current != null) current.Description = descriptionBox.Text; };
-        leaderUnit.TextChanged += (_, _) => { if (!filling && current != null) current.Leader.Unit = leaderUnit.Text.Trim(); RefreshCanvas(); };
+        nameBox.TextChanged += (_, _) =>
+        {
+            if (filling || current == null) return;
+            current.Name = nameBox.Text;
+            RefreshCurrentLabel();
+            Touch();
+        };
+        descriptionBox.TextChanged += (_, _) => { if (!filling && current != null) { current.Description = descriptionBox.Text; Touch(); } };
+        leaderUnit.TextChanged += (_, _) =>
+        {
+            if (filling || current == null) return;
+            current.Leader ??= new FormationWho();
+            current.Leader.Unit = leaderUnit.Text.Trim();
+            Touch();
+            RefreshCanvas();
+        };
         leaderAi.TextChanged += (_, _) =>
         {
             if (filling || current == null) return;
+            current.Leader ??= new FormationWho();
             current.Leader.Ai = leaderAi.Text.Trim();
+            Touch();
             FillPhases();
         };
-        spacing.ValueChanged += (_, _) => { if (!filling && current != null) { current.Spacing = (float)spacing.Value; RefreshCanvas(); } };
-        bindToUnit.CheckedChanged += (_, _) => { if (!filling && current != null) current.BindToUnit = bindToUnit.Checked; };
+        spacing.ValueChanged += (_, _) => { if (!filling && current != null) { current.Spacing = (float)spacing.Value; Touch(); RefreshCanvas(); } };
+        bindToUnit.CheckedChanged += (_, _) => { if (!filling && current != null) { current.BindToUnit = bindToUnit.Checked; Touch(); } };
+
+        memberEditor.Changed += () =>
+        {
+            if (current == null || members.SelectedIndex < 0 || members.SelectedIndex >= current.Members.Count) return;
+            OnPieceEdited(members, members.SelectedIndex, MemberText(current.Members[members.SelectedIndex]));
+        };
+        linkEditor.Changed += () =>
+        {
+            if (current == null || links.SelectedIndex < 0 || links.SelectedIndex >= current.Links.Count) return;
+            OnPieceEdited(links, links.SelectedIndex, LinkText(current.Links[links.SelectedIndex]));
+        };
+        pointEditor.Changed += () =>
+        {
+            if (current == null || pointList.SelectedIndex < 0 || pointList.SelectedIndex >= current.Points.Count) return;
+            OnPieceEdited(pointList, pointList.SelectedIndex, PointText(current.Points[pointList.SelectedIndex]));
+        };
+        summonEditor.Changed += OnSummonEdited;
+        canvas.Changed += OnCanvasChanged;
+
+        members.SelectedIndexChanged += (_, _) => { if (!filling) ShowMember(); };
+        links.SelectedIndexChanged += (_, _) => { if (!filling) ShowLink(); };
+        pointList.SelectedIndexChanged += (_, _) => { if (!filling) ShowPoint(); };
+        summons.SelectedIndexChanged += (_, _) => { if (!filling) ShowSummon(); };
+        members.KeyDown += (_, e) => { if (e.KeyCode == Keys.Delete) { e.Handled = true; RemoveMember(); } };
+        links.KeyDown += (_, e) => { if (e.KeyCode == Keys.Delete) { e.Handled = true; RemoveLink(); } };
+        pointList.KeyDown += (_, e) => { if (e.KeyCode == Keys.Delete) { e.Handled = true; RemovePoint(); } };
+        summons.KeyDown += (_, e) => { if (e.KeyCode == Keys.Delete) { e.Handled = true; RemoveSummon(); } };
+    }
+
+    private TabPage BuildFormationPage()
+    {
+        var page = new TabPage(L.T("Formation")) { Padding = new Padding(8, 4, 8, 8), AutoScroll = true };
+        TableLayoutPanel grid = FormationFields.Grid();
+        FormationFields.Add(grid, L.T("Name"), nameBox);
+        FormationFields.Add(grid, L.T("Description"), descriptionBox);
+        FormationFields.Add(grid, L.T("Spacing"), spacing, false);
+        FormationFields.Add(grid, L.T("Leader unit"), leaderUnit);
+        FormationFields.Add(grid, L.T("Leader AI"), leaderAi);
+        var open = Ui.Button(L.T("Open in Enemy AI"), (_, _) => OpenLeader());
+        context.ToolTip.SetToolTip(open, L.T("The AI file the leader runs. Open in Enemy AI jumps to that file. Phase summons are stored on this AI, not in the formation file."));
+        context.ToolTip.SetToolTip(bindToUnit, L.T("The game unit of the leader, for example trainA01, podleader or fivestarleader. With \"Use this formation for the leader unit when its AI is generic\" on, a generic AI (or no AI) on that unit still brings this formation. Turn it off when the formation must wait until an AI names it."));
+        var buttons = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Top, WrapContents = true };
+        buttons.Controls.Add(open);
+        page.Controls.Add(buttons);
+        page.Controls.Add(bindToUnit);
+        bindToUnit.Dock = DockStyle.Top;
+        bindToUnit.MaximumSize = new Size(520, 0);
+        page.Controls.Add(grid);
+        return page;
+    }
+
+    private TabPage BuildMembersPage()
+    {
+        var page = new TabPage(L.T("Members")) { Padding = new Padding(6) };
+        FlowLayoutPanel buttons = Buttons();
+        buttons.Controls.Add(Ui.Button(L.T("Add"), (_, _) => AddMember()));
+        buttons.Controls.Add(Ui.Danger(L.T("Delete"), (_, _) => RemoveMember()));
+        buttons.Controls.Add(Ui.Button(L.T("Create AI"), (_, _) => CreateMemberAi()));
+        page.Controls.Add(memberEditor);
+        page.Controls.Add(buttons);
+        page.Controls.Add(members);
+        return page;
+    }
+
+    private TabPage BuildLinksPage()
+    {
+        var page = new TabPage(L.T("Links")) { Padding = new Padding(6) };
+        FlowLayoutPanel buttons = Buttons();
+        buttons.Controls.Add(Ui.Button(L.T("Add"), (_, _) => AddLink()));
+        buttons.Controls.Add(Ui.Danger(L.T("Delete"), (_, _) => RemoveLink()));
+        page.Controls.Add(linkEditor);
+        page.Controls.Add(buttons);
+        page.Controls.Add(links);
+        return page;
+    }
+
+    private TabPage BuildPointsPage()
+    {
+        var page = new TabPage(L.T("Points")) { Padding = new Padding(6) };
+        FlowLayoutPanel buttons = Buttons();
+        buttons.Controls.Add(Ui.Button(L.T("Add"), (_, _) => AddPoint()));
+        buttons.Controls.Add(Ui.Danger(L.T("Delete"), (_, _) => RemovePoint()));
+        buttons.Controls.Add(Ui.Text(L.T("Count")));
+        buttons.Controls.Add(polygonCount);
+        buttons.Controls.Add(Ui.Text(L.T("Radius")));
+        buttons.Controls.Add(polygonRadius);
+        buttons.Controls.Add(Ui.Button(L.T("Make polygon"), (_, _) => MakePolygon()));
+        context.ToolTip.SetToolTip(polygonCount, L.T("How many corners the polygon has. This replaces the points."));
+        page.Controls.Add(pointEditor);
+        page.Controls.Add(buttons);
+        page.Controls.Add(pointList);
+        return page;
+    }
+
+    private TabPage BuildSummonsPage()
+    {
+        var page = new TabPage(L.T("Phase summons")) { Padding = new Padding(6) };
+        var phaseRow = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Top, WrapContents = false };
+        phaseRow.Controls.Add(Ui.Text(L.T("State of the leader AI")));
+        phaseRow.Controls.Add(phases);
+        phases.SelectedIndexChanged += (_, _) => { if (!filling) FillSummons(); };
+        FlowLayoutPanel buttons = Buttons();
+        buttons.Controls.Add(Ui.Button(L.T("Add"), (_, _) => AddSummon()));
+        buttons.Controls.Add(Ui.Danger(L.T("Delete"), (_, _) => RemoveSummon()));
+        Button save = Ui.Primary(L.T("Save summons to the AI"), (_, _) => SaveSummons());
+        context.ToolTip.SetToolTip(save, L.T("Writes the phase summons into the leader's AI file. The formation's own Save does not."));
+        buttons.Controls.Add(save);
+        page.Controls.Add(summonEditor);
+        page.Controls.Add(buttons);
+        page.Controls.Add(summons);
+        page.Controls.Add(phaseRow);
+        return page;
+    }
+
+    private Control BuildPreview()
+    {
+        var preview = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(4, 4, 8, 8) };
+        preview.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        preview.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        pauseButton = Ui.Button(L.T("Pause"), (_, _) => TogglePause());
+        var speedBox = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 64 };
+        speedBox.Items.AddRange(new object[] { "0.25x", "0.5x", "1x", "2x", "4x" });
+        speedBox.SelectedIndex = 2;
+        speedBox.SelectedIndexChanged += (_, _) =>
+        {
+            canvas.SpeedScale = speedBox.SelectedIndex switch { 0 => 0.25f, 1 => 0.5f, 3 => 2f, 4 => 4f, _ => 1f };
+        };
+        var motion = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 150 };
+        motion.Items.AddRange(new object[] { L.T("Flies in a circle"), L.T("Stands still"), L.T("Goes where I click") });
+        motion.SelectedIndex = 0;
+        motion.SelectedIndexChanged += (_, _) => canvas.Motion = motion.SelectedIndex;
+        var damage = FormationFields.Number(25, 1, 100, 5);
+        damage.ValueChanged += (_, _) => canvas.ClickDamage = (float)damage.Value / 100f;
+        var drain = FormationFields.Number(0, 0, 100, 1);
+        drain.ValueChanged += (_, _) => canvas.DrainPerSecond = (float)drain.Value / 100f;
+        editPoints.Text = L.T("Edit points on the canvas");
+        editPoints.CheckedChanged += (_, _) => canvas.EditPoints = editPoints.Checked;
+        var respawn = new ThemedCheckBox { Text = L.T("Comes back after dying"), AutoSize = true, Checked = true };
+        respawn.CheckedChanged += (_, _) => canvas.AutoRespawn = respawn.Checked;
+
+        var tip = context.ToolTip;
+        tip.SetToolTip(motion, L.T("How the leader moves in the test. Circle is the default. Stands still parks it. Goes where I click flies it to the point you click, unless Edit points is on."));
+        tip.SetToolTip(damage, L.T("How much health a right click takes from the piece under the cursor (percent)."));
+        tip.SetToolTip(drain, L.T("The pieces lose this percent of their health every second, so you can try shields and kill-all links."));
+        tip.SetToolTip(respawn, L.T("A dead piece comes back after a moment, so the same link can fire again."));
+        tip.SetToolTip(editPoints, L.T("Click the grid to add a point. Drag a point to move it. Right click a point to remove it."));
+
+        var bar = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, WrapContents = true };
+        bar.Controls.AddRange(new Control[]
+        {
+            pauseButton, Ui.Button(L.T("Reset"), (_, _) => canvas.ResetView()),
+            Pair(L.T("Speed"), speedBox), Pair(L.T("Leader motion"), motion),
+            Pair(L.T("Right click takes %"), damage), Pair(L.T("Health lost %/s"), drain),
+            Ui.Button(L.T("Heal"), (_, _) => canvas.Heal()), respawn, editPoints
+        });
+        preview.Controls.Add(bar, 0, 0);
+        preview.Controls.Add(canvas, 0, 1);
+        return preview;
+    }
+
+    private static FlowLayoutPanel Pair(string label, Control box) => Ui.Flow(Ui.Text(label), box);
+
+    private static FlowLayoutPanel Buttons() => new FlowLayoutPanel { AutoSize = true, WrapContents = true, Dock = DockStyle.Top };
+
+    // The list stays narrow and the simulator stays a side column, so the tabs keep the width.
+    private void PlaceSplitters()
+    {
+        if (splittersPlaced || Width < 860 || fileSplit.Width < 700) return;
+        try
+        {
+            fileSplit.Panel1MinSize = 180;
+            fileSplit.Panel2MinSize = 520;
+            fileSplit.SplitterDistance = Math.Clamp(220, 180, fileSplit.Width - 520);
+            editorSplit.Panel1MinSize = 340;
+            editorSplit.Panel2MinSize = 260;
+            int sim = 340;
+            int distance = editorSplit.Width - sim;
+            editorSplit.SplitterDistance = Math.Clamp(distance, 340, Math.Max(340, editorSplit.Width - 260));
+            splittersPlaced = true;
+        }
+        catch (Exception e) when (e is ArgumentException || e is InvalidOperationException)
+        {
+            // Tried too early: the next resize tries again.
+        }
+    }
+
+    private void TogglePause()
+    {
+        canvas.Playing = !canvas.Playing;
+        pauseButton.Text = canvas.Playing ? L.T("Pause") : L.T("Play");
     }
 
     private MenuStrip BuildMenu()
     {
         var bar = new MenuStrip { Renderer = new EditorRenderer(), Dock = DockStyle.Top };
+        saveItem = Item(L.T("Save"), Save, "Ctrl+S");
+        duplicateItem = Item(L.T("Duplicate"), Duplicate);
+        renameItem = Item(L.T("Rename"), Rename);
+        deleteItem = Item(L.T("Delete"), Delete);
+
+        var file = new ToolStripMenuItem(L.T("File"));
+        file.DropDownItems.Add(Item(L.T("New"), NewFile, "Ctrl+N"));
+        file.DropDownItems.Add(saveItem);
+        file.DropDownItems.Add(new ToolStripSeparator());
+        file.DropDownItems.Add(Item(L.T("Reload"), ReloadFromDisk));
+
+        var edit = new ToolStripMenuItem(L.T("Edit"));
+        edit.DropDownItems.Add(duplicateItem);
+        edit.DropDownItems.Add(renameItem);
+        edit.DropDownItems.Add(deleteItem);
+
         var help = new ToolStripMenuItem(L.T("Help"));
         help.DropDownItems.Add(Item(L.T("Help topics..."), () => ShowHelp(0), "F1"));
         help.DropDownItems.Add(new ToolStripSeparator());
@@ -149,8 +356,31 @@ internal sealed class FormationTab : UserControl
             int index = i;
             help.DropDownItems.Add(Item(L.T(topics[i].Title), () => ShowHelp(index)));
         }
-        bar.Items.Add(help);
+        bar.Items.AddRange(new ToolStripItem[] { file, edit, help });
         return bar;
+    }
+
+    private void OnListMouseUp(object? sender, MouseEventArgs e)
+    {
+        if (e.Button != MouseButtons.Right) return;
+        int index = list.IndexFromPoint(e.Location);
+        if (index >= 0) list.SelectedIndex = index;
+        var menu = new ContextMenuStrip { Renderer = new EditorRenderer() };
+        menu.Items.Add(MenuItem(L.T("New"), NewFile));
+        menu.Items.Add(MenuItem(L.T("Duplicate"), Duplicate, current != null));
+        menu.Items.Add(MenuItem(L.T("Rename"), Rename, current != null));
+        menu.Items.Add(MenuItem(L.T("Delete"), Delete, current != null));
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(MenuItem(L.T("Save"), Save, current != null));
+        menu.Items.Add(MenuItem(L.T("Reload"), ReloadFromDisk));
+        menu.Show(list, e.Location);
+    }
+
+    private static ToolStripMenuItem MenuItem(string text, Action action, bool enabled = true)
+    {
+        var item = new ToolStripMenuItem(text) { Enabled = enabled };
+        item.Click += (_, _) => action();
+        return item;
     }
 
     private static ToolStripMenuItem Item(string text, Action action, string? shortcut = null)
@@ -168,37 +398,58 @@ internal sealed class FormationTab : UserControl
 
     protected override bool ProcessCmdKey(ref Message message, Keys keyData)
     {
-        if (keyData == Keys.F1)
+        switch (keyData)
         {
-            ShowHelp(0);
-            return true;
+            case Keys.Control | Keys.S:
+                Save();
+                return true;
+            case Keys.Control | Keys.N:
+                NewFile();
+                return true;
+            case Keys.F1:
+                ShowHelp(0);
+                return true;
         }
         return base.ProcessCmdKey(ref message, keyData);
     }
 
-    private static Control Row(string label, Control box)
+    private void LoadFiles(string? selectId)
     {
-        var row = new FlowLayoutPanel { AutoSize = true, WrapContents = false };
-        row.Controls.Add(new Label { Text = label, AutoSize = true, Padding = new Padding(0, 6, 6, 0) });
-        box.Width = Math.Max(box.Width, 180);
-        row.Controls.Add(box);
-        return row;
+        store.Reload();
+        dirtyIds.Clear();
+        RefreshList(selectId);
     }
 
-    private void Reload()
+    private void RefreshList(string? selectId)
     {
-        string? id = current?.Id;
-        store.Reload();
+        filling = true;
         list.Items.Clear();
-        foreach (FormationFile file in store.Files) list.Items.Add(file.Id);
-        int index = id == null ? -1 : store.Files.FindIndex(f => f.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
-        if (list.Items.Count > 0) list.SelectedIndex = index >= 0 ? index : 0;
-        else Show(null);
-        status.Text = store.Problems.Count == 0 ? L.F("{0} formation(s).", store.Files.Count) : store.Problems[0];
+        foreach (FormationFile file in store.Files) list.Items.Add(LabelOf(file));
+        int index = selectId == null ? -1 : store.Files.FindIndex(f => f.Id.Equals(selectId, StringComparison.OrdinalIgnoreCase));
+        filling = false;
+        if (list.Items.Count == 0) Show(null);
+        else list.SelectedIndex = index >= 0 ? index : 0;
+        if (store.Problems.Count > 0) status.Text = store.Problems[0];
+        else if (dirtyIds.Count == 0) status.Text = L.F("{0} formation(s).", store.Files.Count);
+        UpdateFileMenu();
+    }
+
+    private string LabelOf(FormationFile file)
+    {
+        string star = dirtyIds.Contains(file.Id) ? "* " : "";
+        string name = file.Name.Length > 0 && !file.Name.Equals(file.Id, StringComparison.OrdinalIgnoreCase) ? "  " + file.Name : "";
+        return star + file.Id + name;
+    }
+
+    private void RefreshCurrentLabel()
+    {
+        if (current == null || list.SelectedIndex < 0 || list.SelectedIndex >= store.Files.Count) return;
+        ReplaceItem(list, list.SelectedIndex, LabelOf(current));
     }
 
     private void SelectListed()
     {
+        if (filling) return;
         if (list.SelectedIndex < 0 || list.SelectedIndex >= store.Files.Count) { Show(null); return; }
         Show(store.Files[list.SelectedIndex]);
     }
@@ -209,23 +460,62 @@ internal sealed class FormationTab : UserControl
         filling = true;
         bool on = file != null;
         nameBox.Enabled = descriptionBox.Enabled = leaderUnit.Enabled = leaderAi.Enabled = spacing.Enabled = bindToUnit.Enabled = on;
+        Refill(leaderUnit, UnitNames());
+        Refill(leaderAi, AiNames());
+        memberEditor.UseLists(UnitNames(), AiNames());
+        summonEditor.UseLists(UnitNames(), AiNames());
         nameBox.Text = file?.Name ?? "";
         descriptionBox.Text = file?.Description ?? "";
-        leaderUnit.Text = file?.Leader.Unit ?? "";
+        if (file != null) file.Leader ??= new FormationWho();
+        leaderUnit.Text = file?.Leader?.Unit ?? "";
         leaderAi.Text = file?.LeaderAi ?? "";
-        spacing.Value = (decimal)Math.Clamp(file?.Spacing ?? 1.7f, 0.4f, 20f);
+        FormationFields.SetNumber(spacing, file?.Spacing ?? 1.7f);
         bindToUnit.Checked = file?.BindToUnit ?? true;
         members.Items.Clear();
         if (file != null)
-            foreach (FormationMember member in file.Members)
-                members.Items.Add(MemberText(member));
+            foreach (FormationMember member in file.Members) members.Items.Add(MemberText(member));
         links.Items.Clear();
         if (file != null)
-            foreach (FormationLink link in file.Links)
-                links.Items.Add(LinkText(link));
+            foreach (FormationLink link in file.Links) links.Items.Add(LinkText(link));
+        pointList.Items.Clear();
+        if (file != null)
+            foreach (FormationPoint point in file.Points) pointList.Items.Add(PointText(point));
         filling = false;
+        if (members.Items.Count > 0) members.SelectedIndex = 0;
+        else ShowMember();
+        if (links.Items.Count > 0) links.SelectedIndex = 0;
+        else ShowLink();
+        if (pointList.Items.Count > 0) pointList.SelectedIndex = 0;
+        else ShowPoint();
         FillPhases();
         RefreshCanvas();
+        UpdateFileMenu();
+        if (file != null && dirtyIds.Contains(file.Id)) status.Text = L.T("Not saved yet.");
+    }
+
+    private void ShowMember()
+    {
+        memberEditor.Show(current != null && members.SelectedIndex >= 0 && members.SelectedIndex < current.Members.Count
+            ? current.Members[members.SelectedIndex] : null);
+    }
+
+    private void ShowLink()
+    {
+        linkEditor.Show(current != null && links.SelectedIndex >= 0 && links.SelectedIndex < current.Links.Count
+            ? current.Links[links.SelectedIndex] : null, MemberIds());
+    }
+
+    private void ShowPoint()
+    {
+        pointEditor.Show(current != null && pointList.SelectedIndex >= 0 && pointList.SelectedIndex < current.Points.Count
+            ? current.Points[pointList.SelectedIndex] : null);
+    }
+
+    private void ShowSummon()
+    {
+        JsonArray? lines = SummonLines();
+        summonEditor.Show(lines != null && summons.SelectedIndex >= 0 && summons.SelectedIndex < lines.Count && lines[summons.SelectedIndex] is JsonObject line
+            ? line : null);
     }
 
     private static string MemberText(FormationMember member)
@@ -247,17 +537,83 @@ internal sealed class FormationTab : UserControl
         return L.T("Link");
     }
 
+    private static string PointText(FormationPoint point) =>
+        point.Id + "   " + point.X.ToString("0.##") + ", " + point.Y.ToString("0.##");
+
+    private void OnPieceEdited(ListBox box, int index, string text)
+    {
+        if (filling || current == null || index < 0) return;
+        ReplaceItem(box, index, text);
+        if (box == members) ShowLink();
+        Touch();
+        RefreshCanvas();
+    }
+
+    private void OnSummonEdited()
+    {
+        if (filling || current == null || summons.SelectedIndex < 0) return;
+        JsonArray? lines = SummonLines();
+        if (lines == null || summons.SelectedIndex >= lines.Count || lines[summons.SelectedIndex] is not JsonObject line) return;
+        ReplaceItem(summons, summons.SelectedIndex, SummonText(line));
+        AiDoc? brain = LeaderBrain();
+        if (brain != null) brain.Dirty = true;
+        status.Text = L.T("Phase summons are not saved yet. Save summons to the AI writes them.");
+    }
+
+    private void OnCanvasChanged()
+    {
+        if (current == null || filling) return;
+        int keep = pointList.SelectedIndex;
+        filling = true;
+        pointList.Items.Clear();
+        foreach (FormationPoint point in current.Points) pointList.Items.Add(PointText(point));
+        if (keep >= 0 && keep < pointList.Items.Count) pointList.SelectedIndex = keep;
+        filling = false;
+        if (keep >= 0 && keep < current.Points.Count) pointEditor.Show(current.Points[keep]);
+        else ShowPoint();
+        Touch();
+    }
+
+    private void ReplaceItem(ListBox box, int index, string text)
+    {
+        if (index < 0 || index >= box.Items.Count || Equals(box.Items[index], text)) return;
+        bool was = filling;
+        filling = true;
+        int keep = box.SelectedIndex;
+        box.Items[index] = text;
+        if (keep >= 0 && keep < box.Items.Count && box.SelectedIndex != keep) box.SelectedIndex = keep;
+        filling = was;
+    }
+
     private void RefreshCanvas()
     {
         canvas.File = current;
         canvas.Invalidate();
     }
 
+    private void Touch()
+    {
+        if (filling || current == null) return;
+        dirtyIds.Add(current.Id);
+        RefreshCurrentLabel();
+        status.Text = L.T("Not saved yet.");
+        UpdateFileMenu();
+    }
+
+    private void UpdateFileMenu()
+    {
+        bool on = current != null;
+        if (saveItem != null) saveItem.Enabled = on;
+        if (duplicateItem != null) duplicateItem.Enabled = on;
+        if (renameItem != null) renameItem.Enabled = on;
+        if (deleteItem != null) deleteItem.Enabled = on;
+    }
+
     private void NewFile()
     {
         FormationFile file = store.Add("formation");
-        Reload();
-        list.SelectedIndex = store.Files.IndexOf(file);
+        RefreshList(file.Id);
+        status.Text = L.F("Saved {0}.", file.Id);
     }
 
     private void Duplicate()
@@ -265,19 +621,20 @@ internal sealed class FormationTab : UserControl
         if (current == null) return;
         Pull();
         FormationFile copy = store.Duplicate(current);
-        Reload();
-        list.SelectedIndex = store.Files.FindIndex(f => f.Id == copy.Id);
+        RefreshList(copy.Id);
+        status.Text = L.F("Saved {0}.", copy.Id);
     }
 
     private void Rename()
     {
         if (current == null) return;
-        string? next = Prompt(L.T("New id"), current.Id);
+        string? next = AiPrompt.Ask(FindForm()!, L.T("Rename"), L.T("New id"), current.Id);
         if (string.IsNullOrWhiteSpace(next)) return;
         try
         {
+            dirtyIds.Remove(current.Id);
             store.Rename(current, next);
-            Reload();
+            RefreshList(current.Id);
         }
         catch (Exception e)
         {
@@ -290,9 +647,10 @@ internal sealed class FormationTab : UserControl
         if (current == null) return;
         if (MessageBox.Show(FindForm(), L.F("Move \"{0}\" to the backup folder?", current.Id), L.T("Delete"),
                 MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) != DialogResult.OK) return;
+        dirtyIds.Remove(current.Id);
         store.Delete(current);
         current = null;
-        Reload();
+        RefreshList(null);
     }
 
     private void Save()
@@ -302,6 +660,8 @@ internal sealed class FormationTab : UserControl
         try
         {
             store.Save(current);
+            dirtyIds.Remove(current.Id);
+            RefreshCurrentLabel();
             status.Text = L.F("Saved {0}.", current.Id);
         }
         catch (Exception e)
@@ -310,11 +670,19 @@ internal sealed class FormationTab : UserControl
         }
     }
 
+    private void ReloadFromDisk()
+    {
+        if (dirtyIds.Count > 0 && !Ui.Confirm(FindForm(), L.T("Reload the folder and drop changes that were not saved?"))) return;
+        string? id = current?.Id;
+        LoadFiles(id);
+    }
+
     private void Pull()
     {
         if (current == null) return;
         current.Name = nameBox.Text;
         current.Description = descriptionBox.Text;
+        current.Leader ??= new FormationWho();
         current.Leader.Unit = leaderUnit.Text.Trim();
         current.Leader.Ai = leaderAi.Text.Trim();
         current.Spacing = (float)spacing.Value;
@@ -335,17 +703,7 @@ internal sealed class FormationTab : UserControl
         });
         Show(current);
         members.SelectedIndex = current.Members.Count - 1;
-        EditMember();
-    }
-
-    private void EditMember()
-    {
-        if (current == null || members.SelectedIndex < 0 || members.SelectedIndex >= current.Members.Count) return;
-        FormationMember member = current.Members[members.SelectedIndex];
-        using var dialog = new MemberDialog(member);
-        if (dialog.ShowDialog(FindForm()) != DialogResult.OK) return;
-        dialog.Apply(member);
-        Show(current);
+        Touch();
     }
 
     private void RemoveMember()
@@ -353,6 +711,7 @@ internal sealed class FormationTab : UserControl
         if (current == null || members.SelectedIndex < 0 || members.SelectedIndex >= current.Members.Count) return;
         current.Members.RemoveAt(members.SelectedIndex);
         Show(current);
+        Touch();
     }
 
     private void CreateMemberAi()
@@ -379,7 +738,9 @@ internal sealed class FormationTab : UserControl
             AiDoc doc = aiStore.Add(AiKind.Brain, wanted, root, true, "world");
             member.Ai = doc.Id;
             Show(current);
+            members.SelectedIndex = current.Members.FindIndex(m => ReferenceEquals(m, member));
             status.Text = L.F("Created the AI \"{0}\".", doc.Id);
+            Touch();
         }
         catch (Exception e)
         {
@@ -387,50 +748,21 @@ internal sealed class FormationTab : UserControl
         }
     }
 
-    private void AddShield()
+    private IEnumerable<string> MemberIds()
     {
-        if (current == null) return;
-        current.Links.Add(new FormationLink
-        {
-            Shield = new List<string> { "leader" },
-            WhileAlive = current.Members.FirstOrDefault()?.Id ?? "",
-            Effect = ""
-        });
-        Show(current);
+        yield return "leader";
+        if (current == null) yield break;
+        foreach (FormationMember member in current.Members)
+            if (member.Id.Length > 0) yield return member.Id;
     }
 
-    private void AddKill()
+    private void AddLink()
     {
         if (current == null) return;
-        current.Links.Add(new FormationLink
-        {
-            When = new FormationWhen { Died = current.Members.LastOrDefault()?.Id ?? "tip" },
-            Do = new FormationDo { Kind = "killAll" }
-        });
+        current.Links.Add(new FormationLink { Shield = new List<string> { "leader" }, Effect = "" });
         Show(current);
-    }
-
-    private void AddUnshield()
-    {
-        if (current == null) return;
-        string role = current.Members.FirstOrDefault()?.Role ?? "vessel";
-        current.Links.Add(new FormationLink
-        {
-            When = new FormationWhen { Role = role, Which = "firstAlive", HealthBelow = 33 },
-            Do = new FormationDo { Kind = "unshield", Target = "next" }
-        });
-        Show(current);
-    }
-
-    private void AddHeal()
-    {
-        if (current == null) return;
-        current.Links.Add(new FormationLink
-        {
-            When = new FormationWhen { Died = current.Members.FirstOrDefault()?.Id ?? "" },
-            Do = new FormationDo { Kind = "heal", Target = "leader", Amount = 25 }
-        });
-        Show(current);
+        links.SelectedIndex = current.Links.Count - 1;
+        Touch();
     }
 
     private void RemoveLink()
@@ -438,6 +770,45 @@ internal sealed class FormationTab : UserControl
         if (current == null || links.SelectedIndex < 0 || links.SelectedIndex >= current.Links.Count) return;
         current.Links.RemoveAt(links.SelectedIndex);
         Show(current);
+        Touch();
+    }
+
+    private void AddPoint()
+    {
+        if (current == null) return;
+        current.Points.Add(new FormationPoint { Id = "p" + (current.Points.Count + 1), X = 0, Y = 6 });
+        Show(current);
+        pointList.SelectedIndex = current.Points.Count - 1;
+        Touch();
+    }
+
+    private void RemovePoint()
+    {
+        if (current == null || pointList.SelectedIndex < 0 || pointList.SelectedIndex >= current.Points.Count) return;
+        current.Points.RemoveAt(pointList.SelectedIndex);
+        Show(current);
+        Touch();
+    }
+
+    private void MakePolygon()
+    {
+        if (current == null) return;
+        if (current.Points.Count > 0 && !Ui.Confirm(FindForm(), L.T("Replace the points with this polygon?"))) return;
+        int count = (int)polygonCount.Value;
+        float radius = (float)polygonRadius.Value;
+        current.Points.Clear();
+        for (int i = 0; i < count; i++)
+        {
+            float turn = i * 360f / count * MathF.PI / 180f;
+            current.Points.Add(new FormationPoint
+            {
+                Id = "p" + (i + 1),
+                X = MathF.Round(MathF.Sin(turn) * radius, 2),
+                Y = MathF.Round(MathF.Cos(turn) * radius, 2)
+            });
+        }
+        Show(current);
+        Touch();
     }
 
     private void OpenLeader()
@@ -454,13 +825,18 @@ internal sealed class FormationTab : UserControl
 
     private void FillPhases()
     {
+        filling = true;
         phases.Items.Clear();
         summons.Items.Clear();
         AiDoc? brain = LeaderBrain();
-        if (brain == null) return;
-        foreach (JsonObject state in Json.Objects(Json.ArrOrNull(brain.Root, "states")))
-            phases.Items.Add(Json.Str(state, "id"));
+        if (brain != null)
+        {
+            foreach (JsonObject state in Json.Objects(Json.ArrOrNull(brain.Root, "states")))
+                phases.Items.Add(Json.Str(state, "id"));
+        }
+        filling = false;
         if (phases.Items.Count > 0) phases.SelectedIndex = 0;
+        else { summonEditor.Show(null); }
     }
 
     private JsonObject? SelectedState()
@@ -471,50 +847,106 @@ internal sealed class FormationTab : UserControl
         return Json.Objects(Json.ArrOrNull(brain.Root, "states")).FirstOrDefault(s => Json.Str(s, "id") == id);
     }
 
+    private JsonArray? SummonLines()
+    {
+        JsonObject? state = SelectedState();
+        return state == null ? null : Json.ArrOrNull(state, "summons");
+    }
+
     private void FillSummons()
     {
         summons.Items.Clear();
         JsonObject? state = SelectedState();
-        if (state == null) return;
-        foreach (JsonObject line in Json.Objects(Json.ArrOrNull(state, "summons")))
-            summons.Items.Add(Json.Str(line, "unit") + " x" + Json.Int(line, "count", 1) + "  " + Json.Str(line, "place") +
-                              (Json.Str(line, "role").Length > 0 ? "  " + Json.Str(line, "role") : ""));
+        if (state == null)
+        {
+            summonEditor.Show(null);
+            return;
+        }
+        JsonArray? lines = Json.ArrOrNull(state, "summons");
+        if ((lines == null || lines.Count == 0) && Json.Str(state, "summon").Length > 0)
+        {
+            AiDoc? brain = LeaderBrain();
+            if (brain != null && !aiStore.IsProtected(brain)) lines = EnsureSummonList(state);
+        }
+        if (lines != null && lines.Count > 0)
+        {
+            foreach (JsonObject line in Json.Objects(lines)) summons.Items.Add(SummonText(line));
+        }
+        else if (Json.Str(state, "summon").Length > 0)
+        {
+            summons.Items.Add(Json.Str(state, "summon") + " x" + Json.Int(state, "summonCount", 1) + "  " + Json.Str(state, "summonPlace"));
+        }
+        if (summons.Items.Count > 0) summons.SelectedIndex = 0;
+        else summonEditor.Show(null);
+    }
+
+    private static string SummonText(JsonObject line) =>
+        Json.Str(line, "unit") + " x" + Json.Int(line, "count", 1) + "  " + Json.Str(line, "place") +
+        (Json.Str(line, "role").Length > 0 ? "  " + Json.Str(line, "role") : "");
+
+    private JsonArray EnsureSummonList(JsonObject state)
+    {
+        JsonArray? list = Json.ArrOrNull(state, "summons");
+        if (list != null && list.Count > 0) return list;
+        list = new JsonArray();
+        if (Json.Str(state, "summon").Length > 0)
+        {
+            list.Add(new JsonObject
+            {
+                ["unit"] = Json.Str(state, "summon"),
+                ["ai"] = Json.Str(state, "summonAi"),
+                ["role"] = Json.Str(state, "summonRole"),
+                ["place"] = Json.Str(state, "summonPlace").Length == 0 ? "behind" : Json.Str(state, "summonPlace"),
+                ["count"] = Json.Int(state, "summonCount", 1),
+                ["every"] = Json.Num(state, "summonEvery"),
+                ["max"] = Json.Int(state, "summonMax"),
+                ["distance"] = Json.Num(state, "summonDistance", 5),
+                ["angle"] = Json.Num(state, "summonAngle")
+            });
+        }
+        state["summons"] = list;
+        foreach (string key in new[] { "summon", "summonAi", "summonRole", "summonPlace", "summonCount", "summonEvery", "summonMax", "summonDistance", "summonAngle" })
+            state.Remove(key);
+        return list;
+    }
+
+    private bool GuardSummon(out JsonObject? state)
+    {
+        state = SelectedState();
+        AiDoc? brain = LeaderBrain();
+        if (state == null || brain == null) return false;
+        if (!aiStore.IsProtected(brain)) return true;
+        Ui.ShowError(FindForm(), L.T("This AI is in the generic folder and cannot be edited. Create an AI for the leader first."));
+        state = null;
+        return false;
     }
 
     private void AddSummon()
     {
-        JsonObject? state = SelectedState();
-        AiDoc? brain = LeaderBrain();
-        if (state == null || brain == null) return;
-        if (aiStore.IsProtected(brain))
+        if (!GuardSummon(out JsonObject? state) || state == null) return;
+        JsonArray lines = EnsureSummonList(state);
+        lines.Add(new JsonObject
         {
-            Ui.ShowError(FindForm(), L.T("This AI is in the generic folder and cannot be edited. Create an AI for the leader first."));
-            return;
-        }
-        JsonArray list = Json.ArrOrNull(state, "summons") ?? new JsonArray();
-        state["summons"] = list;
-        list.Add(new JsonObject
-        {
-            ["unit"] = "pod",
-            ["ai"] = "",
-            ["role"] = "",
-            ["place"] = "behind",
-            ["count"] = 1,
-            ["every"] = 0,
-            ["max"] = 0,
-            ["distance"] = 5
+            ["unit"] = "pod", ["ai"] = "", ["role"] = "", ["place"] = "behind",
+            ["count"] = 1, ["every"] = 0, ["max"] = 0, ["distance"] = 5, ["angle"] = 0
         });
+        AiDoc? brain = LeaderBrain();
+        if (brain != null) brain.Dirty = true;
         FillSummons();
+        summons.SelectedIndex = lines.Count - 1;
+        status.Text = L.T("Phase summons are not saved yet. Save summons to the AI writes them.");
     }
 
     private void RemoveSummon()
     {
-        JsonObject? state = SelectedState();
-        if (state == null || summons.SelectedIndex < 0) return;
-        JsonArray? list = Json.ArrOrNull(state, "summons");
-        if (list == null || summons.SelectedIndex >= list.Count) return;
-        list.RemoveAt(summons.SelectedIndex);
+        if (!GuardSummon(out JsonObject? state) || state == null || summons.SelectedIndex < 0) return;
+        JsonArray lines = EnsureSummonList(state);
+        if (summons.SelectedIndex >= lines.Count) return;
+        lines.RemoveAt(summons.SelectedIndex);
+        AiDoc? brain = LeaderBrain();
+        if (brain != null) brain.Dirty = true;
         FillSummons();
+        status.Text = L.T("Phase summons are not saved yet. Save summons to the AI writes them.");
     }
 
     private void SaveSummons()
@@ -538,281 +970,16 @@ internal sealed class FormationTab : UserControl
         }
     }
 
-    private string? Prompt(string title, string value)
+    private static IEnumerable<string> UnitNames() =>
+        EditorAssets.Current.Units.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase);
+
+    private IEnumerable<string> AiNames() => aiStore.Brains.Select(b => b.Id);
+
+    private static void Refill(ComboBox box, IEnumerable<string> items)
     {
-        using var dialog = new Form
-        {
-            Text = title,
-            FormBorderStyle = FormBorderStyle.FixedDialog,
-            StartPosition = FormStartPosition.CenterParent,
-            ClientSize = new Size(320, 96),
-            MinimizeBox = false,
-            MaximizeBox = false
-        };
-        var box = new ThemedTextBox { Text = value, Left = 12, Top = 12, Width = 296 };
-        var ok = Ui.Primary(L.T("Save"), (_, _) => { dialog.DialogResult = DialogResult.OK; dialog.Close(); });
-        ok.Left = 12;
-        ok.Top = 48;
-        dialog.Controls.Add(box);
-        dialog.Controls.Add(ok);
-        dialog.AcceptButton = ok;
-        return dialog.ShowDialog(FindForm()) == DialogResult.OK ? box.Text.Trim() : null;
-    }
-}
-
-internal sealed class MemberDialog : Form
-{
-    private readonly ThemedTextBox id = new ThemedTextBox { Width = 160 };
-    private readonly ThemedTextBox unit = new ThemedTextBox { Width = 160 };
-    private readonly ThemedTextBox ai = new ThemedTextBox { Width = 160 };
-    private readonly ThemedTextBox role = new ThemedTextBox { Width = 160 };
-    private readonly ComboBox kind = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 120 };
-    private readonly NumberBox x = Num(-40, 40);
-    private readonly NumberBox y = Num(-40, 40);
-    private readonly NumberBox radius = Num(0, 40);
-    private readonly NumberBox spin = Num(-180, 180);
-    private readonly NumberBox angle = Num(-360, 360);
-    private readonly NumberBox count = new NumberBox { Minimum = 1, Maximum = 30, Increment = 1, DecimalPlaces = 0, Value = 1, Width = 70 };
-
-    public MemberDialog(FormationMember member)
-    {
-        Text = L.T("Member");
-        FormBorderStyle = FormBorderStyle.FixedDialog;
-        StartPosition = FormStartPosition.CenterParent;
-        ClientSize = new Size(420, 280);
-        MinimizeBox = false;
-        MaximizeBox = false;
-        kind.Items.AddRange(new object[] { "chain", "slot", "ring", "free" });
-        FormationPlace place = member.Place ?? new FormationPlace();
-        id.Text = member.Id;
-        unit.Text = member.Unit;
-        ai.Text = member.Ai;
-        role.Text = member.Role;
-        kind.SelectedItem = place.Kind.Length == 0 ? "slot" : place.Kind;
-        if (kind.SelectedIndex < 0) kind.SelectedIndex = 1;
-        x.Value = (decimal)place.X;
-        y.Value = (decimal)place.Y;
-        radius.Value = (decimal)place.Radius;
-        spin.Value = (decimal)place.Spin;
-        angle.Value = (decimal)place.Angle;
-        count.Value = Math.Clamp(place.Count <= 0 ? 1 : place.Count, 1, 30);
-
-        var grid = new TableLayoutPanel { Dock = DockStyle.Top, ColumnCount = 4, AutoSize = true, Padding = new Padding(8) };
-        Add(grid, 0, L.T("Id"), id, L.T("Unit"), unit);
-        Add(grid, 1, L.T("AI"), ai, L.T("Role"), role);
-        Add(grid, 2, L.T("Place"), kind, L.T("Count"), count);
-        Add(grid, 3, "x", x, "y", y);
-        Add(grid, 4, L.T("Radius"), radius, L.T("Spin"), spin);
-        Add(grid, 5, L.T("Angle"), angle, "", new Label());
-        var ok = Ui.Primary(L.T("Save"), (_, _) => { DialogResult = DialogResult.OK; Close(); });
-        ok.Left = 12;
-        ok.Top = 230;
-        Controls.Add(grid);
-        Controls.Add(ok);
-        AcceptButton = ok;
-    }
-
-    public void Apply(FormationMember member)
-    {
-        member.Id = id.Text.Trim();
-        member.Unit = unit.Text.Trim();
-        member.Ai = ai.Text.Trim();
-        member.Role = role.Text.Trim();
-        member.Place ??= new FormationPlace();
-        member.Place.Kind = kind.SelectedItem?.ToString() ?? "slot";
-        member.Place.X = (float)x.Value;
-        member.Place.Y = (float)y.Value;
-        member.Place.Radius = (float)radius.Value;
-        member.Place.Spin = (float)spin.Value;
-        member.Place.Angle = (float)angle.Value;
-        member.Place.Count = (int)count.Value;
-    }
-
-    private static NumberBox Num(decimal min, decimal max) =>
-        new NumberBox { Minimum = min, Maximum = max, Increment = 0.5m, DecimalPlaces = 1, Width = 70 };
-
-    private static void Add(TableLayoutPanel grid, int row, string a, Control boxA, string b, Control boxB)
-    {
-        grid.Controls.Add(new Label { Text = a, AutoSize = true }, 0, row);
-        grid.Controls.Add(boxA, 1, row);
-        grid.Controls.Add(new Label { Text = b, AutoSize = true }, 2, row);
-        grid.Controls.Add(boxB, 3, row);
-    }
-}
-
-// Draws the formation with the same placement the server uses. A right click damages the piece under the cursor.
-internal sealed class FormationCanvas : Control
-{
-    private readonly System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer { Interval = 40 };
-    private readonly List<(float X, float Y)> trail = new List<(float X, float Y)>();
-    private readonly Dictionary<string, float> health = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> fired = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> suppressed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-    private float time;
-    private FormationFile? file;
-
-    public FormationCanvas()
-    {
-        DoubleBuffered = true;
-        BackColor = Color.FromArgb(24, 28, 34);
-        timer.Tick += (_, _) => { time += 0.04f; Invalidate(); };
-        timer.Start();
-        MouseDown += OnMouse;
-    }
-
-    public FormationFile? File
-    {
-        get => file;
-        set
-        {
-            file = value;
-            trail.Clear();
-            health.Clear();
-            seen.Clear();
-            fired.Clear();
-            suppressed.Clear();
-            time = 0f;
-        }
-    }
-
-    protected override void Dispose(bool disposing)
-    {
-        if (disposing) timer.Dispose();
-        base.Dispose(disposing);
-    }
-
-    private void OnMouse(object? sender, MouseEventArgs e)
-    {
-        if (e.Button != MouseButtons.Right || file == null) return;
-        (float lx, float ly, float rot, _) = LeaderPose();
-        string? hit = Hit(e.X, e.Y, lx, ly, rot);
-        if (hit == null) return;
-        health.TryGetValue(hit, out float hp);
-        if (!health.ContainsKey(hit)) hp = 1f;
-        hp -= 0.25f;
-        if (hp < 0f) hp = 0f;
-        health[hit] = hp;
-        Invalidate();
-    }
-
-    private void LeaderPose(out float x, out float y, out float rot, out float speed)
-    {
-        float angle = time * 28f;
-        x = MathF.Sin(angle * AiMath.Rad) * 10f;
-        y = MathF.Cos(angle * AiMath.Rad) * 7f;
-        rot = angle + 90f;
-        speed = 4f;
-    }
-
-    private (float X, float Y, float Rot, float Speed) LeaderPose()
-    {
-        LeaderPose(out float x, out float y, out float rot, out float speed);
-        return (x, y, rot, speed);
-    }
-
-    private string? Hit(int mx, int my, float lx, float ly, float rot)
-    {
-        string? best = null;
-        float bestD = 14f;
-        void Consider(string id, float wx, float wy)
-        {
-            Point p = ToScreen(wx, wy);
-            float d = MathF.Sqrt((p.X - mx) * (p.X - mx) + (p.Y - my) * (p.Y - my));
-            if (d < bestD) { bestD = d; best = id; }
-        }
-        Consider("leader", lx, ly);
-        if (file == null) return best;
-        foreach (FormationSlot slot in file.Expand())
-        {
-            FormationMotion.Pose pose = PoseOf(slot, lx, ly, rot, 4f);
-            Consider(slot.Id, pose.X, pose.Y);
-        }
-        return best;
-    }
-
-    private FormationMotion.Pose PoseOf(FormationSlot slot, float lx, float ly, float rot, float speed)
-    {
-        if (slot.Kind == "chain")
-            return FormationMotion.AlongTrail(lx, ly, rot, speed, trail, (slot.ChainIndex + 1) * Math.Max(0.4f, file?.Spacing ?? 1.7f));
-        if (slot.Kind == "ring")
-            return FormationMotion.Ring(lx, ly, rot, speed, slot.Radius, slot.Angle, slot.Spin, time);
-        if (slot.Kind == "free")
-            return FormationMotion.Start(slot, lx, ly, rot, file?.Spacing ?? 1.7f);
-        return FormationMotion.Slot(lx, ly, rot, speed, slot.X, slot.Y);
-    }
-
-    private Point ToScreen(float x, float y)
-    {
-        float scale = Math.Min(Width, Height) / 36f;
-        return new Point((int)(Width / 2f + x * scale), (int)(Height / 2f - y * scale));
-    }
-
-    protected override void OnPaint(PaintEventArgs e)
-    {
-        base.OnPaint(e);
-        if (file == null)
-        {
-            TextRenderer.DrawText(e.Graphics, L.T("Pick a formation."), Font, ClientRectangle, Color.Gainsboro,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-            return;
-        }
-        (float lx, float ly, float rot, float speed) = LeaderPose();
-        if (trail.Count == 0 || AiMath.Distance(trail[^1].X, trail[^1].Y, lx, ly) >= 0.5f) trail.Add((lx, ly));
-        if (trail.Count > 80) trail.RemoveRange(0, trail.Count - 80);
-
-        var actors = new List<FormationActor>();
-        var poses = new Dictionary<string, (float X, float Y)>(StringComparer.OrdinalIgnoreCase);
-        void Actor(string id, string role, int order, bool leader)
-        {
-            health.TryGetValue(id, out float hp);
-            if (!health.ContainsKey(id)) hp = 1f;
-            actors.Add(new FormationActor
-            {
-                Id = id, Role = role, RoleOrder = order, IsLeader = leader, Alive = hp > 0f,
-                HealthFraction = hp, ShieldSuppressed = suppressed.Contains(id)
-            });
-        }
-        Actor("leader", "", 0, true);
-        poses["leader"] = (lx, ly);
-        var roleCount = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        foreach (FormationSlot slot in file.Expand())
-        {
-            roleCount.TryGetValue(slot.Role, out int n);
-            roleCount[slot.Role] = n + 1;
-            Actor(slot.Id, slot.Role, n, false);
-            FormationMotion.Pose pose = PoseOf(slot, lx, ly, rot, speed);
-            poses[slot.Id] = (pose.X, pose.Y);
-        }
-        var orders = new List<FormationOrder>();
-        FormationRules.Evaluate(file, actors, seen, fired, orders);
-        var shielded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (FormationOrder order in orders)
-        {
-            if (order.ClearShield) suppressed.Add(order.ActorId);
-            if (order.Shield && !suppressed.Contains(order.ActorId)) shielded.Add(order.ActorId);
-            if (order.Kill) health[order.ActorId] = 0f;
-            if (order.HealFraction > 0f && health.TryGetValue(order.ActorId, out float hp) && hp > 0f)
-                health[order.ActorId] = Math.Min(1f, hp + order.HealFraction);
-        }
-
-        Graphics g = e.Graphics;
-        g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-        foreach (KeyValuePair<string, (float X, float Y)> pair in poses)
-        {
-            Point p = ToScreen(pair.Value.X, pair.Value.Y);
-            bool dead = health.TryGetValue(pair.Key, out float hp) && hp <= 0f;
-            var brush = new SolidBrush(dead ? Color.DimGray : pair.Key == "leader" ? Color.OrangeRed : Color.SteelBlue);
-            g.FillEllipse(brush, p.X - 8, p.Y - 8, 16, 16);
-            brush.Dispose();
-            if (shielded.Contains(pair.Key))
-            {
-                using var pen = new Pen(Color.DeepSkyBlue, 2f);
-                g.DrawEllipse(pen, p.X - 12, p.Y - 12, 24, 24);
-            }
-            TextRenderer.DrawText(g, pair.Key, Font, new Point(p.X + 10, p.Y - 8), Color.WhiteSmoke);
-        }
-        TextRenderer.DrawText(g, L.T("Right click damages the piece under the cursor."), Font, new Rectangle(8, Height - 28, Width - 16, 22),
-            Color.Gainsboro, TextFormatFlags.Left);
+        string text = box.Text;
+        box.Items.Clear();
+        foreach (string item in items) box.Items.Add(item);
+        box.Text = text;
     }
 }

@@ -208,12 +208,16 @@ public static partial class WorldServer
     private static string EnsureBossType(string template, WorldSettings.EnemySettings settings, bool boss, string regionName)
     {
         string ai = BossAi(regionName, template, boss);
-        string key = (boss ? "world/boss/" : "world/part/") + template + (ai.Equals(WorldEnemyLists.DefaultAi, StringComparison.OrdinalIgnoreCase) ? "" : "~" + ai);
+        string formation = boss ? WorldEnemyLists.HostFormation(regionName, template) ?? "" : "";
+        string key = (boss ? "world/boss/" : "world/part/") + template
+            + (ai.Equals(WorldEnemyLists.DefaultAi, StringComparison.OrdinalIgnoreCase) ? "" : "~" + ai)
+            + (formation.Length == 0 ? "" : "~f-" + formation);
         Enemies.RegisterDefaultType(key, new Enemies.EnemyType
         {
             Name = template,
             Template = template,
             Ai = ai,
+            Formation = formation,
             FreeRoam = true,
             Boss = boss,
             DeathUnit = boss && Enemies.FindUnit(template + "DEATH") != null ? template + "DEATH" : "",

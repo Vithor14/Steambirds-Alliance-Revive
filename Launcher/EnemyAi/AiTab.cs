@@ -240,6 +240,8 @@ internal sealed class AiTab : Panel
         file.DropDownItems.Add(new ToolStripSeparator());
         file.DropDownItems.Add(Item(L.T("Open folder"), OpenFolder));
         file.DropDownItems.Add(Item(L.T("Reload"), ReloadFromDisk));
+        file.DropDownItems.Add(new ToolStripSeparator());
+        file.DropDownItems.Add(Item(L.T("Enemy types..."), OpenEnemyTypes));
 
         var edit = new ToolStripMenuItem(L.T("Edit"));
         edit.DropDownItems.Add(duplicateItem);
@@ -1080,6 +1082,12 @@ internal sealed class AiTab : Panel
             // Opening the folder reports it.
         }
         Ui.OpenFolder(this, store.Folder);
+    }
+
+    private void OpenEnemyTypes()
+    {
+        using var dialog = new EnemyTypesForm(store.Brains.Select(b => b.Id));
+        dialog.ShowDialog(FindForm());
     }
 
     private void ExportCurrent()

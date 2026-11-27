@@ -64,6 +64,8 @@ public sealed class WorldEnemyRegion
     public List<WorldEnemyGroup>? Groups { get; set; }
     // The AI file each unit of the biome runs (unit name -> AI id). A unit that is not in it runs the default AI of the open world.
     public Dictionary<string, string>? Ai { get; set; }
+    // The formation born with each unit when it leads a group or spawns alone (unit name -> formation id).
+    public Dictionary<string, string>? Formations { get; set; }
 }
 
 public sealed class WorldEnemyFiles
@@ -130,6 +132,7 @@ public sealed class WorldEnemyFiles
         public string Boss { get; set; } = "";
         public List<WorldEnemyGroup>? Groups { get; set; }
         public Dictionary<string, string>? Ai { get; set; }
+        public Dictionary<string, string>? Formations { get; set; }
     }
 
     // The AI every open-world unit runs unless one is picked for it (Server\World\WorldEnemyLists.DefaultAi).
@@ -176,7 +179,24 @@ public sealed class WorldEnemyFiles
         foreach (KeyValuePair<string, EditRegion> pair in file.Regions)
         {
             if (pair.Value == null) continue;
-            result[pair.Key] = new WorldEnemyRegion { Key = pair.Key, Boss = pair.Value.Boss ?? "", Groups = pair.Value.Groups, Ai = pair.Value.Ai };
+            Dictionary<string, string>? formations = null;
+            if (pair.Value.Formations != null)
+            {
+                formations = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                foreach (KeyValuePair<string, string> formation in pair.Value.Formations)
+                {
+                    if (!string.IsNullOrWhiteSpace(formation.Key) && !string.IsNullOrWhiteSpace(formation.Value))
+                        formations[formation.Key.Trim()] = formation.Value.Trim();
+                }
+            }
+            result[pair.Key] = new WorldEnemyRegion
+            {
+                Key = pair.Key,
+                Boss = pair.Value.Boss ?? "",
+                Groups = pair.Value.Groups,
+                Ai = pair.Value.Ai,
+                Formations = formations
+            };
         }
         return result;
     }
@@ -194,7 +214,8 @@ public sealed class WorldEnemyFiles
             {
                 Boss = pair.Value.Boss,
                 Groups = pair.Value.Groups,
-                Ai = pair.Value.Ai != null && pair.Value.Ai.Count > 0 ? pair.Value.Ai : null
+                Ai = pair.Value.Ai != null && pair.Value.Ai.Count > 0 ? pair.Value.Ai : null,
+                Formations = pair.Value.Formations != null && pair.Value.Formations.Count > 0 ? pair.Value.Formations : null
             };
         TextFiles.WriteAtomic(EditsPath, JsonSerializer.Serialize(file, Options), false);
     }

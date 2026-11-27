@@ -182,14 +182,14 @@ Work on any server.
 | `/wave N` | Jumps to wave N of the `enemies.json` encounter |
 | `/next` | Calls the next wave |
 | `/boss` | Calls the boss wave (inside a dungeon, `/boss` is the dungeon command) |
-| `/enemy TYPE [count]` | Creates enemies of a type from `enemies.json` near you (up to 20) |
+| `/enemy TYPE [count]` | Creates enemies near you (up to 20). TYPE is a type of `enemies.json`, or an AI id: `/enemy ai_ambassador` and `/enemy ambassador` are the Ambassador (`ufo`); `/enemy ai_inquisitor` and `/enemy inquisitor_chase` are the hunter. A summon named like an AI file (the cats, the diplomat) uses that file too |
 | `/spawn TEMPLATE [count]` | Creates any unit of the game by its template name (up to 20) |
 | `/clear` | Removes every enemy and stops the waves |
 | `/reset` | Restarts the encounter |
 | `/encounter [name]` | Lists the encounters or starts one |
 | `/types` | Lists the types of `enemies.json` and the template of each |
 | `/catalog [filter]` | Searches the game's armed units (up to 15 at a time) |
-| `/brains` | Lists the AI files the server loaded (`server\ai`) and the state of the enemies that use one. Types that use an AI: `/enemy ai_chaser`, `ai_bomber`, `ai_charger`, `ai_skirmisher`, `ai_sentry`, `ai_berserker`, `ai_inquisitor`, `ai_ambassador`, `ambassador_cat`, `ambassador_cat_inner`, `ambassador_cat_outer`, `ambassador_diplomat` |
+| `/brains` | Lists the AI files the server loaded (`server\ai`) and the state of the enemies that use one. `/enemy` accepts those ids (see `/enemy`). Types in `enemies.json`: `ai_chaser`, `ai_bomber`, `ai_charger`, `ai_skirmisher`, `ai_sentry`, `ai_berserker` |
 | `/wreck UNIT [seconds] [effect\|none] [state]` | Spawns a still wreck of that unit in front of you (20 seconds and the default death effects when the extras are left out). A type with `deathUnit` leaves a wreck when it dies |
 
 ### Stores
