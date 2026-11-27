@@ -11,6 +11,10 @@ public sealed class FormationFile
 {
     public int Format { get; set; } = 1;
     public string Id { get; set; } = "";
+
+    // Folder inside ai\formations ("generic", "world", "dungeons/arena"). It is the path, not a field of the file.
+    [JsonIgnore]
+    public string Origin { get; set; } = "";
     public string Name { get; set; } = "";
     public string Author { get; set; } = "";
     public string Description { get; set; } = "";
@@ -38,8 +42,11 @@ public sealed class FormationFile
             if (member == null || string.IsNullOrWhiteSpace(member.Unit)) continue;
             FormationPlace place = member.Place ?? new FormationPlace();
             string kind = (place.Kind ?? "slot").Trim().ToLowerInvariant();
-            if (kind != "chain" && kind != "slot" && kind != "ring" && kind != "free" && kind != "points") kind = "slot";
-            int count = kind == "ring" ? Math.Clamp(place.Count <= 0 ? 1 : place.Count, 1, 30) : Math.Clamp(place.Count <= 0 ? 1 : place.Count, 1, 30);
+            if (kind != "chain" && kind != "slot" && kind != "ring" && kind != "free" && kind != "points" && kind != "follow") kind = "slot";
+            // slot has one place. A named point puts every copy on that same vertex, so count does not multiply it.
+            bool usesCount = kind is "chain" or "ring" or "free"
+                || (kind == "points" && string.IsNullOrWhiteSpace(place.Point));
+            int count = usesCount ? Math.Clamp(place.Count <= 0 ? 1 : place.Count, 1, 30) : 1;
             string role = string.IsNullOrWhiteSpace(member.Role) ? (member.Id ?? "").Trim() : member.Role.Trim();
             if (role.Length == 0) role = (member.Unit ?? "").Trim();
             for (int i = 0; i < count; i++)
@@ -92,7 +99,8 @@ public sealed class FormationMember
 
 public sealed class FormationPlace
 {
-    // chain: behind the leader along the path it flew. slot: fixed x (right) and y (front), turns with the leader.
+    // chain: behind the leader along the path it flew. slot: bolted to x (right) and y (front); a sudden turn carries it.
+    // follow: the same x and y, but the piece flies there with its own turn and speed (a sudden turn does not teleport it).
     // ring: count pieces on a circle (radius, spin degrees per second, angle where the first sits).
     // points: use the formation's points. motion is patrol (vertex to vertex), fixed, toward or orbit.
     // free: born in the group and flies with its own AI (not glued).
@@ -231,9 +239,8 @@ public sealed class FormationSlot
     public string Motion = "";
     public string Point = "";
     public float Pause, TravelSpeed, OrbitRadius;
-    public bool Glued => Kind == "chain" || Kind == "slot" || Kind == "ring" || Kind == "points";
-    // Chain and slot are bolted to the leader (the Pup's pods, the train). Points and rings are only based on the
-    // leader's position: they keep the world's axes, and the piece flies to the point at its own speed.
+    public bool Glued => Kind == "chain" || Kind == "slot" || Kind == "ring" || Kind == "points" || Kind == "follow";
+    // Chain and slot are bolted on: the formation writes their position. follow flies to the same offset.
     public bool FaceLocked => Kind == "chain" || Kind == "slot";
 }
 
@@ -276,14 +283,20 @@ public sealed class FormationLibrary
         string dir = Path.Combine(aiFolder ?? "", AiCatalog.FormationsFolder);
         if (Directory.Exists(dir))
         {
-            foreach (string path in Directory.EnumerateFiles(dir, "*.json", SearchOption.TopDirectoryOnly))
+            foreach (string path in Directory.EnumerateFiles(dir, "*.json", SearchOption.AllDirectories).OrderBy(p => p, StringComparer.OrdinalIgnoreCase))
             {
                 string id = AiCatalog.CleanId(Path.GetFileNameWithoutExtension(path));
+                if (library.ById.ContainsKey(id))
+                {
+                    library.Problems.Add(path + ": another formation already has the id \"" + id + "\"");
+                    continue;
+                }
                 try
                 {
                     FormationFile? file = JsonSerializer.Deserialize<FormationFile>(File.ReadAllText(path), AiJson.Options);
                     if (file == null) continue;
                     if (string.IsNullOrWhiteSpace(file.Id)) file.Id = id;
+                    file.Origin = AiLibrary.OriginOf(dir, path);
                     library.Add(file);
                 }
                 catch (Exception e) when (e is JsonException || e is IOException)

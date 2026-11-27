@@ -282,6 +282,17 @@ public static partial class Enemies
                 part.Rot = pose.Rot;
                 part.Vel = pose.Speed;
             }
+            else if (slot.Kind == "follow")
+            {
+                float x = part.X, y = part.Y, rot = part.Rot, vel = part.Vel;
+                float top = Math.Max(part.VelMax > 1f ? part.VelMax : 8f, leader.Vel);
+                float turn = part.MaxTurn > 1f ? part.MaxTurn : 180f;
+                FormationMotion.Follow(ref x, ref y, ref rot, ref vel, pose, leader.Vel, Math.Min(part.VelMin, top), top, turn, dt);
+                part.X = x;
+                part.Y = y;
+                part.Rot = rot;
+                part.Vel = vel;
+            }
             else
             {
                 float x = part.X, y = part.Y, rot = part.Rot, vel = part.Vel;

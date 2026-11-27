@@ -2,6 +2,7 @@ using System.Globalization;
 using SteambirdsAi;
 using SteambirdsLauncher.Core;
 using SteambirdsLauncher.Editor;
+using SteambirdsLauncher.EnemyAi;
 
 namespace SteambirdsLauncher.UI;
 
@@ -65,20 +66,20 @@ internal sealed class WorldEnemiesPage : UserControl
     private readonly ThemedButton removeGroupButton;
     private readonly ThemedButton renameGroupButton;
     private readonly ThemedButton resetButton;
-    private readonly ThemedComboBox aiBox;
     private readonly ThemedButton aiEditButton;
-    private readonly ThemedComboBox formationBox;
     private readonly ThemedButton formationEditButton;
-    private bool fillingFormation;
+    private readonly ThemedButton randomGroupButton;
+    private readonly ThemedComboBox cellChoice;
+    private readonly NumberBox cellCount;
     private FormationLibrary formations = new FormationLibrary();
     private DateTime formationsStamp = DateTime.MinValue;
-    private readonly Label aiNote;
-    private readonly NumberBox countBox;
-    private readonly ThemedButton randomGroupButton;
-    private bool fillingCount;
-    private AiLibrary aiLibrary = new AiLibrary();
-    private string aiSignature = "";
-    private bool fillingAi;
+    private string editUnit = "";
+    private int editGroup = -1;
+    private int editColumn = -1;
+    private bool fillingCell;
+    private const int ColAi = 3;
+    private const int ColFormation = 4;
+    private const int ColAmount = 5;
     private readonly ThemedButton saveLists;
     private readonly ThemedButton undoLists;
     private List<WorldEnemyRegion> defaults = new List<WorldEnemyRegion>();
@@ -202,7 +203,7 @@ internal sealed class WorldEnemiesPage : UserControl
         listStatus = Ui.Wrapping("", 640, gray: true);
         listStatus.Dock = DockStyle.Top;
 
-        list = Ui.Grid((L.T("Group"), 160), (L.T("Role"), 72), (L.T("Enemy"), 140), (L.T("AI"), 150), (L.T("Formation"), 130), (L.T("Amount"), 70), (L.T("Tier"), 45), (L.T("Health"), 64));
+        list = Ui.Grid((L.T("Group"), 150), (L.T("Role"), 72), (L.T("Enemy"), 150), (L.T("AI"), 210), (L.T("Formation"), 190), (L.T("Amount"), 76), (L.T("Tier"), 45), (L.T("Health"), 64));
         list.MultiSelect = true;
         // The picture of each enemy, before its name.
         list.PictureColumn = 2;
@@ -211,38 +212,37 @@ internal sealed class WorldEnemiesPage : UserControl
         list.RowHeight = 52;
         list.PictureSize = 48;
         list.SelectedIndexChanged += (_, _) => UpdateListButtons();
+        list.MouseDown += (_, e) => OpenCell(e.Location);
+        list.MouseWheel += (_, _) => HideEditors();
+        list.ColumnWidthChanged += (_, _) => HideEditors();
         list.KeyDown += (_, e) =>
         {
             if (e.KeyCode != Keys.Delete) return;
             e.Handled = true;
             RemoveSelected();
         };
+        cellChoice = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Visible = false };
+        cellCount = new NumberBox { Minimum = 0, Maximum = WorldEnemyGroup.MaxCount, DecimalPlaces = 0, Value = 1, Width = 70, Visible = false, TextAlign = HorizontalAlignment.Right };
+        list.Controls.Add(cellChoice);
+        list.Controls.Add(cellCount);
+        cellChoice.SelectionChangeCommitted += (_, _) => CommitCellChoice();
+        cellChoice.DropDownClosed += (_, _) => { if (!fillingCell) HideEditors(); };
+        cellCount.ValueChanged += (_, _) => CommitCount();
+        cellCount.Leave += (_, _) => HideEditors();
+        cellCount.KeyDown += (_, e) =>
+        {
+            if (e.KeyCode != Keys.Enter) return;
+            e.Handled = true;
+            CommitCount();
+            HideEditors();
+        };
 
-        aiBox = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 300, Enabled = false };
-        aiBox.SelectedIndexChanged += (_, _) => AiPicked();
-        tip.SetToolTip(aiBox, L.T("The AI the selected enemies run in this biome. The list shows the AIs made for the enemy first, then the generic ones (the AI tab edits them)."));
         aiEditButton = Ui.Button(L.T("Load unit in the AI editor"), (_, _) => LoadInAiEditor());
         tip.SetToolTip(aiEditButton, L.T("Goes to the Enemy AI tab with this enemy and its AI loaded, ready to edit and test."));
-        aiNote = Ui.Wrapping("", 640, gray: true);
-        FlowLayoutPanel aiRow = Ui.WrapFlow(Ui.Text(L.T("AI of the selected enemy:")), aiBox, aiEditButton);
-        aiRow.Dock = DockStyle.Bottom;
-
-        formationBox = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 280, Enabled = false };
-        formationBox.SelectedIndexChanged += (_, _) => FormationPicked();
-        tip.SetToolTip(formationBox, L.T("The formation born with this enemy when it leads a group or spawns alone. The whole formation is created, not only this unit. \"(from the AI or the unit)\" uses the formation the AI names, or the one bound to the unit when the AI is generic."));
         formationEditButton = Ui.Button(L.T("Open formation"), (_, _) => OpenFormation());
         tip.SetToolTip(formationEditButton, L.T("Opens this formation in the Formation tab."));
-        FlowLayoutPanel formationRow = Ui.WrapFlow(Ui.Text(L.T("Formation of the selected enemy:")), formationBox, formationEditButton);
-        formationRow.Dock = DockStyle.Bottom;
-
-        countBox = new NumberBox { Minimum = 0, Maximum = WorldEnemyGroup.MaxCount, DecimalPlaces = 0, Value = 1, Width = 70, TextAlign = HorizontalAlignment.Right, Enabled = false };
-        countBox.ValueChanged += (_, _) => CountPicked();
-        tip.SetToolTip(countBox, L.T("How many of the selected enemy the group creates each time (0 = none). Once a group has amounts it is exact: one leader and every member, as many as said. The original game's Five Star group, for example, is 1 leader and 5 escorts."));
         randomGroupButton = Ui.Button(L.T("Random group"), (_, _) => RandomGroups());
         tip.SetToolTip(randomGroupButton, L.T("Takes the amounts off the selected groups: they go back to a leader and a random number of members (the group size of world.json)."));
-        FlowLayoutPanel countRow = Ui.WrapFlow(Ui.Text(L.T("Amount of the selected enemy per spawn:")), countBox, randomGroupButton);
-        countRow.Dock = DockStyle.Bottom;
-        aiNote.Dock = DockStyle.Bottom;
 
         addButton = Ui.Button(L.T("Add enemy..."), (_, _) => AddEnemies());
         removeButton = Ui.Button(L.T("Remove"), (_, _) => RemoveSelected());
@@ -252,7 +252,7 @@ internal sealed class WorldEnemiesPage : UserControl
         tip.SetToolTip(addButton, L.T("Adds units of the game to a group of this biome, or to a new group."));
         tip.SetToolTip(removeButton, L.T("Takes the selected enemies out of the list of this biome (Delete)."));
         tip.SetToolTip(resetButton, L.T("Drops what you changed in this biome (the groups, the boss and the AIs): it goes back to the game's own list."));
-        FlowLayoutPanel editButtons = Ui.WrapFlow(addButton, removeButton, removeGroupButton, renameGroupButton, resetButton);
+        FlowLayoutPanel editButtons = Ui.WrapFlow(addButton, removeButton, removeGroupButton, renameGroupButton, randomGroupButton, aiEditButton, formationEditButton, resetButton);
         editButtons.Dock = DockStyle.Bottom;
 
         saveLists = Ui.Primary(L.T("Save lists"), (_, _) => SaveLists());
@@ -261,19 +261,14 @@ internal sealed class WorldEnemiesPage : UserControl
         saveButtons.Dock = DockStyle.Bottom;
 
         hint = Ui.Wrapping(L.T("Each spawn site of a biome picks one of these groups at random: a leader with followers, or one enemy of a solo group. " +
-                               "The enemies are the game's units with the generic chase AI; pick another AI for an enemy below (one made for it, or a generic one) and edit AIs in the Enemy AI tab. " +
-                               "The bosses of the biome are listed after the groups, each with its parts and minions; they take an AI the same way.") +
-                               " " + L.T("A formation picked below is born whole with that enemy when it leads the group or spawns alone."), 640, gray: true);
+                               "Click AI, Formation or Amount on a row to change that enemy. The AI list is the ones made for that unit, then the generic ones. " +
+                               "The formation list is only the formations whose leader is that unit. Amount is how many of that enemy the group creates each time."), 640, gray: true);
         hint.Dock = DockStyle.Bottom;
 
         var listsBody = new Panel { Dock = DockStyle.Fill };
         // Fill first, then the others (WinForms docks the last added control first).
         listsBody.Controls.Add(Ui.Framed(list));
         listsBody.Controls.Add(hint);
-        listsBody.Controls.Add(formationRow);
-        listsBody.Controls.Add(aiNote);
-        listsBody.Controls.Add(aiRow);
-        listsBody.Controls.Add(countRow);
         listsBody.Controls.Add(saveButtons);
         listsBody.Controls.Add(editButtons);
         listsBody.Controls.Add(listStatus);
@@ -511,6 +506,7 @@ internal sealed class WorldEnemiesPage : UserControl
         List<(int Group, bool Leader, string Name)> selected = SelectedRows().ToList();
         List<WorldEnemyGroup> groups = EffectiveGroups(region);
 
+        HideEditors();
         list.BeginUpdate();
         list.Items.Clear();
         for (int g = 0; g < groups.Count; g++)
@@ -595,10 +591,16 @@ internal sealed class WorldEnemiesPage : UserControl
 
     private void UpdateListButtons()
     {
-        UpdateAiBox();
-        UpdateFormationBox();
-        UpdateCountControls();
         bool has = Current != null;
+        List<string> units = has ? SelectedUnits() : new List<string>();
+        aiEditButton.Enabled = has && units.Count == 1 && EnemyAiEditors.Available;
+        string openId = has && units.Count == 1 ? EffectiveFormationId(Current!, units[0]) : "";
+        formationEditButton.Enabled = openId.Length > 0 && context.OpenFormationTab != null;
+        randomGroupButton.Enabled = has && SelectedGroupRows().Any(r =>
+        {
+            List<WorldEnemyGroup> groups = EffectiveGroups(Current!);
+            return r.Group >= 0 && r.Group < groups.Count && groups[r.Group].Counts != null;
+        });
         addButton.Enabled = has;
         bool anyGroupRow = SelectedRows().Any(r => r.Group >= 0);
         removeButton.Enabled = has && SelectedRows().Any(r => r.Group >= 0 && r.Name.Length > 0);
@@ -613,6 +615,18 @@ internal sealed class WorldEnemiesPage : UserControl
     {
         listsDirty = true;
         Fill();
+    }
+
+    // A cell edit: the list stays put (rebuilding it would close the editor and jump the scroll).
+    private void NoteDirty()
+    {
+        listsDirty = true;
+        UpdateListButtons();
+        WorldEnemyRegion? region = Current;
+        if (region == null) return;
+        string state = L.T("The list of this biome is yours (changed from the game's).") + " " + L.T("Not saved yet.");
+        int total = EffectiveGroups(region).Sum(g => g.Leaders.Count + g.Members.Count);
+        Ui.SetStatus(listStatus, state + "  " + L.F("{0} group(s), {1} enemy entries.", EffectiveGroups(region).Count, total), TextRole.Warn);
     }
 
     private void AddEnemies()
@@ -740,59 +754,41 @@ internal sealed class WorldEnemiesPage : UserControl
     // The rows of the host's groups that are selected (the bosses have no amount).
     private List<(int Group, bool Leader, string Name)> SelectedGroupRows() => SelectedRows().Where(r => r.Group >= 0 && r.Name.Length > 0).ToList();
 
-    private void UpdateCountControls()
+    // A new amount for one enemy. The group becomes exact: every entry that had no amount counts as 1.
+    private void CommitCount()
     {
+        if (fillingCell || editColumn != ColAmount) return;
         WorldEnemyRegion? region = Current;
-        List<(int Group, bool Leader, string Name)> rows = region == null ? new List<(int Group, bool Leader, string Name)>() : SelectedGroupRows();
-        fillingCount = true;
-        try
-        {
-            countBox.Enabled = rows.Count > 0;
-            randomGroupButton.Enabled = false;
-            if (region == null || rows.Count == 0) return;
-            List<WorldEnemyGroup> groups = EffectiveGroups(region);
-            var amounts = new List<int>();
-            foreach ((int g, _, string name) in rows)
-            {
-                if (g >= groups.Count) continue;
-                amounts.Add(groups[g].CountOf(name));
-                if (groups[g].Counts != null) randomGroupButton.Enabled = true;
-            }
-            if (amounts.Count > 0) countBox.Value = Math.Clamp(amounts[0], 0, WorldEnemyGroup.MaxCount);
-        }
-        finally
-        {
-            fillingCount = false;
-        }
-    }
-
-    // A new amount for the selected enemies. The group becomes exact: every entry that had no amount counts as 1.
-    private void CountPicked()
-    {
-        if (fillingCount) return;
-        WorldEnemyRegion? region = Current;
-        if (region == null) return;
-        List<(int Group, bool Leader, string Name)> rows = SelectedGroupRows();
-        if (rows.Count == 0) return;
-        int amount = (int)countBox.Value;
-
+        if (region == null || editGroup < 0 || editUnit.Length == 0) return;
+        int amount = (int)cellCount.Value;
         List<WorldEnemyGroup> groups = EffectiveGroups(region);
-        bool changed = rows.Any(r => r.Group < groups.Count && (groups[r.Group].Counts == null || groups[r.Group].CountOf(r.Name) != amount));
-        if (!changed) return;
+        if (editGroup >= groups.Count) return;
+        if (groups[editGroup].Counts != null && groups[editGroup].CountOf(editUnit) == amount) return;
 
         groups = Customize(region);
-        foreach ((int g, _, string name) in rows)
+        if (editGroup >= groups.Count) return;
+        WorldEnemyGroup group = groups[editGroup];
+        if (group.Counts == null)
         {
-            if (g >= groups.Count) continue;
-            WorldEnemyGroup group = groups[g];
-            if (group.Counts == null)
-            {
-                group.Counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-                foreach (string unit in group.Leaders.Concat(group.Members)) group.Counts[unit] = 1;
-            }
-            group.Counts[name] = amount;
+            group.Counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (string unit in group.Leaders.Concat(group.Members)) group.Counts[unit] = 1;
         }
-        MarkDirty();
+        group.Counts[editUnit] = amount;
+        RefreshCountColumn();
+        NoteDirty();
+    }
+
+    private void RefreshCountColumn()
+    {
+        WorldEnemyRegion? region = Current;
+        if (region == null) return;
+        List<WorldEnemyGroup> groups = EffectiveGroups(region);
+        foreach (ListViewItem item in list.Items)
+        {
+            if (item.Tag is not ValueTuple<int, bool, string> tag || tag.Item1 < 0 || tag.Item3.Length == 0) continue;
+            if (tag.Item1 >= groups.Count || item.SubItems.Count <= ColAmount) continue;
+            item.SubItems[ColAmount].Text = CountText(groups[tag.Item1], tag.Item3);
+        }
     }
 
     private void RandomGroups()
@@ -849,90 +845,29 @@ internal sealed class WorldEnemiesPage : UserControl
     }
 
     // The AI files of the server, read again when one changes.
-    private AiLibrary Library()
-    {
-        string folder = LauncherPaths.AiFolder;
-        string signature = AiLibrary.Signature(folder);
-        if (signature != aiSignature)
-        {
-            aiLibrary = AiLibrary.Load(folder);
-            aiSignature = signature;
-        }
-        return aiLibrary;
-    }
-
     private List<string> SelectedUnits()
     {
         return SelectedRows().Select(r => r.Name).Where(n => n.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
-    // The box lists the AIs that fit every selected enemy: the ones made for them first, then the generic ones.
-    private void UpdateAiBox()
+    // The AI files of the server are read by UnitLists, the same list the other editors use.
+
+    private void SetUnitAi(WorldEnemyRegion region, string unit, string id)
     {
-        WorldEnemyRegion? region = Current;
-        List<string> units = region == null ? new List<string>() : SelectedUnits();
-        fillingAi = true;
-        try
-        {
-            aiBox.Items.Clear();
-            aiBox.Enabled = false;
-            aiEditButton.Enabled = false;
-            aiNote.Text = "";
-            if (region == null || units.Count == 0) return;
-
-            AiLibrary library = Library();
-            List<List<(string Id, bool Specific)>> perUnit = units.Select(u => library.ApplicableTo(new[] { u })).ToList();
-            List<(string Id, bool Specific)> fit = perUnit[0]
-                .Where(a => perUnit.All(l => l.Any(b => b.Id.Equals(a.Id, StringComparison.OrdinalIgnoreCase))))
-                .Select(a => (a.Id, perUnit.All(l => l.Any(b => b.Id.Equals(a.Id, StringComparison.OrdinalIgnoreCase) && b.Specific))))
-                .OrderByDescending(a => a.Item2).ToList();
-
-            List<string> currents = units.Select(u => AiOf(region, u)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-            string? current = currents.Count == 1 ? currents[0] : null;
-            if (current != null && !fit.Any(a => a.Id.Equals(current, StringComparison.OrdinalIgnoreCase)))
-                aiBox.Items.Add(new AiChoice(current, L.F("{0}  (not made for this unit)", current)));
-            foreach ((string id, bool specific) in fit)
-                aiBox.Items.Add(new AiChoice(id, specific ? L.F("{0}  (made for this unit)", id) : id));
-
-            int index = current == null ? -1 : aiBox.Items.Cast<AiChoice>().ToList().FindIndex(c => c.Id.Equals(current, StringComparison.OrdinalIgnoreCase));
-            aiBox.SelectedIndex = index;
-            aiBox.Enabled = true;
-            aiEditButton.Enabled = EnemyAiEditors.Available && units.Count == 1;
-            if (units.Count > 1)
-                aiNote.Text = L.T("Several enemies are selected: only the AIs that fit all of them are listed.");
-        }
-        finally
-        {
-            fillingAi = false;
-        }
-    }
-
-    private void AiPicked()
-    {
-        if (fillingAi || aiBox.SelectedItem is not AiChoice choice) return;
-        WorldEnemyRegion? region = Current;
-        if (region == null) return;
-        List<string> units = SelectedUnits();
-        if (units.Count == 0) return;
-
-        WorldEnemyRegion? edit = EditOf(region);
-        if (edit == null)
-        {
-            edit = new WorldEnemyRegion { Key = region.Key };
-            edits[region.Key] = edit;
-        }
+        string before = AiOf(region, unit);
+        if (before.Equals(id, StringComparison.OrdinalIgnoreCase)) return;
+        WorldEnemyRegion edit = EnsureEdit(region);
         edit.Ai ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        bool changed = false;
-        foreach (string unit in units)
+        // The default is not written: the biome keeps following the default AI of the open world.
+        if (id.Equals(WorldEnemyFiles.DefaultAiOf(unit), StringComparison.OrdinalIgnoreCase)) edit.Ai.Remove(unit);
+        else edit.Ai[unit] = id;
+        string label = AiLabel(unit);
+        foreach (ListViewItem item in list.Items)
         {
-            string before = AiOf(region, unit);
-            if (before.Equals(choice.Id, StringComparison.OrdinalIgnoreCase)) continue;
-            // The default is not written: the biome keeps following the default AI of the open world.
-            if (choice.Id.Equals(WorldEnemyFiles.DefaultAiOf(unit), StringComparison.OrdinalIgnoreCase)) edit.Ai.Remove(unit);
-            else edit.Ai[unit] = choice.Id;
-            changed = true;
+            if (item.Tag is ValueTuple<int, bool, string> tag && tag.Item3.Equals(unit, StringComparison.OrdinalIgnoreCase) && item.SubItems.Count > ColAi)
+                item.SubItems[ColAi].Text = label;
         }
-        if (changed) MarkDirty();
+        NoteDirty();
     }
 
     // ------------------------------------------------------------------ the formation born with an enemy
@@ -945,7 +880,7 @@ internal sealed class WorldEnemiesPage : UserControl
             string dir = Path.Combine(LauncherPaths.AiFolder, "formations");
             if (Directory.Exists(dir))
             {
-                foreach (string file in Directory.EnumerateFiles(dir, "*.json"))
+                foreach (string file in Directory.EnumerateFiles(dir, "*.json", SearchOption.AllDirectories))
                 {
                     DateTime write = File.GetLastWriteTimeUtc(file);
                     if (write > stamp) stamp = write;
@@ -1000,39 +935,6 @@ internal sealed class WorldEnemiesPage : UserControl
         public override string ToString() => Text;
     }
 
-    private void UpdateFormationBox()
-    {
-        WorldEnemyRegion? region = Current;
-        List<string> units = region == null ? new List<string>() : SelectedUnits();
-        fillingFormation = true;
-        try
-        {
-            formationBox.Items.Clear();
-            formationBox.Enabled = false;
-            formationEditButton.Enabled = false;
-            if (region == null || units.Count == 0) return;
-
-            formationBox.Items.Add(new FormationChoice("", L.T("(from the AI or the unit)")));
-            foreach (string id in Formations().ById.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase))
-                formationBox.Items.Add(new FormationChoice(id, id));
-
-            List<string> currents = units.Select(u => FormationOf(region, u)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-            if (currents.Count != 1) formationBox.SelectedIndex = -1;
-            else
-            {
-                int index = formationBox.Items.Cast<FormationChoice>().ToList().FindIndex(c => c.Id.Equals(currents[0], StringComparison.OrdinalIgnoreCase));
-                formationBox.SelectedIndex = index >= 0 ? index : 0;
-            }
-            formationBox.Enabled = true;
-            string openId = units.Count == 1 ? EffectiveFormationId(region, units[0]) : "";
-            formationEditButton.Enabled = openId.Length > 0 && context.OpenFormationTab != null;
-        }
-        finally
-        {
-            fillingFormation = false;
-        }
-    }
-
     private string EffectiveFormationId(WorldEnemyRegion region, string unit)
     {
         string id = FormationOf(region, unit);
@@ -1041,43 +943,167 @@ internal sealed class WorldEnemiesPage : UserControl
         return bound != null && bound.BindToUnit ? bound.Id : "";
     }
 
-    private void FormationPicked()
+    private WorldEnemyRegion EnsureEdit(WorldEnemyRegion region)
     {
-        if (fillingFormation || formationBox.SelectedItem is not FormationChoice choice) return;
+        if (EditOf(region) is WorldEnemyRegion edit) return edit;
+        edit = new WorldEnemyRegion { Key = region.Key };
+        edits[region.Key] = edit;
+        return edit;
+    }
+
+    // Click AI, Formation or Amount on a row: the editor sits on that cell, filled for that unit only.
+    private void OpenCell(Point at)
+    {
+        ListViewHitTestInfo hit = list.HitTest(at);
+        if (hit.Item == null || hit.SubItem == null || hit.Item.Tag is not ValueTuple<int, bool, string> tag || tag.Item3.Length == 0)
+        {
+            HideEditors();
+            return;
+        }
+        int column = hit.Item.SubItems.IndexOf(hit.SubItem);
+        if (column == ColAmount && tag.Item1 < 0)
+        {
+            HideEditors();
+            return;
+        }
+        if (column != ColAi && column != ColFormation && column != ColAmount)
+        {
+            HideEditors();
+            return;
+        }
+        editUnit = tag.Item3;
+        editGroup = tag.Item1;
+        editColumn = column;
+        Rectangle bounds = hit.SubItem.Bounds;
+        if (column == ColAmount)
+        {
+            cellChoice.Visible = false;
+            ShowCount(bounds);
+            return;
+        }
+        cellCount.Visible = false;
+        fillingCell = true;
+        cellChoice.Items.Clear();
+        if (column == ColAi) FillAiChoices(tag.Item3);
+        else FillFormationChoices(tag.Item3);
+        fillingCell = false;
+        Place(cellChoice, bounds);
+        cellChoice.Visible = true;
+        cellChoice.BringToFront();
+        cellChoice.Focus();
+        cellChoice.BeginInvoke(new Action(() =>
+        {
+            if (!cellChoice.IsDisposed && cellChoice.Visible) cellChoice.DroppedDown = true;
+        }));
+    }
+
+    private void ShowCount(Rectangle bounds)
+    {
+        WorldEnemyRegion? region = Current;
+        int value = 1;
+        if (region != null && editGroup >= 0)
+        {
+            List<WorldEnemyGroup> groups = EffectiveGroups(region);
+            if (editGroup < groups.Count)
+                value = groups[editGroup].Counts == null ? 1 : groups[editGroup].CountOf(editUnit);
+        }
+        fillingCell = true;
+        cellCount.Value = Math.Clamp(value, 0, WorldEnemyGroup.MaxCount);
+        fillingCell = false;
+        Place(cellCount, bounds);
+        cellCount.Visible = true;
+        cellCount.BringToFront();
+        cellCount.Focus();
+    }
+
+    private void FillAiChoices(string unit)
+    {
         WorldEnemyRegion? region = Current;
         if (region == null) return;
-        List<string> units = SelectedUnits();
-        if (units.Count == 0) return;
+        List<(string Id, bool Specific)> fit = UnitLists.Applicable(unit);
+        string current = AiOf(region, unit);
+        if (!fit.Any(a => a.Id.Equals(current, StringComparison.OrdinalIgnoreCase)))
+            cellChoice.Items.Add(new AiChoice(current, L.F("{0}  (not made for this unit)", current)));
+        foreach ((string id, bool specific) in fit)
+            cellChoice.Items.Add(new AiChoice(id, specific ? L.F("{0}  (made for this unit)", id) : id));
+        int index = cellChoice.Items.Cast<AiChoice>().ToList().FindIndex(c => c.Id.Equals(current, StringComparison.OrdinalIgnoreCase));
+        cellChoice.SelectedIndex = index;
+    }
 
-        WorldEnemyRegion? edit = EditOf(region);
-        if (edit == null)
+    private void FillFormationChoices(string unit)
+    {
+        WorldEnemyRegion? region = Current;
+        if (region == null) return;
+        string current = FormationOf(region, unit);
+        cellChoice.Items.Add(new FormationChoice("", L.T("(from the AI or the unit)")));
+        bool listed = current.Length == 0;
+        foreach (FormationFile file in Formations().ById.Values.OrderBy(f => f.Id, StringComparer.OrdinalIgnoreCase))
         {
-            edit = new WorldEnemyRegion { Key = region.Key };
-            edits[region.Key] = edit;
+            if (file.Leader == null || !file.Leader.Unit.Equals(unit, StringComparison.OrdinalIgnoreCase)) continue;
+            string text = file.Name.Length > 0 && !file.Name.Equals(file.Id, StringComparison.OrdinalIgnoreCase)
+                ? file.Name + "  (" + file.Id + ")" : file.Id;
+            cellChoice.Items.Add(new FormationChoice(file.Id, text));
+            if (file.Id.Equals(current, StringComparison.OrdinalIgnoreCase)) listed = true;
         }
+        if (!listed)
+            cellChoice.Items.Add(new FormationChoice(current, L.F("{0}  (not this unit's formation)", current)));
+        int index = cellChoice.Items.Cast<FormationChoice>().ToList().FindIndex(c => c.Id.Equals(current, StringComparison.OrdinalIgnoreCase));
+        cellChoice.SelectedIndex = index >= 0 ? index : 0;
+    }
+
+    private void CommitCellChoice()
+    {
+        if (fillingCell || editUnit.Length == 0 || Current == null) return;
+        if (editColumn == ColAi && cellChoice.SelectedItem is AiChoice ai) SetUnitAi(Current, editUnit, ai.Id);
+        else if (editColumn == ColFormation && cellChoice.SelectedItem is FormationChoice formation) SetUnitFormation(editUnit, formation.Id);
+    }
+
+    private void SetUnitFormation(string unit, string id)
+    {
+        WorldEnemyRegion? region = Current;
+        if (region == null) return;
+        WorldEnemyRegion edit = EnsureEdit(region);
         edit.Formations ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        edit.Ai ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        bool changed = false;
-        FormationFile? file = choice.Id.Length == 0 ? null : Formations().Get(choice.Id);
-        foreach (string unit in units)
+        string before = FormationOf(region, unit);
+        bool changed = !before.Equals(id, StringComparison.OrdinalIgnoreCase);
+        if (changed)
         {
-            string before = FormationOf(region, unit);
-            if (!before.Equals(choice.Id, StringComparison.OrdinalIgnoreCase))
-            {
-                if (choice.Id.Length == 0) edit.Formations.Remove(unit);
-                else edit.Formations[unit] = choice.Id;
-                changed = true;
-            }
-            // A formation names the AI its leader should run. Apply it when this enemy still has the default AI.
-            if (units.Count == 1 && file != null && file.LeaderAi.Length > 0 &&
-                AiOf(region, unit).Equals(WorldEnemyFiles.DefaultAiOf(unit), StringComparison.OrdinalIgnoreCase) &&
-                !file.LeaderAi.Equals(AiOf(region, unit), StringComparison.OrdinalIgnoreCase))
-            {
-                edit.Ai[unit] = file.LeaderAi;
-                changed = true;
-            }
+            if (id.Length == 0) edit.Formations.Remove(unit);
+            else edit.Formations[unit] = id;
         }
-        if (changed) MarkDirty();
+        FormationFile? file = id.Length == 0 ? null : Formations().Get(id);
+        // A formation names the AI its leader should run. Apply it when this enemy still has the default AI.
+        if (file != null && file.LeaderAi.Length > 0 &&
+            AiOf(region, unit).Equals(WorldEnemyFiles.DefaultAiOf(unit), StringComparison.OrdinalIgnoreCase))
+        {
+            edit.Ai ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            edit.Ai[unit] = file.LeaderAi;
+            changed = true;
+        }
+        if (!changed) return;
+        string formationLabel = FormationLabel(unit);
+        string aiLabel = AiLabel(unit);
+        foreach (ListViewItem item in list.Items)
+        {
+            if (item.Tag is not ValueTuple<int, bool, string> tag || !tag.Item3.Equals(unit, StringComparison.OrdinalIgnoreCase)) continue;
+            if (item.SubItems.Count > ColFormation) item.SubItems[ColFormation].Text = formationLabel;
+            if (item.SubItems.Count > ColAi) item.SubItems[ColAi].Text = aiLabel;
+        }
+        NoteDirty();
+    }
+
+    private static void Place(Control box, Rectangle cell)
+    {
+        int height = Math.Max(box.Height, 24);
+        box.SetBounds(cell.X + 1, cell.Y + Math.Max(0, (cell.Height - height) / 2), Math.Max(48, cell.Width - 2), height);
+    }
+
+    private void HideEditors()
+    {
+        if (!cellChoice.Visible && !cellCount.Visible) return;
+        cellChoice.Visible = false;
+        cellCount.Visible = false;
+        editColumn = -1;
     }
 
     private void OpenFormation()

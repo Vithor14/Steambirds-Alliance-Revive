@@ -39,6 +39,7 @@ internal sealed class FormationStore
         {
             Id = id,
             Name = id,
+            Origin = AiCatalog.GenericFolder,
             BindToUnit = true,
             Leader = new FormationWho { Unit = "", Ai = "" }
         };
@@ -53,6 +54,7 @@ internal sealed class FormationStore
         FormationFile copy = JsonSerializer.Deserialize<FormationFile>(json, Write) ?? new FormationFile();
         copy.Id = Unique(source.Id + "_copy");
         copy.Name = (source.Name.Length > 0 ? source.Name : source.Id) + " (copy)";
+        copy.Origin = source.Origin;
         Files.Add(copy);
         Save(copy);
         return copy;
@@ -84,10 +86,15 @@ internal sealed class FormationStore
 
     public void Save(FormationFile file)
     {
-        Directory.CreateDirectory(Folder);
         if (file.Id.Length == 0) file.Id = Unique("formation");
+        string previous = File.Exists(PathOf(file)) ? PathOf(file) : "";
+        string home = FormationOrigins.ForUnit(file.Leader?.Unit ?? "");
+        if (!string.Equals(home, file.Origin, StringComparison.OrdinalIgnoreCase)) file.Origin = home;
+        Directory.CreateDirectory(Path.GetDirectoryName(PathOf(file))!);
         string json = JsonSerializer.Serialize(file, Write);
         File.WriteAllText(PathOf(file), json);
+        if (previous.Length > 0 && !string.Equals(previous, PathOf(file), StringComparison.OrdinalIgnoreCase) && File.Exists(previous))
+            File.Delete(previous);
     }
 
     public string Unique(string wanted)
@@ -101,5 +108,10 @@ internal sealed class FormationStore
         return candidate;
     }
 
-    private string PathOf(FormationFile file) => Path.Combine(Folder, file.Id + ".json");
+    private string PathOf(FormationFile file)
+    {
+        string origin = string.IsNullOrWhiteSpace(file.Origin) ? "" : file.Origin.Replace('/', Path.DirectorySeparatorChar);
+        string folder = origin.Length == 0 ? Folder : Path.Combine(Folder, origin);
+        return Path.Combine(folder, file.Id + ".json");
+    }
 }

@@ -117,36 +117,53 @@ internal static class AiFields
     }
 
     // What a state summons, and the look it turns on. The shield is AiFields.Shield, its own tab.
-    public static IEnumerable<FieldSpec> Summons()
+    public static IEnumerable<FieldSpec> Summons(Func<string> summonUnit)
     {
         yield return FieldSpec.Header("Summons");
         yield return new FieldSpec("summon", "Unit", FieldKind.UnitTree)
         {
+            OnChanged = (_, _, _) => { },
             Help = "The unit this state calls. The list is the same as the Enemy AI unit picker: dungeons, world biomes, generic types, and units with no origin. Empty = no summons."
         };
-        yield return new FieldSpec("summonAi", "AI", FieldKind.EditableChoice)
+        yield return new FieldSpec("summonAi", "AI", FieldKind.Choice)
         {
-            Choices = UnitLists.BrainIds,
-            Help = "AI the summoned units run. Empty = the AI of the unit type."
+            Choices = () => UnitLists.Applicable(summonUnit()).Select(row => row.Id),
+            ChoiceLabel = id => UnitLists.AiText(summonUnit(), id),
+            Help = "AI the summoned units run. The list is the AIs made for this unit, then the generic ones. Empty = the AI of the unit type. Gray when this line summons nothing.",
+            EnabledWhen = SummonLive
         };
         yield return new FieldSpec("summonRole", "Role", FieldKind.EditableChoice)
         {
             Choices = UnitLists.Roles,
-            Help = "Role name, so a summonsAtMost condition or a formation link can count only this kind. The list is the roles used by formations; you can type a new one."
+            Help = "Role name, so a summonsAtMost condition or a formation link can count only this kind. The list is the roles used by formations; you can type a new one. Gray when this line summons nothing.",
+            EnabledWhen = SummonLive
         };
         yield return new FieldSpec("summonPlace", "Place", FieldKind.EditableChoice)
         {
             Choices = () => UnitLists.Places(),
-            Help = "behind, front, left, right, ring or around. A formation point is point:formation/id and sits there (x to the right, y in front of this unit). Empty = behind."
+            Help = "behind, front, left, right, ring or around. A formation point is point:formation/id and sits there (x to the right, y in front of this unit). Empty = behind. Gray when this line summons nothing.",
+            EnabledWhen = SummonLive
         };
-        yield return new FieldSpec("summonCount", "Amount each time", FieldKind.Int) { Min = 1, Max = 30, Default = 1, Help = "How many units appear each time (1 to 30)." };
-        yield return Number("summonEvery", "Again every (s)", 0, 0, 600, 0.5, "0 = only when the state starts. Otherwise it summons again every this many seconds while the state lasts.");
+        yield return new FieldSpec("summonCount", "Amount each time", FieldKind.Int)
+        {
+            Min = 0, Max = 30, Default = 1,
+            Help = "How many units appear each time. 0 summons nothing, and the other fields of this line stay gray. 1 to 30 summon that many."
+        };
+        yield return Number("summonEvery", "Again every (s)", 0, 0, 600, 0.5,
+            "0 = only when the state starts. Otherwise it summons again every this many seconds while the state lasts. Gray when this line summons nothing.",
+            SummonLive);
         yield return new FieldSpec("summonMax", "At most alive", FieldKind.Int)
         {
-            Min = 0, Max = 100, Help = "No new summons of this line while this many of them are alive. 0 = no limit."
+            Min = 0, Max = 100,
+            Help = "No new summons of this line while this many of them are alive. 0 = no limit. Gray when this line summons nothing.",
+            EnabledWhen = SummonLive
         };
-        yield return Number("summonDistance", "Summon distance", 5, 0, 80, 0.5, "How far from the summoner they appear. 0 = 5. A formation point ignores this.");
-        yield return Number("summonAngle", "Summon angle", 0, -360, 360, 5, "Where a ring starts, in degrees.");
+        yield return Number("summonDistance", "Summon distance", 5, 0, 80, 0.5,
+            "How far from the summoner they appear. 0 = 5. Gray for a formation point (that place ignores distance) and when this line summons nothing.",
+            SummonDistance);
+        yield return Number("summonAngle", "Summon angle", 0, -360, 360, 5,
+            "Where a ring or around starts, in degrees. Gray for every other place, and when this line summons nothing.",
+            SummonAngle);
 
         yield return FieldSpec.Header("Look and weapons");
         yield return new FieldSpec("effect", "Visual effect from here on", FieldKind.Choice)
@@ -166,11 +183,13 @@ internal static class AiFields
     public static IEnumerable<FieldSpec> Shield()
     {
         yield return new FieldSpec("shield", "Shield", FieldKind.Bool) { Help = "The unit ignores all damage while the shield is up." };
-        yield return Number("shieldSeconds", "Shield lasts (s)", 0, 0, 600, 0.5, "0 = the whole time the unit is in this state.");
+        yield return Number("shieldSeconds", "Shield lasts (s)", 0, 0, 600, 0.5,
+            "0 = the whole time the unit is in this state. Gray while Shield is off.", ShieldOn);
         yield return new FieldSpec("shieldEffect", "Shield look", FieldKind.Choice)
         {
             Choices = Editor.EditorAssets.EffectChoices,
-            Help = "Name of a client effect shown while the shield is up. Empty = no bubble, the unit still takes no damage. tankShield is the player tank's bubble: leave it for that plane."
+            Help = "Name of a client effect shown while the shield is up. Empty = no bubble, the unit still takes no damage. tankShield is the player tank's bubble: leave it for that plane. Gray while Shield is off.",
+            EnabledWhen = ShieldOn
         };
     }
 
@@ -255,6 +274,34 @@ internal static class AiFields
     // A movement field is active only for the modes that read it (the list is the "Uses:" of each mode in AiCatalog.MoveModes);
     // for the others it is greyed out.
     private static Func<JsonObject, bool> UsedBy(params string[] modes) => data => modes.Contains(ModeOf(data), StringComparer.Ordinal);
+
+    // A summon line does nothing without a unit, or with amount 0 (the runtime skips that line).
+    private static bool SummonLive(JsonObject data)
+    {
+        if (Json.Str(data, "summon").Length == 0) return false;
+        return data["summonCount"] == null || Json.Int(data, "summonCount", 1) > 0;
+    }
+
+    private static string SummonPlaceOf(JsonObject data)
+    {
+        string place = Json.Str(data, "summonPlace").Trim();
+        return place.Length == 0 ? "behind" : place;
+    }
+
+    private static bool SummonDistance(JsonObject data)
+    {
+        if (!SummonLive(data)) return false;
+        return !SummonPlaceOf(data).StartsWith("point:", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool SummonAngle(JsonObject data)
+    {
+        if (!SummonLive(data)) return false;
+        string place = SummonPlaceOf(data);
+        return place.Equals("ring", StringComparison.OrdinalIgnoreCase) || place.Equals("around", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool ShieldOn(JsonObject data) => Json.Bool(data, "shield");
 
     // ------------------------------------------------------------------ list texts
 

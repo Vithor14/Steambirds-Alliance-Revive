@@ -368,8 +368,9 @@ public sealed class AiSim
     // Creates "count" units the summoner asked for, behind it (they stay in the arena until they are destroyed).
     internal void Summon(AiSimUnit by, AiSummonOrder order)
     {
+        if (order.Count <= 0 || string.IsNullOrWhiteSpace(order.Type)) return;
         AiSimSetup? setup = SummonResolver?.Invoke(order.Type);
-        int count = Math.Clamp(order.Count, 1, 30);
+        int count = Math.Min(30, order.Count);
         for (int i = 0; i < count; i++)
         {
             if (units.Count(u => u.Role == AiSimUnit.RoleSummon && !u.Dead) >= MaxSummons)
@@ -483,6 +484,18 @@ public sealed class AiSim
                 part.Y = pose.Y;
                 part.Rot = pose.Rot;
                 part.Vel = pose.Speed;
+            }
+            else if (slot.Kind == "follow")
+            {
+                float x = part.X, y = part.Y, rot = part.Rot, vel = part.Vel;
+                float own = part.Unit.VelMax > 1f ? part.Unit.VelMax : 8f;
+                float top = Math.Max(own, Main.Vel);
+                float turn = part.Unit.Turn > 1f ? part.Unit.Turn : 180f;
+                FormationMotion.Follow(ref x, ref y, ref rot, ref vel, pose, Main.Vel, Math.Min(part.Unit.VelMin, top), top, turn, dt);
+                part.X = x;
+                part.Y = y;
+                part.Rot = rot;
+                part.Vel = vel;
             }
             else
             {

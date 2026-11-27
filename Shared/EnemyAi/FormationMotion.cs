@@ -134,6 +134,7 @@ public static class FormationMotion
             return OnPoints(leaderX, leaderY, slot.FaceLocked ? leaderRot : 0f, slot, points, time);
         if (slot.Kind == "free")
             return Start(slot, leaderX, leaderY, leaderRot, spacing);
+        // slot and follow share the offset. follow only uses it as a destination.
         return Slot(leaderX, leaderY, leaderRot, leaderSpeed, slot.X, slot.Y);
     }
 
@@ -248,6 +249,35 @@ public static class FormationMotion
             t -= pause;
         }
         return Still(world[start], 0f);
+    }
+
+    // Flies to a slot offset with the unit's own turn. The position is never copied from the target, so a leader that
+    // snaps 90 degrees leaves the piece to catch the new point instead of appearing there.
+    public static void Follow(ref float x, ref float y, ref float rot, ref float vel, Pose target,
+        float leaderSpeed, float velMin, float velMax, float maxTurn, float dt)
+    {
+        velMax = Math.Max(1f, velMax);
+        velMin = Math.Clamp(velMin, 0f, velMax);
+        maxTurn = Math.Max(40f, maxTurn);
+        leaderSpeed = Math.Max(0f, leaderSpeed);
+        float dist = AiMath.Distance(x, y, target.X, target.Y);
+        float aimX = target.X;
+        float aimY = target.Y;
+        float want;
+        if (dist < 0.45f)
+        {
+            // Close enough: face the way the leader faces and match its speed. Steering at a point under the nose
+            // would whip the heading around.
+            float rad = target.Rot * AiMath.Rad;
+            aimX = x + MathF.Sin(rad) * 6f;
+            aimY = y + MathF.Cos(rad) * 6f;
+            want = leaderSpeed;
+        }
+        else
+        {
+            want = Math.Min(velMax, Math.Max(leaderSpeed, dist * 2f));
+        }
+        AiMotion.Steer(ref x, ref y, ref rot, ref vel, aimX, aimY, want, velMin, velMax, maxTurn, want < 0.05f, dt);
     }
 
     // Moves toward the place the formation computed, at the piece's own speed. A rigid piece is placed on the point

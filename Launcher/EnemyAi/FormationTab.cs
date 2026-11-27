@@ -13,7 +13,8 @@ internal sealed class FormationTab : UserControl
     private readonly LauncherContext context;
     private readonly AiStore aiStore;
     private readonly FormationStore store;
-    private readonly ListBox list = new ListBox { IntegralHeight = false, HorizontalScrollbar = true, Dock = DockStyle.Fill };
+    private readonly TreeView files = new TreeView { Dock = DockStyle.Fill, HideSelection = false, ShowLines = true };
+    private readonly Dictionary<FormationFile, TreeNode> fileNodes = new Dictionary<FormationFile, TreeNode>();
     private readonly ThemedTextBox nameBox = new ThemedTextBox();
     private readonly ThemedTextBox descriptionBox = new ThemedTextBox();
     private readonly UnitTreeBox leaderUnit = new UnitTreeBox(UnitPickKind.GameUnit);
@@ -22,7 +23,6 @@ internal sealed class FormationTab : UserControl
     private readonly ThemedCheckBox bindToUnit = new ThemedCheckBox { AutoSize = true };
     private readonly ListBox members = new ListBox { IntegralHeight = false, Height = 120, Dock = DockStyle.Top };
     private readonly ListBox links = new ListBox { IntegralHeight = false, Height = 120, Dock = DockStyle.Top };
-    private readonly ListBox shields = new ListBox { IntegralHeight = false, Height = 120, Dock = DockStyle.Top };
     private readonly ThemedComboBox phases = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 180 };
     private readonly ListBox summons = new ListBox { IntegralHeight = false, Height = 100, Dock = DockStyle.Top };
     private readonly ListBox pointList = new ListBox { IntegralHeight = false, Height = 120, Dock = DockStyle.Top };
@@ -32,7 +32,6 @@ internal sealed class FormationTab : UserControl
     private readonly Label status = new Label { AutoSize = false, Height = 32, Dock = DockStyle.Fill, Tag = TextRole.Muted };
     private readonly MemberEditor memberEditor;
     private readonly LinkEditor linkEditor;
-    private readonly LinkEditor shieldEditor;
     private readonly PointEditor pointEditor;
     private readonly SummonEditor summonEditor;
     private readonly FormationCanvas canvas;
@@ -46,7 +45,6 @@ internal sealed class FormationTab : UserControl
     private ToolStripMenuItem deleteItem = null!;
     private FormationFile? current;
     private FormationLink? shownLink;
-    private FormationLink? shownShield;
     private bool filling;
     private bool splittersPlaced;
 
@@ -57,12 +55,11 @@ internal sealed class FormationTab : UserControl
         store = new FormationStore(LauncherPaths.AiFolder);
         if (EditorAssets.Current.Folder.Length == 0) EditorAssets.Load(context.GameFolder);
         canvas = new FormationCanvas { Dock = DockStyle.Fill };
-        leaderAi = FormationFields.TypedChoice(AiNames());
-        memberEditor = new MemberEditor(AiNames(), context.ToolTip);
+        leaderAi = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 240 };
+        memberEditor = new MemberEditor(context.ToolTip);
         linkEditor = new LinkEditor(context.ToolTip);
-        shieldEditor = new LinkEditor(context.ToolTip);
         pointEditor = new PointEditor(context.ToolTip);
-        summonEditor = new SummonEditor(AiNames());
+        summonEditor = new SummonEditor(context.ToolTip);
         Dock = DockStyle.Fill;
         Build();
         SizeChanged += (_, _) => PlaceSplitters();
@@ -80,7 +77,7 @@ internal sealed class FormationTab : UserControl
             RefreshList(id);
             return;
         }
-        if (index >= 0) list.SelectedIndex = index;
+        if (index >= 0) SelectFile(store.Files[index]);
     }
 
     private void Build()
@@ -94,17 +91,21 @@ internal sealed class FormationTab : UserControl
         var left = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(8, 4, 4, 8) };
         left.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         left.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
-        left.Controls.Add(list, 0, 0);
+        left.Controls.Add(files, 0, 0);
         left.Controls.Add(status, 0, 1);
-        list.SelectedIndexChanged += (_, _) => SelectListed();
-        list.MouseUp += OnListMouseUp;
-        context.ToolTip.SetToolTip(list, L.T("Right-click for New, Duplicate, Rename, Delete, Save and Reload."));
+        files.AfterSelect += (_, _) => SelectListed();
+        files.NodeMouseClick += (_, e) =>
+        {
+            if (e.Button != MouseButtons.Right) return;
+            files.SelectedNode = e.Node;
+            ShowFileMenu(e.Location);
+        };
+        context.ToolTip.SetToolTip(files, L.T("Right-click for New, Duplicate, Rename, Delete, Save and Reload."));
 
         var tabs = new ThemedTabControl { Dock = DockStyle.Fill };
         tabs.TabPages.Add(BuildFormationPage());
         tabs.TabPages.Add(BuildMembersPage());
         tabs.TabPages.Add(BuildLinksPage());
-        tabs.TabPages.Add(BuildShieldPage());
         tabs.TabPages.Add(BuildPointsPage());
         tabs.TabPages.Add(BuildSummonsPage());
 
@@ -128,14 +129,19 @@ internal sealed class FormationTab : UserControl
             if (filling || current == null) return;
             current.Leader ??= new FormationWho();
             current.Leader.Unit = leaderUnit.Value;
+            filling = true;
+            AiFill.Apply(leaderAi, current.Leader.Unit, current.Leader.Ai);
+            filling = false;
+            current.Leader.Ai = AiFill.Id(leaderAi);
             Touch();
             RefreshCanvas();
+            FillPhases();
         };
-        leaderAi.TextChanged += (_, _) =>
+        leaderAi.SelectedIndexChanged += (_, _) =>
         {
             if (filling || current == null) return;
             current.Leader ??= new FormationWho();
-            current.Leader.Ai = leaderAi.Text.Trim();
+            current.Leader.Ai = AiFill.Id(leaderAi);
             Touch();
             FillPhases();
         };
@@ -144,11 +150,11 @@ internal sealed class FormationTab : UserControl
 
         memberEditor.Changed += () =>
         {
+            UpdateSpacing();
             if (current == null || members.SelectedIndex < 0 || members.SelectedIndex >= current.Members.Count) return;
             OnPieceEdited(members, members.SelectedIndex, MemberText(current.Members[members.SelectedIndex]));
         };
-        linkEditor.Changed += () => RefreshLinkLists(LinkOf(links), LinkOf(shields));
-        shieldEditor.Changed += () => RefreshLinkLists(LinkOf(links), LinkOf(shields));
+        linkEditor.Changed += () => RefreshLinks(LinkOf(links));
         pointEditor.Changed += () =>
         {
             if (current == null || pointList.SelectedIndex < 0 || pointList.SelectedIndex >= current.Points.Count) return;
@@ -158,13 +164,11 @@ internal sealed class FormationTab : UserControl
         canvas.Changed += OnCanvasChanged;
 
         members.SelectedIndexChanged += (_, _) => { if (!filling) ShowMember(); };
-        links.SelectedIndexChanged += (_, _) => { if (!filling) ShowLinkEditor(links, linkEditor, true); };
-        shields.SelectedIndexChanged += (_, _) => { if (!filling) ShowLinkEditor(shields, shieldEditor, false); };
+        links.SelectedIndexChanged += (_, _) => { if (!filling) ShowLink(); };
         pointList.SelectedIndexChanged += (_, _) => { if (!filling) ShowPoint(); };
         summons.SelectedIndexChanged += (_, _) => { if (!filling) ShowSummon(); };
         members.KeyDown += (_, e) => { if (e.KeyCode == Keys.Delete) { e.Handled = true; RemoveMember(); } };
-        links.KeyDown += (_, e) => { if (e.KeyCode == Keys.Delete) { e.Handled = true; RemoveLink(links); } };
-        shields.KeyDown += (_, e) => { if (e.KeyCode == Keys.Delete) { e.Handled = true; RemoveLink(shields); } };
+        links.KeyDown += (_, e) => { if (e.KeyCode == Keys.Delete) { e.Handled = true; RemoveLink(); } };
         pointList.KeyDown += (_, e) => { if (e.KeyCode == Keys.Delete) { e.Handled = true; RemovePoint(); } };
         summons.KeyDown += (_, e) => { if (e.KeyCode == Keys.Delete) { e.Handled = true; RemoveSummon(); } };
     }
@@ -178,9 +182,15 @@ internal sealed class FormationTab : UserControl
         FormationFields.Add(grid, L.T("Spacing"), spacing, false);
         FormationFields.Add(grid, L.T("Leader unit"), leaderUnit);
         FormationFields.Add(grid, L.T("Leader AI"), leaderAi);
+        var tip = context.ToolTip;
+        tip.SetToolTip(nameBox, L.T("Name shown in the list. The file name is the id."));
+        tip.SetToolTip(descriptionBox, L.T("What this formation is, in a few words. Shown to whoever you share the file with."));
+        tip.SetToolTip(spacing, L.T("How far apart the pieces of a chain sit, in map units. Gray until a member uses place chain. A ring and a slot use their own radius and offsets."));
+        tip.SetToolTip(leaderUnit, L.T("The game unit of the leader, the only one a map places. The list is the same as the Enemy AI unit picker."));
+        tip.SetToolTip(leaderAi, L.T("The AI file the leader runs. The list is the AIs made for this unit, then the generic ones. Phase summons are stored on this AI."));
         var open = Ui.Button(L.T("Open in Enemy AI"), (_, _) => OpenLeader());
         context.ToolTip.SetToolTip(open, L.T("The AI file the leader runs. Open in Enemy AI jumps to that file. Phase summons are stored on this AI, not in the formation file."));
-        context.ToolTip.SetToolTip(bindToUnit, L.T("The game unit of the leader, for example trainA01, podleader or fivestarleader. With \"Use this formation for the leader unit when its AI is generic\" on, a generic AI (or no AI) on that unit still brings this formation. Turn it off when the formation must wait until an AI names it."));
+        context.ToolTip.SetToolTip(bindToUnit, L.T("On: a generic AI, or no AI, on the leader unit still brings this formation. Off: it waits until an AI names it, or a map or a biome picks it."));
         var buttons = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Top, WrapContents = true };
         buttons.Controls.Add(open);
         page.Controls.Add(buttons);
@@ -188,6 +198,7 @@ internal sealed class FormationTab : UserControl
         bindToUnit.Dock = DockStyle.Top;
         bindToUnit.MaximumSize = new Size(520, 0);
         page.Controls.Add(grid);
+        page.Controls.Add(FormationFields.Explain(page, L.T("The leader is the only unit a map, a biome or a dungeon places. Spacing is the gap of a chain and stays gray until a member uses place chain. The leader AI is the file that leader runs, including its phase summons.")));
         return page;
     }
 
@@ -201,6 +212,7 @@ internal sealed class FormationTab : UserControl
         page.Controls.Add(memberEditor);
         page.Controls.Add(buttons);
         page.Controls.Add(members);
+        page.Controls.Add(FormationFields.Explain(page, L.T("A member is one kind of piece born with the leader. Place decides which fields do anything: chain uses Count, slot uses x and y, ring uses Count, Radius, Spin and Angle, points uses the polygon, and free only uses Count. Gray fields are kept, but the formation does not read them.")));
         return page;
     }
 
@@ -208,23 +220,12 @@ internal sealed class FormationTab : UserControl
     {
         var page = new TabPage(L.T("Links")) { Padding = new Padding(6) };
         FlowLayoutPanel buttons = Buttons();
-        buttons.Controls.Add(Ui.Button(L.T("Add"), (_, _) => AddLink(shield: false)));
-        buttons.Controls.Add(Ui.Danger(L.T("Delete"), (_, _) => RemoveLink(links)));
+        buttons.Controls.Add(Ui.Button(L.T("Add"), (_, _) => AddLink()));
+        buttons.Controls.Add(Ui.Danger(L.T("Delete"), (_, _) => RemoveLink()));
         page.Controls.Add(linkEditor);
         page.Controls.Add(buttons);
         page.Controls.Add(links);
-        return page;
-    }
-
-    private TabPage BuildShieldPage()
-    {
-        var page = new TabPage(L.T("Shield")) { Padding = new Padding(6) };
-        FlowLayoutPanel buttons = Buttons();
-        buttons.Controls.Add(Ui.Button(L.T("Add"), (_, _) => AddLink(shield: true)));
-        buttons.Controls.Add(Ui.Danger(L.T("Delete"), (_, _) => RemoveLink(shields)));
-        page.Controls.Add(shieldEditor);
-        page.Controls.Add(buttons);
-        page.Controls.Add(shields);
+        page.Controls.Add(FormationFields.Explain(page, L.T("One list for every rule: a shield that holds, kill all when someone dies, drop the next shield at a health percent, or heal a target. Kind stays on this row. Only the fields of the chosen kind stay on.")));
         return page;
     }
 
@@ -240,9 +241,11 @@ internal sealed class FormationTab : UserControl
         buttons.Controls.Add(polygonRadius);
         buttons.Controls.Add(Ui.Button(L.T("Make polygon"), (_, _) => MakePolygon()));
         context.ToolTip.SetToolTip(polygonCount, L.T("How many corners the polygon has. This replaces the points."));
+        context.ToolTip.SetToolTip(polygonRadius, L.T("Distance from the leader to each corner, in map units. x is to the right and y is in front."));
         page.Controls.Add(pointEditor);
         page.Controls.Add(buttons);
         page.Controls.Add(pointList);
+        page.Controls.Add(FormationFields.Explain(page, L.T("Points are places around the leader: x to the right, y in front. A member whose place is points walks them (patrol, stay, fly to one, or orbit one). Edit points on the preview does the same with the mouse.")));
         return page;
     }
 
@@ -253,6 +256,7 @@ internal sealed class FormationTab : UserControl
         phaseRow.Controls.Add(Ui.Text(L.T("State of the leader AI")));
         phaseRow.Controls.Add(phases);
         phases.SelectedIndexChanged += (_, _) => { if (!filling) FillSummons(); };
+        context.ToolTip.SetToolTip(phases, L.T("The state of the leader AI whose summon lines are listed below. The lines are saved into that AI, not into the formation."));
         FlowLayoutPanel buttons = Buttons();
         buttons.Controls.Add(Ui.Button(L.T("Add"), (_, _) => AddSummon()));
         buttons.Controls.Add(Ui.Danger(L.T("Delete"), (_, _) => RemoveSummon()));
@@ -263,6 +267,7 @@ internal sealed class FormationTab : UserControl
         page.Controls.Add(buttons);
         page.Controls.Add(summons);
         page.Controls.Add(phaseRow);
+        page.Controls.Add(FormationFields.Explain(page, L.T("Phase summons are units the leader's AI creates during a state. They are not born with the formation. Pick a state, edit the lines, then Save summons to the AI. A line with no unit, or with count 0, summons nothing, so its other fields stay gray.")));
         return page;
     }
 
@@ -319,17 +324,11 @@ internal sealed class FormationTab : UserControl
     // The list stays narrow and the simulator stays a side column, so the tabs keep the width.
     private void PlaceSplitters()
     {
-        if (splittersPlaced || Width < 860 || fileSplit.Width < 700) return;
+        if (splittersPlaced || Width < 700) return;
         try
         {
-            fileSplit.Panel1MinSize = 180;
-            fileSplit.Panel2MinSize = 520;
-            fileSplit.SplitterDistance = Math.Clamp(220, 180, fileSplit.Width - 520);
-            editorSplit.Panel1MinSize = 340;
-            editorSplit.Panel2MinSize = 260;
-            int sim = 340;
-            int distance = editorSplit.Width - sim;
-            editorSplit.SplitterDistance = Math.Clamp(distance, 340, Math.Max(340, editorSplit.Width - 260));
+            fileSplit.SplitterDistance = Math.Clamp(Width * 17 / 100, 170, 260);
+            editorSplit.SplitterDistance = Math.Max(300, editorSplit.Width * 48 / 100);
             splittersPlaced = true;
         }
         catch (Exception e) when (e is ArgumentException || e is InvalidOperationException)
@@ -376,11 +375,8 @@ internal sealed class FormationTab : UserControl
         return bar;
     }
 
-    private void OnListMouseUp(object? sender, MouseEventArgs e)
+    private void ShowFileMenu(Point at)
     {
-        if (e.Button != MouseButtons.Right) return;
-        int index = list.IndexFromPoint(e.Location);
-        if (index >= 0) list.SelectedIndex = index;
         var menu = new ContextMenuStrip { Renderer = new EditorRenderer() };
         menu.Items.Add(MenuItem(L.T("New"), NewFile));
         menu.Items.Add(MenuItem(L.T("Duplicate"), Duplicate, current != null));
@@ -389,7 +385,7 @@ internal sealed class FormationTab : UserControl
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(MenuItem(L.T("Save"), Save, current != null));
         menu.Items.Add(MenuItem(L.T("Reload"), ReloadFromDisk));
-        menu.Show(list, e.Location);
+        menu.Show(files, at);
     }
 
     private static ToolStripMenuItem MenuItem(string text, Action action, bool enabled = true)
@@ -423,8 +419,8 @@ internal sealed class FormationTab : UserControl
                 NewFile();
                 return true;
             case Keys.F1:
-                ShowHelp(0);
-                return true;
+            ShowHelp(0);
+            return true;
         }
         return base.ProcessCmdKey(ref message, keyData);
     }
@@ -439,15 +435,56 @@ internal sealed class FormationTab : UserControl
     private void RefreshList(string? selectId)
     {
         filling = true;
-        list.Items.Clear();
-        foreach (FormationFile file in store.Files) list.Items.Add(LabelOf(file));
-        int index = selectId == null ? -1 : store.Files.FindIndex(f => f.Id.Equals(selectId, StringComparison.OrdinalIgnoreCase));
+        files.BeginUpdate();
+        files.Nodes.Clear();
+        fileNodes.Clear();
+        var folders = new Dictionary<string, TreeNode>(StringComparer.OrdinalIgnoreCase);
+        foreach (string standard in new[] { AiCatalog.GenericFolder, AiCatalog.WorldFolder, AiCatalog.DungeonsFolder })
+            FolderNode(folders, standard);
+        foreach (FormationFile file in store.Files.OrderBy(f => f.Id, StringComparer.OrdinalIgnoreCase))
+            AddFileNode(folders, file);
+        files.ExpandAll();
+        files.EndUpdate();
         filling = false;
-        if (list.Items.Count == 0) Show(null);
-        else list.SelectedIndex = index >= 0 ? index : 0;
+        FormationFile? pick = selectId == null ? store.Files.FirstOrDefault() : store.Files.FirstOrDefault(f => f.Id.Equals(selectId, StringComparison.OrdinalIgnoreCase));
+        if (pick == null) Show(null);
+        else SelectFile(pick);
         if (store.Problems.Count > 0) status.Text = store.Problems[0];
         else if (dirtyIds.Count == 0) status.Text = L.F("{0} formation(s).", store.Files.Count);
         UpdateFileMenu();
+    }
+
+    private TreeNode FolderNode(Dictionary<string, TreeNode> folders, string origin)
+    {
+        if (folders.TryGetValue(origin, out TreeNode? known)) return known;
+        int cut = origin.LastIndexOf('/');
+        TreeNode parent = cut < 0 ? null! : FolderNode(folders, origin.Substring(0, cut));
+        var node = new TreeNode(origin.Substring(cut + 1)) { ForeColor = Theme.ColorOf(TextRole.Muted) };
+        if (cut < 0) files.Nodes.Add(node);
+        else parent.Nodes.Add(node);
+        folders[origin] = node;
+        return node;
+    }
+
+    private void AddFileNode(Dictionary<string, TreeNode> folders, FormationFile file)
+    {
+        string origin = string.IsNullOrWhiteSpace(file.Origin) ? AiCatalog.GenericFolder : file.Origin;
+        TreeNode parent = FolderNode(folders, origin);
+        if (origin.Equals(AiCatalog.WorldFolder, StringComparison.OrdinalIgnoreCase) || origin.StartsWith(AiCatalog.WorldFolder + "/", StringComparison.OrdinalIgnoreCase))
+        {
+            string biome = FormationOrigins.BiomeOf(file.Leader?.Unit ?? "");
+            if (biome.Length > 0) parent = FolderNode(folders, AiCatalog.WorldFolder + "/" + biome);
+        }
+        var node = new TreeNode(LabelOf(file)) { Tag = file };
+        parent.Nodes.Add(node);
+        fileNodes[file] = node;
+    }
+
+    private void SelectFile(FormationFile file)
+    {
+        if (!fileNodes.TryGetValue(file, out TreeNode? node)) return;
+        files.SelectedNode = node;
+        node.EnsureVisible();
     }
 
     private string LabelOf(FormationFile file)
@@ -459,15 +496,22 @@ internal sealed class FormationTab : UserControl
 
     private void RefreshCurrentLabel()
     {
-        if (current == null || list.SelectedIndex < 0 || list.SelectedIndex >= store.Files.Count) return;
-        ReplaceItem(list, list.SelectedIndex, LabelOf(current));
+        if (current == null || !fileNodes.TryGetValue(current, out TreeNode? node)) return;
+        node.Text = LabelOf(current);
     }
 
     private void SelectListed()
     {
         if (filling) return;
-        if (list.SelectedIndex < 0 || list.SelectedIndex >= store.Files.Count) { Show(null); return; }
-        Show(store.Files[list.SelectedIndex]);
+        if (files.SelectedNode?.Tag is not FormationFile file) return;
+        Show(file);
+    }
+
+    private void UpdateSpacing()
+    {
+        bool chain = current != null && current.Members.Any(member =>
+            string.Equals(member.Place?.Kind, "chain", StringComparison.OrdinalIgnoreCase));
+        FormationFields.SetLive(spacing, current != null && chain);
     }
 
     private void Show(FormationFile? file)
@@ -475,15 +519,14 @@ internal sealed class FormationTab : UserControl
         current = file;
         filling = true;
         bool on = file != null;
-        nameBox.Enabled = descriptionBox.Enabled = leaderUnit.Enabled = leaderAi.Enabled = spacing.Enabled = bindToUnit.Enabled = on;
-        Refill(leaderAi, AiNames());
-        memberEditor.UseLists(AiNames());
-        summonEditor.UseLists(AiNames(), file);
+        nameBox.Enabled = descriptionBox.Enabled = leaderUnit.Enabled = leaderAi.Enabled = bindToUnit.Enabled = on;
+        UpdateSpacing();
+        summonEditor.UseLists(file);
         nameBox.Text = file?.Name ?? "";
         descriptionBox.Text = file?.Description ?? "";
         if (file != null) file.Leader ??= new FormationWho();
         leaderUnit.Value = file?.Leader?.Unit ?? "";
-        leaderAi.Text = file?.LeaderAi ?? "";
+        AiFill.Apply(leaderAi, file?.Leader?.Unit ?? "", file?.LeaderAi ?? "");
         FormationFields.SetNumber(spacing, file?.Spacing ?? 1.7f);
         bindToUnit.Checked = file?.BindToUnit ?? true;
         members.Items.Clear();
@@ -495,7 +538,7 @@ internal sealed class FormationTab : UserControl
         filling = false;
         if (members.Items.Count > 0) members.SelectedIndex = 0;
         else ShowMember();
-        RefreshLinkLists(null, null);
+        RefreshLinks(null);
         if (pointList.Items.Count > 0) pointList.SelectedIndex = 0;
         else ShowPoint();
         FillPhases();
@@ -552,7 +595,6 @@ internal sealed class FormationTab : UserControl
         if (box == members)
         {
             linkEditor.Show(LinkOf(links), MemberIds());
-            shieldEditor.Show(LinkOf(shields), MemberIds());
         }
         Touch();
         RefreshCanvas();
@@ -693,7 +735,7 @@ internal sealed class FormationTab : UserControl
         current.Description = descriptionBox.Text;
         current.Leader ??= new FormationWho();
         current.Leader.Unit = leaderUnit.Value;
-        current.Leader.Ai = leaderAi.Text.Trim();
+        current.Leader.Ai = AiFill.Id(leaderAi);
         current.Spacing = (float)spacing.Value;
         current.BindToUnit = bindToUnit.Checked;
     }
@@ -772,49 +814,27 @@ internal sealed class FormationTab : UserControl
         public override string ToString() => LinkText(Link);
     }
 
-    private static bool IsShield(FormationLink link) =>
-        (link.Shield != null && link.Shield.Count > 0) || link.Do?.Kind == "unshield";
-
     private static FormationLink? LinkOf(ListBox box) => (box.SelectedItem as LinkItem)?.Link;
 
-    private void RefreshLinkLists(FormationLink? keepLink, FormationLink? keepShield)
+    // Rebuilds the one list. The editor is reloaded only when the selected link object changes, so typing and
+    // changing Kind do not wipe the row or move the caret.
+    private void RefreshLinks(FormationLink? keep)
     {
-        bool was = filling;
         filling = true;
         links.Items.Clear();
-        shields.Items.Clear();
         if (current != null)
-        {
-            foreach (FormationLink link in current.Links)
-                (IsShield(link) ? shields : links).Items.Add(new LinkItem(link));
-        }
-        int linkIndex = IndexOf(links, keepLink);
-        int shieldIndex = IndexOf(shields, keepShield);
-        if (linkIndex < 0 && keepLink != null && IsShield(keepLink)) shieldIndex = IndexOf(shields, keepLink);
-        if (shieldIndex < 0 && keepShield != null && !IsShield(keepShield)) linkIndex = IndexOf(links, keepShield);
-        if (linkIndex < 0 && links.Items.Count > 0 && keepLink == null && keepShield == null) linkIndex = 0;
-        if (shieldIndex < 0 && shields.Items.Count > 0 && keepLink == null && keepShield == null) shieldIndex = 0;
-        filling = was;
-        if (links.SelectedIndex != linkIndex)
-        {
-            if (linkIndex >= 0) links.SelectedIndex = linkIndex;
-            else ShowLinkEditor(links, linkEditor, true);
-        }
-        else if (LinkOf(links) != shownLink) ShowLinkEditor(links, linkEditor, true);
-        if (shields.SelectedIndex != shieldIndex)
-        {
-            if (shieldIndex >= 0) shields.SelectedIndex = shieldIndex;
-            else ShowLinkEditor(shields, shieldEditor, false);
-        }
-        else if (LinkOf(shields) != shownShield) ShowLinkEditor(shields, shieldEditor, false);
+            foreach (FormationLink link in current.Links) links.Items.Add(new LinkItem(link));
+        int index = IndexOf(links, keep);
+        if (index < 0 && keep == null && links.Items.Count > 0) index = 0;
+        links.SelectedIndex = index;
+        filling = false;
+        if (LinkOf(links) != shownLink) ShowLink();
     }
 
-    private void ShowLinkEditor(ListBox box, LinkEditor editor, bool plain)
+    private void ShowLink()
     {
-        FormationLink? link = LinkOf(box);
-        if (plain) shownLink = link;
-        else shownShield = link;
-        editor.Show(link, MemberIds());
+        shownLink = LinkOf(links);
+        linkEditor.Show(shownLink, MemberIds());
     }
 
     private static int IndexOf(ListBox box, FormationLink? link)
@@ -825,22 +845,20 @@ internal sealed class FormationTab : UserControl
         return -1;
     }
 
-    private void AddLink(bool shield)
+    private void AddLink()
     {
         if (current == null) return;
-        var link = shield
-            ? new FormationLink { Shield = new List<string> { "leader" }, Effect = "" }
-            : new FormationLink { When = new FormationWhen { Died = "leader" }, Do = new FormationDo { Kind = "killAll" } };
+        var link = new FormationLink { When = new FormationWhen { Died = "leader" }, Do = new FormationDo { Kind = "killAll" } };
         current.Links.Add(link);
-        RefreshLinkLists(shield ? null : link, shield ? link : null);
+        RefreshLinks(link);
         Touch();
     }
 
-    private void RemoveLink(ListBox box)
+    private void RemoveLink()
     {
-        if (current == null || LinkOf(box) is not FormationLink link) return;
+        if (current == null || LinkOf(links) is not FormationLink link) return;
         current.Links.Remove(link);
-        RefreshLinkLists(null, null);
+        RefreshLinks(null);
         Touch();
     }
 
@@ -902,8 +920,8 @@ internal sealed class FormationTab : UserControl
         AiDoc? brain = LeaderBrain();
         if (brain != null)
         {
-            foreach (JsonObject state in Json.Objects(Json.ArrOrNull(brain.Root, "states")))
-                phases.Items.Add(Json.Str(state, "id"));
+        foreach (JsonObject state in Json.Objects(Json.ArrOrNull(brain.Root, "states")))
+            phases.Items.Add(Json.Str(state, "id"));
         }
         filling = false;
         if (phases.Items.Count > 0) phases.SelectedIndex = 0;
@@ -1041,16 +1059,4 @@ internal sealed class FormationTab : UserControl
         }
     }
 
-    private static IEnumerable<string> UnitNames() =>
-        EditorAssets.Current.Units.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase);
-
-    private IEnumerable<string> AiNames() => aiStore.Brains.Select(b => b.Id);
-
-    private static void Refill(ComboBox box, IEnumerable<string> items)
-    {
-        string text = box.Text;
-        box.Items.Clear();
-        foreach (string item in items) box.Items.Add(item);
-        box.Text = text;
-    }
 }

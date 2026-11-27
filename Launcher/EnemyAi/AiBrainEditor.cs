@@ -28,6 +28,7 @@ internal sealed class AiBrainEditor : Panel
     private readonly Label conditionHelp;
     private AiDoc? doc;
     private JsonObject? state;
+    private JsonObject? summonState;
     private string stateId = "";
 
     public AiBrainEditor(AiStore store)
@@ -49,7 +50,7 @@ internal sealed class AiBrainEditor : Panel
             statesList.RefreshText();
             Changed();
         });
-        summonsForm = new JsonForm(AiFields.Summons(), () => { }, _ =>
+        summonsForm = new JsonForm(AiFields.Summons(() => Json.Str(summonState, "summon")), () => { }, _ =>
         {
             statesList.RefreshText();
             Changed();
@@ -366,6 +367,7 @@ internal sealed class AiBrainEditor : Panel
     private void OnStateSelected(JsonObject? selected)
     {
         state = selected;
+        summonState = selected;
         stateId = Json.Str(selected, "id");
         stateForm.Bind(selected);
         ownForm.Bind(selected);

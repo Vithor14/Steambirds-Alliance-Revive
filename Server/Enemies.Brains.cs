@@ -310,6 +310,7 @@ public static partial class Enemies
     // Creates "count" units behind the summoner (they stay in its group and room, so a script counts them together).
     private static void SummonUnits(Instance inst, Enemy enemy, AiSummonOrder order, double now, Action<string, string>? log)
     {
+        if (order.Count <= 0) return;
         string typeName = order.Type;
         EnemyType? type = FindSummonType(enemy, typeName, out string key);
         if (type == null)

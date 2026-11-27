@@ -10,6 +10,8 @@ internal sealed class ThemedComboBox : ComboBox
     private const int WmPaint = 0x000F;
     private const int WmEraseBackground = 0x0014;
     private const int WmMouseWheel = 0x020A;
+    private const int WmCtlColorEdit = 0x0133;
+    private const int WmCtlColorStatic = 0x0138;
 
     [StructLayout(LayoutKind.Sequential)]
     private struct Rect
@@ -53,7 +55,24 @@ internal sealed class ThemedComboBox : ComboBox
     [DllImport("user32.dll")]
     private static extern IntPtr SendMessage(IntPtr window, int message, IntPtr wParam, IntPtr lParam);
 
+    [DllImport("user32.dll")]
+    private static extern bool InvalidateRect(IntPtr window, IntPtr rect, bool erase);
+
+    [DllImport("gdi32.dll")]
+    private static extern int SetBkColor(IntPtr dc, int color);
+
+    [DllImport("gdi32.dll")]
+    private static extern int SetTextColor(IntPtr dc, int color);
+
+    [DllImport("gdi32.dll")]
+    private static extern IntPtr CreateSolidBrush(int color);
+
+    [DllImport("gdi32.dll")]
+    private static extern bool DeleteObject(IntPtr brush);
+
     private bool hover;
+    private IntPtr editBrush;
+    private int editBrushColor = -1;
     private Func<string, int, Image?>? itemImage;
 
     public ThemedComboBox()
@@ -90,6 +109,11 @@ internal sealed class ThemedComboBox : ComboBox
 
     protected override void WndProc(ref Message m)
     {
+        if (m.Msg == WmCtlColorEdit || m.Msg == WmCtlColorStatic)
+        {
+            ColorEdit(ref m);
+            return;
+        }
         if (m.Msg == WmMouseWheel && !DroppedDown && Parent != null)
         {
             SendMessage(Parent.Handle, m.Msg, m.WParam, m.LParam);
@@ -200,11 +224,53 @@ internal sealed class ThemedComboBox : ComboBox
     protected override void OnHandleCreated(EventArgs e)
     {
         base.OnHandleCreated(e);
+        // The system style paints the edit white with black text. Without it, the field uses the theme colors.
+        NativeTheme.Strip(Handle);
+        StripEdit();
         // An editable box starts with its text selected in the system's blue: clear it until the user clicks in.
         BeginInvoke(new Action(() =>
         {
             if (!IsDisposed && !Focused && DropDownStyle == ComboBoxStyle.DropDown) SelectionLength = 0;
         }));
+    }
+
+    // The editable kind is a child text box. It asks its parent (this combo) for colors; answer with the theme.
+    private void ColorEdit(ref Message m)
+    {
+        Theme.Palette p = Theme.P;
+        Color backdrop = Dpi.BackdropOf(this);
+        Color back = Enabled ? p.Input : Theme.Blend(backdrop, p.Input, 0.35f);
+        Color fore = Enabled ? p.Text : Theme.Blend(backdrop, p.Muted, 0.65f);
+        int rgb = ColorTranslator.ToWin32(back);
+        SetBkColor(m.WParam, rgb);
+        SetTextColor(m.WParam, ColorTranslator.ToWin32(fore));
+        if (editBrush == IntPtr.Zero || editBrushColor != rgb)
+        {
+            if (editBrush != IntPtr.Zero) DeleteObject(editBrush);
+            editBrush = CreateSolidBrush(rgb);
+            editBrushColor = rgb;
+        }
+        m.Result = editBrush;
+    }
+
+    private void StripEdit()
+    {
+        var info = new ComboBoxInfo { Size = Marshal.SizeOf<ComboBoxInfo>() };
+        if (GetComboBoxInfo(Handle, ref info) && info.Edit != IntPtr.Zero)
+        {
+            NativeTheme.Strip(info.Edit);
+            InvalidateRect(info.Edit, IntPtr.Zero, true);
+        }
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing && editBrush != IntPtr.Zero)
+        {
+            DeleteObject(editBrush);
+            editBrush = IntPtr.Zero;
+        }
+        base.Dispose(disposing);
     }
 
     // Text set by code selects itself in the system's blue even without the focus: clear it unless the user is in the box.
@@ -269,5 +335,6 @@ internal sealed class ThemedComboBox : ComboBox
     {
         Invalidate();
         base.OnEnabledChanged(e);
+        if (IsHandleCreated) StripEdit();
     }
 }

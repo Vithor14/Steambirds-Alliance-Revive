@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using SteambirdsAi;
 using SteambirdsLauncher.Core;
+using SteambirdsLauncher.EnemyAi;
 using SteambirdsLauncher.UI;
 
 namespace SteambirdsLauncher.Editor;
@@ -116,7 +117,8 @@ internal sealed class UnitTypesPage : EditorPage
         yield return new FieldSpec(EnemyAiEditors.AiField, "AI (file)", FieldKind.EditableChoice)
         {
             Choices = () => EnemyAiEditors.Current?.ApplicableBrainIds(EnemyAiEditors.UnitNamesOf(CurrentType)) ?? Enumerable.Empty<string>(),
-            Help = "Id of an AI file of the server's ai\\brains folder. The list shows the AIs made for this unit first, then the generic ones; you can also type another id. Empty = the unit gets the generic chase AI."
+            ChoiceLabel = id => UnitLists.AiText(string.Join("|", EnemyAiEditors.UnitNamesOf(CurrentType)), id),
+            Help = "Id of an AI file of the server's ai\\brains folder. The list shows the AIs made for this unit first, then the generic ones. Empty = the unit gets the generic chase AI."
         };
         yield return new FieldSpec("formation", "Formation", FieldKind.EditableChoice)
         {

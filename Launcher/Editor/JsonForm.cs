@@ -77,6 +77,9 @@ internal sealed class FieldSpec
     // UnitTree: true writes the game unit name (a map template). False writes a type id when the row is a type.
     public bool PickGameUnit { get; init; }
 
+    // Choice: text shown for an id. The file still stores the id, not this text.
+    public Func<string, string>? ChoiceLabel { get; init; }
+
     // Text and choice fields: called inside the change, after the new value is written (the data, the old and the new value).
     public Action<JsonObject, string, string>? OnChanged { get; init; }
 
@@ -228,12 +231,12 @@ internal sealed class JsonForm : Panel
                     Func<string, AssetPicture?> picture = spec.Picture;
                     combo.ItemImage = (text, size) => EditorAssets.Current.HasPictures ? picture(text)?.Thumb(size) ?? AssetPicture.Placeholder(size) : null;
                 }
-                if (spec.Kind == FieldKind.Choice) combo.SelectedIndexChanged += (_, _) => CommitText(spec, combo.Text);
+                if (spec.Kind == FieldKind.Choice) combo.SelectedIndexChanged += (_, _) => CommitText(spec, ComboValue(combo));
                 else
                 {
-                    combo.SelectionChangeCommitted += (_, _) => CommitText(spec, combo.Text);
-                    combo.Validated += (_, _) => CommitText(spec, combo.Text);
-                    combo.KeyDown += (_, e) => EnterCommits(e, () => CommitText(spec, combo.Text));
+                    combo.SelectionChangeCommitted += (_, _) => CommitText(spec, ComboValue(combo));
+                    combo.Validated += (_, _) => CommitText(spec, ComboValue(combo));
+                    combo.KeyDown += (_, e) => EnterCommits(e, () => CommitText(spec, ComboValue(combo)));
                 }
                 return combo;
             }
@@ -379,7 +382,7 @@ internal sealed class JsonForm : Panel
         // Build the wanted list first (a set avoids the quadratic Items.Contains) and touch the combo only when it
         // differs: this runs on every change the canvas makes, and rebuilding long lists made painting freeze.
         var wanted = new List<string>();
-        var seen = new HashSet<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         if (spec.AllowEmpty || spec.Kind == FieldKind.EditableChoice)
         {
             wanted.Add("");
@@ -392,18 +395,55 @@ internal sealed class JsonForm : Panel
         }
         if (current.Length > 0 && seen.Add(current)) wanted.Add(current);
 
+        bool labeled = spec.ChoiceLabel != null;
         bool same = combo.Items.Count == wanted.Count;
-        for (int i = 0; same && i < wanted.Count; i++) same = combo.Items[i] as string == wanted[i];
+        for (int i = 0; same && i < wanted.Count; i++)
+            same = labeled ? combo.Items[i] is ChoiceRow row && row.Id.Equals(wanted[i], StringComparison.OrdinalIgnoreCase) : combo.Items[i] as string == wanted[i];
         if (!same)
         {
             combo.BeginUpdate();
             combo.Items.Clear();
-            foreach (string item in wanted) combo.Items.Add(item);
+            foreach (string item in wanted)
+                combo.Items.Add(labeled ? new ChoiceRow(item, item.Length == 0 ? "" : spec.ChoiceLabel!(item)) : item);
             combo.EndUpdate();
         }
 
+        if (labeled)
+        {
+            for (int i = 0; i < combo.Items.Count; i++)
+            {
+                if (combo.Items[i] is ChoiceRow row && row.Id.Equals(current, StringComparison.OrdinalIgnoreCase))
+                {
+                    combo.SelectedIndex = i;
+                    return;
+                }
+            }
+            combo.SelectedIndex = -1;
+            return;
+        }
         if (spec.Kind == FieldKind.EditableChoice) combo.Text = current;
         else combo.SelectedItem = current.Length > 0 || seen.Contains("") ? current : null;
+    }
+
+    private static string ComboValue(ComboBox combo)
+    {
+        if (combo.SelectedItem is ChoiceRow row &&
+            (combo.DropDownStyle == ComboBoxStyle.DropDownList || string.Equals(combo.Text, row.Text, StringComparison.Ordinal)))
+            return row.Id;
+        return combo.Text.Trim();
+    }
+
+    private sealed class ChoiceRow
+    {
+        public ChoiceRow(string id, string text)
+        {
+            Id = id;
+            Text = text;
+        }
+
+        public string Id { get; }
+        public string Text { get; }
+        public override string ToString() => Text;
     }
 
     private static string TextOf(FieldSpec spec, JsonNode? node)
@@ -508,6 +548,8 @@ internal sealed class JsonForm : Panel
         if (old == null && box.Checked == spec.DefaultBool) return;
         JsonObject data = Data;
         Apply(spec, () => Write(data, spec.Key, JsonValue.Create(box.Checked)!));
+        // Shield lasts and Shield look follow this checkbox. Other checkboxes do not gate fields.
+        if (spec.Key == "shield") RefreshDependents();
     }
 
     private void CommitNumber(FieldSpec spec, NumberBox number)
@@ -523,6 +565,15 @@ internal sealed class JsonForm : Panel
             if (spec.Kind == FieldKind.Int) Write(data, spec.Key, JsonValue.Create((int)Math.Round(value))!);
             else Write(data, spec.Key, JsonValue.Create(Json.Round(value))!);
         });
+        // Amount 0 turns the rest of a summon line off. Other numbers do not gate fields, so they must not reload
+        // the form (a reload fights the spin buttons).
+        if (spec.Key == "summonCount") RefreshDependents();
+    }
+
+    // A checkbox or a number can turn other fields on or off (shield, summon count). Show that immediately.
+    private void RefreshDependents()
+    {
+        if (rows.Any(r => r.Spec.EnabledWhen != null)) Refresh_();
     }
 
     private void CommitGuns(FieldSpec spec, List<int> on)

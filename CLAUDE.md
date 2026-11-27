@@ -78,13 +78,21 @@ Maintained 100% by the community, with some additions and improvements.
     `dungeons.json`, `world.json`, `network.json`, `stores.json`, `social.json` (created with defaults on first start).
     `flocks.json`, `world-map.json` and `world-live.json` are written by the server (gitignored).
   - Maps: `maps\*.json` (format: `docs/map-format.md`, all field names in English). Loot: `loot_tables\`. Enemy AI: `ai\`
-    (`brains\`, `behaviors\`, `formations\`). The Ambassador fight is `brains\world\ambassador*.json` (phase summons, not a birth
-    formation). `formations\ambassador_body.json` is an optional glued body and is not bound to that AI.
+    (`brains\`, `behaviors\`, `formations\`). Brains and formations use the same folders: `generic`, `world` (the formation list
+    also groups world files by biome) and `dungeons\<name>`. The Ambassador fight is `brains\world\ambassador*.json` (phase summons,
+    not a birth formation). `formations\world\ambassador_body.json` is an optional glued body and is not bound to that AI.
+    Place `follow` is a slot offset the piece flies to with its own turn and speed (the Sergeant Pup pods); `slot` and `chain`
+    stay bolted to the leader. A formation link (shield, kill everyone in the formation, unshield, heal) is one row of the Links
+    tab. Summon amount 0 spawns nothing.
   - Game data exported by the plugin (gitignored, copied from the game): `data\`. Item catalog written by the server: `catalog\`.
   - Accounts: `accounts\<key>\` (gitignored). Chat messages of the client: `Game*.cs`; message IDs: `MessageCatalog.cs`.
 - `Launcher\` — WinForms .NET 8 launcher (0.7.1): `Core\`, `UI\` (screens) with `UI\Controls\` (themed controls), `Editor\` (map editor tab),
   `EnemyAi\` (Enemy AI tab and simulator, Formation tab), `lang\` (English is the default; `pt-BR.json`, `_template.json`).
-  F1 on Enemy AI and on Formation opens the help of that tab (`AiHelp`, `FormationHelp`).
+  F1 on Enemy AI and on Formation opens the help of that tab (`AiHelp`, `FormationHelp`). Right-click a file in the Enemy AI
+  list to rename it (a generic AI stays protected). Formation choices (place, motion, rule, holds while) show a plain name and
+  a line under the list that says what the current choice does; fields that choice does not read stay gray. On Server > World
+  map > Enemies of each biome, AI, Formation and Amount are edited on the enemy's row: the AI list is the ones made for that
+  unit plus the generic ones, and the formation list is only formations whose leader is that unit.
   Docs: `Launcher\README.md`, `Launcher\Editor\README.md`, `Launcher\lang\README.md`.
 - `Shared\EnemyAi\` — enemy AI core (file formats, runtime, flight, gun aim, simulator), compiled into **both** `Server` and `Launcher`
   (`<Compile Include="..\Shared\EnemyAi\*.cs">`). The AI files themselves live in `Server\ai\` (format: `Server\ai\README.md`).

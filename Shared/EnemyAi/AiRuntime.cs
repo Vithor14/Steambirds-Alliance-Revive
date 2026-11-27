@@ -220,7 +220,7 @@ public sealed class AiRuntime
 
     private void QueueSummon(AiSummonEntry line, in AiSense s)
     {
-        if (line.Unit.Length == 0) return;
+        if (line.Unit.Length == 0 || line.Count <= 0) return;
         if (line.Max > 0)
         {
             int alive = s.CountMatching != null ? s.CountMatching(line.Unit, line.Role) : s.SummonsAlive;
@@ -229,7 +229,7 @@ public sealed class AiRuntime
         Out.Summons.Add(new AiSummonOrder
         {
             Type = line.Unit,
-            Count = Math.Max(1, line.Count),
+            Count = line.Count,
             Ai = line.Ai,
             Role = line.Role,
             Place = line.Place.Length == 0 ? "behind" : line.Place,

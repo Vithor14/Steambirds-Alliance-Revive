@@ -51,6 +51,20 @@ internal static class NativeTheme
         }
     }
 
+    // Drops the system visual style so a text box or combo can use the launcher colors (a styled edit stays white).
+    public static void Strip(IntPtr handle)
+    {
+        if (handle == IntPtr.Zero) return;
+        try
+        {
+            SetWindowTheme(handle, "", "");
+        }
+        catch
+        {
+            // Older Windows.
+        }
+    }
+
     // Same for a window the control does not own (the drop-down list of a combo box).
     public static void StyleHandle(IntPtr handle)
     {

@@ -10,6 +10,30 @@ internal sealed class ThemedTextBox : TextBox
     private const int WmNcPaint = 0x0085;
     private const int WmMouseWheel = 0x020A;
 
+    [StructLayout(LayoutKind.Sequential)]
+    private struct Rect
+    {
+        public int Left, Top, Right, Bottom;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct PaintStruct
+    {
+        public IntPtr Hdc;
+        public int Erase;
+        public Rect Paint;
+        public int Restore;
+        public int IncUpdate;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+        public byte[] Reserved;
+    }
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr BeginPaint(IntPtr window, ref PaintStruct paint);
+
+    [DllImport("user32.dll")]
+    private static extern bool EndPaint(IntPtr window, ref PaintStruct paint);
+
     [DllImport("user32.dll")]
     private static extern IntPtr GetWindowDC(IntPtr window);
 
@@ -26,6 +50,30 @@ internal sealed class ThemedTextBox : TextBox
         BorderStyle = BorderStyle.FixedSingle;
     }
 
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+        // The system style paints a disabled box white with black text. Without it, BackColor is the theme color.
+        NativeTheme.Strip(Handle);
+        ApplyInputColors();
+    }
+
+    protected override void OnEnabledChanged(EventArgs e)
+    {
+        base.OnEnabledChanged(e);
+        if (IsHandleCreated) ApplyInputColors();
+        Invalidate();
+    }
+
+    private void ApplyInputColors()
+    {
+        Theme.Palette p = Theme.P;
+        Color back = Enabled ? p.Input : Theme.Blend(p.Surface, p.Input, 0.45f);
+        Color fore = Enabled ? p.Text : p.Muted;
+        if (BackColor != back) BackColor = back;
+        if (ForeColor != fore) ForeColor = fore;
+    }
+
     protected override void WndProc(ref Message m)
     {
         // A single-line box has nothing to scroll: the mouse wheel goes to the page behind it.
@@ -34,9 +82,38 @@ internal sealed class ThemedTextBox : TextBox
             SendMessage(Parent.Handle, m.Msg, m.WParam, m.LParam);
             return;
         }
+        // A disabled box is painted by Windows in the system colors (white, black text). Draw it ourselves.
+        if (!Enabled && m.Msg == WmPaint && IsHandleCreated)
+        {
+            var paint = new PaintStruct { Reserved = new byte[32] };
+            IntPtr dc = BeginPaint(Handle, ref paint);
+            try
+            {
+                using var g = Graphics.FromHdc(dc);
+                PaintDisabled(g);
+            }
+            finally
+            {
+                EndPaint(Handle, ref paint);
+            }
+            PaintBorder();
+            return;
+        }
         base.WndProc(ref m);
         // The system paints its own frame after ours in some cases (both messages): draw over it every time.
         if ((m.Msg == WmNcPaint || m.Msg == WmPaint) && BorderStyle == BorderStyle.FixedSingle) PaintBorder();
+    }
+
+    private void PaintDisabled(Graphics g)
+    {
+        Theme.Palette p = Theme.P;
+        Color back = Theme.Blend(p.Surface, p.Input, 0.45f);
+        g.Clear(back);
+        var flags = TextFormatFlags.Left | TextFormatFlags.NoPrefix | TextFormatFlags.TextBoxControl;
+        if (Multiline) flags |= TextFormatFlags.WordBreak | TextFormatFlags.Top;
+        else flags |= TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis;
+        var bounds = new Rectangle(2, 0, Math.Max(0, ClientSize.Width - 4), ClientSize.Height);
+        TextRenderer.DrawText(g, Text, Font, bounds, p.Muted, flags);
     }
 
     private void PaintBorder()

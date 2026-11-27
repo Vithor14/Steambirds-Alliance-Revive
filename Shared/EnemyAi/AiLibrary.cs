@@ -287,7 +287,8 @@ public sealed class AiLibrary
 
     private static AiSummonEntry NormalizeSummon(AiSummonEntry line, List<AiProblem> problems, string where)
     {
-        int count = line.Count <= 0 ? 1 : line.Count;
+        // 0 summons nothing. A missing count stays 1 (the property default); only an explicit 0 is skipped.
+        int count = line.Count < 0 ? 0 : line.Count;
         if (count > 30)
         {
             problems.Add(new AiProblem(false, where, "summons at most 30 units at a time: 30 are used"));

@@ -117,30 +117,12 @@ internal sealed class AiTab : Panel
             UpdateHint();
             UpdateButtons();
         };
-        // Right click on a file: the same actions as the Edit menu, where the file is.
+        // Right click on a file: load, duplicate, rename or delete it (the same actions as the Edit menu).
         tree.NodeMouseClick += (_, e) =>
         {
             if (e.Button != MouseButtons.Right || e.Node?.Tag is not AiDoc) return;
             tree.SelectedNode = e.Node;
             ShowFileMenu(e.Location);
-        };
-        // Right click on a file: duplicate or delete it (the same actions as the Edit menu, on the file under the mouse).
-        var treeMenu = new ContextMenuStrip { Renderer = new EditorRenderer() };
-        var menuDuplicate = new ToolStripMenuItem(L.T("Duplicate"));
-        menuDuplicate.Click += (_, _) => DuplicateCurrent();
-        var menuDelete = new ToolStripMenuItem(L.T("Delete"));
-        menuDelete.Click += (_, _) => DeleteCurrent();
-        treeMenu.Items.Add(menuDuplicate);
-        treeMenu.Items.Add(menuDelete);
-        tree.NodeMouseClick += (_, e) =>
-        {
-            if (e.Button != MouseButtons.Right || e.Node?.Tag is not AiDoc doc) return;
-            tree.SelectedNode = e.Node;
-            picked = doc;
-            UpdateHint();
-            UpdateButtons();
-            menuDuplicate.Enabled = doc.LoadError == null;
-            treeMenu.Show(tree, e.Location);
         };
         tree.NodeMouseDoubleClick += (_, e) =>
         {
@@ -645,20 +627,26 @@ internal sealed class AiTab : Panel
         LoadPicked();
     }
 
-    // The menu of a file of the list (right click): load it on the unit, duplicate it, delete it.
+    // The menu of a file of the list (right click): load it on the unit, duplicate it, rename it, delete it.
     private void ShowFileMenu(Point at)
     {
         if (picked == null) return;
         var menu = new ContextMenuStrip { Renderer = new EditorRenderer() };
         bool ok = picked.LoadError == null;
+        bool locked = store.IsProtected(picked);
         ToolStripMenuItem load = Item(L.T("Load on the unit"), LoadPicked);
         load.Enabled = ok && !ReferenceEquals(picked, current);
         ToolStripMenuItem duplicate = Item(L.T("Duplicate"), DuplicateCurrent);
         duplicate.Enabled = ok;
+        ToolStripMenuItem rename = Item(L.T("Rename..."), RenameCurrent);
+        rename.Enabled = ok && !locked;
+        ToolStripMenuItem delete = Item(L.T("Delete"), DeleteCurrent);
+        delete.Enabled = !locked;
         menu.Items.Add(load);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(duplicate);
-        menu.Items.Add(Item(L.T("Delete"), DeleteCurrent));
+        menu.Items.Add(rename);
+        menu.Items.Add(delete);
         menu.Show(tree, at);
     }
 

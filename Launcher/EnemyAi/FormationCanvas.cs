@@ -1,6 +1,8 @@
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using SteambirdsAi;
 using SteambirdsLauncher.Core;
+using SteambirdsLauncher.Editor;
 using SteambirdsLauncher.UI;
 
 namespace SteambirdsLauncher.EnemyAi;
@@ -266,8 +268,23 @@ internal sealed class FormationCanvas : Control
                 continue;
             }
             float x = at.X, y = at.Y, facing = at.Rot, vel = at.Vel;
-            float pace = slot.TravelSpeed > 0.05f ? slot.TravelSpeed : 4f;
-            FormationMotion.StepToward(ref x, ref y, ref facing, ref vel, target, pace, dt);
+            if (slot.Kind == "follow")
+            {
+                float own = 8f;
+                float turn = 180f;
+                if (EditorAssets.Current.Units.TryGetValue(slot.Unit, out GameUnit? unit))
+                {
+                    if (unit.VelMax > 1) own = (float)unit.VelMax;
+                    if (unit.Turn > 1) turn = (float)unit.Turn;
+                }
+                float top = Math.Max(own, speed);
+                FormationMotion.Follow(ref x, ref y, ref facing, ref vel, target, speed, 0f, top, turn, dt);
+            }
+            else
+            {
+                float pace = slot.TravelSpeed > 0.05f ? slot.TravelSpeed : 4f;
+                FormationMotion.StepToward(ref x, ref y, ref facing, ref vel, target, pace, dt);
+            }
             body[slot.Id] = (x, y, facing, vel);
         }
     }
@@ -400,22 +417,20 @@ internal sealed class FormationCanvas : Control
                 health[order.ActorId] = Math.Min(1f, hp + order.HealFraction);
         }
 
+        var units = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { ["leader"] = file.Leader?.Unit ?? "" };
+        foreach (FormationSlot slot in file.Expand()) units[slot.Id] = slot.Unit;
         foreach (KeyValuePair<string, (float X, float Y, float Rot)> pair in poses)
         {
             Point p = ToScreen(pair.Value.X, pair.Value.Y);
             bool dead = health.TryGetValue(pair.Key, out float hp) && hp <= 0f;
-            Color fill = dead ? palette.Muted : pair.Key == "leader" ? Color.OrangeRed : Color.SteelBlue;
-            using var brush = new SolidBrush(fill);
-            g.FillEllipse(brush, p.X - 9, p.Y - 9, 18, 18);
-            float face = pair.Value.Rot * MathF.PI / 180f;
-            g.DrawLine(Pens.White, p.X, p.Y, p.X + MathF.Sin(face) * 12f, p.Y - MathF.Cos(face) * 12f);
+            DrawShip(g, palette, p, pair.Value.Rot, units.TryGetValue(pair.Key, out string? unit) ? unit : "", dead, pair.Key == "leader");
             if (shielded.TryGetValue(pair.Key, out string? look))
             {
                 Color ring = look.Equals("tankShield", StringComparison.OrdinalIgnoreCase) ? Color.Goldenrod : Color.DeepSkyBlue;
                 using var pen = new Pen(ring, 2f);
-                g.DrawEllipse(pen, p.X - 14, p.Y - 14, 28, 28);
+                g.DrawEllipse(pen, p.X - 18, p.Y - 18, 36, 36);
             }
-            TextRenderer.DrawText(g, pair.Key, Font, new Point(p.X + 12, p.Y - 8), palette.Text);
+            TextRenderer.DrawText(g, pair.Key, Font, new Point(p.X + 16, p.Y - 8), palette.Text);
         }
         string hint = EditPoints
             ? L.T("Click the grid to add a point. Drag a point to move it. Right click a point to remove it.")
@@ -423,6 +438,37 @@ internal sealed class FormationCanvas : Control
                 ? L.T("Click the grid to send the leader there. Right click damages the piece under the cursor.")
                 : L.T("Right click damages the piece under the cursor.");
         TextRenderer.DrawText(g, hint, Font, new Rectangle(8, Height - 22, Width - 16, 20), palette.Muted, TextFormatFlags.Left);
+    }
+
+    private void DrawShip(Graphics g, Theme.Palette palette, Point at, float rot, string unit, bool dead, bool leader)
+    {
+        AssetPicture? picture = unit.Length == 0 ? null : EditorAssets.Current.PictureOfUnit(unit);
+        if (picture != null)
+        {
+            GraphicsState state = g.Save();
+            g.TranslateTransform(at.X, at.Y);
+            g.RotateTransform(rot);
+            float half = Math.Max(10f, (float)(picture.Half * PixelsPerUnit));
+            if (dead)
+            {
+                using var attributes = new ImageAttributes();
+                attributes.SetColorMatrix(new ColorMatrix { Matrix33 = 0.35f });
+                g.DrawImage(picture.Image, new[] { new PointF(-half, -half), new PointF(half, -half), new PointF(-half, half) },
+                    new RectangleF(0, 0, picture.Image.Width, picture.Image.Height), GraphicsUnit.Pixel, attributes);
+            }
+            else g.DrawImage(picture.Image, -half, -half, half * 2f, half * 2f);
+            g.Restore(state);
+            if (!dead) return;
+            using var pen = new Pen(Color.FromArgb(210, 230, 90, 40), 2f);
+            g.DrawLine(pen, at.X - half, at.Y - half, at.X + half, at.Y + half);
+            g.DrawLine(pen, at.X - half, at.Y + half, at.X + half, at.Y - half);
+            return;
+        }
+        Color fill = dead ? palette.Muted : leader ? Color.OrangeRed : Color.SteelBlue;
+        using var brush = new SolidBrush(fill);
+        g.FillEllipse(brush, at.X - 9, at.Y - 9, 18, 18);
+        float face = rot * MathF.PI / 180f;
+        g.DrawLine(Pens.White, at.X, at.Y, at.X + MathF.Sin(face) * 12f, at.Y - MathF.Cos(face) * 12f);
     }
 
     private void DrawGrid(Graphics g, Theme.Palette palette)
