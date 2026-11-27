@@ -17,6 +17,8 @@ Base: 0.8.1 (27/11/2026). / Base: 0.8.1 (27/11/2026).
 
 ### Fixes
 
+- **Plugin build finds the game on any drive.** `QuieterPlugin.csproj`, `Build plugin.ps1`, `Build launcher.ps1` and `Clean project.ps1` look for depot 386011 in `STEAMBIRDS_GAME`, then in the Steam folder from the registry (like the launcher), then in the default `C:\Program Files (x86)\Steam`. `Build plugin.ps1` no longer needs the repo at `C:\Steambirds`.
+
 ## Português
 
 ### Launcher e editor
@@ -28,3 +30,5 @@ Base: 0.8.1 (27/11/2026). / Base: 0.8.1 (27/11/2026).
 - **Pintura de escudo do inimigo:** enquanto um escudo está ativo (estado da IA, elo de formação, ou `statusEffect: "shielded"` na unidade) o servidor liga o flag `shielded` do cliente e manda no FieldUpdate. Quando o escudo acaba, manda 0, a menos que o `statusEffect` do tipo mantenha a pintura. Os outros status (`slow`, `burn`, `blind`, …) seguem o mesmo caminho.
 
 ### Correções
+
+- **Build do plugin acha o jogo em qualquer disco.** `QuieterPlugin.csproj`, `Build plugin.ps1`, `Build launcher.ps1` e `Clean project.ps1` procuram o depot 386011 em `STEAMBIRDS_GAME`, depois na pasta da Steam pelo registro (como o launcher) e por último no padrão `C:\Program Files (x86)\Steam`. O `Build plugin.ps1` não exige mais o repositório em `C:\Steambirds`.

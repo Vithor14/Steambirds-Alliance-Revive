@@ -200,7 +200,13 @@ foreach ($serverFolder in $serverFolders) {
 # ------------------------------------------------------------------ 5. data exported by the plugin (old Portuguese rows)
 $dataFolders = @((Join-Path $root "Server\data"), (Join-Path $root "Launcher\dist\server\data"))
 $gameFolder = $env:STEAMBIRDS_GAME
-if (-not $gameFolder) { $gameFolder = "C:\Program Files (x86)\Steam\steamapps\content\app_386010\depot_386011" }
+if (-not $gameFolder) {
+    # Steam folder from the registry (like the launcher's GameInstall), then the default Steam folder.
+    $steam = (Get-ItemProperty -Path "HKCU:\Software\Valve\Steam" -Name SteamPath -ErrorAction SilentlyContinue).SteamPath
+    if (-not $steam) { $steam = (Get-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Valve\Steam" -Name InstallPath -ErrorAction SilentlyContinue).InstallPath }
+    $gameFolder = if ($steam) { Join-Path ($steam -replace '/', '\') "steamapps\content\app_386010\depot_386011" } else { "" }
+    if (-not $gameFolder -or -not (Test-Path -LiteralPath $gameFolder)) { $gameFolder = "C:\Program Files (x86)\Steam\steamapps\content\app_386010\depot_386011" }
+}
 $bepinex = Join-Path $gameFolder "BepInEx"
 $dataFolders += $bepinex
 $rowRenames = @(

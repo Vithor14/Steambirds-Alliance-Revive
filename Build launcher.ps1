@@ -281,6 +281,10 @@ function CopyServerData() {
 function FindGameFolder() {
     $candidates = @()
     if ($env:STEAMBIRDS_GAME) { $candidates += $env:STEAMBIRDS_GAME }
+    # Steam folder from the registry (like the launcher's GameInstall), then the default Steam folder.
+    $steam = (Get-ItemProperty -Path "HKCU:\Software\Valve\Steam" -Name SteamPath -ErrorAction SilentlyContinue).SteamPath
+    if (-not $steam) { $steam = (Get-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Valve\Steam" -Name InstallPath -ErrorAction SilentlyContinue).InstallPath }
+    if ($steam) { $candidates += (Join-Path ($steam -replace '/', '\') "steamapps\content\app_386010\depot_386011") }
     $candidates += "C:\Program Files (x86)\Steam\steamapps\content\app_386010\depot_386011"
     foreach ($folder in $candidates) {
         if ($folder -and (Test-Path -LiteralPath (Join-Path $folder "Steambirds_Data\StreamingAssets\configBinary"))) {

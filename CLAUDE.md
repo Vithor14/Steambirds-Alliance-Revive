@@ -131,8 +131,9 @@ dotnet build GameFiles\SteambirdsGameFiles.csproj -nologo -v q -clp:ErrorsOnly
 ```
 
 - Build only the projects you touched.
-- The plugin references the game's DLLs at
-  `C:\Program Files (x86)\Steam\steamapps\content\app_386010\depot_386011` (BepInEx and `Steambirds_Data\Managed`).
+- The plugin references the game's DLLs (BepInEx and `Steambirds_Data\Managed`) in depot 386011: `-p:GameDir=...`,
+  else `STEAMBIRDS_GAME`, else `<Steam>\steamapps\content\app_386010\depot_386011` (Steam folder from the registry),
+  else `C:\Program Files (x86)\Steam\...`. On the maintainer's PC that is `C:\...`; other PCs may have it elsewhere (e.g. `D:\Steam`).
 - If the server build fails because a file is locked (MSB3027 / MSB3021), the server is running: ask the user to stop it.
 - Duplicate `.cs` copies (`Name-1.cs`, `Name (1).cs`, `Name - Copy.cs`, or the same file in two folders, such as
   `LootDrops.cs` in the root and in `Items\`) break the build with CS0101 / CS0111. Never leave copies behind.
