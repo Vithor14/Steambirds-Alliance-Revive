@@ -11,6 +11,10 @@ Base: 0.8.1 (27/11/2026). / Base: 0.8.1 (27/11/2026).
 
 ### Maps
 
+### Server
+
+- **Enemy shield paint:** while a shield is up (an AI state, a formation link, or `statusEffect: "shielded"` on the unit) the server sets the client flag `shielded` and sends it in FieldUpdate. When the shield ends it sends 0, unless the type's `statusEffect` keeps the paint. The other status names (`slow`, `burn`, `blind`, …) are sent the same way.
+
 ### Fixes
 
 ## Português

@@ -57,8 +57,9 @@ They are fields of a **state** (`Server\ai\README.md` has the table), done by `B
   a condition asks: `AiBrain.NeedsSummonCount`). In a dungeon map the type is looked up as `<map>/<name>` first, then as `<name>`.
 - **Shield:** while `ShieldOn` the server renews `Enemy.ShieldUntil` every tick (`TakeDamage` ignores damage until then) and shows
   `shieldEffect` (or `tankShield`) in EFFECTSTATE1; when the state stops asking, `UpdateInstance` puts the normal look back.
-  The paint the original client calls the enemy shield is not one of those names: it is the unit flag `shielded` (bit 0x800,
-  map field `statusEffect`), which runs the shield shader on the unit's own art. The effects catalog shows it on the status-flag row.
+  The paint the original client calls the enemy shield is not one of those names: it is the unit flag `shielded` (bit 0x800).
+  While `ShieldUntil` is in the future the server sets that bit and sends it in FieldUpdate flags (and sends 0 when the shield
+  ends, unless the type's `statusEffect` keeps it). The effects catalog shows it on the status-flag row.
 - **Look:** `effect` sets `Enemy.BaseEffect` from this state on. **Homing:** `homing` sets `Enemy.Homing`.
 - **Phases:** a phase is a state that a `healthBelow` transition leads to; nothing else is special. The old `phases` of the unit
   types (`BossPhase`, `ApplyPhases`, `barks.phase` of the dungeon server) are gone: a one-off script converted the 24 bosses of
