@@ -1,7 +1,6 @@
-# Steambirds Alliance Revive 0.8.0 (in progress)
+# Steambirds Alliance Revive 0.8.0
 
-**Status: not released.** This file is fed with every change until 0.8.0 is out; add a line here (English and Portuguese) in the same change
-that touches the game, the server, the launcher or the editors. / **Em andamento:** este arquivo recebe cada alteração até o lançamento da 0.8.0.
+**Status: released (27/11/2026).** English notes for GitHub: `release-notes-0.8.0.md`. New changes go to `update-notes-0.9.0.md`. / **Lançada (27/11/2026).** Notas em inglês para o GitHub: `release-notes-0.8.0.md`. Mudanças novas vão para `update-notes-0.9.0.md`.
 
 Base: 0.7.1 (the patch on top of 0.7.0). / Base: 0.7.1 (o patch sobre a 0.7.0).
 

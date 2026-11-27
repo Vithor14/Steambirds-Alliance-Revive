@@ -26,9 +26,9 @@ Maintained 100% by the community, with some additions and improvements.
 
 ## Where things stand
 
-- Version at the last release (24/11/2026): server and launcher **0.7.1**, plugin Steambirds Quieter **1.22.0**, client build
-  **201219.1413**. **0.8.0 is in progress** (`docs/update-notes-0.8.0.md`). Closed notes: `docs/update-notes-0.7.0.md` and
-  `docs/update-notes-0.7.1.md` (full, English and Portuguese), `docs/release-notes-0.7.0.md` and `docs/release-notes-0.7.1.md` (short, for GitHub).
+- Version at the last release (27/11/2026): server and launcher **0.8.0**, plugin Steambirds Quieter **1.22.0**, client build
+  **201219.1413**. The launcher assembly is already **0.9.0**. **0.9.0 is in progress** (`docs/update-notes-0.9.0.md`). Closed notes: `docs/update-notes-0.7.0.md`,
+  `docs/update-notes-0.7.1.md` and `docs/update-notes-0.8.0.md` (full, English and Portuguese), `docs/release-notes-0.7.0.md`, `docs/release-notes-0.7.1.md` and `docs/release-notes-0.8.0.md` (short, for GitHub; 0.8.0 is English only).
   When a design note and a later update note disagree, the later note is the one to follow, then the code.
 - **`CHECKLIST.md` (repo root) is the source of truth**: done / partial / missing per area, and the suggested MVP order.
   Update it when a feature changes state (keep its Portuguese style) and recompute its summary table (a bullet counts as
@@ -60,7 +60,8 @@ Maintained 100% by the community, with some additions and improvements.
 | `docs/update-notes-0.6.0.md`, `docs/release-notes-0.6.0.md` | release notes of 0.6.0: full (English and Portuguese) and the short one for GitHub |
 | `docs/update-notes-0.7.0.md`, `docs/release-notes-0.7.0.md` | release notes of 0.7.0: full (English and Portuguese) and the short one for GitHub |
 | `docs/update-notes-0.7.1.md`, `docs/release-notes-0.7.1.md` | patch 0.7.1: full (English and Portuguese) and the short one for GitHub |
-| `docs/update-notes-0.8.0.md` | 0.8.0, open until release: every later change is written here (English and Portuguese) |
+| `docs/update-notes-0.8.0.md`, `docs/release-notes-0.8.0.md` | 0.8.0, released 27/11/2026: full log (English and Portuguese) and the English GitHub text |
+| `docs/update-notes-0.9.0.md` | 0.9.0, open until release: every later change is written here (English and Portuguese) |
 | `docs/radmin-vpn-guide.md` | player-facing guide: install Radmin VPN, join the `Steambirds_Revive` network, host or join a server (English) |
 | `docs/discord-server.md`, `docs/discord-start-here.md` | plan of the community Discord server and the ready-to-paste `#start-here` texts (not code) |
 
@@ -86,7 +87,7 @@ Maintained 100% by the community, with some additions and improvements.
     tab. Summon amount 0 spawns nothing.
   - Game data exported by the plugin (gitignored, copied from the game): `data\`. Item catalog written by the server: `catalog\`.
   - Accounts: `accounts\<key>\` (gitignored). Chat messages of the client: `Game*.cs`; message IDs: `MessageCatalog.cs`.
-- `Launcher\` — WinForms .NET 8 launcher (0.7.1): `Core\`, `UI\` (screens) with `UI\Controls\` (themed controls), `Editor\` (map editor tab),
+- `Launcher\` — WinForms .NET 8 launcher (0.9.0): `Core\`, `UI\` (screens) with `UI\Controls\` (themed controls), `Editor\` (map editor tab),
   `EnemyAi\` (Enemy AI tab and simulator, Formation tab), `lang\` (English is the default; `pt-BR.json`, `_template.json`).
   F1 on Enemy AI and on Formation opens the help of that tab (`AiHelp`, `FormationHelp`). Right-click a file in the Enemy AI
   list to rename it (a generic AI stays protected). Formation choices (place, motion, rule, holds while) show a plain name and
@@ -168,8 +169,8 @@ In-game testing is done by the user. When they report a test, read `server-repor
 - Never commit game files (assets, DLLs, `configBinary`, decompiled code); `.gitignore` covers them.
   Commit / push only when the user asks.
 - Write complete changes in place, then tell the user which files changed and what to test in the game.
-- **0.8.0 is in progress:** every change to the game, the server, the launcher or the editors gets a line in
-  `docs/update-notes-0.8.0.md` (English and Portuguese, in the right section), in the same change. At the release the file is closed and
+- **0.9.0 is in progress:** every change to the game, the server, the launcher or the editors gets a line in
+  `docs/update-notes-0.9.0.md` (English and Portuguese, in the right section), in the same change. At the release the file is closed and
   the next one (`update-notes-<next>.md`) starts.
 - When a feature, file or command changes, update the docs in the same change: `CHECKLIST.md`, the matching `docs\` note, the
   READMEs and `Chat commands.md`. (A big part of the docs went stale between 16/11 and 23/11 because they were not.)

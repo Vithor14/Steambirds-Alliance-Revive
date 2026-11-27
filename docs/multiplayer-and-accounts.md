@@ -1,6 +1,6 @@
 # Multiplayer, contas por jogador e launcher
 
-Login, contas e relay abaixo. O launcher atual é o **0.7.1** (0.8.0 em andamento); a seção de telas para na 0.5.0 e o que veio depois está em `Launcher/README.md` e nas notas `docs/update-notes-0.6.0.md` em diante. Servidor **v11** e launcher **0.3.0** (16/11/2026, testados em 22/11 com dois PCs), revisado em 23/11/2026 para o launcher **0.5.0**. O que existe: vários PCs entram no mesmo servidor, cada jogador com a própria conta, e os jogadores se veem no Nexus, no mundo aberto e nas dungeons (`PlayerRelay`; o tutorial segue privado). O que não existe: troca de servidor entre hosts diferentes, limite de jogadores por dungeon e fila. As partes de amigos e flocks estão em `docs/social.md`; o mundo aberto, em `docs/open-world.md`.
+Login, contas e relay abaixo. O launcher atual é o **0.9.0** (0.8.0 lançada em 27/11/2026; 0.9.0 em andamento); a seção de telas para na 0.5.0 e o que veio depois está em `Launcher/README.md` e nas notas `docs/update-notes-0.6.0.md` em diante. Servidor **v11** e launcher **0.3.0** (16/11/2026, testados em 22/11 com dois PCs), revisado em 23/11/2026 para o launcher **0.5.0**. O que existe: vários PCs entram no mesmo servidor, cada jogador com a própria conta, e os jogadores se veem no Nexus, no mundo aberto e nas dungeons (`PlayerRelay`; o tutorial segue privado). O que não existe: troca de servidor entre hosts diferentes, limite de jogadores por dungeon e fila. As partes de amigos e flocks estão em `docs/social.md`; o mundo aberto, em `docs/open-world.md`.
 
 ## Fluxo de login
 

@@ -24,8 +24,8 @@ community-made project. The game itself is **not** included: you need your own c
 Not done yet: quests and missions, the Combat Sim, the original boss AI and most dungeon-specific scripts (only
 Iron Lair and Bomb Factory are switched on in `dungeons.json`; the others are ready to try). The last big in-game test is 23/11/2026:
 friends, the default flock, loot, and six dungeons. Whisper, flock chat, teleport, safe trade, most store shelves, dungeon keys and the
-0.6.0–0.8.0 editor work still need a game test. See [CHECKLIST.md](CHECKLIST.md), [0.7.1](docs/release-notes-0.7.1.md) and
-[what is in progress for 0.8.0](docs/update-notes-0.8.0.md).
+0.6.0–0.8.0 editor work still need a game test. See [CHECKLIST.md](CHECKLIST.md), [0.8.0](docs/release-notes-0.8.0.md) and
+[what is in progress for 0.9.0](docs/update-notes-0.9.0.md).
 
 ## Play or host
 
@@ -60,7 +60,7 @@ zip for GitHub Releases (launcher, server, `SteambirdsGameFiles.exe` and plugin,
 | Path | What it is |
 |---|---|
 | `Server\` | The game server (.NET 8): HTTP login and UDP game servers; maps, loot tables and settings as data files |
-| `Launcher\` | WinForms launcher (0.7.1) with the map editor and Enemy AI tabs |
+| `Launcher\` | WinForms launcher (0.9.0) with the map editor, Enemy AI and Formation tabs |
 | `Shared\EnemyAi\` | Enemy AI core, shared by the server and the launcher |
 | `QuieterPlugin\` | BepInEx plugin for the game client (data exports and client-side fixes) |
 | `GameFiles\` | `SteambirdsGameFiles.exe`: gets the needed files from your own game copy |

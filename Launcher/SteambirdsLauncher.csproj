@@ -13,7 +13,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>SteambirdsLauncher</AssemblyName>
     <RootNamespace>SteambirdsLauncher</RootNamespace>
-    <Version>0.7.1</Version>
+    <Version>0.9.0</Version>
     <Product>Steambirds Alliance Revive Launcher</Product>
     <Company>Steambirds Alliance Revive community</Company>
     <Description>Launcher for the community revival of Steambirds Alliance</Description>
