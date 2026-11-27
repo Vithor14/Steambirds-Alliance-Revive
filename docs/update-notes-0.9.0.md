@@ -23,4 +23,8 @@ Base: 0.8.1 (27/11/2026). / Base: 0.8.1 (27/11/2026).
 
 ### Mapas
 
+### Servidor
+
+- **Pintura de escudo do inimigo:** enquanto um escudo está ativo (estado da IA, elo de formação, ou `statusEffect: "shielded"` na unidade) o servidor liga o flag `shielded` do cliente e manda no FieldUpdate. Quando o escudo acaba, manda 0, a menos que o `statusEffect` do tipo mantenha a pintura. Os outros status (`slow`, `burn`, `blind`, …) seguem o mesmo caminho.
+
 ### Correções
