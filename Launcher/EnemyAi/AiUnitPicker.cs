@@ -3,75 +3,96 @@ using SteambirdsLauncher.UI;
 
 namespace SteambirdsLauncher.EnemyAi;
 
-// The drop-down of the Enemy AI tab's unit bar: a button that opens a tree of units sorted by origin (Dungeons > each dungeon,
-// World > each biome, Generic, Without origin). A unit that is in several places shows in each. A unit with no AI is drawn in a
-// different color.
-internal sealed class AiUnitPicker : Form
+// The unit tree shared by the Enemy AI tab (docked on the left) and by the drop-down picker other editors open.
+// Folders come from AiUnitOrigins: Dungeons > each dungeon, World > each biome, Generic, Without origin. A unit that
+// lives in several places is listed in each. A unit with no AI file is drawn in a different color. On the Enemy AI
+// tab, a unit that already has its own AI (not a generic one) is drawn green.
+internal sealed class AiUnitList : UserControl
 {
     private readonly TextBox filter;
     private readonly TreeView tree;
-    private readonly List<AiUnitGroup> groups;
-    private readonly Func<AiUnitChoice, bool> hasAi;
-    private readonly string currentLabel;
-    private bool closing;
+    private readonly bool chooseOnClick;
+    private List<AiUnitGroup> groups = new List<AiUnitGroup>();
+    private Func<AiUnitChoice, bool> hasAi = _ => true;
+    private Func<AiUnitChoice, bool>? personal;
+    private string currentLabel = "";
+    private AiUnitChoice? currentChoice;
+    private bool filling;
 
-    public AiUnitPicker(List<AiUnitGroup> groups, Func<AiUnitChoice, bool> hasAi, string currentLabel)
+    public AiUnitList(bool chooseOnClick, string hint)
     {
-        this.groups = groups;
-        this.hasAi = hasAi;
-        this.currentLabel = currentLabel;
+        this.chooseOnClick = chooseOnClick;
+        Dock = DockStyle.Fill;
 
-        FormBorderStyle = FormBorderStyle.FixedToolWindow;
-        ShowInTaskbar = false;
-        StartPosition = FormStartPosition.Manual;
-        Text = L.T("Pick a unit");
-        ClientSize = new Size(520, 460);
-        KeyPreview = true;
-
-        filter = new ThemedTextBox { Dock = DockStyle.Top };
-        filter.TextChanged += (_, _) => Fill();
-        var hint = new Label
+        filter = new ThemedTextBox { Dock = DockStyle.Top, PlaceholderText = L.T("Filter units...") };
+        filter.TextChanged += (_, _) =>
         {
-            Dock = DockStyle.Bottom, Height = 34, AutoSize = false, TextAlign = ContentAlignment.MiddleLeft,
-            Text = L.T("Units written in a different color have no AI file. Double-click or press Enter to pick one.")
+            if (!filling) Fill();
+        };
+        var hintLabel = new Label
+        {
+            Dock = DockStyle.Bottom, Height = 52, AutoSize = false, TextAlign = ContentAlignment.MiddleLeft, Text = hint
         };
         tree = new TreeView { Dock = DockStyle.Fill, HideSelection = false, ShowNodeToolTips = true, ShowLines = true };
-        tree.NodeMouseDoubleClick += (_, e) => Pick(e.Node);
+        tree.AfterSelect += (_, e) =>
+        {
+            if (filling) return;
+            if (e.Node?.Tag is not AiUnitChoice choice)
+            {
+                if (currentChoice != null) TrySelect(currentChoice);
+                return;
+            }
+            currentChoice = choice;
+            currentLabel = choice.Label;
+            if (chooseOnClick) Chosen?.Invoke(choice);
+        };
+        tree.NodeMouseDoubleClick += (_, e) => Confirm(e.Node);
         tree.KeyDown += (_, e) =>
         {
             if (e.KeyCode != Keys.Enter) return;
             e.SuppressKeyPress = true;
-            Pick(tree.SelectedNode);
+            Confirm(tree.SelectedNode);
         };
-        KeyDown += (_, e) =>
-        {
-            if (e.KeyCode == Keys.Escape) CloseOnce();
-        };
-        Deactivate += (_, _) => CloseOnce();
 
         Controls.Add(tree);
-        Controls.Add(hint);
+        Controls.Add(hintLabel);
         Controls.Add(filter);
-        Theme.AttachWindow(this);
+    }
+
+    public event Action<AiUnitChoice>? Chosen;
+
+    public void FocusFilter() => filter.Focus();
+
+    // Rebuilds the tree from these groups. The unit with this label stays selected, and choosing it does not raise Chosen.
+    // personal, when given, paints those units green: they already have an AI of their own (not a generic one).
+    public void Set(List<AiUnitGroup> groups, Func<AiUnitChoice, bool> hasAi, string currentLabel, Func<AiUnitChoice, bool>? personal = null)
+    {
+        this.groups = groups;
+        this.hasAi = hasAi;
+        this.personal = personal;
+        this.currentLabel = currentLabel ?? "";
         Fill();
-        Shown += (_, _) => filter.Focus();
     }
 
-    public AiUnitChoice? Chosen { get; private set; }
-
-    private void CloseOnce()
+    // Shows this unit in the tree (clears the filter when the filter is hiding it) without raising Chosen.
+    public void ShowSelection(AiUnitChoice? unit)
     {
-        if (closing) return;
-        closing = true;
-        Close();
-    }
-
-    private void Pick(TreeNode? node)
-    {
-        if (node?.Tag is not AiUnitChoice choice) return;
-        Chosen = choice;
-        DialogResult = DialogResult.OK;
-        CloseOnce();
+        if (unit != null && ReferenceEquals(tree.SelectedNode?.Tag, unit))
+        {
+            currentChoice = unit;
+            currentLabel = unit.Label;
+            return;
+        }
+        currentChoice = unit;
+        currentLabel = unit?.Label ?? "";
+        if (unit != null && TrySelect(unit)) return;
+        if (filter.Text.Length > 0)
+        {
+            filling = true;
+            filter.Text = "";
+            filling = false;
+        }
+        Fill();
     }
 
     public static string NodeText(AiUnitChoice c)
@@ -81,9 +102,40 @@ internal sealed class AiUnitPicker : Form
         return c.TypeId + name + "  -  " + (c.OwnAi.Length > 0 ? c.OwnAi : L.T("no AI"));
     }
 
+    private void Confirm(TreeNode? node)
+    {
+        if (node?.Tag is not AiUnitChoice choice) return;
+        currentChoice = choice;
+        currentLabel = choice.Label;
+        Chosen?.Invoke(choice);
+    }
+
+    private bool TrySelect(AiUnitChoice unit)
+    {
+        TreeNode? node = Find(tree.Nodes, unit);
+        if (node == null) return false;
+        filling = true;
+        tree.SelectedNode = node;
+        node.EnsureVisible();
+        filling = false;
+        return true;
+    }
+
+    private static TreeNode? Find(TreeNodeCollection nodes, AiUnitChoice unit)
+    {
+        foreach (TreeNode node in nodes)
+        {
+            if (ReferenceEquals(node.Tag, unit)) return node;
+            TreeNode? child = Find(node.Nodes, unit);
+            if (child != null) return child;
+        }
+        return null;
+    }
+
     private void Fill()
     {
         string text = filter.Text.Trim();
+        filling = true;
         tree.BeginUpdate();
         tree.Nodes.Clear();
         TreeNode? select = null;
@@ -98,8 +150,10 @@ internal sealed class AiUnitPicker : Form
             foreach (TreeNode top in tree.Nodes) top.Expand();
             if (select != null) select.EnsureVisible();
         }
-        if (select != null) tree.SelectedNode = select;
+        tree.SelectedNode = select;
+        currentChoice = select?.Tag as AiUnitChoice;
         tree.EndUpdate();
+        filling = false;
     }
 
     // A folder with the units that match the filter (null when nothing in it matches).
@@ -117,16 +171,65 @@ internal sealed class AiUnitPicker : Form
         foreach (AiUnitChoice unit in group.Units)
         {
             string shown = NodeText(unit);
-            if (text.Length > 0 && shown.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0 && group.Title.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0) continue;
+            if (text.Length > 0 && shown.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0 &&
+                unit.Label.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0 &&
+                group.Title.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0) continue;
             var leaf = new TreeNode(shown) { Tag = unit, ToolTipText = unit.Label };
-            if (!hasAi(unit)) leaf.ForeColor = Theme.ColorOf(TextRole.Warn);
+            if (personal != null && personal(unit)) leaf.ForeColor = Theme.ColorOf(TextRole.Good);
+            else if (!hasAi(unit)) leaf.ForeColor = Theme.ColorOf(TextRole.Warn);
             node.Nodes.Add(leaf);
             count++;
-            if (unit.Label == currentLabel) select = leaf;
+            if (select == null && unit.Label == currentLabel) select = leaf;
         }
         if (count == 0) return null;
         node.Text = group.Title + "  (" + count + ")";
         node.Tag = count;
         return node;
+    }
+}
+
+// The drop-down other editors use to pick a unit: the same tree, closed by a double-click, Enter or clicking away.
+internal sealed class AiUnitPicker : Form
+{
+    private bool closing;
+
+    public AiUnitPicker(List<AiUnitGroup> groups, Func<AiUnitChoice, bool> hasAi, string currentLabel)
+    {
+        FormBorderStyle = FormBorderStyle.FixedToolWindow;
+        ShowInTaskbar = false;
+        StartPosition = FormStartPosition.Manual;
+        Text = L.T("Pick a unit");
+        ClientSize = new Size(520, 460);
+        KeyPreview = true;
+
+        var list = new AiUnitList(false, L.T("Units written in a different color have no AI file. Double-click or press Enter to pick one."))
+        {
+            Dock = DockStyle.Fill
+        };
+        list.Set(groups, hasAi, currentLabel);
+        list.Chosen += choice =>
+        {
+            Chosen = choice;
+            DialogResult = DialogResult.OK;
+            CloseOnce();
+        };
+        KeyDown += (_, e) =>
+        {
+            if (e.KeyCode == Keys.Escape) CloseOnce();
+        };
+        Deactivate += (_, _) => CloseOnce();
+
+        Controls.Add(list);
+        Theme.AttachWindow(this);
+        Shown += (_, _) => list.FocusFilter();
+    }
+
+    public AiUnitChoice? Chosen { get; private set; }
+
+    private void CloseOnce()
+    {
+        if (closing) return;
+        closing = true;
+        Close();
     }
 }

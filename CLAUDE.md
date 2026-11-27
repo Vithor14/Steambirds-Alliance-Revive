@@ -26,9 +26,9 @@ Maintained 100% by the community, with some additions and improvements.
 
 ## Where things stand
 
-- Version at the last release (27/11/2026): server and launcher **0.8.0**, plugin Steambirds Quieter **1.22.0**, client build
-  **201219.1413**. The launcher assembly is already **0.9.0**. **0.9.0 is in progress** (`docs/update-notes-0.9.0.md`). Closed notes: `docs/update-notes-0.7.0.md`,
-  `docs/update-notes-0.7.1.md` and `docs/update-notes-0.8.0.md` (full, English and Portuguese), `docs/release-notes-0.7.0.md`, `docs/release-notes-0.7.1.md` and `docs/release-notes-0.8.0.md` (short, for GitHub; 0.8.0 is English only).
+- Version: launcher **0.8.1** (patch on 0.8.0, 27/11/2026; notes `docs/update-notes-0.8.1.md`), plugin Steambirds Quieter **1.22.0**, client build
+  **201219.1413**. **0.9.0 is in progress** (`docs/update-notes-0.9.0.md`). Closed notes: `docs/update-notes-0.7.0.md`,
+  `docs/update-notes-0.7.1.md`, `docs/update-notes-0.8.0.md` and `docs/update-notes-0.8.1.md` (full, English and Portuguese), `docs/release-notes-0.7.0.md`, `docs/release-notes-0.7.1.md` and `docs/release-notes-0.8.0.md` (short, for GitHub; 0.8.0 is English only).
   When a design note and a later update note disagree, the later note is the one to follow, then the code.
 - **`CHECKLIST.md` (repo root) is the source of truth**: done / partial / missing per area, and the suggested MVP order.
   Update it when a feature changes state (keep its Portuguese style) and recompute its summary table (a bullet counts as
@@ -61,6 +61,7 @@ Maintained 100% by the community, with some additions and improvements.
 | `docs/update-notes-0.7.0.md`, `docs/release-notes-0.7.0.md` | release notes of 0.7.0: full (English and Portuguese) and the short one for GitHub |
 | `docs/update-notes-0.7.1.md`, `docs/release-notes-0.7.1.md` | patch 0.7.1: full (English and Portuguese) and the short one for GitHub |
 | `docs/update-notes-0.8.0.md`, `docs/release-notes-0.8.0.md` | 0.8.0, released 27/11/2026: full log (English and Portuguese) and the English GitHub text |
+| `docs/update-notes-0.8.1.md` | patch 0.8.1 (27/11/2026): full log, English and Portuguese |
 | `docs/update-notes-0.9.0.md` | 0.9.0, open until release: every later change is written here (English and Portuguese) |
 | `docs/radmin-vpn-guide.md` | player-facing guide: install Radmin VPN, join the `Steambirds_Revive` network, host or join a server (English) |
 | `docs/discord-server.md`, `docs/discord-start-here.md` | plan of the community Discord server and the ready-to-paste `#start-here` texts (not code) |
@@ -82,18 +83,20 @@ Maintained 100% by the community, with some additions and improvements.
     (`brains\`, `behaviors\`, `formations\`). Brains and formations use the same folders: `generic`, `world` (the formation list
     also groups world files by biome) and `dungeons\<name>`. The Ambassador fight is `brains\world\ambassador*.json` (phase summons,
     not a birth formation). `formations\world\ambassador_body.json` is an optional glued body and is not bound to that AI.
-    Place `follow` is a slot offset the piece flies to with its own turn and speed (the Sergeant Pup pods); `slot` and `chain`
+    Place `follow` is a slot offset the piece flies toward, aiming at an area around the point and allowed to stop there (the Sergeant Pup pods); `slot` and `chain`
     stay bolted to the leader. A formation link (shield, kill everyone in the formation, unshield, heal) is one row of the Links
     tab. Summon amount 0 spawns nothing.
   - Game data exported by the plugin (gitignored, copied from the game): `data\`. Item catalog written by the server: `catalog\`.
   - Accounts: `accounts\<key>\` (gitignored). Chat messages of the client: `Game*.cs`; message IDs: `MessageCatalog.cs`.
-- `Launcher\` — WinForms .NET 8 launcher (0.9.0): `Core\`, `UI\` (screens) with `UI\Controls\` (themed controls), `Editor\` (map editor tab),
+- `Launcher\` — WinForms .NET 8 launcher (0.8.1): `Core\`, `UI\` (screens) with `UI\Controls\` (themed controls), `Editor\` (map editor tab),
   `EnemyAi\` (Enemy AI tab and simulator, Formation tab), `lang\` (English is the default; `pt-BR.json`, `_template.json`).
-  F1 on Enemy AI and on Formation opens the help of that tab (`AiHelp`, `FormationHelp`). Right-click a file in the Enemy AI
-  list to rename it (a generic AI stays protected). Formation choices (place, motion, rule, holds while) show a plain name and
+  F1 on Enemy AI and on Formation opens the help of that tab (`AiHelp`, `FormationHelp`). The Enemy AI tab lists units on
+  the left (the same folders and filter as the unit picker; a unit with its own AI is green, one with no AI file is another color) and the AI box at the top lists the AIs of the selected unit.
+  Rename is in the Edit menu (a generic AI stays protected). Formation choices (place, motion, rule, holds while) show a plain name and
   a line under the list that says what the current choice does; fields that choice does not read stay gray. On Server > World
-  map > Enemies of each biome, AI, Formation and Amount are edited on the enemy's row: the AI list is the ones made for that
-  unit plus the generic ones, and the formation list is only formations whose leader is that unit.
+  map > Enemies of each biome, Formation, AI and Amount are edited on the enemy's row. Formation is the column before AI;
+  choosing one turns the other cell off, and a formation overrides an AI picked for that unit. The formation list is only
+  formations whose leader is that unit, and the AI list is the ones made for that unit plus the generic ones.
   Docs: `Launcher\README.md`, `Launcher\Editor\README.md`, `Launcher\lang\README.md`.
 - `Shared\EnemyAi\` — enemy AI core (file formats, runtime, flight, gun aim, simulator), compiled into **both** `Server` and `Launcher`
   (`<Compile Include="..\Shared\EnemyAi\*.cs">`). The AI files themselves live in `Server\ai\` (format: `Server\ai\README.md`).
@@ -103,7 +106,7 @@ Maintained 100% by the community, with some additions and improvements.
   pictures from each player's own copy of the game (installs BepInEx + plugin, opens the game once). See its README.
 - `Branding\` — project logo and square emblem (SVG, PNG, ICO), our own drawing in the style of the original logo.
   Generated by `tools\make_logo.py` (Pillow only); see `Branding\README.md`. Never copy the game's own logo into the repo.
-- `tools\` — `make_logo.py` and `scale_dungeon_maps.py` (shrinks a dungeon map; refuses to scale twice) and `make_map_maker_helper.py` (generates the three catalog maps `Server\maps\map_maker_floors.json`, `map_maker_decor.json` and `map_maker_enemies.json`: every floor piece, decoration and enemy, from `Server\data`). The scripts that
+- `tools\` — `make_logo.py` and `scale_dungeon_maps.py` (shrinks a dungeon map; refuses to scale twice) and `make_map_maker_helper.py` (generates the catalog maps `Server\maps\map_maker_floors.json`, `map_maker_decor.json`, `map_maker_enemies.json` and `map_maker_effects.json`: every floor piece, decoration, enemy and looping visual effect, from `Server\data` and the game's configBinary). The scripts that
   generated the 17 dungeon maps are gone: the `.json` files are the source now.
 - `docs\` — design notes (see the table above). `Release\` — output of `Build launcher release.ps1` (gitignored).
 - `decompilado\` — decompiled client (Assembly-CSharp and firstpass). Reference only, very large, gitignored:

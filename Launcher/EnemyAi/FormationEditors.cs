@@ -219,7 +219,7 @@ internal sealed class MemberEditor : UserControl
         kind = FormationFields.Choices(
             new FormationFields.NamedChoice("chain", "Behind along the path", "Each copy follows the path the leader already flew, one Spacing apart (set on the Formation tab). Turning the leader does not swing it sideways."),
             new FormationFields.NamedChoice("slot", "Bolted to an offset", "Stuck at x (right of the leader) and y (in front; negative is behind), and it turns with the leader. A sudden 90 degree turn moves it there instantly."),
-            new FormationFields.NamedChoice("follow", "Flies to an offset", "The destination is the same x and y, but the piece flies there with its own turn and speed. A sudden turn does not teleport it. The Sergeant Pup pods do this."),
+            new FormationFields.NamedChoice("follow", "Flies to an offset", "The destination is the same x and y. The piece flies toward an area around that point and may stop to settle there, so a moving point does not make it loop past and come all the way around. A sudden turn does not teleport it. The Sergeant Pup pods do this."),
             new FormationFields.NamedChoice("ring", "Circle around the leader", "Count copies stand on a circle around the leader. Radius is the size, Angle is where the first sits, and Spin turns the circle (degrees per second)."),
             new FormationFields.NamedChoice("points", "Walks the points", "Uses the points of this formation. Motion chooses patrol, stay, fly to one, or orbit. A point's x is to the right of the leader and y is in front."),
             new FormationFields.NamedChoice("free", "Flies on its own", "Born near the leader, then its own AI flies it. The formation does not hold it. Only Count matters."));
@@ -234,10 +234,10 @@ internal sealed class MemberEditor : UserControl
         Tip(unit, "The game unit that is born. The list is the same as the Enemy AI unit picker. With no unit, this member is not spawned and the other fields stay gray.");
         Tip(ai, "AI file this piece runs. The list is the AIs made for this unit, then the generic ones. Empty uses the AI of the unit.");
         Tip(role, "A name a link or a summonsAtMost condition can filter on, for example pod or outer.");
-        Tip(kind, "Where this piece sits. chain follows behind (only Count is used; spacing is on the Formation tab). slot is bolted to x and y. follow uses the same x and y, but the piece flies there with its own turn and speed. ring uses Count, Radius, Spin and Angle. points uses the polygon. free only uses Count.");
+        Tip(kind, "Where this piece sits. chain follows behind (only Count is used; spacing is on the Formation tab). slot is bolted to x and y. follow uses the same x and y, but the piece flies toward an area around that point and may stop there. ring uses Count, Radius, Spin and Angle. points uses the polygon. free only uses Count.");
         Tip(count, "How many copies of this member are born. Used by chain, ring, free, and by points when Point is empty (each copy starts at the next vertex). A slot ignores it: the copies would sit on the same spot.");
-        Tip(x, "Map units to the right of the leader. A slot is bolted there. follow flies to that point.");
-        Tip(y, "Map units in front of the leader. Negative is behind. A slot is bolted there. follow flies to that point.");
+        Tip(x, "Map units to the right of the leader. A slot is bolted there. follow flies toward an area around that point and may stop to settle there.");
+        Tip(y, "Map units in front of the leader. Negative is behind. A slot is bolted there. follow flies toward an area around that point and may stop to settle there.");
         Tip(radius, "Size of the circle, in map units. Only a ring reads this.");
         Tip(spin, "Degrees per second. A ring spins the circle. On points, patrol uses it as the turn at a vertex (0 = 90) and orbit uses it as the spin (0 = 40).");
         Tip(angle, "Where the first piece of a ring sits, in degrees. The others are spaced evenly. Only a ring reads this.");

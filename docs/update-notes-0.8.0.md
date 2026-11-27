@@ -1,6 +1,6 @@
 # Steambirds Alliance Revive 0.8.0
 
-**Status: released (27/11/2026).** English notes for GitHub: `release-notes-0.8.0.md`. New changes go to `update-notes-0.9.0.md`. / **Lançada (27/11/2026).** Notas em inglês para o GitHub: `release-notes-0.8.0.md`. Mudanças novas vão para `update-notes-0.9.0.md`.
+**Status: released (27/11/2026).** English notes for GitHub: `release-notes-0.8.0.md`. The patch is `update-notes-0.8.1.md`. Later changes go to `update-notes-0.9.0.md`. / **Lançada (27/11/2026).** Notas em inglês para o GitHub: `release-notes-0.8.0.md`. O patch é `update-notes-0.8.1.md`. Mudanças seguintes vão para `update-notes-0.9.0.md`.
 
 Base: 0.7.1 (the patch on top of 0.7.0). / Base: 0.7.1 (o patch sobre a 0.7.0).
 

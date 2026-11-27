@@ -54,6 +54,15 @@ internal sealed class UnitTypesPage : EditorPage
 
         types.ItemSelected += item =>
         {
+            // A formation already stored with an AI wins: drop the AI so the two fields are not both set.
+            if (item?.Data != null
+                && Json.Str(item.Data, "formation").Trim().Length > 0
+                && Json.Str(item.Data, EnemyAiEditors.AiField).Trim().Length > 0)
+            {
+                Session.Checkpoint();
+                item.Data.Remove(EnemyAiEditors.AiField);
+                Session.Touch();
+            }
             combatForm.Bind(item?.Data);
             deathForm.Bind(item?.Data);
             aiForm.Bind(item?.Data);
@@ -94,7 +103,7 @@ internal sealed class UnitTypesPage : EditorPage
         var page = new TabPage(L.T("Enemy AI")) { Padding = new Padding(6) };
         Label title = Ui.Bold(L.T("Enemy AI"));
         Label text = Ui.Wrapping(
-            L.T("How this unit moves, when it shoots and when it blows up is an AI made in the Enemy AI tab of the launcher. The AI lives in its own file (server\\ai\\brains), not in the map, so the same one can serve many maps and can be shared. Pick it here and use the button to edit it and test it on this unit."),
+            L.T("Pick a formation or an AI, not both. Formation is first. Choosing one turns the AI field off: it overrides an AI picked here or anywhere else, and the leader runs the AI saved on the formation. Clear the formation to pick an AI; picking an AI turns the formation field off. An AI lives in its own file (server\\ai\\brains), not in the map."),
             400, true);
         var table = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1 };
         table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
@@ -114,17 +123,22 @@ internal sealed class UnitTypesPage : EditorPage
 
     private IEnumerable<FieldSpec> AiFieldSpecs()
     {
-        yield return new FieldSpec(EnemyAiEditors.AiField, "AI (file)", FieldKind.EditableChoice)
-        {
-            Choices = () => EnemyAiEditors.Current?.ApplicableBrainIds(EnemyAiEditors.UnitNamesOf(CurrentType)) ?? Enumerable.Empty<string>(),
-            ChoiceLabel = id => UnitLists.AiText(string.Join("|", EnemyAiEditors.UnitNamesOf(CurrentType)), id),
-            Help = "Id of an AI file of the server's ai\\brains folder. The list shows the AIs made for this unit first, then the generic ones. Empty = the unit gets the generic chase AI."
-        };
+        // Formation first. The two fields cannot both be set: a formation overrides any AI chosen here or elsewhere.
         yield return new FieldSpec("formation", "Formation", FieldKind.EditableChoice)
         {
             Choices = FormationIds,
             OnChanged = FormationChosen,
-            Help = "Id of a formation file in server\\ai\\formations. When it is set, this unit is born with every piece of that formation, not only itself. Empty = the formation the AI names, or the one bound to this unit when the AI is generic."
+            EnabledWhen = type => Json.Str(type, "formation").Trim().Length > 0
+                || Json.Str(type, EnemyAiEditors.AiField).Trim().Length == 0,
+            Help = "Id of a formation file in server\\ai\\formations. The unit is born with every piece of that formation, and this choice overrides any AI selected here or elsewhere. The AI field turns off. Empty this to choose an AI instead."
+        };
+        yield return new FieldSpec(EnemyAiEditors.AiField, "AI (file)", FieldKind.EditableChoice)
+        {
+            Choices = () => EnemyAiEditors.Current?.ApplicableBrainIds(EnemyAiEditors.UnitNamesOf(CurrentType)) ?? Enumerable.Empty<string>(),
+            ChoiceLabel = id => UnitLists.AiText(string.Join("|", EnemyAiEditors.UnitNamesOf(CurrentType)), id),
+            OnChanged = AiChosen,
+            EnabledWhen = type => Json.Str(type, "formation").Trim().Length == 0,
+            Help = "Id of an AI file of the server's ai\\brains folder. The list shows the AIs made for this unit first, then the generic ones. Empty = the unit gets the generic chase AI. This field turns off while a formation is chosen. Clear the formation to pick an AI; picking an AI turns the formation field off."
         };
     }
 
@@ -140,7 +154,8 @@ internal sealed class UnitTypesPage : EditorPage
         }
     }
 
-    // Picking a formation fills an empty game unit and a generic AI from that formation's leader.
+    // Picking a formation fills an empty game unit from that formation's leader, and drops any AI on this type.
+    // The formation's own leader AI is what runs; the two fields are not kept together.
     private void FormationChosen(JsonObject type, string oldId, string newId)
     {
         if (newId.Length > 0 && !newId.Equals(oldId, StringComparison.OrdinalIgnoreCase))
@@ -157,36 +172,56 @@ internal sealed class UnitTypesPage : EditorPage
                     FollowTemplate(type, "", leaderUnit);
                     types.PropertyForm.RefreshValues();
                 }
-                string ai = Json.Str(type, EnemyAiEditors.AiField);
-                bool generic = ai.Length == 0 || ai.StartsWith("generic_", StringComparison.OrdinalIgnoreCase);
-                if (generic && file.LeaderAi.Length > 0) type[EnemyAiEditors.AiField] = file.LeaderAi;
             }
         }
+        if (newId.Length > 0) type.Remove(EnemyAiEditors.AiField);
+        UpdateAiState();
+    }
+
+    // An AI on this type means no formation picked here. A formation the AI file names still applies on its own.
+    private void AiChosen(JsonObject type, string oldId, string newId)
+    {
+        if (newId.Length > 0) type.Remove("formation");
         UpdateAiState();
     }
 
     private void UpdateAiState()
     {
         JsonObject? type = CurrentType;
-        aiButton.Enabled = EnemyAiEditors.Available && type != null;
+        string formation = type == null ? "" : Json.Str(type, "formation").Trim();
+        aiButton.Enabled = EnemyAiEditors.Available && type != null && formation.Length == 0;
         if (type == null)
         {
             aiState.Text = "";
             formationButton.Enabled = false;
             return;
         }
-        string behavior = Json.Str(type, "behavior");
-        aiState.Text = EnemyAiEditors.HasAi(type)
-            ? L.F("This type uses the AI \"{0}\".", Json.Str(type, EnemyAiEditors.AiField))
-            : behavior.Length > 0
-                ? L.F("This type has no AI. It keeps the built-in behavior \"{0}\" of the map (not edited here). Pick an AI above, or open the AI editor, to control how it moves and shoots.", behavior)
-                : L.T("This type has no AI. Pick one above, or open the AI editor, to control how it moves and shoots.");
-        string formation = Json.Str(type, "formation");
         int members = FormationMembers(type);
         if (formation.Length > 0)
-            aiState.Text += " " + L.F("This type brings the formation \"{0}\" ({1} piece(s)).", formation, members);
-        else if (members > 0)
-            aiState.Text += " " + L.F("This AI brings {0} formation member(s).", members);
+        {
+            aiState.Text = L.F("This type brings the formation \"{0}\" ({1} piece(s)).", formation, members);
+            string leaderAi = LeaderAiOf(formation);
+            string kept = Json.Str(type, EnemyAiEditors.AiField).Trim();
+            if (leaderAi.Length > 0)
+                aiState.Text += " " + L.F("The AI field is off. This formation overrides it, and the leader runs \"{0}\".", leaderAi);
+            else if (kept.Length > 0)
+                aiState.Text += " " + L.F("The AI field is off. This formation names no leader AI, so the unit keeps \"{0}\".", kept);
+            else
+                aiState.Text += " " + L.T("The AI field is off. This formation overrides it. The formation names no leader AI, so the unit keeps the generic chase AI.");
+        }
+        else
+        {
+            string behavior = Json.Str(type, "behavior");
+            aiState.Text = EnemyAiEditors.HasAi(type)
+                ? L.F("This type uses the AI \"{0}\".", Json.Str(type, EnemyAiEditors.AiField))
+                : behavior.Length > 0
+                    ? L.F("This type has no AI. It keeps the built-in behavior \"{0}\" of the map (not edited here). Pick an AI above, or open the AI editor, to control how it moves and shoots.", behavior)
+                    : L.T("This type has no AI. Pick one above, or open the AI editor, to control how it moves and shoots.");
+            if (members > 0)
+                aiState.Text += " " + L.F("This AI brings {0} formation member(s).", members);
+            if (EnemyAiEditors.HasAi(type))
+                aiState.Text += " " + L.T("The formation field is off. Clear the AI to choose a formation instead.");
+        }
         formationButton.Enabled = Context.OpenFormation != null && FormationIdOf(type).Length > 0;
     }
 
@@ -206,6 +241,18 @@ internal sealed class UnitTypesPage : EditorPage
         catch (IOException)
         {
             return 0;
+        }
+    }
+
+    private static string LeaderAiOf(string formationId)
+    {
+        try
+        {
+            return FormationLibrary.Load(LauncherPaths.AiFolder).Get(formationId)?.LeaderAi ?? "";
+        }
+        catch (IOException)
+        {
+            return "";
         }
     }
 

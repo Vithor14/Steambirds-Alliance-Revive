@@ -89,10 +89,37 @@ public sealed class AiSimUnit
 
     public bool Shielded { get; private set; }
 
-    public void SetShield(bool on)
+    // The AI state and the formation each ask for a shield on their own. The unit is shielded while either one still
+    // wants it. The log is written only when that result changes: a formation that renews the shield every tick must
+    // not look like the shield falling off.
+    private bool aiWantsShield;
+    private bool formationWantsShield;
+    private string shieldEffect = "";
+
+    // The formation's wish for this tick (on, with the bubble name, or off). A suppressed shield stays down.
+    public void SetShield(bool on, string effect = "")
     {
         if (ShieldSuppressed) on = false;
+        formationWantsShield = on;
+        if (on && effect.Length > 0) shieldEffect = effect;
+        PublishShield();
+    }
+
+    private void SetAiShield(bool on, string effect)
+    {
+        if (ShieldSuppressed) on = false;
+        aiWantsShield = on;
+        if (on && effect.Length > 0) shieldEffect = effect;
+        PublishShield();
+    }
+
+    private void PublishShield()
+    {
+        bool on = !ShieldSuppressed && (aiWantsShield || formationWantsShield);
+        if (on == Shielded) return;
         Shielded = on;
+        Log(Shielded ? "shield up" + (shieldEffect.Length > 0 ? " (" + shieldEffect + ")" : "") : "shield down");
+        if (!Shielded) shieldEffect = "";
     }
     public string VisualEffect { get; private set; } = "";
     public bool Homing { get; private set; }
@@ -152,6 +179,9 @@ public sealed class AiSimUnit
         lastHitAt = -1;
         bornAt = world.Time;
         Shielded = false;
+        aiWantsShield = false;
+        formationWantsShield = false;
+        shieldEffect = "";
         VisualEffect = "";
         Homing = false;
         Vel = (Unit.VelMin + Unit.VelMax) * 0.5f * Math.Max(0.01f, Tuning.SpeedMult);
@@ -268,12 +298,7 @@ public sealed class AiSimUnit
                 TotalSummoned += order.Count;
                 world.Summon(this, order);
             }
-            if (ShieldSuppressed) o.ShieldOn = false;
-            if (o.ShieldOn != Shielded)
-            {
-                Shielded = o.ShieldOn;
-                Log(Shielded ? "shield up" + (o.ShieldEffect.Length > 0 ? " (" + o.ShieldEffect + ")" : "") : "shield down");
-            }
+            SetAiShield(o.ShieldOn, o.ShieldEffect);
             if (o.Explode)
             {
                 Die(true);

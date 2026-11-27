@@ -77,8 +77,8 @@ internal sealed class WorldEnemiesPage : UserControl
     private int editGroup = -1;
     private int editColumn = -1;
     private bool fillingCell;
-    private const int ColAi = 3;
-    private const int ColFormation = 4;
+    private const int ColFormation = 3;
+    private const int ColAi = 4;
     private const int ColAmount = 5;
     private readonly ThemedButton saveLists;
     private readonly ThemedButton undoLists;
@@ -203,7 +203,7 @@ internal sealed class WorldEnemiesPage : UserControl
         listStatus = Ui.Wrapping("", 640, gray: true);
         listStatus.Dock = DockStyle.Top;
 
-        list = Ui.Grid((L.T("Group"), 150), (L.T("Role"), 72), (L.T("Enemy"), 150), (L.T("AI"), 210), (L.T("Formation"), 190), (L.T("Amount"), 76), (L.T("Tier"), 45), (L.T("Health"), 64));
+        list = Ui.Grid((L.T("Group"), 150), (L.T("Role"), 72), (L.T("Enemy"), 150), (L.T("Formation"), 190), (L.T("AI"), 210), (L.T("Amount"), 76), (L.T("Tier"), 45), (L.T("Health"), 64));
         list.MultiSelect = true;
         // The picture of each enemy, before its name.
         list.PictureColumn = 2;
@@ -261,8 +261,9 @@ internal sealed class WorldEnemiesPage : UserControl
         saveButtons.Dock = DockStyle.Bottom;
 
         hint = Ui.Wrapping(L.T("Each spawn site of a biome picks one of these groups at random: a leader with followers, or one enemy of a solo group. " +
-                               "Click AI, Formation or Amount on a row to change that enemy. The AI list is the ones made for that unit, then the generic ones. " +
-                               "The formation list is only the formations whose leader is that unit. Amount is how many of that enemy the group creates each time."), 640, gray: true);
+                               "Click Formation, AI or Amount on a row to change that enemy. Formation comes first. Choosing one turns the AI cell off and overrides an AI picked here or anywhere else: the leader runs the AI saved on the formation. " +
+                               "Choosing an AI turns the formation cell off. Clear one to pick the other. The formation list is only the formations whose leader is that unit. The AI list is the ones made for that unit, then the generic ones. " +
+                               "Amount is how many of that enemy the group creates each time."), 640, gray: true);
         hint.Dock = DockStyle.Bottom;
 
         var listsBody = new Panel { Dock = DockStyle.Fill };
@@ -503,6 +504,7 @@ internal sealed class WorldEnemiesPage : UserControl
     {
         WorldEnemyRegion? region = Current;
         if (region == null) return;
+        if (DropAiWhereFormationWins(region)) listsDirty = true;
         List<(int Group, bool Leader, string Name)> selected = SelectedRows().ToList();
         List<WorldEnemyGroup> groups = EffectiveGroups(region);
 
@@ -573,8 +575,8 @@ internal sealed class WorldEnemiesPage : UserControl
         var item = new ListViewItem(groupName) { Tag = (group, leader, name) };
         item.SubItems.Add(role);
         item.SubItems.Add(enemy.Length > 0 ? enemy : L.T("(empty group)"));
-        item.SubItems.Add(enemy.Length > 0 ? AiLabel(enemy) : "");
         item.SubItems.Add(enemy.Length > 0 ? FormationLabel(enemy) : "");
+        item.SubItems.Add(enemy.Length > 0 ? AiLabel(enemy) : "");
         item.SubItems.Add(count);
         item.SubItems.Add(unit != null ? unit.Tier.ToString() : "");
         item.SubItems.Add(unit != null ? unit.MaxHealth.ToString("0") : "");
@@ -593,7 +595,8 @@ internal sealed class WorldEnemiesPage : UserControl
     {
         bool has = Current != null;
         List<string> units = has ? SelectedUnits() : new List<string>();
-        aiEditButton.Enabled = has && units.Count == 1 && EnemyAiEditors.Available;
+        bool formationChosen = has && units.Count == 1 && FormationOf(Current!, units[0]).Length > 0;
+        aiEditButton.Enabled = has && units.Count == 1 && EnemyAiEditors.Available && !formationChosen;
         string openId = has && units.Count == 1 ? EffectiveFormationId(Current!, units[0]) : "";
         formationEditButton.Enabled = openId.Length > 0 && context.OpenFormationTab != null;
         randomGroupButton.Enabled = has && SelectedGroupRows().Any(r =>
@@ -823,10 +826,28 @@ internal sealed class WorldEnemiesPage : UserControl
         return WorldEnemyFiles.DefaultAiOf(unit);
     }
 
+    // The host wrote an AI for this unit. The default shown on the row is not a choice, so the formation cell stays open.
+    private bool HostPickedAi(WorldEnemyRegion region, string unit)
+    {
+        Dictionary<string, string>? chosen = EditOf(region)?.Ai;
+        if (chosen == null) return false;
+        foreach (KeyValuePair<string, string> pair in chosen)
+        {
+            if (pair.Key.Equals(unit, StringComparison.OrdinalIgnoreCase) && pair.Value.Length > 0) return true;
+        }
+        return false;
+    }
+
     private string AiLabel(string unit)
     {
         WorldEnemyRegion? region = Current;
         if (region == null) return "";
+        string formation = FormationOf(region, unit);
+        if (formation.Length > 0)
+        {
+            string leader = Formations().Get(formation)?.LeaderAi ?? "";
+            return leader.Length > 0 ? leader + " (" + L.T("from the formation") + ")" : L.T("(from the formation)");
+        }
         string id = AiOf(region, unit);
         return id.Equals(WorldEnemyFiles.DefaultAiOf(unit), StringComparison.OrdinalIgnoreCase) ? id + " (" + L.T("default") + ")" : id;
     }
@@ -859,13 +880,20 @@ internal sealed class WorldEnemiesPage : UserControl
         WorldEnemyRegion edit = EnsureEdit(region);
         edit.Ai ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         // The default is not written: the biome keeps following the default AI of the open world.
-        if (id.Equals(WorldEnemyFiles.DefaultAiOf(unit), StringComparison.OrdinalIgnoreCase)) edit.Ai.Remove(unit);
-        else edit.Ai[unit] = id;
+        if (id.Equals(WorldEnemyFiles.DefaultAiOf(unit), StringComparison.OrdinalIgnoreCase)) RemoveIgnoreCase(edit.Ai, unit);
+        else
+        {
+            edit.Ai[unit] = id;
+            // An AI chosen here turns the formation off. A formation the AI file names still applies on its own.
+            if (edit.Formations != null) RemoveIgnoreCase(edit.Formations, unit);
+        }
         string label = AiLabel(unit);
+        string formationLabel = FormationLabel(unit);
         foreach (ListViewItem item in list.Items)
         {
-            if (item.Tag is ValueTuple<int, bool, string> tag && tag.Item3.Equals(unit, StringComparison.OrdinalIgnoreCase) && item.SubItems.Count > ColAi)
-                item.SubItems[ColAi].Text = label;
+            if (item.Tag is not ValueTuple<int, bool, string> tag || !tag.Item3.Equals(unit, StringComparison.OrdinalIgnoreCase)) continue;
+            if (item.SubItems.Count > ColAi) item.SubItems[ColAi].Text = label;
+            if (item.SubItems.Count > ColFormation) item.SubItems[ColFormation].Text = formationLabel;
         }
         NoteDirty();
     }
@@ -900,6 +928,25 @@ internal sealed class WorldEnemiesPage : UserControl
         return formations;
     }
 
+    // A formation already stored with an AI wins: drop the AI so the two are not both set.
+    private bool DropAiWhereFormationWins(WorldEnemyRegion region)
+    {
+        WorldEnemyRegion? edit = EditOf(region);
+        if (edit?.Formations == null || edit.Ai == null) return false;
+        List<string> drop = edit.Ai.Keys.Where(unit =>
+            edit.Formations.Keys.Any(f => f.Equals(unit, StringComparison.OrdinalIgnoreCase))).ToList();
+        if (drop.Count == 0) return false;
+        foreach (string unit in drop) edit.Ai.Remove(unit);
+        return true;
+    }
+
+    private static bool RemoveIgnoreCase(Dictionary<string, string>? map, string unit)
+    {
+        if (map == null) return false;
+        string? key = map.Keys.FirstOrDefault(k => k.Equals(unit, StringComparison.OrdinalIgnoreCase));
+        return key != null && map.Remove(key);
+    }
+
     // The formation the host wrote for this unit. Empty = the AI or the unit binding decides.
     private string FormationOf(WorldEnemyRegion region, string unit)
     {
@@ -918,6 +965,7 @@ internal sealed class WorldEnemiesPage : UserControl
         if (region == null) return "";
         string id = FormationOf(region, unit);
         if (id.Length > 0) return id;
+        if (HostPickedAi(region, unit)) return "";
         FormationFile? bound = Formations().ForUnit(unit);
         return bound != null && bound.BindToUnit ? bound.Id + " (" + L.T("bound") + ")" : "";
     }
@@ -967,6 +1015,23 @@ internal sealed class WorldEnemiesPage : UserControl
             return;
         }
         if (column != ColAi && column != ColFormation && column != ColAmount)
+        {
+            HideEditors();
+            return;
+        }
+        WorldEnemyRegion? region = Current;
+        if (region == null)
+        {
+            HideEditors();
+            return;
+        }
+        // One or the other. A formation overrides an AI picked here or anywhere else, so that cell does not open.
+        if (column == ColAi && FormationOf(region, tag.Item3).Length > 0)
+        {
+            HideEditors();
+            return;
+        }
+        if (column == ColFormation && HostPickedAi(region, tag.Item3))
         {
             HideEditors();
             return;
@@ -1071,15 +1136,8 @@ internal sealed class WorldEnemiesPage : UserControl
             if (id.Length == 0) edit.Formations.Remove(unit);
             else edit.Formations[unit] = id;
         }
-        FormationFile? file = id.Length == 0 ? null : Formations().Get(id);
-        // A formation names the AI its leader should run. Apply it when this enemy still has the default AI.
-        if (file != null && file.LeaderAi.Length > 0 &&
-            AiOf(region, unit).Equals(WorldEnemyFiles.DefaultAiOf(unit), StringComparison.OrdinalIgnoreCase))
-        {
-            edit.Ai ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            edit.Ai[unit] = file.LeaderAi;
-            changed = true;
-        }
+        // The formation's own leader AI is what runs. Do not also store an AI for this unit.
+        if (id.Length > 0 && RemoveIgnoreCase(edit.Ai, unit)) changed = true;
         if (!changed) return;
         string formationLabel = FormationLabel(unit);
         string aiLabel = AiLabel(unit);

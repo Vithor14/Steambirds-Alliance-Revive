@@ -229,6 +229,7 @@ public static partial class Enemies
         enemy.ActiveGuns = new List<int>(type.Guns ?? new List<int>());
         enemy.BaseEffect = MonoHash.StatefulEffectId(type.VisualEffect);
         enemy.EffectId = enemy.BaseEffect;
+        enemy.StatusFlags = StatusFlagsOf(type.StatusEffect);
 
         inst.Enemies[enemy.ShortId] = enemy;
         return enemy;

@@ -166,7 +166,7 @@ internal static class MapEditorHelp
             "- Shooting: the delay of the first shot, free aim (the guns aim at the player by themselves) and homing bullets.",
             "- Health and speed: the starting and the maximum health, and the multipliers of health, speed, turning, fire rate and damage. 2 is double.",
             "## Enemy AI tab",
-            "How the unit moves, when it shoots, which guns it uses and when it explodes is made by an AI, in the Enemy AI tab of the launcher, not here. Pick the AI in the field AI (file); the button Load unit in the AI editor goes to the Enemy AI tab with this unit type already in the simulator (its game unit, speed, turning, fire rate, aim and AI), ready to edit. Empty means no AI: the unit keeps the built-in behavior the map already has.",
+            "Pick a formation or an AI, not both. Formation is the first field. Choosing one turns the AI field off and overrides an AI picked here or anywhere else: the leader runs the AI saved on the formation. Clear the formation to pick an AI. Picking an AI turns the formation field off. Load unit in the AI editor is off while a formation is chosen. Empty AI means the generic chase AI.",
             "## Death and summons tab",
             "- Leaves: the unit type that appears where this one died (wreckage, a reward chest, a ring of bullets).",
             "- Then comes: types that are born one after the other when the one before dies.",

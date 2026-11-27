@@ -251,32 +251,71 @@ public static class FormationMotion
         return Still(world[start], 0f);
     }
 
-    // Flies to a slot offset with the unit's own turn. The position is never copied from the target, so a leader that
-    // snaps 90 degrees leaves the piece to catch the new point instead of appearing there.
+    // Flies toward a slot offset with the unit's own turn. The position is never copied from the target, so a leader
+    // that snaps 90 degrees leaves the piece to catch the new point instead of appearing there.
+    // The goal is a disk around the slot (Area), not the coordinate. Inside it the piece rides with the leader and
+    // does not chase the center. Outside, its velocity is the leader's plus a closing speed that falls to zero at
+    // the edge of the disk. If it has passed a nearby slot, it may stop and turn; steering on past the point at the
+    // unit's minimum speed is what makes a pod loop all the way around to get behind the leader again.
+    public const float Area = 1.25f;
+
     public static void Follow(ref float x, ref float y, ref float rot, ref float vel, Pose target,
         float leaderSpeed, float velMin, float velMax, float maxTurn, float dt)
     {
         velMax = Math.Max(1f, velMax);
-        velMin = Math.Clamp(velMin, 0f, velMax);
+        // A follower may stop. The unit's minimum speed would keep it carving a circle around a point it already passed.
+        velMin = 0f;
         maxTurn = Math.Max(40f, maxTurn);
         leaderSpeed = Math.Max(0f, leaderSpeed);
+
         float dist = AiMath.Distance(x, y, target.X, target.Y);
-        float aimX = target.X;
-        float aimY = target.Y;
-        float want;
-        if (dist < 0.45f)
+        float lrad = target.Rot * AiMath.Rad;
+        float lvx = MathF.Sin(lrad) * leaderSpeed;
+        float lvy = MathF.Cos(lrad) * leaderSpeed;
+        float dx = target.X - x;
+        float dy = target.Y - y;
+        float gap = dist - Area;
+        // Closing speed dies at the edge of the area, so the piece arrives instead of flying through the coordinate.
+        float close = gap <= 0f ? 0f : Math.Min(velMax, gap * 1.8f);
+        float vx = lvx;
+        float vy = lvy;
+        if (dist > 0.05f && close > 0f)
         {
-            // Close enough: face the way the leader faces and match its speed. Steering at a point under the nose
-            // would whip the heading around.
-            float rad = target.Rot * AiMath.Rad;
-            aimX = x + MathF.Sin(rad) * 6f;
-            aimY = y + MathF.Cos(rad) * 6f;
-            want = leaderSpeed;
+            vx += dx / dist * close;
+            vy += dy / dist * close;
         }
-        else
+        float want = MathF.Sqrt(vx * vx + vy * vy);
+        if (want > velMax && want > 0.001f)
         {
-            want = Math.Min(velMax, Math.Max(leaderSpeed, dist * 2f));
+            float scale = velMax / want;
+            vx *= scale;
+            vy *= scale;
+            want = velMax;
         }
+
+        float aim = want < 0.05f ? target.Rot : AiMath.Heading(0f, 0f, vx, vy);
+        // Passed it: the slot is behind the nose and still nearby. Stop and rotate. A turn at speed is the full lap.
+        if (gap > 0f && dist < Area + 4f && dist > 0.05f)
+        {
+            float slotDelta = Math.Abs(AiMath.AngleDifference(rot, AiMath.Heading(x, y, target.X, target.Y)));
+            if (slotDelta > 100f)
+            {
+                want = 0f;
+                aim = AiMath.Heading(x, y, target.X, target.Y);
+            }
+        }
+        else if (gap <= 0f)
+        {
+            // In the area. Match the leader. Still pointed well off its heading: stop and turn first, so the
+            // leftover speed does not carry the piece out the far side.
+            float face = Math.Abs(AiMath.AngleDifference(rot, target.Rot));
+            want = face > 55f ? 0f : leaderSpeed;
+            aim = target.Rot;
+        }
+
+        float ar = aim * AiMath.Rad;
+        float aimX = x + MathF.Sin(ar) * 6f;
+        float aimY = y + MathF.Cos(ar) * 6f;
         AiMotion.Steer(ref x, ref y, ref rot, ref vel, aimX, aimY, want, velMin, velMax, maxTurn, want < 0.05f, dt);
     }
 

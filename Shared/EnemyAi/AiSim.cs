@@ -515,7 +515,18 @@ public sealed class AiSim
         if (orders.Any(o => o.ClearShield && o.ActorId.Equals(id, StringComparison.OrdinalIgnoreCase)))
             who.ShieldSuppressed = true;
         bool want = !who.ShieldSuppressed && orders.Any(o => o.Shield && o.ActorId.Equals(id, StringComparison.OrdinalIgnoreCase));
-        if (want || who.ShieldSuppressed) who.SetShield(want);
+        string effect = "";
+        if (want)
+        {
+            foreach (FormationOrder order in orders)
+            {
+                if (!order.Shield || !order.ActorId.Equals(id, StringComparison.OrdinalIgnoreCase)) continue;
+                effect = order.Effect ?? "";
+                break;
+            }
+        }
+        // Every tick, including "off". Skipping the off left the last "on" stuck after the link stopped holding.
+        who.SetShield(want, effect);
     }
 
     private void TrimTrail(float needed)

@@ -100,7 +100,8 @@ public sealed class FormationMember
 public sealed class FormationPlace
 {
     // chain: behind the leader along the path it flew. slot: bolted to x (right) and y (front); a sudden turn carries it.
-    // follow: the same x and y, but the piece flies there with its own turn and speed (a sudden turn does not teleport it).
+    // follow: the same x and y, but the piece flies toward an area around that point and may stop to settle there
+    // (a sudden turn does not teleport it, and a moving point does not make it loop all the way around).
     // ring: count pieces on a circle (radius, spin degrees per second, angle where the first sits).
     // points: use the formation's points. motion is patrol (vertex to vertex), fixed, toward or orbit.
     // free: born in the group and flies with its own AI (not glued).
@@ -240,7 +241,7 @@ public sealed class FormationSlot
     public string Point = "";
     public float Pause, TravelSpeed, OrbitRadius;
     public bool Glued => Kind == "chain" || Kind == "slot" || Kind == "ring" || Kind == "points" || Kind == "follow";
-    // Chain and slot are bolted on: the formation writes their position. follow flies to the same offset.
+    // Chain and slot are bolted on: the formation writes their position. follow flies toward an area around that offset.
     public bool FaceLocked => Kind == "chain" || Kind == "slot";
 }
 

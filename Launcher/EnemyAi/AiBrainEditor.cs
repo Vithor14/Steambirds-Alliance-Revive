@@ -63,7 +63,7 @@ internal sealed class AiBrainEditor : Panel
         graph = new AiGraphView();
         graph.StateChosen += id => statesList.SelectById(id);
         graph.Edited += () => Edited?.Invoke();
-        ownNote = Ui.Wrapping(L.T("These are the values of the state's own behavior: how it moves, shoots and what happens on contact. They are used (and editable here) while no behavior is picked in the \"Behavior (file)\" field of the State tab. To change a behavior you picked, use \"Edit behavior...\" (one inside this AI) or its file in the list on the left."), 420, true);
+        ownNote = Ui.Wrapping(L.T("These are the values of the state's own behavior: how it moves, shoots and what happens on contact. They are used (and editable here) while no behavior is picked in the \"Behavior (file)\" field of the State tab. To change a behavior you picked, use \"Edit behavior...\" (one inside this AI)."), 420, true);
 
         transitions = new ListEditor(() => AiFields.NewTransition(DefaultTarget()), AiFields.DescribeTransition, 100);
         transitions.SelectionChanged += OnTransitionSelected;

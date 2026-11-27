@@ -61,7 +61,7 @@ internal static class FormationHelp
             "## Place",
             "- chain: behind the leader, along the path it flew, one spacing apart. Only Count is used (each copy is the next car). Spacing is on the Formation tab.",
             "- slot: a fixed offset, x to the right of the leader and y in front. The piece is bolted there, so a sudden turn of the leader carries it. Count stays gray, because extra copies would sit on the same spot.",
-            "- follow: the same x and y, but the piece flies to that point with its own turn and speed. A sudden turn does not teleport it. The Sergeant Pup pods use this.",
+            "- follow: the same x and y, but the piece flies toward an area around that point with its own turn and speed, and it may stop to settle there. A moving point does not make it loop all the way around. A sudden turn does not teleport it. The Sergeant Pup pods use this.",
             "- ring: Count pieces on a circle (Radius, Spin degrees per second, Angle where the first sits).",
             "- points: the piece uses the points of this formation. Motion then decides the rest. patrol walks vertex to vertex and waits while it turns (Pause, Speed, Spin). fixed stays on a point. toward flies to a point (Speed). orbit circles a point (Orbit radius, Spin). Point names one vertex; leave it empty and Count spreads the copies across the vertices.",
             "- free: born near the leader, then flies with its own AI. It is not glued. Only Count is used.",

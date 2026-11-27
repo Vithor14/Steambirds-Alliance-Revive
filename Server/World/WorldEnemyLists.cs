@@ -8,8 +8,10 @@ using System.Text.Json.Serialization;
 //   "groups": the groups of enemies a spawn site of the region picks from. Each group has "leaders" and "members" (a group of one
 //             leader and followers) or "solo": true (one enemy of "members" alone). When "groups" is missing the game's groups stay.
 //             "counts" ({unit: how many}) makes the group exact: how many of each unit it creates each time.
-//   "ai":     {unit: AI id}: the AI file (Serverirains) each unit of the region runs; a unit that is not in it runs generic_chase.
+//   "ai":     {unit: AI id}: the AI file (Server\ai\brains) each unit of the region runs; a unit that is not in it runs generic_chase.
+//             Not kept for a unit that also has "formations": the formation overrides it.
 //   "formations": {unit: formation id}: the formation born with that unit when it leads a group or spawns alone.
+//             When set, the leader runs that formation's leader AI, ahead of "ai".
 //   "boss":   the unit that "spawn boss here" (the launcher's map menu) creates in the region. Empty = the default boss of the region.
 // The server also writes world-enemy-defaults.json (the game's lists, the boss choices and the zone names) so the launcher can show
 // what is default, add to it and go back to it. The key of a region is the tile name of the map: beach, lowlands, lowlands2...
@@ -38,8 +40,9 @@ public static class WorldEnemyLists
         public List<GroupEntry>? Groups { get; set; }
         // The AI of each unit of the region (by the game's unit name). Missing = the default AI of the open world.
         public Dictionary<string, string>? Ai { get; set; }
-        // The formation born with each unit when that unit leads a group or spawns alone. Missing = the AI's formation,
-        // or the one bound to the unit when the AI is generic.
+        // The formation born with each unit when that unit leads a group or spawns alone. When set, it overrides Ai
+        // for that unit: the leader runs the formation's leader AI. Missing = the AI's formation, or the one bound
+        // to the unit when the AI is generic.
         public Dictionary<string, string>? Formations { get; set; }
     }
 

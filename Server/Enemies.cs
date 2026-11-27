@@ -104,14 +104,19 @@ public static partial class Enemies
         // Visual effect shown on the unit from the start (name of a configBinary "statefulEffects" entry, e.g.
         // "tankShield"). Sent in FieldUpdate EFFECTSTATE1; the id is MonoHash.StatefulEffectId(name).
         public string VisualEffect { get; set; } = "";
+        // Status paint from the client's unit flags (FieldUpdate FIELDMASK_FLAGS), not a statefulEffects name.
+        // "shielded" is the enemy shield: the client runs the shield shader on the unit's own art.
+        public string StatusEffect { get; set; } = "";
 
         // Id of an AI file (ai\brains\<id>.json, made in the launcher's Enemy AI tab). Empty = the built-in "behavior" above.
-        // A value that is not text (the old "ai" slot of the map editor) is ignored.
+        // A value that is not text (the old "ai" slot of the map editor) is ignored. Ignored when Formation names a
+        // file that has its own leader AI: that formation overrides this.
         [JsonConverter(typeof(AiReferenceConverter))]
         public string Ai { get; set; } = "";
 
-        // Id of a formation file (ai\formations). When set, this unit is born with every piece of that formation.
-        // Empty = the formation the AI names, or the one bound to the unit when the AI is generic.
+        // Id of a formation file (ai\formations). When set, this unit is born with every piece of that formation and
+        // the leader runs that file's leader AI, ahead of Ai. Empty = the formation the AI names, or the one bound to
+        // the unit when the AI is generic. The map editor does not keep this and Ai both set.
         public string Formation { get; set; } = "";
 
         // Death wreck (Enemies.Wrecks.cs). Empty DeathUnit = the normal explosion. DeathSequence lines are "SECONDS EFFECT".
@@ -311,6 +316,8 @@ public static partial class Enemies
         public double ShieldUntil;
         // Visual effect (FieldUpdate EFFECTSTATE1): current id, the id outside shields and "send it again".
         public short EffectId;
+        // Unit flags (FieldUpdate FIELDMASK_FLAGS). Bit 0x800 is the enemy shield paint (EffectType.Shielded).
+        public uint StatusFlags;
         // Behavior "mine": false while dormant. It arms itself once no player is inside its contact radius, so a mine
         // that is dropped on top of a player (or a player that spawns on it) does not go off by itself.
         public bool Armed;

@@ -6,25 +6,21 @@ using SteambirdsLauncher.UI;
 
 namespace SteambirdsLauncher.EnemyAi;
 
-// The "Enemy AI" tab: the list of AI files (left), the editor of the selected one (middle) and the simulator (right).
+// The "Enemy AI" tab: the units (left), the editor of the AI that runs on the selected one (middle) and the simulator (right).
 // Every AI and every behavior is its own .json file in the server's ai folder, so they can be copied, shared and loaded
 // as needed; the server reads them again by itself when they change.
 internal sealed class AiTab : Panel
 {
     private readonly LauncherContext context;
     private readonly AiStore store;
-    private readonly TreeView tree;
-    private readonly TreeNode brainsNode;
-    private readonly TreeNode behaviorsNode;
+    private readonly AiUnitList unitList;
     private readonly AiBrainEditor brainEditor;
     private readonly AiBehaviorEditor behaviorEditor;
     private readonly Label placeholder;
     private readonly TextBox problems;
     private readonly AiSimView simView;
-    private readonly Label idHint;
     private readonly SplitContainer outer;
     private readonly SplitContainer inner;
-    private readonly Dictionary<AiDoc, TreeNode> nodes = new Dictionary<AiDoc, TreeNode>();
     private readonly ToolStripMenuItem duplicateItem;
     private readonly ToolStripMenuItem renameItem;
     private readonly ToolStripMenuItem moveItem;
@@ -35,7 +31,7 @@ internal sealed class AiTab : Panel
     private readonly ToolStripMenuItem revertItem;
     private readonly ToolStripMenuItem exportItem;
     private readonly MenuStrip menu;
-    private readonly Button unitButton;
+    private readonly Button copyIdButton;
     private readonly ComboBox aiBox;
     private readonly Button loadOtherButton;
     private List<AiUnitGroup> unitGroups = new List<AiUnitGroup>();
@@ -43,11 +39,10 @@ internal sealed class AiTab : Panel
     private readonly CheckBox armedOnly;
     private readonly Label banner;
     private readonly Button backButton;
-    private readonly Button loadButton;
     private readonly Dictionary<string, AiUnitChoice> byLabel = new Dictionary<string, AiUnitChoice>(StringComparer.OrdinalIgnoreCase);
     private static string lastChoiceLabel = "";
 
-    // The unit in the simulator, the file selected in the list (only for the file buttons), the file loaded on the unit
+    // The unit in the simulator, the file the Edit menu acts on (the one open in the editor), the file loaded on the unit
     // just to be edited (null = the unit's own AI), and the file the editors show: loaded ?? the unit's own AI.
     private AiUnitChoice? choice;
     // The unit type the map editor opened here last (kept in the list of units while the tab lives).
@@ -56,7 +51,6 @@ internal sealed class AiTab : Panel
     private AiDoc? loaded;
     private AiDoc? current;
     private bool placed;
-    private bool refreshing;
     private bool building;
     // A generic AI was edited: the edits went to this new AI (shown in the banner until it is saved); the switch is queued.
     private AiDoc? divertedTo;
@@ -85,72 +79,42 @@ internal sealed class AiTab : Panel
         exportItem.ToolTipText = L.T("Writes one file with this AI and the behaviors it uses, to send to someone else (Import... reads it).");
         menu = BuildMenu();
 
-        // ---- the unit: what the simulator runs and what the editor is allowed to edit
-        unitButton = Ui.Button("", (_, _) => OpenUnitPicker());
-        unitButton.Width = 400;
-        unitButton.TextAlign = ContentAlignment.MiddleLeft;
-        aiBox = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 330 };
+        // ---- the AI of the unit selected on the left: what the editor shows and what the simulator runs
+        aiBox = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 420 };
+        aiBox.DropDownWidth = 520;
         aiBox.SelectedIndexChanged += (_, _) => AiBoxChosen();
         loadOtherButton = Ui.Button(L.T("Load another AI..."), (_, _) => ShowLoadOtherMenu());
-        armedOnly = new ThemedCheckBox { Text = L.T("Armed units only"), AutoSize = true, Checked = true };
-        armedOnly.CheckedChanged += (_, _) => FillUnits(true);
+        copyIdButton = Ui.Button(L.T("Copy id"), (_, _) =>
+        {
+            if (current != null) Clipboard.SetText(current.Id);
+        });
         backButton = Ui.Button(L.T("Back to the unit's AI"), (_, _) => BackToOwn());
         banner = Ui.Wrapping("", 800, false);
-        context.ToolTip.SetToolTip(unitButton, L.T("The unit the simulator flies. Click to pick one: the list is sorted by where the unit lives (a dungeon, a biome of the open world, generic, or no origin) and each entry runs the AI that place gives it. Units written in a different color have no AI."));
         context.ToolTip.SetToolTip(aiBox, L.T("The AIs that fit this unit: the ones made for it first, then the generic ones. Picking one loads it on the unit to edit and test; \"Back to the unit's AI\" returns to the AI the unit really runs."));
         context.ToolTip.SetToolTip(loadOtherButton, L.T("Loads an AI that is not made for this unit, or a file from anywhere on this computer, on the unit."));
+        context.ToolTip.SetToolTip(copyIdButton, L.T("Copies the id of the file that is open."));
         context.ToolTip.SetToolTip(backButton, L.T("Stops testing the loaded file on this unit and goes back to the AI the unit really uses."));
         var unitBar = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = true, Padding = new Padding(0, 4, 0, 0) };
-        unitBar.Controls.AddRange(new Control[] { Ui.Flow(Ui.Bold(L.T("Unit")), unitButton), Ui.Flow(Ui.Bold(L.T("AI")), aiBox), loadOtherButton, armedOnly, backButton, banner });
+        unitBar.Controls.AddRange(new Control[] { Ui.Flow(Ui.Bold(L.T("AI")), aiBox), loadOtherButton, copyIdButton, backButton, banner });
         unitBar.SetFlowBreak(backButton, true);
 
-        // ---- left: the files
-        tree = new TreeView { Dock = DockStyle.Fill, HideSelection = false, ShowNodeToolTips = true };
-        brainsNode = new TreeNode(L.T("AIs"));
-        behaviorsNode = new TreeNode(L.T("Behaviors"));
-        tree.Nodes.Add(brainsNode);
-        tree.Nodes.Add(behaviorsNode);
-        tree.AfterSelect += (_, e) =>
-        {
-            if (refreshing) return;
-            picked = e.Node?.Tag as AiDoc;
-            UpdateHint();
-            UpdateButtons();
-        };
-        // Right click on a file: load, duplicate, rename or delete it (the same actions as the Edit menu).
-        tree.NodeMouseClick += (_, e) =>
-        {
-            if (e.Button != MouseButtons.Right || e.Node?.Tag is not AiDoc) return;
-            tree.SelectedNode = e.Node;
-            ShowFileMenu(e.Location);
-        };
-        tree.NodeMouseDoubleClick += (_, e) =>
-        {
-            if (e.Node?.Tag is not AiDoc doc) return;
-            picked = doc;
-            LoadPicked();
-        };
-        idHint = Ui.Wrapping("", 210, true);
-        idHint.Dock = DockStyle.Bottom;
-        Button copyId = Ui.Button(L.T("Copy id"), (_, _) =>
-        {
-            if (picked != null) Clipboard.SetText(picked.Id);
-        });
-        loadButton = Ui.Primary(L.T("Load on the unit"), (_, _) => LoadPicked());
-        loadButton.Dock = DockStyle.Bottom;
-        context.ToolTip.SetToolTip(loadButton, L.T("Puts the selected AI or behavior on the unit above, to edit it and try it there. The unit's own AI comes back with \"Back to the unit's AI\"."));
-        copyId.Dock = DockStyle.Bottom;
+        // ---- left: the units, with the same folders and filter as the old unit drop-down
+        unitList = new AiUnitList(true, L.T("Green: the unit already has its own AI. Another color: no AI file. Click one to fly it in the simulator."));
+        unitList.Chosen += OnUnitChosen;
+        armedOnly = new ThemedCheckBox { Text = L.T("Armed units only"), AutoSize = true, Checked = true, Margin = new Padding(6, 6, 4, 2) };
+        armedOnly.CheckedChanged += (_, _) => FillUnits(true);
+        context.ToolTip.SetToolTip(armedOnly, L.T("Hides the units that have no guns. Turn it off to try an AI on a unit that only flies."));
+        var armedRow = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, WrapContents = false, Padding = new Padding(0, 2, 0, 0) };
+        armedRow.Controls.Add(armedOnly);
         var left = new Panel { Dock = DockStyle.Fill };
-        left.Controls.Add(tree);
-        left.Controls.Add(loadButton);
-        left.Controls.Add(copyId);
-        left.Controls.Add(idHint);
+        left.Controls.Add(unitList);
+        left.Controls.Add(armedRow);
 
         // ---- middle: the editors
         brainEditor = new AiBrainEditor(store) { Visible = false };
         behaviorEditor = new AiBehaviorEditor(store) { Visible = false };
         placeholder = Ui.Wrapping(
-            L.T("Pick an AI or a behavior on the left, or make a new one.\n\nAn AI is a set of states (for example: wait, chase, retreat). Each state acts like a behavior and has transitions that say when to change to another state. A behavior is one way of acting: how to move and shoot.\n\nThe simulator on the right shows what you build, with the art and the guns of any game unit."),
+            L.T("Pick a unit on the left. Its AI opens here, and the AI box above lists the AIs that fit it.\n\nAn AI is a set of states (for example: wait, chase, retreat). Each state acts like a behavior and has transitions that say when to change to another state. A behavior is one way of acting: how to move and shoot.\n\nThe simulator on the right shows what you build, with the art and the guns of any game unit."),
             400, true);
         placeholder.Padding = new Padding(10);
         brainEditor.Edited += OnEdited;
@@ -183,14 +147,13 @@ internal sealed class AiTab : Panel
         Controls.Add(unitBar);
         Controls.Add(menu);
 
-        store.Changed += RefreshTree;
+        store.Changed += OnStoreChanged;
         context.GameFolderChanged += OnGameFolderChanged;
         SizeChanged += (_, _) =>
         {
             banner.MaximumSize = new Size(Math.Max(300, Width - 40), 0);
             PlaceSplitters();
         };
-        RefreshTree();
         FillUnits(false);
     }
 
@@ -310,7 +273,7 @@ internal sealed class AiTab : Panel
     {
         if (disposing)
         {
-            store.Changed -= RefreshTree;
+            store.Changed -= OnStoreChanged;
             context.GameFolderChanged -= OnGameFolderChanged;
         }
         base.Dispose(disposing);
@@ -328,7 +291,7 @@ internal sealed class AiTab : Panel
         if (placed || Width < 700) return;
         try
         {
-            outer.SplitterDistance = Math.Clamp(Width * 17 / 100, 170, 260);
+            outer.SplitterDistance = Math.Clamp(Width * 30 / 100, 300, 460);
             inner.SplitterDistance = Math.Max(300, inner.Width * 48 / 100);
             placed = true;
         }
@@ -338,67 +301,26 @@ internal sealed class AiTab : Panel
         }
     }
 
-    // ------------------------------------------------------------------ tree
+    // ------------------------------------------------------------------ the unit list
 
-    private void RefreshTree()
+    // A file was saved, added or removed: the colors (who has an AI file) and the AI box follow, without reloading the unit.
+    private void OnStoreChanged()
     {
-        refreshing = true;
-        try
-        {
-            AiDoc? keep = picked;
-            nodes.Clear();
-            brainsNode.Nodes.Clear();
-            behaviorsNode.Nodes.Clear();
-            var folders = new Dictionary<string, TreeNode>(StringComparer.OrdinalIgnoreCase);
-            // The folders every server has show even when empty, so it is clear where an AI can live.
-            foreach (string standard in new[] { AiCatalog.GenericFolder, AiCatalog.WorldFolder, AiCatalog.DungeonsFolder })
-                FolderNode(folders, standard);
-            foreach (AiDoc doc in store.Brains) AddNode(FolderNode(folders, doc.Origin), doc);
-            foreach (AiDoc doc in store.Behaviors) AddNode(behaviorsNode, doc);
-            brainsNode.ExpandAll();
-            behaviorsNode.Expand();
-            if (keep != null && nodes.TryGetValue(keep, out TreeNode? node)) tree.SelectedNode = node;
-        }
-        finally
-        {
-            refreshing = false;
-        }
+        unitList.Set(unitGroups, HasAiFile, choice?.Label ?? "", HasPersonalAi);
+        UpdateAiBox();
         UpdateButtons();
     }
 
-    // The tree node of a folder inside brains\ ("dungeons/arena" is "arena" inside "dungeons"); "" is the AIs node itself.
-    private TreeNode FolderNode(Dictionary<string, TreeNode> folders, string origin)
+    private void OnUnitChosen(AiUnitChoice unit)
     {
-        if (origin.Length == 0) return brainsNode;
-        if (folders.TryGetValue(origin, out TreeNode? known)) return known;
-        int cut = origin.LastIndexOf('/');
-        TreeNode parent = cut < 0 ? brainsNode : FolderNode(folders, origin.Substring(0, cut));
-        var node = new TreeNode(origin.Substring(cut + 1)) { ForeColor = Theme.ColorOf(TextRole.Muted) };
-        node.ToolTipText = L.T("Folder inside server\ai\brains");
-        parent.Nodes.Add(node);
-        folders[origin] = node;
-        return node;
-    }
-
-    private void AddNode(TreeNode parent, AiDoc doc)
-    {
-        var node = new TreeNode(doc.Title) { Tag = doc };
-        if (doc.LoadError != null) node.ForeColor = Theme.ColorOf(TextRole.Bad);
-        node.ToolTipText = doc.LoadError ?? doc.DisplayName;
-        parent.Nodes.Add(node);
-        nodes[doc] = node;
-    }
-
-    private void UpdateNode(AiDoc doc)
-    {
-        if (nodes.TryGetValue(doc, out TreeNode? node)) node.Text = doc.Title;
+        if (building) return;
+        if (choice != null && unit.Label == choice.Label && ReferenceEquals(choice, unit)) return;
+        ApplyChoice(unit, false);
     }
 
     private void SelectNode(AiDoc doc)
     {
         picked = doc;
-        if (nodes.TryGetValue(doc, out TreeNode? node)) tree.SelectedNode = node;
-        UpdateHint();
         UpdateButtons();
     }
 
@@ -422,7 +344,9 @@ internal sealed class AiTab : Panel
             building = false;
         }
         AiUnitChoice? pick = wanted.Length > 0 && byLabel.TryGetValue(wanted, out AiUnitChoice? same) ? same : DefaultChoice(list);
-        ApplyChoice(pick, keepState && pick != null && pick.Label == choice?.Label);
+        bool sameUnit = pick != null && pick.Label == choice?.Label;
+        unitList.Set(unitGroups, HasAiFile, pick?.Label ?? "", HasPersonalAi);
+        ApplyChoice(pick, keepState && sameUnit);
     }
 
     // The first enemy type that has an AI file; without one, a mobile armed unit of middle strength.
@@ -438,34 +362,24 @@ internal sealed class AiTab : Panel
         return list.FirstOrDefault(c => !c.IsType && middle != null && c.UnitName == middle.Name) ?? list.FirstOrDefault(c => !c.IsType);
     }
 
-    // True when the unit's own AI file exists (a unit written in another color in the picker has none).
+    // True when the unit's own AI file exists (a unit written in another color in the list has none).
     private bool HasAiFile(AiUnitChoice unit) => unit.OwnAi.Length > 0 && store.Find(AiKind.Brain, unit.OwnAi) != null;
 
-    private void OpenUnitPicker()
+    // True when that file is one made for the unit, not a generic AI (drawn green in the list).
+    private bool HasPersonalAi(AiUnitChoice unit)
     {
-        if (building) return;
-        using var picker = new AiUnitPicker(unitGroups, HasAiFile, choice?.Label ?? "")
-        {
-            Location = unitButton.PointToScreen(new Point(0, unitButton.Height))
-        };
-        if (picker.ShowDialog(this) == DialogResult.OK && picker.Chosen != null) ApplyChoice(picker.Chosen, false);
+        if (unit.OwnAi.Length == 0 || unit.OwnAi.StartsWith("generic_", StringComparison.OrdinalIgnoreCase)) return false;
+        AiDoc? doc = store.Find(AiKind.Brain, unit.OwnAi);
+        return doc != null && doc.LoadError == null && !AiLibrary.IsGenericOrigin(doc.Origin);
     }
 
-    // Puts a unit in the simulator. What was loaded on the previous unit goes away (an unsaved file stays unsaved in the list).
+    // Puts a unit in the simulator. What was loaded on the previous unit goes away (an unsaved file stays unsaved).
     private void ApplyChoice(AiUnitChoice? unit, bool keepLoaded)
     {
         choice = unit;
         if (!keepLoaded) loaded = null;
-        building = true;
-        try
-        {
-            unitButton.Text = unit == null ? "" : unit.Label;
-        }
-        finally
-        {
-            building = false;
-        }
         if (unit != null) lastChoiceLabel = unit.Label;
+        unitList.ShowSelection(unit);
         simView.SetUnit(unit, unit?.LeaderChoice == null ? null : AiSimSetups.Build(unit.LeaderChoice, BrainOf));
         AiUnits.CurrentGuns = simView.UnitGuns.ToList();
         Rebind();
@@ -549,6 +463,7 @@ internal sealed class AiTab : Panel
     {
         AiDoc? own = OwnDoc();
         current = loaded ?? own;
+        picked = current;
         bool editable = current != null && current.LoadError == null;
         brainEditor.Visible = editable && current!.Kind == AiKind.Brain;
         behaviorEditor.Visible = editable && current!.Kind == AiKind.Behavior;
@@ -556,7 +471,7 @@ internal sealed class AiTab : Panel
         if (current != null && current.LoadError != null)
             placeholder.Text = L.F("This file could not be read, so it cannot be edited here:\n\n{0}\n\nFix it with a text editor (the file is in the ai folder) and press Reload.", current.LoadError);
         else if (!editable)
-            placeholder.Text = L.T("Nothing is loaded on this unit, so there is nothing to edit.\n\nThe editor only shows the AI of the unit in the simulator. To edit another AI or a behavior, pick it in the list on the left and press \"Load on the unit\" (or double-click it): it runs on this unit, you edit and save it there, and \"Back to the unit's AI\" returns the unit to its own AI.\n\nAn AI is a set of states (for example: wait, chase, retreat). Each state acts like a behavior and has transitions that say when to change to another state. A behavior is one way of acting: how to move and shoot.");
+            placeholder.Text = L.T("Nothing is loaded on this unit, so there is nothing to edit.\n\nPick an AI in the box above (the ones made for this unit, then the generic ones), or use \"Load another AI...\" for any other file. \"Back to the unit's AI\" returns the unit to its own AI.\n\nAn AI is a set of states (for example: wait, chase, retreat). Each state acts like a behavior and has transitions that say when to change to another state. A behavior is one way of acting: how to move and shoot.");
 
         if (editable)
         {
@@ -564,7 +479,6 @@ internal sealed class AiTab : Panel
             else behaviorEditor.Bind(current);
         }
         UpdateBanner(own);
-        UpdateHint();
         UpdateButtons();
         UpdateAiBox();
         Simulate(restart);
@@ -625,29 +539,6 @@ internal sealed class AiTab : Panel
         if (doc == null || doc.LoadError != null) return;
         SelectNode(doc);
         LoadPicked();
-    }
-
-    // The menu of a file of the list (right click): load it on the unit, duplicate it, rename it, delete it.
-    private void ShowFileMenu(Point at)
-    {
-        if (picked == null) return;
-        var menu = new ContextMenuStrip { Renderer = new EditorRenderer() };
-        bool ok = picked.LoadError == null;
-        bool locked = store.IsProtected(picked);
-        ToolStripMenuItem load = Item(L.T("Load on the unit"), LoadPicked);
-        load.Enabled = ok && !ReferenceEquals(picked, current);
-        ToolStripMenuItem duplicate = Item(L.T("Duplicate"), DuplicateCurrent);
-        duplicate.Enabled = ok;
-        ToolStripMenuItem rename = Item(L.T("Rename..."), RenameCurrent);
-        rename.Enabled = ok && !locked;
-        ToolStripMenuItem delete = Item(L.T("Delete"), DeleteCurrent);
-        delete.Enabled = !locked;
-        menu.Items.Add(load);
-        menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add(duplicate);
-        menu.Items.Add(rename);
-        menu.Items.Add(delete);
-        menu.Show(tree, at);
     }
 
     // "Load another AI...": any AI of the folders (also the ones made for other units), or a file from anywhere on the computer.
@@ -735,30 +626,21 @@ internal sealed class AiTab : Panel
         }
         else if (choice.IsType && choice.BuiltInBehavior.Length > 0)
         {
-            text = L.F("{0} uses the built-in behavior \"{1}\", which is not an AI file, so there is nothing to edit. Load an AI from the list to see it act on this unit.", unit, choice.BuiltInBehavior);
+            text = L.F("{0} uses the built-in behavior \"{1}\", which is not an AI file, so there is nothing to edit. Pick an AI in the box above to see it act on this unit.", unit, choice.BuiltInBehavior);
         }
         else if (choice.IsType)
         {
-            text = L.F("{0} has no AI file. Load an AI from the list to see it act on this unit.", unit);
+            text = L.F("{0} has no AI file. Pick an AI in the box above to see it act on this unit.", unit);
         }
         else
         {
-            text = L.F("{0} is a plain game unit: it has no AI of its own. Load an AI or a behavior from the list to edit it and try it on this unit.", unit);
+            text = L.F("{0} is a plain game unit: it has no AI of its own. Pick an AI in the box above to edit it and try it on this unit.", unit);
         }
         banner.Text = text;
         Ui.SetRole(banner, role);
 
         string caption = current == null ? "" : current.Kind == AiKind.Behavior ? L.T("behavior") + " " + current.Id : current.Id;
         simView.SetCaptions(caption, loaded != null);
-    }
-
-    private void UpdateHint()
-    {
-        idHint.Text = picked == null
-            ? ""
-            : picked.Kind == AiKind.Brain
-                ? L.F("To use it: write \"ai\": \"{0}\" in a unit type (map editor, Units, Enemy AI) or in enemies.json.", picked.Id)
-                : L.F("A behavior is used by the states of an AI: pick \"{0}\" in the \"Behavior (file)\" field of a state.", picked.Id);
     }
 
     private void UpdateButtons()
@@ -773,7 +655,7 @@ internal sealed class AiTab : Panel
         deleteItem.Enabled = has && !locked;
         saveAsItem.Enabled = editing;
         exportItem.Enabled = pickedOk;
-        loadButton.Enabled = pickedOk && !ReferenceEquals(picked, current);
+        copyIdButton.Enabled = current != null;
         backButton.Visible = loaded != null;
         saveItem.Enabled = editing && (current!.Dirty || current.IsNew);
         revertItem.Enabled = editing && current!.Dirty && !current.IsNew;
@@ -793,7 +675,6 @@ internal sealed class AiTab : Panel
             return;
         }
         current.Dirty = true;
-        UpdateNode(current);
         UpdateButtons();
         Simulate(false);
     }
@@ -816,7 +697,6 @@ internal sealed class AiTab : Panel
             divertedFrom = source.Id;
             divertedTo = copy;
             loaded = copy;
-            UpdateNode(source);
             SelectNode(copy);
             Rebind(false);
         }
@@ -975,7 +855,6 @@ internal sealed class AiTab : Panel
         try
         {
             store.Save(current);
-            UpdateNode(current);
             UpdateBanner(OwnDoc());
             UpdateButtons();
             Simulate(false);
@@ -1020,7 +899,6 @@ internal sealed class AiTab : Panel
         try
         {
             store.SaveAll();
-            foreach (AiDoc doc in store.Docs) UpdateNode(doc);
             return true;
         }
         catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)

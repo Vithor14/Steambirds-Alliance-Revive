@@ -795,7 +795,7 @@ internal sealed class AiSimView : Panel
             AiSim sim = view.sim;
             if (view.brain == null)
             {
-                TextRenderer.DrawText(g, L.T("This unit has no AI file. Load one from the list on the left to see it act."), Font, new Point(10, 10), p.Muted);
+                TextRenderer.DrawText(g, L.T("This unit has no AI file. Pick one in the AI box to see it act."), Font, new Point(10, 10), p.Muted);
                 return;
             }
             using var big = new Font(Font.FontFamily, 11f, FontStyle.Bold);

@@ -1,6 +1,6 @@
 # Steambirds Alliance Revive 0.8.0
 
-On top of 0.7.1. Client **201219.1413** and plugin **1.22.0** are unchanged. Settings and maps from 0.7.1 keep working. Formations and the Ambassador fight are a reconstruction.
+On top of 0.7.1. Client **201219.1413** and plugin **1.22.0** are unchanged. Formations and the Ambassador fight are a reconstruction.
 
 ## Formations
 
@@ -9,7 +9,7 @@ On top of 0.7.1. Client **201219.1413** and plugin **1.22.0** are unchanged. Set
 - **Train:** cars follow the head. Every car is shielded except the tail tip, and destroying the tip destroys the train.
 - **Sergeant Pup:** four pods use `follow` (same offset as a slot, but they fly there on their own, so a hard turn does not teleport them). The leader keeps the small enemy bubble until the four pods fall, then fights alone. `tankShield` stays the player tank.
 - **Five Star:** points around the leader, walked in straight legs (a pentagon). Points do not turn with the leader, and the stars keep walking after the leader dies.
-- A chain or a slot stays bolted to the leader. Choices show a plain name and a line that says what they do. Unused fields stay gray. Shields, kill-all, unshield and heal are one Links list.
+- A chain or a slot stays bolted to the leader. Choices show a plain name plus what they do, and unused fields stay gray. Shields, kill-all, unshield and heal share the Links list.
 - Same flow as the other editors: one tab each for the formation, members, links, points and phase summons, fields under the selected line. File actions are in the menus and on right-click. The preview draws the game's ships, can pause, and has speed, leader motion, right-click damage, health drain, Heal and respawn. F1 explains the tab.
 - A map unit and each biome enemy can name a Formation. On a world site that replaces the random escorts. The list offers only formations whose leader is that unit, and picking one on the default AI also applies that formation's leader AI.
 
@@ -32,5 +32,3 @@ On top of 0.7.1. Client **201219.1413** and plugin **1.22.0** are unchanged. Set
 ## Other
 
 - `Push to GitHub.ps1` commits and pushes `main` only, and stops if the current branch has commits `main` does not.
-
-Full log: `docs/update-notes-0.8.0.md`.

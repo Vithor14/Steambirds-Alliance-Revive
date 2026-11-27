@@ -56,10 +56,17 @@ public static partial class Enemies
         return new AiRuntime(brain, rng);
     }
 
-    // The AI a unit type runs: the one it names ("ai"); a type with no AI gets the generic AI of its old "behavior" (chase when it has
-    // none), so every unit is driven by an AI. null only when airains\generic has no such file (then the built-in flight runs).
+    // A formation named on the type overrides an AI picked here or anywhere else: the leader runs the AI saved on
+    // that formation. Otherwise the one the type names ("ai"). A type with no AI gets the generic AI of its old
+    // "behavior" (chase when it has none). null only when that generic file is missing (then the built-in flight runs).
     private static string? EffectiveAi(EnemyType type)
     {
+        string formationId = (type.Formation ?? "").Trim();
+        if (formationId.Length > 0)
+        {
+            string leaderAi = (Formations.Library.Get(formationId)?.LeaderAi ?? "").Trim();
+            if (leaderAi.Length > 0) return leaderAi;
+        }
         if (!string.IsNullOrWhiteSpace(type.Ai)) return type.Ai;
         string generic = "generic_" + NormalizeBehavior(type.Behavior);
         return aiLibrary.Brains.ContainsKey(generic) ? generic : null;

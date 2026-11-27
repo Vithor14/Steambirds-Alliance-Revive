@@ -120,11 +120,13 @@ public static partial class Enemies
 
     // FieldUpdateSerializer.Write: mask, then position (x1024), velocity (x1024), rotation (x32), health (x512, fraction).
     // withEffect: also the visual effect (EFFECTSTATE1 = 8192, short id; 0 turns it off). The client reads the fields in
-    // the order of FieldUpdateSerializer: position, velocity, rotation, (aim, state), health, ..., effect state 1.
+    // the order of FieldUpdateSerializer: position, velocity, rotation, (aim, state), health, flags, guns, effect state 1.
+    // flags: FIELDMASK_FLAGS (2048), the status bits. Bit 0x800 is the enemy shield paint (it is not a statefulEffects name).
     // guns: FIELDMASK_GUNS (4096), the angle of each turret (Enemies.Guns.cs); null = nothing to say.
     private static void WriteFields(NetBuffer m, Enemy enemy, bool withHealth, bool withEffect = false, byte[]? guns = null)
     {
-        uint mask = 1u | 2u | 4u | (withHealth ? 8u : 0u) | (guns != null ? 4096u : 0u) | (withEffect ? 8192u : 0u);
+        bool withFlags = enemy.StatusFlags != 0;
+        uint mask = 1u | 2u | 4u | (withHealth ? 8u : 0u) | (withFlags ? 2048u : 0u) | (guns != null ? 4096u : 0u) | (withEffect ? 8192u : 0u);
         float vx = MathF.Sin(enemy.Rot * Rad) * enemy.Vel;
         float vy = MathF.Cos(enemy.Rot * Rad) * enemy.Vel;
 
@@ -135,12 +137,39 @@ public static partial class Enemies
         WriteScaled(m, vy, 1024f);
         WriteScaled(m, NormalizeAngle(enemy.Rot), 32f);
         if (withHealth) WriteScaled(m, Math.Clamp(enemy.Health / enemy.MaxHp, 0f, 1f), 512f);
+        if (withFlags) m.WriteVariableUInt32(enemy.StatusFlags);
         if (guns != null)
         {
             m.WriteVariableInt32(guns.Length);
             m.Write(guns);
         }
         if (withEffect) m.Write(enemy.EffectId);
+    }
+
+    // Bit of a client status paint (UnitScript flags). "shielded" paints the unit itself; the others spawn a prefab.
+    private static uint StatusFlagsOf(string? name)
+    {
+        switch ((name ?? "").Trim().ToLowerInvariant())
+        {
+            case "damageboosted": return 1;
+            case "safe": return 4;
+            case "slow": return 8;
+            case "jam": return 16;
+            case "burn": return 32;
+            case "silence": return 64;
+            case "weaken": return 128;
+            case "sicken": return 256;
+            case "confuse": return 512;
+            case "blind": return 1024;
+            case "shielded":
+            case "shield": return 2048;
+            case "scaled": return 8192;
+            case "bash": return 16384;
+            case "damageresisted": return 32768;
+            case "externalshielded": return 131072;
+            case "teleporting": return 524288;
+            default: return 0;
+        }
     }
 
     // GunFire (62326), in the order of GunFireSpecSerializer.Write, for a unit that is not a player:
