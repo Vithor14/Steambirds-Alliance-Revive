@@ -273,20 +273,14 @@ internal sealed class UnitTypesPage : EditorPage
         if (!ownName) type["name"] = shown;
     }
 
-    private static IEnumerable<string> GameUnitNames()
-    {
-        return EditorAssets.Current.Units.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList();
-    }
-
     private IEnumerable<FieldSpec> GeneralFields()
     {
         yield return new FieldSpec("name", "Display name", FieldKind.Text) { Help = "Name shown in the log and in messages." };
-        yield return new FieldSpec("template", "Game unit (template)", FieldKind.EditableChoice)
+        yield return new FieldSpec("template", "Game unit (template)", FieldKind.UnitTree)
         {
-            Choices = GameUnitNames,
+            PickGameUnit = true,
             OnChanged = FollowTemplate,
-            Picture = name => EditorAssets.Current.PictureOfUnit(name),
-            Help = "The unit of the game this type is made from (units_config.txt).\nSeveral can be given as a|b, or auto:<name>."
+            Help = "The unit of the game this type is made from. The list is the same as the Enemy AI unit picker (dungeons, biomes, generic types, units with no origin). You can still type a|b or auto:<name>."
         };
         yield return new FieldSpec("team", "Team (1 ally, 2 enemy)", FieldKind.OptionalNumber) { Help = "Side of the unit: 1 = ally of the player, 2 = enemy. Empty = the team of the game unit." };
         yield return new FieldSpec("note", "Note", FieldKind.MultiText) { Help = "Free text for you. The server ignores it." };

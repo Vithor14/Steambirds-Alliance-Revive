@@ -90,7 +90,7 @@ internal static class FormationFields
 // One member of the formation: who, which unit, and where it sits.
 internal sealed class MemberEditor : UserControl
 {
-    private readonly ThemedComboBox unit;
+    private readonly UnitTreeBox unit = new UnitTreeBox(UnitPickKind.GameUnit);
     private readonly ThemedComboBox ai;
     private readonly ThemedTextBox id = new ThemedTextBox();
     private readonly ThemedTextBox role = new ThemedTextBox();
@@ -109,17 +109,16 @@ internal sealed class MemberEditor : UserControl
     private FormationMember? member;
     private bool filling;
 
-    public MemberEditor(IEnumerable<string> units, IEnumerable<string> ais, ToolTip tip)
+    public MemberEditor(IEnumerable<string> ais, ToolTip tip)
     {
         Dock = DockStyle.Fill;
         AutoScroll = true;
-        unit = FormationFields.TypedChoice(units);
         ai = FormationFields.TypedChoice(ais);
         kind = FormationFields.ListChoice("chain", "slot", "ring", "points", "free");
         motion = FormationFields.ListChoice("patrol", "fixed", "toward", "orbit");
 
         tip.SetToolTip(id, L.T("Id is the name links use."));
-        tip.SetToolTip(unit, L.T("The game unit this piece is."));
+        tip.SetToolTip(unit, L.T("The same folders as the Enemy AI unit list: dungeons, world biomes, generic types, and units that no place uses."));
         tip.SetToolTip(ai, L.T("AI file this piece runs. Empty uses the AI of the unit."));
         tip.SetToolTip(role, L.T("A name a link can filter on, for example pod or outer."));
         tip.SetToolTip(kind, L.T("chain follows behind, slot is a fixed offset, ring is a circle, points walks the polygon, free flies on its own."));
@@ -145,7 +144,7 @@ internal sealed class MemberEditor : UserControl
         Controls.Add(grid);
 
         id.TextChanged += (_, _) => Push();
-        unit.TextChanged += (_, _) => Push();
+        unit.ValueChanged += () => Push();
         ai.TextChanged += (_, _) => Push();
         role.TextChanged += (_, _) => Push();
         point.TextChanged += (_, _) => Push();
@@ -158,10 +157,11 @@ internal sealed class MemberEditor : UserControl
 
     public event Action? Changed;
 
-    public void UseLists(IEnumerable<string> units, IEnumerable<string> ais)
+    public void UseLists(IEnumerable<string> ais)
     {
-        Refill(unit, units);
+        filling = true;
         Refill(ai, ais);
+        filling = false;
     }
 
     public void Show(FormationMember? next)
@@ -172,7 +172,7 @@ internal sealed class MemberEditor : UserControl
         Enabled = on;
         FormationPlace place = next?.Place ?? new FormationPlace();
         id.Text = next?.Id ?? "";
-        unit.Text = next?.Unit ?? "";
+        unit.Value = next?.Unit ?? "";
         ai.Text = next?.Ai ?? "";
         role.Text = next?.Role ?? "";
         Select(kind, place.Kind.Length == 0 ? "slot" : place.Kind);
@@ -202,7 +202,7 @@ internal sealed class MemberEditor : UserControl
         if (filling || member == null) return;
         string nextId = id.Text.Trim();
         if (nextId.Length > 0) member.Id = nextId;
-        member.Unit = unit.Text.Trim();
+        member.Unit = unit.Value;
         member.Ai = ai.Text.Trim();
         member.Role = role.Text.Trim();
         member.Place ??= new FormationPlace();
@@ -456,10 +456,10 @@ internal sealed class PointEditor : UserControl
 // One phase-summon line of the leader's AI. The Formation tab saves the AI file; this only edits the line.
 internal sealed class SummonEditor : UserControl
 {
-    private readonly ThemedComboBox unit;
+    private readonly UnitTreeBox unit = new UnitTreeBox(UnitPickKind.Summon);
     private readonly ThemedComboBox ai;
-    private readonly ThemedTextBox role = new ThemedTextBox();
-    private readonly ThemedComboBox place = FormationFields.ListChoice("behind", "front", "left", "right", "ring", "around");
+    private readonly ThemedComboBox role = FormationFields.TypedChoice(UnitLists.Roles());
+    private readonly ThemedComboBox place = FormationFields.TypedChoice(UnitLists.Places());
     private readonly NumberBox count = FormationFields.Number(1, 1, 30, 1);
     private readonly NumberBox every = FormationFields.Number(0, 0, 600, 0.5m);
     private readonly NumberBox max = FormationFields.Number(0, 0, 100, 1);
@@ -468,11 +468,11 @@ internal sealed class SummonEditor : UserControl
     private JsonObject? line;
     private bool filling;
 
-    public SummonEditor(IEnumerable<string> units, IEnumerable<string> ais)
+    public SummonEditor(IEnumerable<string> ais, FormationFile? points = null)
     {
         Dock = DockStyle.Fill;
         AutoScroll = true;
-        unit = FormationFields.TypedChoice(units);
+        Refill(place, UnitLists.Places(points));
         ai = FormationFields.TypedChoice(ais);
         TableLayoutPanel grid = FormationFields.Grid();
         FormationFields.Add(grid, L.T("Unit"), unit);
@@ -485,10 +485,10 @@ internal sealed class SummonEditor : UserControl
         FormationFields.Add(grid, L.T("Distance"), distance, false);
         FormationFields.Add(grid, L.T("Angle"), angle, false);
         Controls.Add(grid);
-        unit.TextChanged += (_, _) => Push();
+        unit.ValueChanged += () => Push();
         ai.TextChanged += (_, _) => Push();
         role.TextChanged += (_, _) => Push();
-        place.SelectedIndexChanged += (_, _) => Push();
+        place.TextChanged += (_, _) => Push();
         foreach (NumberBox box in new[] { count, every, max, distance, angle })
             box.ValueChanged += (_, _) => Push();
         Show(null);
@@ -496,10 +496,13 @@ internal sealed class SummonEditor : UserControl
 
     public event Action? Changed;
 
-    public void UseLists(IEnumerable<string> units, IEnumerable<string> ais)
+    public void UseLists(IEnumerable<string> ais, FormationFile? points)
     {
-        Refill(unit, units);
+        filling = true;
         Refill(ai, ais);
+        Refill(role, UnitLists.Roles());
+        Refill(place, UnitLists.Places(points));
+        filling = false;
     }
 
     public void Show(JsonObject? next)
@@ -507,12 +510,11 @@ internal sealed class SummonEditor : UserControl
         line = next;
         filling = true;
         Enabled = next != null;
-        unit.Text = next == null ? "" : Json.Str(next, "unit");
+        unit.Value = next == null ? "" : Json.Str(next, "unit");
         ai.Text = next == null ? "" : Json.Str(next, "ai");
         role.Text = next == null ? "" : Json.Str(next, "role");
         string where = next == null ? "behind" : Json.Str(next, "place");
-        place.SelectedItem = where.Length == 0 ? "behind" : where;
-        if (place.SelectedIndex < 0) place.SelectedIndex = 0;
+        place.Text = where.Length == 0 ? "behind" : where;
         FormationFields.SetNumber(count, next == null ? 1 : Json.Int(next, "count", 1));
         FormationFields.SetNumber(every, next == null ? 0 : (float)Json.Num(next, "every"));
         FormationFields.SetNumber(max, next == null ? 0 : Json.Int(next, "max"));
@@ -524,10 +526,10 @@ internal sealed class SummonEditor : UserControl
     private void Push()
     {
         if (filling || line == null) return;
-        line["unit"] = unit.Text.Trim();
+        line["unit"] = unit.Value;
         line["ai"] = ai.Text.Trim();
         line["role"] = role.Text.Trim();
-        line["place"] = place.SelectedItem?.ToString() ?? "behind";
+        line["place"] = place.Text.Trim().Length == 0 ? "behind" : place.Text.Trim();
         line["count"] = (int)count.Value;
         line["every"] = (double)every.Value;
         line["max"] = (int)max.Value;

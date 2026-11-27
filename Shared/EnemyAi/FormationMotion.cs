@@ -35,6 +35,27 @@ public static class FormationMotion
         return Slot(leaderX, leaderY, leaderRot, 0f, slot.X, slot.Y);
     }
 
+    // "point:id" uses this formation. "point:formation/id" only matches when the file id is that formation.
+    // x is to the right of the leader and y is in front. False when the text is not a point place.
+    public static bool TryPointOffset(string place, FormationFile? file, out float x, out float y)
+    {
+        x = 0f;
+        y = 0f;
+        if (file == null || place.Length < 7 || !place.StartsWith("point:", StringComparison.OrdinalIgnoreCase)) return false;
+        string rest = place.Substring(6);
+        int slash = rest.IndexOf('/');
+        if (slash >= 0)
+        {
+            if (!file.Id.Equals(rest.Substring(0, slash), StringComparison.OrdinalIgnoreCase)) return false;
+            rest = rest.Substring(slash + 1);
+        }
+        FormationPoint? point = file.Points?.FirstOrDefault(p => p != null && p.Id.Equals(rest, StringComparison.OrdinalIgnoreCase));
+        if (point == null) return false;
+        x = point.X;
+        y = point.Y;
+        return true;
+    }
+
     public static Pose Slot(float leaderX, float leaderY, float leaderRot, float leaderSpeed, float x, float y)
     {
         float rad = leaderRot * AiMath.Rad;

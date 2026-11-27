@@ -177,6 +177,7 @@ internal sealed class AiSimView : Panel
         try
         {
             FormationLibrary library = FormationLibrary.Load(LauncherPaths.AiFolder);
+            sim.KnownFormations = library;
             FormationFile? file = string.IsNullOrWhiteSpace(next.Formation) ? null : library.Get(next.Formation);
             file ??= library.ForAi(next.Id);
             if (file == null && !string.IsNullOrWhiteSpace(sim.Unit.Name))

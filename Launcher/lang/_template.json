@@ -2171,5 +2171,13 @@
   "bound": "",
   "A formation picked below is born whole with that enemy when it leads the group or spawns alone.": "",
   "Id of a formation file in server\\ai\\formations. When it is set, this unit is born with every piece of that formation, not only itself. Empty = the formation the AI names, or the one bound to this unit when the AI is generic.": "",
-  "This type brings the formation \"{0}\" ({1} piece(s)).": ""
+  "This type brings the formation \"{0}\" ({1} piece(s)).": "",
+  "The unit this state calls. The list is the same as the Enemy AI unit picker: dungeons, world biomes, generic types, and units with no origin. Empty = no summons.": "",
+  "Role name, so a summonsAtMost condition or a formation link can count only this kind. The list is the roles used by formations; you can type a new one.": "",
+  "behind, front, left, right, ring or around. A formation point is point:formation/id and sits there (x to the right, y in front of this unit). Empty = behind.": "",
+  "How far from the summoner they appear. 0 = 5. A formation point ignores this.": "",
+  "What this state calls in. The unit list is the same as the one on the Enemy AI bar. Role and place include what the formation files use, and a place can be a point of a formation.": "",
+  "The shield of this state. Shield look is the same list as the Formation tab: empty means no bubble, and the unit still takes no damage. tankShield is the player tank.": "",
+  "The unit of the game this type is made from. The list is the same as the Enemy AI unit picker (dungeons, biomes, generic types, units with no origin). You can still type a|b or auto:<name>.": "",
+  "The same folders as the Enemy AI unit list: dungeons, world biomes, generic types, and units that no place uses.": ""
 }

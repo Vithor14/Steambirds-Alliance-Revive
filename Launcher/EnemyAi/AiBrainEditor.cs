@@ -14,7 +14,8 @@ internal sealed class AiBrainEditor : Panel
     private readonly ListEditor statesList;
     private readonly JsonForm stateForm;
     private readonly JsonForm ownForm;
-    private readonly JsonForm effectsForm;
+    private readonly JsonForm summonsForm;
+    private readonly JsonForm shieldForm;
     private readonly AiGraphView graph;
     private readonly Label behaviorInfo;
     private readonly Button newBehaviorButton;
@@ -48,7 +49,12 @@ internal sealed class AiBrainEditor : Panel
             statesList.RefreshText();
             Changed();
         });
-        effectsForm = new JsonForm(AiFields.Effects(AiUnits.TypeNames), () => { }, _ =>
+        summonsForm = new JsonForm(AiFields.Summons(), () => { }, _ =>
+        {
+            statesList.RefreshText();
+            Changed();
+        });
+        shieldForm = new JsonForm(AiFields.Shield(), () => { }, _ =>
         {
             statesList.RefreshText();
             Changed();
@@ -102,7 +108,8 @@ internal sealed class AiBrainEditor : Panel
         var detail = new ThemedTabControl { Dock = DockStyle.Fill, Padding = new Point(8, 3) };
         detail.TabPages.Add(StatePage());
         detail.TabPages.Add(OwnPage());
-        detail.TabPages.Add(EffectsPage());
+        detail.TabPages.Add(SummonsPage());
+        detail.TabPages.Add(ShieldPage());
         detail.TabPages.Add(TransitionsPage());
 
         var table = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, Padding = new Padding(0) };
@@ -163,15 +170,28 @@ internal sealed class AiBrainEditor : Panel
         return page;
     }
 
-    private TabPage EffectsPage()
+    private TabPage SummonsPage()
     {
-        var page = new TabPage(L.T("Summons and shield")) { Padding = new Padding(2) };
+        var page = new TabPage(L.T("Summons")) { Padding = new Padding(2) };
         var table = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1 };
         table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         table.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        table.Controls.Add(Ui.Wrapping(L.T("What the unit does when it is in this state, besides moving and shooting. Summons and the shield belong to the state, not to a behavior file."), 420, true), 0, 0);
-        table.Controls.Add(effectsForm, 0, 1);
+        table.Controls.Add(Ui.Wrapping(L.T("What this state calls in. The unit list is the same as the one on the Enemy AI bar. Role and place include what the formation files use, and a place can be a point of a formation."), 420, true), 0, 0);
+        table.Controls.Add(summonsForm, 0, 1);
+        page.Controls.Add(table);
+        return page;
+    }
+
+    private TabPage ShieldPage()
+    {
+        var page = new TabPage(L.T("Shield")) { Padding = new Padding(2) };
+        var table = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1 };
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        table.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        table.Controls.Add(Ui.Wrapping(L.T("The shield of this state. Shield look is the same list as the Formation tab: empty means no bubble, and the unit still takes no damage. tankShield is the player tank."), 420, true), 0, 0);
+        table.Controls.Add(shieldForm, 0, 1);
         page.Controls.Add(table);
         return page;
     }
@@ -349,7 +369,8 @@ internal sealed class AiBrainEditor : Panel
         stateId = Json.Str(selected, "id");
         stateForm.Bind(selected);
         ownForm.Bind(selected);
-        effectsForm.Bind(selected);
+        summonsForm.Bind(selected);
+        shieldForm.Bind(selected);
         graph.SelectState(stateId);
         UpdateOwnEnabled();
         transitions.Bind(Json.ArrOrNull(selected, "transitions"), selected == null ? null : () => Json.Arr(selected, "transitions"));

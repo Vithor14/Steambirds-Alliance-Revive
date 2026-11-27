@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json.Nodes;
 using SteambirdsLauncher.Core;
+using SteambirdsLauncher.EnemyAi;
 using SteambirdsLauncher.UI;
 
 namespace SteambirdsLauncher.Editor;
@@ -27,7 +28,10 @@ internal enum FieldKind
     GunMounts,
 
     // A condition ("cleared:<room>+death:<type>") edited with drop-downs (needs FieldSpec.Condition).
-    Condition
+    Condition,
+
+    // A game unit or a summon, picked from the same folders as the Enemy AI unit list.
+    UnitTree
 }
 
 // One field of a property page: the key in the JSON object ("a.b" reaches the object "a" inside it), the label
@@ -69,6 +73,9 @@ internal sealed class FieldSpec
 
     // Choice and EditableChoice: the picture of a choice (a unit, a floor piece), drawn next to its name in the list.
     public Func<string, AssetPicture?>? Picture { get; init; }
+
+    // UnitTree: true writes the game unit name (a map template). False writes a type id when the row is a type.
+    public bool PickGameUnit { get; init; }
 
     // Text and choice fields: called inside the change, after the new value is written (the data, the old and the new value).
     public Action<JsonObject, string, string>? OnChanged { get; init; }
@@ -236,6 +243,17 @@ internal sealed class JsonForm : Panel
                 condition.Edited += () => CommitText(spec, condition.Value);
                 return condition;
             }
+            case FieldKind.UnitTree:
+            {
+                var units = new UnitTreeBox(spec.PickGameUnit ? UnitPickKind.GameUnit : UnitPickKind.Summon)
+                {
+                    Dock = DockStyle.Fill,
+                    Margin = new Padding(3, 2, 3, 2),
+                    MinimumSize = new Size(80, 28)
+                };
+                units.ValueChanged += () => CommitText(spec, units.Value);
+                return units;
+            }
             case FieldKind.GunMounts:
             {
                 var list = new GunMountList { Anchor = AnchorStyles.Left | AnchorStyles.Top };
@@ -343,6 +361,9 @@ internal sealed class JsonForm : Panel
             }
             case GunMountList guns:
                 guns.Show(spec.Guns?.Invoke() ?? Array.Empty<SteambirdsAi.AiGunStats>(), Json.Ints(node).ToList());
+                break;
+            case UnitTreeBox units:
+                units.Value = Json.AsString(node);
                 break;
             case ComboBox combo:
                 LoadCombo(combo, spec, Json.AsString(node));

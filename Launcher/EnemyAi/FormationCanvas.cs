@@ -176,8 +176,8 @@ internal sealed class FormationCanvas : Control
         string? piece = HitPiece(e.X, e.Y, lx, ly, rot, speed);
         if (piece == null) return;
         if (!health.ContainsKey(piece)) health[piece] = 1f;
-        float hit = Math.Clamp(ClickDamage, 0.01f, 1f);
-        health[piece] = Math.Max(0f, health[piece] - hit);
+        float damage = Math.Clamp(ClickDamage, 0.01f, 1f);
+        health[piece] = Math.Max(0f, health[piece] - damage);
     }
 
     private void StepHealth(float dt)

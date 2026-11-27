@@ -107,6 +107,9 @@ public sealed class AiSim
 
     // Pieces glued to the edited unit. Set before SetBrain / Reset. Null = the unit is alone.
     public FormationFile? Formation { get; set; }
+
+    // Every formation file, so a summon place "point:formation/id" can find a point that is not on Formation.
+    public FormationLibrary? KnownFormations { get; set; }
     private readonly List<(float X, float Y)> formationTrail = new List<(float X, float Y)>();
     private readonly HashSet<string> formationSeen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> formationFired = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -391,9 +394,23 @@ public sealed class AiSim
         }
     }
 
-    private static void SummonPoint(AiSimUnit by, AiSummonOrder order, int index, int count, out float x, out float y)
+    private void SummonPoint(AiSimUnit by, AiSummonOrder order, int index, int count, out float x, out float y)
     {
         string place = (order.Place ?? "behind").ToLowerInvariant();
+        if (place.StartsWith("point:", StringComparison.OrdinalIgnoreCase))
+        {
+            string rest = place.Substring(6);
+            int slash = rest.IndexOf('/');
+            FormationFile? file = slash >= 0 ? KnownFormations?.Get(rest.Substring(0, slash)) : Formation;
+            file ??= Formation;
+            if (FormationMotion.TryPointOffset(place, file, out float localX, out float localY))
+            {
+                FormationMotion.Pose pose = FormationMotion.Slot(by.X, by.Y, by.Rot, 0f, localX, localY);
+                x = pose.X;
+                y = pose.Y;
+                return;
+            }
+        }
         float distance = order.Distance <= 0f ? 5f : order.Distance;
         float spread = count <= 1 ? 0f : (index - (count - 1) * 0.5f) * (place == "ring" ? 360f / count : 40f);
         float facing = place switch

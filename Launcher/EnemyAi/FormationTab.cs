@@ -16,12 +16,13 @@ internal sealed class FormationTab : UserControl
     private readonly ListBox list = new ListBox { IntegralHeight = false, HorizontalScrollbar = true, Dock = DockStyle.Fill };
     private readonly ThemedTextBox nameBox = new ThemedTextBox();
     private readonly ThemedTextBox descriptionBox = new ThemedTextBox();
-    private readonly ThemedComboBox leaderUnit;
+    private readonly UnitTreeBox leaderUnit = new UnitTreeBox(UnitPickKind.GameUnit);
     private readonly ThemedComboBox leaderAi;
     private readonly NumberBox spacing = FormationFields.Number(1.7m, 0.4m, 20m, 0.1m);
     private readonly ThemedCheckBox bindToUnit = new ThemedCheckBox { AutoSize = true };
     private readonly ListBox members = new ListBox { IntegralHeight = false, Height = 120, Dock = DockStyle.Top };
     private readonly ListBox links = new ListBox { IntegralHeight = false, Height = 120, Dock = DockStyle.Top };
+    private readonly ListBox shields = new ListBox { IntegralHeight = false, Height = 120, Dock = DockStyle.Top };
     private readonly ThemedComboBox phases = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 180 };
     private readonly ListBox summons = new ListBox { IntegralHeight = false, Height = 100, Dock = DockStyle.Top };
     private readonly ListBox pointList = new ListBox { IntegralHeight = false, Height = 120, Dock = DockStyle.Top };
@@ -31,6 +32,7 @@ internal sealed class FormationTab : UserControl
     private readonly Label status = new Label { AutoSize = false, Height = 32, Dock = DockStyle.Fill, Tag = TextRole.Muted };
     private readonly MemberEditor memberEditor;
     private readonly LinkEditor linkEditor;
+    private readonly LinkEditor shieldEditor;
     private readonly PointEditor pointEditor;
     private readonly SummonEditor summonEditor;
     private readonly FormationCanvas canvas;
@@ -43,6 +45,8 @@ internal sealed class FormationTab : UserControl
     private ToolStripMenuItem renameItem = null!;
     private ToolStripMenuItem deleteItem = null!;
     private FormationFile? current;
+    private FormationLink? shownLink;
+    private FormationLink? shownShield;
     private bool filling;
     private bool splittersPlaced;
 
@@ -53,12 +57,12 @@ internal sealed class FormationTab : UserControl
         store = new FormationStore(LauncherPaths.AiFolder);
         if (EditorAssets.Current.Folder.Length == 0) EditorAssets.Load(context.GameFolder);
         canvas = new FormationCanvas { Dock = DockStyle.Fill };
-        leaderUnit = FormationFields.TypedChoice(UnitNames());
         leaderAi = FormationFields.TypedChoice(AiNames());
-        memberEditor = new MemberEditor(UnitNames(), AiNames(), context.ToolTip);
+        memberEditor = new MemberEditor(AiNames(), context.ToolTip);
         linkEditor = new LinkEditor(context.ToolTip);
+        shieldEditor = new LinkEditor(context.ToolTip);
         pointEditor = new PointEditor(context.ToolTip);
-        summonEditor = new SummonEditor(UnitNames(), AiNames());
+        summonEditor = new SummonEditor(AiNames());
         Dock = DockStyle.Fill;
         Build();
         SizeChanged += (_, _) => PlaceSplitters();
@@ -100,6 +104,7 @@ internal sealed class FormationTab : UserControl
         tabs.TabPages.Add(BuildFormationPage());
         tabs.TabPages.Add(BuildMembersPage());
         tabs.TabPages.Add(BuildLinksPage());
+        tabs.TabPages.Add(BuildShieldPage());
         tabs.TabPages.Add(BuildPointsPage());
         tabs.TabPages.Add(BuildSummonsPage());
 
@@ -118,11 +123,11 @@ internal sealed class FormationTab : UserControl
             Touch();
         };
         descriptionBox.TextChanged += (_, _) => { if (!filling && current != null) { current.Description = descriptionBox.Text; Touch(); } };
-        leaderUnit.TextChanged += (_, _) =>
+        leaderUnit.ValueChanged += () =>
         {
             if (filling || current == null) return;
             current.Leader ??= new FormationWho();
-            current.Leader.Unit = leaderUnit.Text.Trim();
+            current.Leader.Unit = leaderUnit.Value;
             Touch();
             RefreshCanvas();
         };
@@ -142,11 +147,8 @@ internal sealed class FormationTab : UserControl
             if (current == null || members.SelectedIndex < 0 || members.SelectedIndex >= current.Members.Count) return;
             OnPieceEdited(members, members.SelectedIndex, MemberText(current.Members[members.SelectedIndex]));
         };
-        linkEditor.Changed += () =>
-        {
-            if (current == null || links.SelectedIndex < 0 || links.SelectedIndex >= current.Links.Count) return;
-            OnPieceEdited(links, links.SelectedIndex, LinkText(current.Links[links.SelectedIndex]));
-        };
+        linkEditor.Changed += () => RefreshLinkLists(LinkOf(links), LinkOf(shields));
+        shieldEditor.Changed += () => RefreshLinkLists(LinkOf(links), LinkOf(shields));
         pointEditor.Changed += () =>
         {
             if (current == null || pointList.SelectedIndex < 0 || pointList.SelectedIndex >= current.Points.Count) return;
@@ -156,11 +158,13 @@ internal sealed class FormationTab : UserControl
         canvas.Changed += OnCanvasChanged;
 
         members.SelectedIndexChanged += (_, _) => { if (!filling) ShowMember(); };
-        links.SelectedIndexChanged += (_, _) => { if (!filling) ShowLink(); };
+        links.SelectedIndexChanged += (_, _) => { if (!filling) ShowLinkEditor(links, linkEditor, true); };
+        shields.SelectedIndexChanged += (_, _) => { if (!filling) ShowLinkEditor(shields, shieldEditor, false); };
         pointList.SelectedIndexChanged += (_, _) => { if (!filling) ShowPoint(); };
         summons.SelectedIndexChanged += (_, _) => { if (!filling) ShowSummon(); };
         members.KeyDown += (_, e) => { if (e.KeyCode == Keys.Delete) { e.Handled = true; RemoveMember(); } };
-        links.KeyDown += (_, e) => { if (e.KeyCode == Keys.Delete) { e.Handled = true; RemoveLink(); } };
+        links.KeyDown += (_, e) => { if (e.KeyCode == Keys.Delete) { e.Handled = true; RemoveLink(links); } };
+        shields.KeyDown += (_, e) => { if (e.KeyCode == Keys.Delete) { e.Handled = true; RemoveLink(shields); } };
         pointList.KeyDown += (_, e) => { if (e.KeyCode == Keys.Delete) { e.Handled = true; RemovePoint(); } };
         summons.KeyDown += (_, e) => { if (e.KeyCode == Keys.Delete) { e.Handled = true; RemoveSummon(); } };
     }
@@ -204,11 +208,23 @@ internal sealed class FormationTab : UserControl
     {
         var page = new TabPage(L.T("Links")) { Padding = new Padding(6) };
         FlowLayoutPanel buttons = Buttons();
-        buttons.Controls.Add(Ui.Button(L.T("Add"), (_, _) => AddLink()));
-        buttons.Controls.Add(Ui.Danger(L.T("Delete"), (_, _) => RemoveLink()));
+        buttons.Controls.Add(Ui.Button(L.T("Add"), (_, _) => AddLink(shield: false)));
+        buttons.Controls.Add(Ui.Danger(L.T("Delete"), (_, _) => RemoveLink(links)));
         page.Controls.Add(linkEditor);
         page.Controls.Add(buttons);
         page.Controls.Add(links);
+        return page;
+    }
+
+    private TabPage BuildShieldPage()
+    {
+        var page = new TabPage(L.T("Shield")) { Padding = new Padding(6) };
+        FlowLayoutPanel buttons = Buttons();
+        buttons.Controls.Add(Ui.Button(L.T("Add"), (_, _) => AddLink(shield: true)));
+        buttons.Controls.Add(Ui.Danger(L.T("Delete"), (_, _) => RemoveLink(shields)));
+        page.Controls.Add(shieldEditor);
+        page.Controls.Add(buttons);
+        page.Controls.Add(shields);
         return page;
     }
 
@@ -460,31 +476,26 @@ internal sealed class FormationTab : UserControl
         filling = true;
         bool on = file != null;
         nameBox.Enabled = descriptionBox.Enabled = leaderUnit.Enabled = leaderAi.Enabled = spacing.Enabled = bindToUnit.Enabled = on;
-        Refill(leaderUnit, UnitNames());
         Refill(leaderAi, AiNames());
-        memberEditor.UseLists(UnitNames(), AiNames());
-        summonEditor.UseLists(UnitNames(), AiNames());
+        memberEditor.UseLists(AiNames());
+        summonEditor.UseLists(AiNames(), file);
         nameBox.Text = file?.Name ?? "";
         descriptionBox.Text = file?.Description ?? "";
         if (file != null) file.Leader ??= new FormationWho();
-        leaderUnit.Text = file?.Leader?.Unit ?? "";
+        leaderUnit.Value = file?.Leader?.Unit ?? "";
         leaderAi.Text = file?.LeaderAi ?? "";
         FormationFields.SetNumber(spacing, file?.Spacing ?? 1.7f);
         bindToUnit.Checked = file?.BindToUnit ?? true;
         members.Items.Clear();
         if (file != null)
             foreach (FormationMember member in file.Members) members.Items.Add(MemberText(member));
-        links.Items.Clear();
-        if (file != null)
-            foreach (FormationLink link in file.Links) links.Items.Add(LinkText(link));
         pointList.Items.Clear();
         if (file != null)
             foreach (FormationPoint point in file.Points) pointList.Items.Add(PointText(point));
         filling = false;
         if (members.Items.Count > 0) members.SelectedIndex = 0;
         else ShowMember();
-        if (links.Items.Count > 0) links.SelectedIndex = 0;
-        else ShowLink();
+        RefreshLinkLists(null, null);
         if (pointList.Items.Count > 0) pointList.SelectedIndex = 0;
         else ShowPoint();
         FillPhases();
@@ -497,12 +508,6 @@ internal sealed class FormationTab : UserControl
     {
         memberEditor.Show(current != null && members.SelectedIndex >= 0 && members.SelectedIndex < current.Members.Count
             ? current.Members[members.SelectedIndex] : null);
-    }
-
-    private void ShowLink()
-    {
-        linkEditor.Show(current != null && links.SelectedIndex >= 0 && links.SelectedIndex < current.Links.Count
-            ? current.Links[links.SelectedIndex] : null, MemberIds());
     }
 
     private void ShowPoint()
@@ -544,7 +549,11 @@ internal sealed class FormationTab : UserControl
     {
         if (filling || current == null || index < 0) return;
         ReplaceItem(box, index, text);
-        if (box == members) ShowLink();
+        if (box == members)
+        {
+            linkEditor.Show(LinkOf(links), MemberIds());
+            shieldEditor.Show(LinkOf(shields), MemberIds());
+        }
         Touch();
         RefreshCanvas();
     }
@@ -683,7 +692,7 @@ internal sealed class FormationTab : UserControl
         current.Name = nameBox.Text;
         current.Description = descriptionBox.Text;
         current.Leader ??= new FormationWho();
-        current.Leader.Unit = leaderUnit.Text.Trim();
+        current.Leader.Unit = leaderUnit.Value;
         current.Leader.Ai = leaderAi.Text.Trim();
         current.Spacing = (float)spacing.Value;
         current.BindToUnit = bindToUnit.Checked;
@@ -756,20 +765,82 @@ internal sealed class FormationTab : UserControl
             if (member.Id.Length > 0) yield return member.Id;
     }
 
-    private void AddLink()
+    private sealed class LinkItem
+    {
+        public LinkItem(FormationLink link) { Link = link; }
+        public FormationLink Link { get; }
+        public override string ToString() => LinkText(Link);
+    }
+
+    private static bool IsShield(FormationLink link) =>
+        (link.Shield != null && link.Shield.Count > 0) || link.Do?.Kind == "unshield";
+
+    private static FormationLink? LinkOf(ListBox box) => (box.SelectedItem as LinkItem)?.Link;
+
+    private void RefreshLinkLists(FormationLink? keepLink, FormationLink? keepShield)
+    {
+        bool was = filling;
+        filling = true;
+        links.Items.Clear();
+        shields.Items.Clear();
+        if (current != null)
+        {
+            foreach (FormationLink link in current.Links)
+                (IsShield(link) ? shields : links).Items.Add(new LinkItem(link));
+        }
+        int linkIndex = IndexOf(links, keepLink);
+        int shieldIndex = IndexOf(shields, keepShield);
+        if (linkIndex < 0 && keepLink != null && IsShield(keepLink)) shieldIndex = IndexOf(shields, keepLink);
+        if (shieldIndex < 0 && keepShield != null && !IsShield(keepShield)) linkIndex = IndexOf(links, keepShield);
+        if (linkIndex < 0 && links.Items.Count > 0 && keepLink == null && keepShield == null) linkIndex = 0;
+        if (shieldIndex < 0 && shields.Items.Count > 0 && keepLink == null && keepShield == null) shieldIndex = 0;
+        filling = was;
+        if (links.SelectedIndex != linkIndex)
+        {
+            if (linkIndex >= 0) links.SelectedIndex = linkIndex;
+            else ShowLinkEditor(links, linkEditor, true);
+        }
+        else if (LinkOf(links) != shownLink) ShowLinkEditor(links, linkEditor, true);
+        if (shields.SelectedIndex != shieldIndex)
+        {
+            if (shieldIndex >= 0) shields.SelectedIndex = shieldIndex;
+            else ShowLinkEditor(shields, shieldEditor, false);
+        }
+        else if (LinkOf(shields) != shownShield) ShowLinkEditor(shields, shieldEditor, false);
+    }
+
+    private void ShowLinkEditor(ListBox box, LinkEditor editor, bool plain)
+    {
+        FormationLink? link = LinkOf(box);
+        if (plain) shownLink = link;
+        else shownShield = link;
+        editor.Show(link, MemberIds());
+    }
+
+    private static int IndexOf(ListBox box, FormationLink? link)
+    {
+        if (link == null) return -1;
+        for (int i = 0; i < box.Items.Count; i++)
+            if (box.Items[i] is LinkItem item && ReferenceEquals(item.Link, link)) return i;
+        return -1;
+    }
+
+    private void AddLink(bool shield)
     {
         if (current == null) return;
-        current.Links.Add(new FormationLink { Shield = new List<string> { "leader" }, Effect = "" });
-        Show(current);
-        links.SelectedIndex = current.Links.Count - 1;
+        var link = shield
+            ? new FormationLink { Shield = new List<string> { "leader" }, Effect = "" }
+            : new FormationLink { When = new FormationWhen { Died = "leader" }, Do = new FormationDo { Kind = "killAll" } };
+        current.Links.Add(link);
+        RefreshLinkLists(shield ? null : link, shield ? link : null);
         Touch();
     }
 
-    private void RemoveLink()
+    private void RemoveLink(ListBox box)
     {
-        if (current == null || links.SelectedIndex < 0 || links.SelectedIndex >= current.Links.Count) return;
-        current.Links.RemoveAt(links.SelectedIndex);
-        Show(current);
+        if (current == null || LinkOf(box) is not FormationLink link) return;
+        current.Links.Remove(link);
+        RefreshLinkLists(null, null);
         Touch();
     }
 

@@ -241,7 +241,26 @@ public static partial class Enemies
         key = name;
         EnemyType? named = GetEnemyType(name);
         if (named != null) return named;
-        return TypeFromAi(name, out key);
+        EnemyType? fromAi = TypeFromAi(name, out key);
+        if (fromAi != null) return fromAi;
+        UnitSummary? plain = FindUnit(name);
+        if (plain == null || plain.Wall || plain.Player)
+        {
+            key = name;
+            return null;
+        }
+        key = "summon/" + plain.Name;
+        if (GetEnemyType(key) == null)
+        {
+            RegisterDefaultType(key, new EnemyType
+            {
+                Name = plain.Name,
+                Template = plain.Name,
+                Ai = "generic_chase",
+                FreeRoam = true
+            });
+        }
+        return GetEnemyType(key);
     }
 
     // /enemy and a summon can name an AI file instead of a type in enemies.json. The unit is the first one in that
@@ -338,6 +357,7 @@ public static partial class Enemies
     private static void SummonOffset(Enemy enemy, AiSummonOrder order, int index, int count, out float x, out float y)
     {
         string place = (order.Place ?? "behind").ToLowerInvariant();
+        if (SummonAtPoint(enemy, place, out x, out y)) return;
         float distance = order.Distance <= 0f ? 5f : order.Distance;
         float step = count <= 1 ? 0f : (index - (count - 1) * 0.5f) * 40f;
         float facing = place switch
@@ -351,6 +371,23 @@ public static partial class Enemies
         float rad = facing * Rad;
         x = enemy.X + MathF.Sin(rad) * distance;
         y = enemy.Y + MathF.Cos(rad) * distance;
+    }
+
+    // A place "point:id" or "point:formation/id" sits on that formation point, in front of and beside the summoner.
+    private static bool SummonAtPoint(Enemy enemy, string place, out float x, out float y)
+    {
+        x = 0f;
+        y = 0f;
+        if (!place.StartsWith("point:", StringComparison.OrdinalIgnoreCase)) return false;
+        string rest = place.Substring(6);
+        int slash = rest.IndexOf('/');
+        FormationFile? file = slash >= 0 ? Formations.Library.Get(rest.Substring(0, slash)) : ResolveFormation(enemy);
+        file ??= ResolveFormation(enemy);
+        if (!FormationMotion.TryPointOffset(place, file, out float localX, out float localY)) return false;
+        FormationMotion.Pose pose = FormationMotion.Slot(enemy.X, enemy.Y, enemy.Rot, 0f, localX, localY);
+        x = pose.X;
+        y = pose.Y;
+        return true;
     }
 
     // /brains: the AIs of the folder and the state of the ones flying now.
