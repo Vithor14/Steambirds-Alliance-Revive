@@ -28,7 +28,7 @@ Maintained 100% by the community, with some additions and improvements.
 
 - Version: launcher **0.8.1** (patch on 0.8.0, 27/11/2026; notes `docs/update-notes-0.8.1.md`), plugin Steambirds Quieter **1.22.0**, client build
   **201219.1413**. **0.9.0 is in progress** (`docs/update-notes-0.9.0.md`). Closed notes: `docs/update-notes-0.7.0.md`,
-  `docs/update-notes-0.7.1.md`, `docs/update-notes-0.8.0.md` and `docs/update-notes-0.8.1.md` (full, English and Portuguese), `docs/release-notes-0.7.0.md`, `docs/release-notes-0.7.1.md` and `docs/release-notes-0.8.0.md` (short, for GitHub; 0.8.0 is English only).
+  `docs/update-notes-0.7.1.md` and `docs/update-notes-0.8.0.md` (full, English and Portuguese), `docs/update-notes-0.8.1.md` (short, English), `docs/release-notes-0.7.0.md`, `docs/release-notes-0.7.1.md` and `docs/release-notes-0.8.0.md` (short, for GitHub; 0.8.0 is English only).
   When a design note and a later update note disagree, the later note is the one to follow, then the code.
 - **`CHECKLIST.md` (repo root) is the source of truth**: done / partial / missing per area, and the suggested MVP order.
   Update it when a feature changes state (keep its Portuguese style) and recompute its summary table (a bullet counts as
@@ -61,7 +61,7 @@ Maintained 100% by the community, with some additions and improvements.
 | `docs/update-notes-0.7.0.md`, `docs/release-notes-0.7.0.md` | release notes of 0.7.0: full (English and Portuguese) and the short one for GitHub |
 | `docs/update-notes-0.7.1.md`, `docs/release-notes-0.7.1.md` | patch 0.7.1: full (English and Portuguese) and the short one for GitHub |
 | `docs/update-notes-0.8.0.md`, `docs/release-notes-0.8.0.md` | 0.8.0, released 27/11/2026: full log (English and Portuguese) and the English GitHub text |
-| `docs/update-notes-0.8.1.md` | patch 0.8.1 (27/11/2026): full log, English and Portuguese |
+| `docs/update-notes-0.8.1.md` | patch 0.8.1 (27/11/2026): short log, English |
 | `docs/update-notes-0.9.0.md` | 0.9.0, open until release: every later change is written here (English and Portuguese) |
 | `docs/radmin-vpn-guide.md` | player-facing guide: install Radmin VPN, join the `Steambirds_Revive` network, host or join a server (English) |
 | `docs/discord-server.md`, `docs/discord-start-here.md` | plan of the community Discord server and the ready-to-paste `#start-here` texts (not code) |
