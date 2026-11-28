@@ -1,21 +1,14 @@
 // First generated from the dungeon maps by a script that is no longer in the repository: this file is now the source, edit it by hand.
+// Units with meowzaDB drop rates (loot_tables\meowzadb\) are not listed here.
 {
   "id": "dungeon_miniboss",
   "description": "Dungeon miniboss: one item the class uses (one tier above), an extra, health and scrap.",
   "units": [
     "avatarbattlemech",
     "avatarbattlemech3",
-    "bansheeleader5",
-    "battlemech",
-    "cloudleaderbig",
-    "coilsnake01",
-    "cyclopus",
     "cyclopus2",
     "escortgoliath",
-    "escorttrain1",
     "fatblimp",
-    "flamebatleader",
-    "huskyleader",
     "keylock",
     "keylock2",
     "keylock3",

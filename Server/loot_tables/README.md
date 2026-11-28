@@ -61,4 +61,28 @@ In the game chat: `/loot` (regular enemy), `/loot boss 3` (tier 3 boss), `/loot 
 
 ## Dungeon tables
 
-`dungeon_chest`, `dungeon_chest_big`, `dungeon_miniboss` and `dungeon_no_loot` list in `units` the enemies of each dungeon (they were first generated from the dungeon maps by a script that is no longer in the repository, so the files are now the source: edit the weights, items and `units` by hand). `dungeon_no_loot` has an empty roll on purpose (walls, barrels, bombs, mines, debris).
+`dungeon_chest`, `dungeon_chest_big`, `dungeon_miniboss` and `dungeon_no_loot` list in `units` the enemies of each dungeon (they were first generated from the dungeon maps by a script that is no longer in the repository, so the files are now the source: edit the weights, items and `units` by hand). `dungeon_no_loot` has an empty roll on purpose (walls, barrels, bombs, mines, debris). Minibosses with meowzaDB rates are not in `dungeon_miniboss` (see below).
+
+## meowzaDB tables (`meowzadb\`)
+
+One table per unit (`drops_<templateName>`, listed in `units`) with the drop rates of [meowzaDB](https://meowzadb.com/database/):
+40 bosses and minibosses (world bosses of The Island, dungeon bosses and minibosses, Godleader Meowza 1 and 2). meowzaDB
+says its rates are datamined, based on a pattern or estimated from observation (none could be datamined after 2019/11).
+
+- Each drop is its own roll: rate 0.2 = 20%; 1 or more = that many guaranteed copies (1.25 = one copy and 25% of a second).
+- Drops with separate Normal / Difficult / Lethal rates have one roll per difficulty (`difficulty` condition, from
+  `dungeonDifficulty` in `items.json`); drops with one rate count on every difficulty.
+- Obsolete crafting gems (`craft_*gem`) drop the ingredient pickup the client migrates them to. 0% entries and ids that
+  are not items of build 201219 (`iron`) are skipped and listed in the header of the file.
+- These units no longer get the generic `dungeon_miniboss` / `boss` loot (tier items, health, scrap).
+
+The files are **generated**: save the unit pages (`https://meowzadb.com/unit/<templateName>`, browser "Save Page As",
+HTML only) into a folder outside the repository and run
+
+```powershell
+.\tools\import_meowzadb_drops.ps1 -Pages "D:\path\to\saved pages"
+```
+
+Rerunning overwrites the files of the units it finds and warns when another table also lists one of them in `units`
+(remove it there). To hand-tune a unit, stop regenerating it (or move its file out of `meowzadb\`) first. The saved
+pages themselves are meowzaDB's and are not committed.
