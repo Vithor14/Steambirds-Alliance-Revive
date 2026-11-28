@@ -23,7 +23,7 @@
 | 2 | Avião, classes e hangar | 10 | 5 | 0 |
 | 3 | Piloto, permadeath e progressão | 2 | 11 | 0 |
 | 4 | Combate e inimigos | 10 | 7 | 1 |
-| 5 | Itens, inventário e loot | 7 | 9 | 0 |
+| 5 | Itens, inventário e loot | 8 | 9 | 0 |
 | 6 | Rebel City (Nexus) e prédios | 4 | 5 | 4 |
 | 7 | Mundo aberto (ilhas) | 5 | 5 | 3 |
 | 8 | Dungeons e tutoriais | 8 | 13 | 5 |
@@ -37,7 +37,7 @@
 | 16 | Launcher — aba Server | 5 | 13 | 0 |
 | 17 | Launcher standalone (objetivo final) | 4 | 3 | 0 |
 | 18 | Editor de mapas | 7 | 7 | 0 |
-| | **Total** | **105** | **92** | **30** |
+| | **Total** | **106** | **92** | **30** |
 
 Os apêndices (classes, terrenos e chefes) e as observações abaixo ficam fora da conta.
 
@@ -170,6 +170,7 @@ Código em `Server\Items` (v9). No teste de 23/11 o loot, as trocas, o armazém 
 - [x] Catálogo de todos os itens: `catalog\item_catalog.md` e `.json` (id, nome, tier, classes que podem usar, stats, texto de lore, valor de reciclagem). O desta entrega vem da build 190911 (1242 itens); o servidor regrava com a 201219 ao subir (`/exportar_itens`)
 - [x] Loot ao matar inimigos: sacos de loot (prefab `lootbag`, um item por saco, some em 30 s), `ServerRequestAddInventoryItem` `21818` → `ClientInvAdd` `34491`, `ServerReportItemPickup` `4422`, `ServerRequestKill` do saco. Vale no tutorial, nas dungeons e no mundo aberto. Testado em 23/11 (466 sorteios, itens de tier 1 a 10 pegos pelos três jogadores)
 - [x] Tabelas de loot em arquivo: `normal` (inimigos comuns), `boss` (chefes e baús), `tutorial_walker_chest`. Ordem: tabela da unidade (`units`), loot do jogo da unidade (embutido + `lootTableId` via `replaces`), senão normal/boss. Valores reconstruídos (funcionaram em 23/11; os jogadores comentaram itens T9 e T10 saindo já nas primeiras dungeons: ajustar se for demais)
+- [x] Drops de chefes e minichefes do meowzaDB (27/11): 40 unidades com os itens e as chances do site (Normal / Difficult / Lethal quando há), uma tabela por unidade em `loot_tables\meowzadb\`, geradas por `tools\import_meowzadb_drops.ps1` a partir das páginas salvas à mão. Conferido com o carregador do servidor (sorteios batem com as chances) e testado no jogo em 27/11. Inimigos comuns ainda usam `normal`
 - [ ] 🟡 Avisos de coleta: `ClientNoRoomForPickup` `22110` (o item volta ao mundo), `ClientConsumedItemOnPickup` `22111` (ingredientes e itens `devourOnPickup`), `ClientCargoFull` `14528` (desequipar com cargo cheio). `ClientReplaceInventoryAndPickup` `16148` escrito, sem uso
 - [ ] 🟡 Mover, equipar, descartar e favoritar itens: `ServerInvSwapItems` `17407` (confere o slot do item), `ServerInvRemoveItem` `60901` (soltar = arrastar para o mundo = saco no mundo, sem avião vivo o item fica no cargo; reciclar = o menu do cliente manda Lixo: o item é sempre destruído e paga a moeda de reciclagem se `mulchOnTrash` em `items.json` estiver ligado), `ServerInvAccumulateItem` `60904`, `ServerInvFavoriteItem` `60905`. Testado em 23/11: trocas de vaga, equipar e reciclar (62 itens) funcionam. **Não funciona:** arrastar o item para fora do inventário (soltar no mundo): o servidor não recebe mensagem nenhuma (relato do host e de um jogador)
 - [ ] 🟡 Consumir e ordenar itens: `ServerInvConsumeItem` `60902` (o cliente aplica vida/vapor/nuvem; o servidor entrega desbloqueio, variante, moeda, buff de conta e ingrediente, e gasta os usos), `ServerInvApplySort` `60903` (tier ou tipo, ordem estável e `ClientReplaceInventory` depois)
@@ -249,7 +250,7 @@ Doc das dungeons recriadas: `docs/dungeons-190828.md`. Servidor de dungeon: `doc
 - [x] Teste de 15/11 (Iron Lair e Bomb Factory): entrar pelo porta-aviões, welcome, chão, salas acordando, ponto de controle, portão fechando atrás do jogador na Iron Lair, morte e volta ao Nexus funcionaram, sem erro no servidor nem no jogo. Achado: na primeira sala da Bomb Factory um atirador invisível (`bombbarrelboom`) atirava um anel no jogador de longe. Corrigido: o barril visível leva o atirador no `onDeath` (atira uma vez, 1,5 s, `excludeFromRoomClear`); a mesma correção vale para o `firebarrel` do Reeducation Camp. A Bomb Factory foi concluída de novo em 23/11, com a reação em cadeia dos barris. A dificuldade (vida e dano dos tiers) fica como está, até existirem itens que melhorem o avião
 - [ ] 🟡 Falas de fase dos chefes (v11): a chave de cada fase vinha em `fala`, e o servidor ignorava em silêncio. Agora é `bark` (`dungeon_finalboss.json`, quatro fases do meowza) e sai como balão de fala pelo mesmo caminho das falas das dungeons (`WorldObjects.SendSpeech`, em `Enemies.Messages.cs`). Mudança de comportamento: o chefe passa a falar. Falta testar no jogo
 - [ ] 🟡 Emboscada do ladrão (`ambush` do `dungeon_thief.json`, com `group` e `intervalSeconds`): o servidor ainda não lê essa chave
-- [ ] 🟡 Loot das dungeons: tabelas `loot_tables\dungeon_*.json` (baús, Big Treasure, minichefes; muros/barris/bombas/minas sem loot). Falta conferir no jogo
+- [ ] 🟡 Loot das dungeons: tabelas `loot_tables\dungeon_*.json` (baús, Big Treasure, minichefes; muros/barris/bombas/minas sem loot). Chefes e 8 minichefes usam as chances do meowzaDB (`loot_tables\meowzadb\`). Falta conferir no jogo
 - [ ] 🟡 Inimigos sem arma no cliente (bombas teleguiadas, jatos bombardeiros): desde a 0.7.0 a IA `generic_kamikaze` explode em anel ao encostar; `generic_mine` (23/11, minas do SN-Z: paradas, anel vermelho `detectionZone`, explodem quando o jogador entra no raio; na 0.7.0 não explodem ao serem soltas nem atingidas, e esse ajuste não foi rejogado); carregadores/dirigíveis largam bombas (`countsForRoomClear: false`); minas-robô e outros que orbitavam além do alcance da arma agora se aproximam. Bomb Factory conferida em 23/11 (bombas teleguiadas e reação em cadeia funcionaram e a dungeon foi concluída); falta conferir as demais dungeons
 - [ ] Conferir as outras unidades invisíveis armadas das dungeons ainda fechadas (lista em `docs/dungeons-190828.md`)
 - [ ] 🟡 **Correções do teste de 22/11 (compiladas, falta testar no jogo; detalhes em `docs/dungeon-tuning.md`):**

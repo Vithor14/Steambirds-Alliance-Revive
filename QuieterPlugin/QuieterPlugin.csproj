@@ -4,6 +4,19 @@
     <TargetFramework>net46</TargetFramework>
     <AssemblyName>QuieterPlugin</AssemblyName>
     <RootNamespace>QuieterPlugin</RootNamespace>
+  </PropertyGroup>
+
+  <!-- Game folder (depot 386011), first match wins: -p:GameDir=..., the STEAMBIRDS_GAME environment variable,
+       the Steam folder from the registry (like the launcher's GameInstall), and last the default Steam folder. -->
+  <PropertyGroup Condition="'$(GameDir)' == '' And '$(STEAMBIRDS_GAME)' != ''">
+    <GameDir>$(STEAMBIRDS_GAME)</GameDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(GameDir)' == ''">
+    <SteamDir>$([MSBuild]::GetRegistryValue('HKEY_CURRENT_USER\Software\Valve\Steam', 'SteamPath'))</SteamDir>
+    <SteamDir Condition="'$(SteamDir)' == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Valve\Steam', 'InstallPath', null, RegistryView.Registry32))</SteamDir>
+    <GameDir Condition="'$(SteamDir)' != '' And Exists('$(SteamDir)\steamapps\content\app_386010\depot_386011\BepInEx\core\BepInEx.dll')">$([System.IO.Path]::GetFullPath('$(SteamDir)\steamapps\content\app_386010\depot_386011'))</GameDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(GameDir)' == ''">
     <GameDir>C:\Program Files (x86)\Steam\steamapps\content\app_386010\depot_386011</GameDir>
   </PropertyGroup>
 

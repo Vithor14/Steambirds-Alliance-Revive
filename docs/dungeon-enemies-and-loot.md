@@ -25,4 +25,4 @@ Segue `docs/dungeon-server.md` (v8/v8b) e `docs/items-and-loot.md` (v9). Revisad
 
 ## Falta
 
-Retestar a Bomb Factory (loot de baús/minichefes, bombas, minas, sala 2 e sala 4) e as demais dungeons ao abrir uma a uma; loot dos chefes ainda genérico (`boss.json`).
+Retestar a Bomb Factory (loot de baús/minichefes, bombas, minas, sala 2 e sala 4) e as demais dungeons ao abrir uma a uma; desde 27/11 os chefes e 8 minichefes usam as chances do meowzaDB (`loot_tables\meowzadb\`, `tools\import_meowzadb_drops.ps1`); o resto dos minichefes segue em `dungeon_miniboss`.
